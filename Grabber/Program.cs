@@ -8,10 +8,10 @@ namespace FxMovies.Grabber
     {
         static void Main(string[] args)
         {
-            var builder = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-
-            var configuration = builder.Build();
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
 
             // Get the connection string
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
