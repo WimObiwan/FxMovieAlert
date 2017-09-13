@@ -16,18 +16,21 @@ namespace FxMovies.Grabber
             // Get the connection string
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
 
-            DateTime date = DateTime.Now.Date.AddDays(1);
-            var movies = HumoGrabber.GetGuide(date).Result;
-            var fxMoviesDB = new FxMoviesDB(connectionString);
-
-            fxMoviesDB.RemoveForDate(date);
-
-            Console.WriteLine(date.ToString());
-            foreach (var movie in movies)
+            for (int days = 0; days < 3; days++)
             {
-                fxMoviesDB.Save(movie);
+                DateTime date = DateTime.Now.Date.AddDays(days);
+                var movies = HumoGrabber.GetGuide(date).Result;
+                var fxMoviesDB = new FxMoviesDB(connectionString);
 
-                Console.WriteLine("{0} {1} {2} {4} {5}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime, movie.EndTime);
+                fxMoviesDB.RemoveForDate(date);
+
+                Console.WriteLine(date.ToString());
+                foreach (var movie in movies)
+                {
+                    fxMoviesDB.Save(movie);
+
+                    Console.WriteLine("{0} {1} {2} {4} {5}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime, movie.EndTime);
+                }
             }
         }
     }
