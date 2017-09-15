@@ -12,6 +12,7 @@ namespace FxMovies.FxMoviesDB
             : base(options)
         { }
 
+        public DbSet<Channel> Channels { get; set; }
         public DbSet<MovieEvent> MovieEvents { get; set; }
     }
 
@@ -26,28 +27,10 @@ namespace FxMovies.FxMoviesDB
             optionsBuilder.UseSqlite(connectionString);
 
             // Ensure that the SQLite database and sechema is created!
-            var context = new FxMoviesDbContext(optionsBuilder.Options);
-            context.Database.EnsureCreated();
+            var db = new FxMoviesDbContext(optionsBuilder.Options);
+            db.Database.EnsureCreated();
 
-            return context;
+            return db;
         }
     }
-
-    /// <summary>
-    /// A simple class representing a Student
-    /// </summary>
-    public class MovieEvent
-    {
-        public MovieEvent()
-        {
-        }
-
-        public int Id { get; set; }
-
-        public string Title { get; set; }
-
-        public int Year { get; set; }
-
-        public DateTime StartTime { get; set; }
-    }   
 }

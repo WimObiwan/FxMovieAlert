@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using FxMovies.FxMoviesDB;
 using Newtonsoft.Json;
 
 namespace FxMovies.Grabber
@@ -82,7 +83,7 @@ namespace FxMovies.Grabber
         }
         #endregion
 
-        public static async Task<IList<Movie>> GetGuide(DateTime date)
+        public static async Task<IList<MovieEvent>> GetGuide(DateTime date)
         {
             string dateYMD = date.ToString("yyyy-MM-dd");
             string url = string.Format("http://www.humo.be/api/epg/humosite/schedule/main/{0}/full", dateYMD);
@@ -93,6 +94,11 @@ namespace FxMovies.Grabber
                 using (var textStream = new StreamReader(response.GetResponseStream()))
                 {
                     string json = await textStream.ReadToEndAsync();
+
+                    using (StreamWriter outputFile = new StreamWriter(string.Format(@"humo-{0}.json", dateYMD)))
+                    {
+                        outputFile.WriteLine(json);
+                    }
 
                     var humo = JsonConvert.DeserializeObject<Humo>(json);
 
@@ -113,25 +119,35 @@ namespace FxMovies.Grabber
             humo.broadcasters.RemoveAll(b => (b.events.Count == 0));
         }
 
-        private static IList<Movie> MovieAdapter(Humo humo)
+        private static IList<MovieEvent> MovieAdapter(Humo humo)
         {
-            var movies = new List<Movie>();
+            var movies = new List<MovieEvent>();
             foreach (var broadcaster in humo.broadcasters)
             {
                 var channel = new Channel()
                 {
+                    Code = broadcaster.code,
                     Name = broadcaster.display_name,
+                    LogoS = broadcaster.media.Find(m => m.link_type == "epg_logo")?.resized_urls?.small,
+                    LogoM = broadcaster.media.Find(m => m.link_type == "epg_logo")?.resized_urls?.medium,
+                    LogoL = broadcaster.media.Find(m => m.link_type == "epg_logo")?.resized_urls?.large,
                 };
 
                 foreach (var evnt in broadcaster.events)
                 {
-                    var movie = new Movie()
+                    var movie = new MovieEvent()
                     {
                         Channel = channel,
                         Title = evnt.program.title,
                         Year = evnt.program.year,
                         StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.starttime).ToLocalTime(),
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.endtime).ToLocalTime(),
+                        Duration = evnt.properties.eventduration,
+                        PosterS = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.small,
+                        PosterM = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.medium,
+                        PosterL = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.large,
+                        Content = evnt.program.content_long,
+                        Genre = evnt.program.description,
                     };
 
                     movies.Add(movie);

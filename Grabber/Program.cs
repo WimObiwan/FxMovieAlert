@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Configuration;
 
 namespace FxMovies.Grabber
@@ -16,20 +19,60 @@ namespace FxMovies.Grabber
             // Get the connection string
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
 
-            for (int days = 0; days < 3; days++)
+            Console.WriteLine("Using database: {0}", connectionString);
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
-                DateTime date = DateTime.Now.Date.AddDays(days);
-                var movies = HumoGrabber.GetGuide(date).Result;
-                var fxMoviesDB = new FxMoviesDB(connectionString);
+                DateTime now = DateTime.Now;
 
-                fxMoviesDB.RemoveForDate(date);
-
-                Console.WriteLine(date.ToString());
-                foreach (var movie in movies)
+                // Remove all old MovieEvents
                 {
-                    fxMoviesDB.Save(movie);
+                    var set = db.MovieEvents;
+                    set.RemoveRange(set.Where(x => x.StartTime < now.Date));
+                }
 
-                    Console.WriteLine("{0} {1} {2} {4} {5}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime, movie.EndTime);
+                int maxDays;
+                if (!int.TryParse(configuration.GetSection("Grabber")["MaxDays"], out maxDays))
+                    maxDays = 7;
+
+                for (int days = 0; days <= maxDays; days++)
+                {
+                    DateTime date = now.Date.AddDays(days);
+                    var movies = HumoGrabber.GetGuide(date).Result;
+
+                    // Remove all MovieEvents for the specific date
+                    {
+                        var set = db.MovieEvents;
+                        set.RemoveRange(set.Where(x => x.StartTime.Date == date));
+                        //db.SaveChanges();
+                    }
+
+                    Console.WriteLine(date.ToString());
+                    foreach (var movie in movies)
+                    {
+                        Console.WriteLine("{0} {1} {2} {4}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime);
+                    }
+
+                    foreach (var movie in movies)
+                    {
+                        Channel existingChannel = db.Channels.Find(movie.Channel.Code);
+                        if (existingChannel != null)
+                        {
+                            existingChannel.Name = movie.Channel.Name;
+                            existingChannel.LogoS = movie.Channel.LogoS;
+                            existingChannel.LogoM = movie.Channel.LogoM;
+                            existingChannel.LogoL = movie.Channel.LogoL;
+                            db.Channels.Update(existingChannel);
+                        }
+                        else
+                        {
+                            db.Channels.Add(movie.Channel);
+                        }
+                    }
+
+                    //context.SaveChanges();
+                    db.MovieEvents.AddRange(movies);
+                    db.SaveChanges();
                 }
             }
         }
