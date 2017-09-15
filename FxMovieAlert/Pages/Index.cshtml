@@ -35,7 +35,14 @@
                     }
                 </td>
                 <td>
-                    <h2>@movieEvent.Title <small>@movieEvent.Year</small></h2>
+                    <h2>
+                        @movieEvent.Title
+                        <small>@movieEvent.Year</small>
+                        @if (@movieEvent.ImdbId != null)
+                        {
+                            <small><a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new">IMDB</a></small>
+                        }
+                    </h2>
                     <br/>
                     @movieEvent.Content
                 </td>
