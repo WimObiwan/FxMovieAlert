@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +11,12 @@ namespace FxMovies.Grabber
     class Program
     {
         static void Main(string[] args)
+        {
+            //UpdateDatabaseEpg();
+            UpdateImdbData();
+        }
+
+        static void UpdateDatabaseEpg()
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -108,6 +115,55 @@ namespace FxMovies.Grabber
 
                     db.SaveChanges();
                 }
+            }
+        }
+
+        static void UpdateImdbData()
+        {
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
+                var movies = db.MovieEvents;
+
+                var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbMoviesList"]);
+                using (var originalFileStream = fileToDecompress.OpenRead())
+                using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
+                using (var textReader = new StreamReader(decompressionStream))
+                {
+                    int count = 0;
+                    string text;
+                    while ((text = textReader.ReadLine()) != null)
+                    {
+                        count++;
+
+                        foreach (var movie in movies)
+                        {
+                            if (text.Contains(movie.Title) && text.Contains(movie.Year.ToString()))
+                            {
+                                Console.WriteLine(text);
+                            
+                                string imdbId = text.Substring(0, 9);
+                                if (movie.ImdbId == null)
+                                    movie.ImdbId = text.Substring(0, 9);
+                                else if (!movie.ImdbId.Equals(imdbId))
+                                    Console.WriteLine ("Possible double entry with {0}", movie.ImdbId);
+                            }
+                        }
+                    }
+
+                    Console.WriteLine("IMDB movies scanned: {0}", count);
+                }
+
+                db.SaveChanges();
             }
         }
     }
