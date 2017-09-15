@@ -1,0 +1,45 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<table class="table">
+    <!--
+    <thead>
+        <tr>
+            <th>Channel</th>
+            <th>Start</th>
+            <th>Duration</th>
+            <th>Title</th>
+            <th>Year</th>
+        </tr>
+    </thead>-->
+    <tbody>
+        @foreach (var movieEvent in Model.MovieEvents.OrderBy(m => m.StartTime))
+        {
+            <tr>
+                <td>
+                    <img width=50 src=@(@movieEvent.Channel.LogoS) />
+                    <br/>
+                    @(@movieEvent.StartTime.ToString("dddd"))
+                    <br/>
+                    @(@movieEvent.StartTime.ToShortDateString())
+                    <br/>
+                    @(@movieEvent.StartTime.ToShortTimeString())
+                </td>
+                <td>
+                    @if (@movieEvent.PosterS != null)
+                    {
+                        <img width=150 src=@(@movieEvent.PosterS) />
+                    }
+                </td>
+                <td>
+                    <h2>@movieEvent.Title <small>@movieEvent.Year</small></h2>
+                    <br/>
+                    @movieEvent.Content
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
