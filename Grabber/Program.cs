@@ -44,7 +44,7 @@ namespace FxMovies.Grabber
                     {
                         var set = db.MovieEvents;
                         set.RemoveRange(set.Where(x => x.StartTime.Date == date));
-                        //db.SaveChanges();
+                        db.SaveChanges();
                     }
 
                     Console.WriteLine(date.ToString());
@@ -53,24 +53,26 @@ namespace FxMovies.Grabber
                         Console.WriteLine("{0} {1} {2} {4}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime);
                     }
 
-                    foreach (var movie in movies)
+                    foreach (var channel in movies.Select(m => m.Channel).Distinct())
                     {
-                        Channel existingChannel = db.Channels.Find(movie.Channel.Code);
+                        Channel existingChannel = db.Channels.Find(channel.Code);
                         if (existingChannel != null)
                         {
-                            existingChannel.Name = movie.Channel.Name;
-                            existingChannel.LogoS = movie.Channel.LogoS;
-                            existingChannel.LogoM = movie.Channel.LogoM;
-                            existingChannel.LogoL = movie.Channel.LogoL;
+                            existingChannel.Name = channel.Name;
+                            existingChannel.LogoS = channel.LogoS;
+                            existingChannel.LogoM = channel.LogoM;
+                            existingChannel.LogoL = channel.LogoL;
                             db.Channels.Update(existingChannel);
+                            foreach (var movie in movies.Where(m => m.Channel == channel))
+                                movie.Channel = existingChannel;
                         }
                         else
                         {
-                            db.Channels.Add(movie.Channel);
+                            db.Channels.Add(channel);
                         }
                     }
 
-                    //context.SaveChanges();
+                    // db.SaveChanges();
                     db.MovieEvents.AddRange(movies);
                     db.SaveChanges();
                 }
