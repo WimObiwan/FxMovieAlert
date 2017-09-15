@@ -95,10 +95,10 @@ namespace FxMovies.Grabber
                 {
                     string json = await textStream.ReadToEndAsync();
 
-                    using (StreamWriter outputFile = new StreamWriter(string.Format(@"humo-{0}.json", dateYMD)))
-                    {
-                        outputFile.WriteLine(json);
-                    }
+                    // using (StreamWriter outputFile = new StreamWriter(string.Format(@"humo-{0}.json", dateYMD)))
+                    // {
+                    //     outputFile.WriteLine(json);
+                    // }
 
                     var humo = JsonConvert.DeserializeObject<Humo>(json);
 
