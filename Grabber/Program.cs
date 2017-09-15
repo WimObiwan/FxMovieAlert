@@ -40,19 +40,17 @@ namespace FxMovies.Grabber
                     DateTime date = now.Date.AddDays(days);
                     var movies = HumoGrabber.GetGuide(date).Result;
 
-                    // Remove all MovieEvents for the specific date
-                    {
-                        var set = db.MovieEvents;
-                        set.RemoveRange(set.Where(x => x.StartTime.Date == date));
-                        db.SaveChanges();
-                    }
-
                     Console.WriteLine(date.ToString());
                     foreach (var movie in movies)
                     {
                         Console.WriteLine("{0} {1} {2} {4}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime);
                     }
 
+                    var existingMovies = db.MovieEvents.Where(x => x.StartTime.Date == date);
+                    Console.WriteLine("Existing movies: {0}", existingMovies.Count());
+                    Console.WriteLine("New movies: {0}", movies.Count());
+
+                    // Update channels
                     foreach (var channel in movies.Select(m => m.Channel).Distinct())
                     {
                         Channel existingChannel = db.Channels.Find(channel.Code);
@@ -72,8 +70,42 @@ namespace FxMovies.Grabber
                         }
                     }
 
-                    // db.SaveChanges();
-                    db.MovieEvents.AddRange(movies);
+                    // Remove exising movies that don't appear in new movies
+                    {
+                        var remove = existingMovies.Where(m1 => !movies.Any(m2 => m2.Id == m1.Id));
+                        Console.WriteLine("Existing movies to be removed: {0}", remove.Count());
+                        db.RemoveRange(remove);
+                    }
+
+                    // Update movies
+                    foreach (var movie in movies)
+                    {
+                        var existingMovie = db.MovieEvents.Find(movie.Id);
+                        if (existingMovie != null)
+                        {
+                            existingMovie.Title = movie.Title;
+                            existingMovie.Year = movie.Year;
+                            existingMovie.StartTime = movie.StartTime;
+                            existingMovie.EndTime = movie.EndTime;
+                            existingMovie.Channel = movie.Channel;
+                            existingMovie.PosterS = movie.PosterS;
+                            existingMovie.PosterM = movie.PosterM;
+                            existingMovie.PosterL = movie.PosterL;
+                            existingMovie.Duration = movie.Duration;
+                            existingMovie.Genre = movie.Genre;
+                            existingMovie.Content = movie.Content;
+                        }
+                        else
+                        {
+                            db.MovieEvents.Add(movie);
+                        }
+                    }
+
+                    // {
+                    //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
+                    //     db.SaveChanges();
+                    // }
+
                     db.SaveChanges();
                 }
             }

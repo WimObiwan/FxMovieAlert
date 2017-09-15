@@ -137,6 +137,7 @@ namespace FxMovies.Grabber
                 {
                     var movie = new MovieEvent()
                     {
+                        Id = evnt.id,
                         Channel = channel,
                         Title = evnt.program.title,
                         Year = evnt.program.year,
