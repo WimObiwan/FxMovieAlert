@@ -16,7 +16,7 @@
         </tr>
     </thead>-->
     <tbody>
-        @foreach (var movieEvent in Model.MovieEvents.OrderBy(m => m.StartTime))
+        @foreach (var movieEvent in Model.MovieEvents.Where(m => m.EndTime >= DateTime.Now).OrderBy(m => m.StartTime))
         {
             <tr>
                 <td>
