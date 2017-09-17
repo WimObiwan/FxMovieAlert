@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using FxMovies.FxMoviesDB;
+using FxMovies.ImdbDB;
 using Microsoft.Extensions.Configuration;
 
 // Compile: 
@@ -15,9 +16,78 @@ namespace FxMovies.Grabber
     {
         static void Main(string[] args)
         {
-            UpdateDatabaseEpg();
-            UpdateImdbDataWithMovies();
-            UpdateImdbDataWithRatings();
+            // nice -n 16 dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll GenerateImdbDatabase
+            // nice -n 16 dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll UpdateEPG
+            string command = null;
+            var arguments = new List<string>();
+            foreach (var arg in args)
+                if (arg.StartsWith('-'))
+                {
+                    continue;
+                }
+                else if (command == null)
+                {
+                    command = arg;
+                }
+                else
+                {
+                    arguments.Add(arg);
+                }
+            
+            if (command == null)
+            {                
+                // Usage
+                Help();
+
+                return;
+            }
+
+            if (command.Equals("Help", StringComparison.InvariantCultureIgnoreCase))
+            {
+                Help();
+            } 
+            else if (command.Equals("GenerateImdbDatabase"))
+            {
+                if (arguments.Count != 0)
+                {
+                    Console.WriteLine("GenerateImdbDatabase: Invalid argument count");
+                    return;
+                }
+                ImportImdbData_Movies();
+                ImportImdbData_Ratings();
+            }
+            else if (command.Equals("UpdateEPG"))
+            {
+                if (arguments.Count != 0)
+                {
+                    Console.WriteLine("UpdateEPG: Invalid argument count");
+                    return;
+                }
+                UpdateDatabaseEpg();
+                UpdateEpgDataWithImdb();
+            }
+            else if (command.Equals("Manual"))
+            {
+                if (arguments.Count != 2)
+                {
+                    Console.WriteLine("Manual: Invalid argument count");
+                    return;
+                }
+
+                UpdateEpgDataWithImdbManual(int.Parse(arguments[0]), arguments[1]);
+            }
+
+            // sqlite3 /tmp/imdb.db "VACUUM;" -- 121MB => 103 MB
+        }
+
+        static void Help()
+        {
+            Console.WriteLine("Grabber");
+            Console.WriteLine("Usage:");
+            Console.WriteLine("   Grabber Help");
+            Console.WriteLine("   Grabber GenerateImdbDatabase");
+            Console.WriteLine("   Grabber UpdateEPG");
+            Console.WriteLine("   Grabber Manual <MovieEventId> <ImdbID(tt...)>");
         }
 
         static void UpdateDatabaseEpg()
@@ -122,7 +192,7 @@ namespace FxMovies.Grabber
             }
         }
 
-        static void UpdateImdbDataWithMovies()
+        static void UpdateEpgDataWithImdb()
         {
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
@@ -132,24 +202,80 @@ namespace FxMovies.Grabber
                 .Build();
 
             // Get the connection string
-            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+            string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
+            string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
 
-            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
+            using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
             {
-                var movies = db.MovieEvents.Where(m => m.ImdbId == null);
+                foreach (var movieEvent in dbMovies.MovieEvents.Where(m => m.ImdbId == null))
+                {
+                    var movie = dbImdb.Movies.FirstOrDefault(m => 
+                        m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
+                            && (!m.Year.HasValue || m.Year == movieEvent.Year));
+                    if (movie == null)
+                        movie = dbImdb.Movies.FirstOrDefault(m =>
+                            m.OriginalTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
+                                && (!m.Year.HasValue || m.Year == movieEvent.Year));
+                    
+                    if (movie == null)
+                    {
+                        Console.WriteLine("UpdateEpgDataWithImdb: Could not find movie '{0} ({1})' in IMDB", movieEvent.Title, movieEvent.Year);
+                        continue;
+                    }
+
+                    Console.WriteLine("{0} ({1}) ==> {2}", movieEvent.Title, movieEvent.Year, movie.Id);
+                    movieEvent.ImdbId = movie.Id;
+                    movieEvent.ImdbRating = movie.Rating;
+                    movieEvent.ImdbVotes = movie.Votes;
+                }
+
+                dbMovies.SaveChanges();
+            }
+        }
+
+        static void ImportImdbData_Movies()
+        {
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("ImdbDb");
+
+            using (var db = ImdbDbContextFactory.Create(connectionString))
+            {
+                db.Movies.RemoveRange(db.Movies);
+                db.SaveChanges();
 
                 var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbMoviesList"]);
                 using (var originalFileStream = fileToDecompress.OpenRead())
                 using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
                 using (var textReader = new StreamReader(decompressionStream))
                 {
-                    int count = 0;
+                    int count = 0, skipped = 0;
                     string text;
 
                     // tconst	titleType	primaryTitle	originalTitle	isAdult	startYear	endYear	runtimeMinutes	genres
                     // tt0000009	movie	Miss Jerry	Miss Jerry	0	1894	\N	45	Romance
-                    var regex = new Regex(@"^([^\t]*)\t[^\t]*\t([^\t]*)\t([^\t]*)\t[^\t]*\t([^\t]*)\t[^\t]*\t[^\t]*\t[^\t]*$",
+                    var regex = new Regex(@"^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t[^\t]*\t([^\t]*)\t[^\t]*\t[^\t]*\t[^\t]*$",
                         RegexOptions.Compiled);
+
+                    // Skip header
+                    textReader.ReadLine();
+
+                    var FilterTypes = new string[]
+                    {
+                        "movie",
+                        "video",
+                        "short",
+                        "tvMovie",
+                        "tvMiniSeries",
+                    };
 
                     while ((text = textReader.ReadLine()) != null)
                     {
@@ -157,8 +283,11 @@ namespace FxMovies.Grabber
 
                         if (count % 10000 == 0)
                         {
-                            Console.WriteLine("UpdateImdbDataWithMovies: {1} records done ({0}%)", 
-                                originalFileStream.Position * 100.0 / originalFileStream.Length, count);
+                            Console.WriteLine("UpdateImdbDataWithMovies: {1} records done ({0}%), {2} records skipped ({3}%)", 
+                                originalFileStream.Position * 100 / originalFileStream.Length, 
+                                count, 
+                                skipped, 
+                                skipped * 100 / count);
                             db.SaveChanges();
                         }
 
@@ -168,30 +297,22 @@ namespace FxMovies.Grabber
                             Console.WriteLine("Unable to parse line {0}: {1}", count, text);
                             continue;
                         }
-                        string primaryTitle = match.Groups[2].Value;
-                        string originalTitle = match.Groups[3].Value;
 
-                        foreach (var movie in movies)
+                        // Filter on movie|video|short|tvMovie|tvMiniSeries
+                        if (!FilterTypes.Contains(match.Groups[2].Value))
                         {
-                            if (!(primaryTitle.Equals(movie.Title) || originalTitle.Equals(movie.Title)))
-                                continue;
-
-                            int startYear;
-                            if (!int.TryParse(match.Groups[4].Value, out startYear))
-                                startYear = 0; 
-
-                            if (!(startYear == 0 || startYear == movie.Year))
-                                continue;
-
-                            Console.WriteLine(text);
-
-                            string tconst = match.Groups[1].Value;
-                        
-                            if (movie.ImdbId == null)
-                                movie.ImdbId = tconst;
-                            else if (!movie.ImdbId.Equals(tconst))
-                                Console.WriteLine ("Possible double entry with {0}", movie.ImdbId);
+                            skipped++;
+                            continue;
                         }
+
+                        var movie = new ImdbDB.Movie();
+                        movie.Id = match.Groups[1].Value;
+                        movie.PrimaryTitle = match.Groups[3].Value;
+                        movie.OriginalTitle = match.Groups[4].Value;
+                        if (int.TryParse(match.Groups[5].Value, out int startYear))
+                            movie.Year = startYear;
+
+                        db.Movies.Add(movie);
                     }
 
                     Console.WriteLine("IMDB movies scanned: {0}", count);
@@ -199,30 +320,28 @@ namespace FxMovies.Grabber
 
                 db.SaveChanges();
             }
-        }
-
-        static void UpdateImdbDataWithRatings()
+        }        
+        static void ImportImdbData_Ratings()
         {
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
+
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
 
             // Get the connection string
-            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+            string connectionString = configuration.GetConnectionString("ImdbDb");
 
-            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            using (var db = ImdbDbContextFactory.Create(connectionString))
             {
-                var movies = db.MovieEvents.Where(m => m.ImdbId != null);
-
                 var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbRatingsList"]);
                 using (var originalFileStream = fileToDecompress.OpenRead())
                 using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
                 using (var textReader = new StreamReader(decompressionStream))
                 {
-                    int count = 0;
+                    int count = 0, skipped = 0;
                     string text;
 
                     // New  Distribution  Votes  Rank  Title
@@ -230,14 +349,20 @@ namespace FxMovies.Grabber
                     var regex = new Regex(@"^([^\t]*)\t(\d+\.\d+)\t(\d*)$",
                         RegexOptions.Compiled);
 
+                    // Skip header
+                    textReader.ReadLine();
+
                     while ((text = textReader.ReadLine()) != null)
                     {
                         count++;
 
                         if (count % 10000 == 0)
                         {
-                            Console.WriteLine("UpdateImdbDataWithRatings: {1} records done ({0}%)", 
-                                originalFileStream.Position * 100.0 / originalFileStream.Length, count);
+                            Console.WriteLine("UpdateImdbDataWithRatings: {1} records done ({0}%), {2} records skipped", 
+                                originalFileStream.Position * 100 / originalFileStream.Length, 
+                                count, 
+                                skipped,
+                                skipped * 100 / count);
                             db.SaveChanges();
                         }
 
@@ -250,30 +375,72 @@ namespace FxMovies.Grabber
 
                         string tconst = match.Groups[1].Value;
 
-                        foreach (var movie in movies)
+                        var movie = db.Movies.Find(tconst);
+                        if (movie == null)
                         {
-                            if (!movie.ImdbId.Equals(tconst))
-                                continue;
-
-                            Console.WriteLine(text);
-                            
-                            int votes;
-                            if (!int.TryParse(match.Groups[3].Value, out votes))
-                                votes = 0;
-
-                            decimal rating;
-                            if (!decimal.TryParse(match.Groups[2].Value, out rating))
-                                rating = 0;
-
-                            movie.ImdbVotes = votes;
-                            movie.ImdbRating = (int)(rating * 10);
+                            // Probably a serie or ...
+                            //Console.WriteLine("Unable to find movie {0}", tconst);
+                            skipped++;
+                            continue;
                         }
+
+                        int votes;
+                        if (int.TryParse(match.Groups[3].Value, out votes))
+                            movie.Votes = votes;
+
+                        decimal rating;
+                        if (decimal.TryParse(match.Groups[2].Value, out rating))
+                            movie.Rating = (int)(rating * 10);
                     }
 
                     Console.WriteLine("IMDB ratings scanned: {0}", count);
                 }
 
                 db.SaveChanges();
+            }
+        }
+        
+        static void UpdateEpgDataWithImdbManual(int movieEventId, string imdbId)
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
+            string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
+
+            using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
+            using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+            {
+                var movieEvent = dbMovies.MovieEvents.Find(movieEventId);
+
+                if (movieEvent == null)
+                {
+                    Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find MovieEvent with ID {0}", movieEventId);
+                    return;
+                }
+
+                Console.WriteLine("MovieEvent: {0} ({1}), ID {2}, Current ImdbID={3}", 
+                    movieEvent.Title, movieEvent.Year, movieEvent.Id, movieEvent.ImdbId);
+                    
+                var movie = dbImdb.Movies.Find(imdbId);
+
+                if (movie == null)
+                {
+                    Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find IMDB movie with ID {0}", imdbId);
+                    return;
+                }
+
+                Console.WriteLine("IMDB: {0} ({1}), ImdbID={2}", 
+                    movie.PrimaryTitle, movie.Year, movie.Id);
+                    
+                movieEvent.ImdbId = movie.Id;
+                movieEvent.ImdbRating = movie.Rating;
+                movieEvent.ImdbVotes = movie.Votes;
+
+                dbMovies.SaveChanges();
             }
         }
     }
