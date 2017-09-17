@@ -65,19 +65,28 @@
                             <small>
                                 <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new">
                                     <img src="/images/imdb.png" height="24px">
-                                    @if (@movieEvent.ImdbRating > 0)
+                                    @if (@movieEvent.ImdbRating.HasValue)
                                     {
-                                        @((@movieEvent.ImdbRating / 10.0).ToString("0.0"))
+                                        @((@movieEvent.ImdbRating.Value / 10.0).ToString("0.0"))
                                         <span class="stars">
-                                            <span style="width: @(Math.Round(16.0 * @movieEvent.ImdbRating / 10, 0))px" />
+                                            <span style="width: @(Math.Round(16.0 * @movieEvent.ImdbRating.Value / 10, 0))px;" />
                                         </span>
                                     }
-                                </a>
+                               </a>
+                            </small>
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="white-space: nowrap; float: right;">
+                            <small>
+                                @movieEvent.Id
                             </small>
                             </span>
                         }
                     </h2>
                     <div style="clear: both;">
+                        @movieEvent.Genre<br/>
                         @movieEvent.Content
                     </div>
                 </td>
