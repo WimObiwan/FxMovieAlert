@@ -24,7 +24,7 @@ namespace FxMovies.FxMoviesDB
         public string Genre { get; set; }
         public string Content { get; set; }
         public string ImdbId { get; set; }
-        public int ImdbRating { get; set; }
-        public int ImdbVotes { get; set; }
+        public int? ImdbRating { get; set; }
+        public int? ImdbVotes { get; set; }
     }   
 }
