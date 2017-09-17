@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Configuration;
+
+// Compile: 
 
 namespace FxMovies.Grabber
 {
@@ -12,8 +15,9 @@ namespace FxMovies.Grabber
     {
         static void Main(string[] args)
         {
-            //UpdateDatabaseEpg();
-            UpdateImdbData();
+            UpdateDatabaseEpg();
+            UpdateImdbDataWithMovies();
+            UpdateImdbDataWithRatings();
         }
 
         static void UpdateDatabaseEpg()
@@ -118,7 +122,7 @@ namespace FxMovies.Grabber
             }
         }
 
-        static void UpdateImdbData()
+        static void UpdateImdbDataWithMovies()
         {
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
@@ -132,7 +136,7 @@ namespace FxMovies.Grabber
 
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
-                var movies = db.MovieEvents;
+                var movies = db.MovieEvents.Where(m => m.ImdbId == null);
 
                 var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbMoviesList"]);
                 using (var originalFileStream = fileToDecompress.OpenRead())
@@ -141,26 +145,132 @@ namespace FxMovies.Grabber
                 {
                     int count = 0;
                     string text;
+
+                    // tconst	titleType	primaryTitle	originalTitle	isAdult	startYear	endYear	runtimeMinutes	genres
+                    // tt0000009	movie	Miss Jerry	Miss Jerry	0	1894	\N	45	Romance
+                    var regex = new Regex(@"^([^\t]*)\t[^\t]*\t([^\t]*)\t([^\t]*)\t[^\t]*\t([^\t]*)\t[^\t]*\t[^\t]*\t[^\t]*$",
+                        RegexOptions.Compiled);
+
                     while ((text = textReader.ReadLine()) != null)
                     {
                         count++;
 
+                        if (count % 10000 == 0)
+                        {
+                            Console.WriteLine("UpdateImdbDataWithMovies: {1} records done ({0}%)", 
+                                originalFileStream.Position * 100.0 / originalFileStream.Length, count);
+                            db.SaveChanges();
+                        }
+
+                        var match = regex.Match(text);
+                        if (!match.Success)
+                        {
+                            Console.WriteLine("Unable to parse line {0}: {1}", count, text);
+                            continue;
+                        }
+                        string primaryTitle = match.Groups[2].Value;
+                        string originalTitle = match.Groups[3].Value;
+
                         foreach (var movie in movies)
                         {
-                            if (text.Contains(movie.Title) && text.Contains(movie.Year.ToString()))
-                            {
-                                Console.WriteLine(text);
-                            
-                                string imdbId = text.Substring(0, 9);
-                                if (movie.ImdbId == null)
-                                    movie.ImdbId = text.Substring(0, 9);
-                                else if (!movie.ImdbId.Equals(imdbId))
-                                    Console.WriteLine ("Possible double entry with {0}", movie.ImdbId);
-                            }
+                            if (!(primaryTitle.Equals(movie.Title) || originalTitle.Equals(movie.Title)))
+                                continue;
+
+                            int startYear;
+                            if (!int.TryParse(match.Groups[4].Value, out startYear))
+                                startYear = 0; 
+
+                            if (!(startYear == 0 || startYear == movie.Year))
+                                continue;
+
+                            Console.WriteLine(text);
+
+                            string tconst = match.Groups[1].Value;
+                        
+                            if (movie.ImdbId == null)
+                                movie.ImdbId = tconst;
+                            else if (!movie.ImdbId.Equals(tconst))
+                                Console.WriteLine ("Possible double entry with {0}", movie.ImdbId);
                         }
                     }
 
                     Console.WriteLine("IMDB movies scanned: {0}", count);
+                }
+
+                db.SaveChanges();
+            }
+        }
+
+        static void UpdateImdbDataWithRatings()
+        {
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
+                var movies = db.MovieEvents.Where(m => m.ImdbId != null);
+
+                var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbRatingsList"]);
+                using (var originalFileStream = fileToDecompress.OpenRead())
+                using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
+                using (var textReader = new StreamReader(decompressionStream))
+                {
+                    int count = 0;
+                    string text;
+
+                    // New  Distribution  Votes  Rank  Title
+                    //       0000000125  1852213   9.2  The Shawshank Redemption (1994)
+                    var regex = new Regex(@"^([^\t]*)\t(\d+\.\d+)\t(\d*)$",
+                        RegexOptions.Compiled);
+
+                    while ((text = textReader.ReadLine()) != null)
+                    {
+                        count++;
+
+                        if (count % 10000 == 0)
+                        {
+                            Console.WriteLine("UpdateImdbDataWithRatings: {1} records done ({0}%)", 
+                                originalFileStream.Position * 100.0 / originalFileStream.Length, count);
+                            db.SaveChanges();
+                        }
+
+                        var match = regex.Match(text);
+                        if (!match.Success)
+                        {
+                            Console.WriteLine("Unable to parse line {0}: {1}", count, text);
+                            continue;
+                        }
+
+                        string tconst = match.Groups[1].Value;
+
+                        foreach (var movie in movies)
+                        {
+                            if (!movie.ImdbId.Equals(tconst))
+                                continue;
+
+                            Console.WriteLine(text);
+                            
+                            int votes;
+                            if (!int.TryParse(match.Groups[3].Value, out votes))
+                                votes = 0;
+
+                            decimal rating;
+                            if (!decimal.TryParse(match.Groups[2].Value, out rating))
+                                rating = 0;
+
+                            movie.ImdbVotes = votes;
+                            movie.ImdbRating = (int)(rating * 10);
+                        }
+                    }
+
+                    Console.WriteLine("IMDB ratings scanned: {0}", count);
                 }
 
                 db.SaveChanges();
