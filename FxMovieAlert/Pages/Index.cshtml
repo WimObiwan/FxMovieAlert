@@ -28,15 +28,45 @@
     <thead>
         <tr>
             <th>Channel</th>
-            <th>Start</th>
-            <th>Duration</th>
+            <th>Image</th>
             <th>Title</th>
-            <th>Year</th>
         </tr>
     </thead>-->
     <tbody>
+        @{
+            DateTime? lastDate = null;
+        }
         @foreach (var movieEvent in Model.MovieEvents.Where(m => m.EndTime >= DateTime.Now).OrderBy(m => m.StartTime))
         {
+            @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
+            {
+                if (lastDate != null)
+                {
+                    <tr>
+                        <td colspan="3">
+                            // Show adds
+                            <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+                            <!-- MyComputerAdventures -->
+                            <ins class="adsbygoogle"
+                                style="display:block"
+                                data-ad-client="ca-pub-6612546844038667"
+                                data-ad-slot="6049450578"
+                                data-ad-format="auto"></ins>
+                            <script>
+                            (adsbygoogle = window.adsbygoogle || []).push({});
+                            </script>
+                        </td>
+                    </tr>
+                }
+
+                <tr>
+                    <td colspan="3">
+                        <h1>@(@movieEvent.StartTime.ToLongDateString())</h1>
+                    </td>
+                </tr>
+
+                lastDate = movieEvent.StartTime.Date;
+            }
             <tr>
                 <td>
                     <img width=50 src=@(@movieEvent.Channel.LogoS) />
