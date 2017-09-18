@@ -249,9 +249,6 @@ namespace FxMovies.Grabber
 
             using (var db = ImdbDbContextFactory.Create(connectionString))
             {
-                db.Movies.RemoveRange(db.Movies);
-                db.SaveChanges();
-
                 var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbMoviesList"]);
                 using (var originalFileStream = fileToDecompress.OpenRead())
                 using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
@@ -305,14 +302,19 @@ namespace FxMovies.Grabber
                             continue;
                         }
 
-                        var movie = new ImdbDB.Movie();
-                        movie.Id = match.Groups[1].Value;
+                        string movieId = match.Groups[1].Value;
+
+                        ImdbDB.Movie movie = db.Movies.Find(movieId);
+                        if (movie == null)
+                        {
+                            movie = new ImdbDB.Movie();
+                            movie.Id = match.Groups[1].Value;
+                        }
+
                         movie.PrimaryTitle = match.Groups[3].Value;
                         movie.OriginalTitle = match.Groups[4].Value;
                         if (int.TryParse(match.Groups[5].Value, out int startYear))
                             movie.Year = startYear;
-
-                        db.Movies.Add(movie);
                     }
 
                     Console.WriteLine("IMDB movies scanned: {0}", count);
