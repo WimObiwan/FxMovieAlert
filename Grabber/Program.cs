@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -391,7 +392,7 @@ namespace FxMovies.Grabber
                             movie.Votes = votes;
 
                         decimal rating;
-                        if (decimal.TryParse(match.Groups[2].Value, out rating))
+                        if (decimal.TryParse(match.Groups[2].Value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out rating))
                             movie.Rating = (int)(rating * 10);
                     }
 
