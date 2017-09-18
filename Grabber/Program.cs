@@ -209,15 +209,23 @@ namespace FxMovies.Grabber
             using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
             using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
             {
-                foreach (var movieEvent in dbMovies.MovieEvents.Where(m => m.ImdbId == null))
+                foreach (var movieEvent in dbMovies.MovieEvents)
                 {
-                    var movie = dbImdb.Movies.FirstOrDefault(m => 
-                        m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
-                            && (!m.Year.HasValue || m.Year == movieEvent.Year));
-                    if (movie == null)
-                        movie = dbImdb.Movies.FirstOrDefault(m =>
-                            m.OriginalTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
+                    Movie movie;
+                    if (movieEvent.ImdbId != null)
+                    {
+                        movie = dbImdb.Movies.Find(movieEvent.ImdbId);
+                    }
+                    else
+                    {
+                        movie = dbImdb.Movies.FirstOrDefault(m => 
+                            m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
                                 && (!m.Year.HasValue || m.Year == movieEvent.Year));
+                        if (movie == null)
+                            movie = dbImdb.Movies.FirstOrDefault(m =>
+                                m.OriginalTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
+                                    && (!m.Year.HasValue || m.Year == movieEvent.Year));
+                    }
                     
                     if (movie == null)
                     {
@@ -310,6 +318,7 @@ namespace FxMovies.Grabber
                         {
                             movie = new ImdbDB.Movie();
                             movie.Id = match.Groups[1].Value;
+                            db.Movies.Add(movie);
                         }
 
                         movie.PrimaryTitle = match.Groups[3].Value;
