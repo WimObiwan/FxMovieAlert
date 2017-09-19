@@ -12,8 +12,15 @@ namespace FxMovies.FxMoviesDB
             : base(options)
         { }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<UserRating>()
+                .HasKey(u => new { u.ImdbUserId, u.ImdbMovieId });
+        }
+
         public DbSet<Channel> Channels { get; set; }
         public DbSet<MovieEvent> MovieEvents { get; set; }
+        public DbSet<UserRating> UserRatings { get; set; }
     }
 
     /// <summary>

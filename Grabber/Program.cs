@@ -4,7 +4,9 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
+using System.Xml;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.Extensions.Configuration;
@@ -57,6 +59,16 @@ namespace FxMovies.Grabber
                 ImportImdbData_Movies();
                 ImportImdbData_Ratings();
             }
+            else if (command.Equals("UpdateImdbUserRatings"))
+            {
+                if (arguments.Count != 1)
+                {
+                    Console.WriteLine("Manual: Invalid argument count");
+                    return;
+                }
+
+                UpdateImdbUserRatings(arguments[0]);
+            }
             else if (command.Equals("UpdateEPG"))
             {
                 if (arguments.Count != 0)
@@ -89,6 +101,67 @@ namespace FxMovies.Grabber
             Console.WriteLine("   Grabber GenerateImdbDatabase");
             Console.WriteLine("   Grabber UpdateEPG");
             Console.WriteLine("   Grabber Manual <MovieEventId> <ImdbID(tt...)>");
+        }
+
+        static void UpdateImdbUserRatings(string imdbUserId)
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            Console.WriteLine("Using database: {0}", connectionString);
+
+            var regexImdbId = new Regex(@"/(tt\d+)/", RegexOptions.Compiled);
+            var regexRating = new Regex(@"rated this (\d+)\.", RegexOptions.Compiled);
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
+                DateTime now = DateTime.Now;
+
+                string url = string.Format("http://rss.imdb.com/user/{0}/ratings", imdbUserId);
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                using (var response = request.GetResponse())
+                {
+                    var xmlDocument = new XmlDocument();
+                    xmlDocument.Load(response.GetResponseStream());
+                    foreach (XmlNode item in xmlDocument.DocumentElement["channel"].ChildNodes)
+                    {
+                        if (item.Name != "item")
+                            continue;
+                        
+                        Console.WriteLine("{0} - {1} - {2}", item["pubDate"].InnerText, item["title"].InnerText, item["description"].InnerText);
+
+                        string imdbId = regexImdbId.Match(item["link"].InnerText)?.Groups?[1]?.Value;
+                        if (imdbId == null)
+                            continue;
+
+                        DateTime ratingDate = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
+                        string ratingText = regexRating.Match(item["description"].InnerText)?.Groups?[1]?.Value;
+                        if (ratingText == null)
+                            continue;
+
+                        int rating = int.Parse(ratingText);
+
+                        var userRating = db.UserRatings.Find(imdbUserId, imdbId);
+                        if (userRating == null)
+                        {
+                            userRating = new UserRating();
+                            userRating.ImdbUserId = imdbUserId;
+                            userRating.ImdbMovieId = imdbId;
+                            db.UserRatings.Add(userRating);
+                        }
+                        userRating.RatingDate = ratingDate;
+                        userRating.Rating = rating;
+
+                        Console.WriteLine("{0} {1} {2} {3}", 
+                            userRating.ImdbUserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+                    }
+                }
+                db.SaveChanges();
+            }            
         }
 
         static void UpdateDatabaseEpg()
