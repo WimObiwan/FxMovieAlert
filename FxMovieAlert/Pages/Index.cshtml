@@ -1,5 +1,7 @@
 ﻿@page
 @model IndexModel
+@using System.Text;
+@using System.Globalization;
 @{
     ViewData["Title"] = "Home page";
 }
@@ -22,20 +24,68 @@
             margin: 0px;
         }
 	</style>
+
+    @functions 
+    {
+        string FormatQueryString(decimal? minrating)
+        {
+            StringBuilder sb = null;
+            if (minrating.HasValue)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("minrating=");
+                sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
+            }
+            return sb?.ToString() ?? "";
+        }
+
+        string FormatQueryStringWithMinRating(decimal? minrating)
+        {
+            return FormatQueryString(minrating);
+        }
+
+        string GetFilterStyle(bool hasValue)
+        {
+            if (hasValue)
+                return "btn-success";
+            else
+                return "btn-default";
+        }
+    }
     
     <table class="table">
-    <!--
-    <thead>
-        <tr>
-            <th>Channel</th>
-            <th>Image</th>
-            <th>Title</th>
-        </tr>
-    </thead>-->
     <tbody>
+            Filter:
+            <div class="btn-group">
+            
+                <a href="?@FormatQueryStringWithMinRating(null)" class="btn @GetFilterStyle(Model.MinRating.HasValue)">
+                    IMDB Sterren
+                    @if (Model.MinRating.HasValue)
+                    {
+                        @: (@Model.MinRating.Value)
+                    }
+                </a>
+                <button type="button" class="btn @GetFilterStyle(Model.MinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>  <!-- caret -->
+                    <span class="sr-only">IMDB Sterren</span>
+                </button>
+                
+                <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
+                    <li><a href="?@FormatQueryStringWithMinRating(5.0m)">5 of meer</a></li>
+                    <li><a href="?@FormatQueryStringWithMinRating(6.0m)">6 of meer</a></li>
+                    <li><a href="?@FormatQueryStringWithMinRating(7.0m)">7 of meer</a></li>
+                    <li><a href="?@FormatQueryStringWithMinRating(8.0m)">8 of meer</a></li>
+                    <li><a href="?@FormatQueryStringWithMinRating(9.0m)">9 of meer</a></li>
+                </ul>
+            </div>
+
         @{
             DateTime? lastDate = null;
         }
+
         @foreach (var movieEvent in Model.MovieEvents.Where(m => m.EndTime >= DateTime.Now).OrderBy(m => m.StartTime))
         {
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
