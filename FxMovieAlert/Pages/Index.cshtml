@@ -84,13 +84,14 @@
 
         @{
             DateTime? lastDate = null;
+            int moviesSinceLastAd = 0;
         }
 
         @foreach (var movieEvent in Model.MovieEvents.Where(m => m.EndTime >= DateTime.Now).OrderBy(m => m.StartTime))
         {
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
             {
-                if (lastDate != null)
+                if (lastDate != null && moviesSinceLastAd > 5)
                 {
                     <tr>
                         <td colspan="3">
@@ -106,6 +107,7 @@
                             </script>
                         </td>
                     </tr>
+                    moviesSinceLastAd = 0;
                 }
 
                 <tr>
@@ -116,6 +118,9 @@
 
                 lastDate = movieEvent.StartTime.Date;
             }
+
+            moviesSinceLastAd++;
+
             <tr>
                 <td>
                     <img width=50 src=@(@movieEvent.Channel.LogoS) />
