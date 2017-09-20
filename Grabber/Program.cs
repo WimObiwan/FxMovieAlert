@@ -22,6 +22,8 @@ namespace FxMovies.Grabber
             // linux: 
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
+            // export ConnectionStrings__FxMoviesDb='Data Source=/mnt/data/tmp/fxmovies.db'
+            // export ConnectionStrings__ImdbDb='Data Source=/mnt/data/tmp/imdb.db'
             // cd <solutiondir>
             // dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll GenerateImdbDatabase
             // dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll UpdateEPG
