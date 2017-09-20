@@ -168,31 +168,35 @@
                     <h2>
                         @movieEvent.Title
                         <small>@movieEvent.Year</small>
-                        @if (@movieEvent.ImdbId != null)
-                        {
-                            <span style="white-space: nowrap; float: right;">
+                        <span style="white-space: nowrap; float: right;">
                             <small>
-                                <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new">
-                                    <img src="/images/imdb.png" height="24px">
-                                    @if (@movieEvent.ImdbRating.HasValue)
-                                    {
-                                        @((@movieEvent.ImdbRating.Value / 10.0).ToString("0.0"))
-                                        <span class="stars">
-                                            <span style="width: @(Math.Round(16.0 * @movieEvent.ImdbRating.Value / 10, 0))px;" />
-                                        </span>
-                                    }
-                               </a>
+                                @if (@movieEvent.YeloUrl != null)
+                                {
+                                    <a href="@movieEvent.YeloUrl" target="_new">
+                                        <img src="/images/yeloplay.png" height="36px" />
+                                    </a>
+                                    
+                                }
+                                &nbsp;
+                                @if (@movieEvent.ImdbId != null)
+                                {
+                                        <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new">
+                                            <img src="/images/imdb.png" height="24px" />
+                                            @if (@movieEvent.ImdbRating.HasValue)
+                                            {
+                                                @((@movieEvent.ImdbRating.Value / 10.0).ToString("0.0"))
+                                                <span class="stars">
+                                                    <span style="width: @(Math.Round(16.0 * @movieEvent.ImdbRating.Value / 10, 0))px;" />
+                                                </span>
+                                            }
+                                    </a>
+                                }
+                                else
+                                {
+                                    @movieEvent.Id
+                                }
                             </small>
-                            </span>
-                        }
-                        else
-                        {
-                            <span style="white-space: nowrap; float: right;">
-                            <small>
-                                @movieEvent.Id
-                            </small>
-                            </span>
-                        }
+                        </span>
                     </h2>
                     <div style="clear: both;">
                         <p>
