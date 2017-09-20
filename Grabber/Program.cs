@@ -189,6 +189,8 @@ namespace FxMovies.Grabber
 
             var movieTitlesToIgnore = configuration.GetSection("Grabber").GetSection("MovieTitlesToIgnore")
                 .GetChildren().Select(i => i.Value).ToList();
+            var movieTitlesToTransform = configuration.GetSection("Grabber").GetSection("MovieTitlesToTransform")
+                .GetChildren().Select(i => i.Value).ToList();
 
             Console.WriteLine("Using database: {0}", connectionString);
 
@@ -226,6 +228,21 @@ namespace FxMovies.Grabber
                         Console.WriteLine("Ignoring movie: {0} {1}", movie.Id, movie.Title);
                     }
                     movies = movies.Where(m => !isMovieIgnored(m)).ToList();
+
+                    // Transform movie titles
+                    foreach (var movie in movies)
+                    {
+                        foreach (var item in movieTitlesToTransform)
+                        {
+                            var match = Regex.Match(movie.Title, item);
+                            if (match.Success && match.Groups.Count > 1)
+                            {
+                                string newTitle = match.Groups[1].Value;
+                                Console.WriteLine("Transforming movie {0} to {1}", movie.Title, newTitle);
+                                movie.Title = newTitle;
+                            }
+                        }
+                    }
 
                     Console.WriteLine(date.ToString());
                     foreach (var movie in movies)
