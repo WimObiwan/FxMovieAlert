@@ -187,6 +187,9 @@ namespace FxMovies.Grabber
             // Get the connection string
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
 
+            var movieTitlesToIgnore = configuration.GetSection("Grabber").GetSection("MovieTitlesToIgnore")
+                .GetChildren().Select(i => i.Value).ToList();
+
             Console.WriteLine("Using database: {0}", connectionString);
 
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
@@ -207,6 +210,22 @@ namespace FxMovies.Grabber
                 {
                     DateTime date = now.Date.AddDays(days);
                     var movies = HumoGrabber.GetGuide(date).Result;
+
+                    // Remove movies that should be ignored
+                    Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
+                    {
+                        foreach (var item in movieTitlesToIgnore)
+                        {
+                            if (Regex.IsMatch(movieEvent.Title, item))
+                                return true;
+                        }
+                        return false;
+                    };
+                    foreach (var movie in movies.Where(isMovieIgnored))
+                    {
+                        Console.WriteLine("Ignoring movie: {0} {1}", movie.Id, movie.Title);
+                    }
+                    movies = movies.Where(m => !isMovieIgnored(m)).ToList();
 
                     Console.WriteLine(date.ToString());
                     foreach (var movie in movies)
