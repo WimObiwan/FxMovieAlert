@@ -27,7 +27,7 @@
 
     @functions 
     {
-        string FormatQueryString(decimal? minrating)
+        string FormatQueryString(decimal? minrating, bool notyetrated)
         {
             StringBuilder sb = null;
             if (minrating.HasValue)
@@ -39,12 +39,25 @@
                 sb.Append("minrating=");
                 sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
             }
+            if (notyetrated)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("notyetrated=true");
+            }
             return sb?.ToString() ?? "";
         }
 
         string FormatQueryStringWithMinRating(decimal? minrating)
         {
-            return FormatQueryString(minrating);
+            return FormatQueryString(minrating, Model.NotYetRated);
+        }
+
+        string FormatQueryStringWithNotYetRated(bool notyetrated)
+        {
+            return FormatQueryString(Model.MinRating, notyetrated);
         }
 
         string GetFilterStyle(bool hasValue)
@@ -82,16 +95,28 @@
                 </ul>
             </div>
 
+            <a href="?@FormatQueryStringWithNotYetRated(!Model.NotYetRated)" class="btn @GetFilterStyle(Model.NotYetRated)">
+                @if (Model.NotYetRated)
+                {
+                    @: Nog niet gezien
+                }
+                else
+                {
+                    @: Reeds gezien
+                }
+            </a>
+
         @{
             DateTime? lastDate = null;
             int moviesSinceLastAd = 0;
         }
 
-        @foreach (var movieEvent in Model.MovieEvents.Where(m => m.EndTime >= DateTime.Now).OrderBy(m => m.StartTime))
+        @foreach (var record in Model.Records.Where(m => m.MovieEvent.EndTime >= DateTime.Now).OrderBy(m => m.MovieEvent.StartTime))
         {
+            var movieEvent = record.MovieEvent;
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
             {
-                if (lastDate != null && moviesSinceLastAd > 5)
+                if (lastDate != null && moviesSinceLastAd >= 6)
                 {
                     <tr>
                         <td colspan="3">
@@ -170,8 +195,20 @@
                         }
                     </h2>
                     <div style="clear: both;">
-                        @movieEvent.Genre<br/>
-                        @movieEvent.Content
+                        <p>
+                            @movieEvent.Genre
+                        </p>
+                        <p>
+                            @movieEvent.Content
+                        </p>
+                        @if (record.UserRating != null)
+                        {
+                            <p>
+                                <b>
+                                    Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating van "@record.UserRating.Rating".
+                                </b>
+                            </p>
+                        }
                     </div>
                 </td>
             </tr>
