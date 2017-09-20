@@ -19,8 +19,21 @@ namespace FxMovies.Grabber
     {
         static void Main(string[] args)
         {
-            // nice -n 16 dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll GenerateImdbDatabase
-            // nice -n 16 dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll UpdateEPG
+            // linux: 
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
+            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
+            // cd <solutiondir>
+            // dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll GenerateImdbDatabase
+            // dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll UpdateEPG
+            // dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll UpdateImdbUserRatings ur27490911
+            // nice -n 16 dotnet ./Grabber/bin/Release/netcoreapp2.0/Grabber.dll UpdateImdbUserRatings ur27490911
+            // windows:
+            // cd <solutiondir>
+            // dotnet build --configuration release
+            // dotnet .\Grabber\bin\Release\netcoreapp2.0\Grabber.dll GenerateImdbDatabase
+            // dotnet .\Grabber\bin\Release\netcoreapp2.0\Grabber.dll UpdateEPG
+            // dotnet .\Grabber\bin\Release\netcoreapp2.0\Grabber.dll UpdateImdbUserRatings ur27490911
+
             string command = null;
             var arguments = new List<string>();
             foreach (var arg in args)
@@ -318,9 +331,6 @@ namespace FxMovies.Grabber
 
         static void ImportImdbData_Movies()
         {
-            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
-            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
-
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
