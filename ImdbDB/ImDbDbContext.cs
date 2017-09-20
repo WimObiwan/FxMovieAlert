@@ -12,6 +12,12 @@ namespace FxMovies.ImdbDB
             : base(options)
         { }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Movie>()
+                .HasIndex(m => new { m.PrimaryTitle, m.Year });
+        }
+
         public DbSet<Movie> Movies { get; set; }
     }
 
