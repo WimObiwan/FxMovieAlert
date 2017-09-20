@@ -26,5 +26,6 @@ namespace FxMovies.FxMoviesDB
         public string ImdbId { get; set; }
         public int? ImdbRating { get; set; }
         public int? ImdbVotes { get; set; }
+        public string YeloUrl { get; set; }
     }   
 }
