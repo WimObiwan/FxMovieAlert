@@ -8,7 +8,7 @@ namespace FxMovies.ImdbDB
         [Key]
         public string Id { get; set; }
         public string PrimaryTitle { get; set; }
-        public string OriginalTitle { get; set; }
+        //public string OriginalTitle { get; set; }
         public int? Year {get; set; }
         public int? Votes { get; set; }
         public int? Rating { get; set; } // 100
