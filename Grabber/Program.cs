@@ -234,10 +234,10 @@ namespace FxMovies.Grabber
                     {
                         foreach (var item in movieTitlesToTransform)
                         {
+                            var newTitle = Regex.Replace(movie.Title, item, "$1");
                             var match = Regex.Match(movie.Title, item);
-                            if (match.Success && match.Groups.Count > 1)
+                            if (movie.Title != newTitle)
                             {
-                                string newTitle = match.Groups[1].Value;
                                 Console.WriteLine("Transforming movie {0} to {1}", movie.Title, newTitle);
                                 movie.Title = newTitle;
                             }
