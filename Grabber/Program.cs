@@ -328,6 +328,8 @@ namespace FxMovies.Grabber
             string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
             string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
 
+            int imdbHuntingYearDiff = int.Parse(configuration.GetSection("Grabber")["ImdbHuntingYearDiff"]);
+
             using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
             using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
             {
@@ -337,6 +339,12 @@ namespace FxMovies.Grabber
                     (movieEvent, m) => m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
                                 && (!m.Year.HasValue || m.Year == movieEvent.Year)
                 );
+                // Search for PrimaryTitle (+/-Year)
+                huntingProcedure.Add(
+                    (movieEvent, m) => m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
+                                && (!m.Year.HasValue || (m.Year >= movieEvent.Year - imdbHuntingYearDiff) && (m.Year <= movieEvent.Year + imdbHuntingYearDiff))
+                );
+
                 foreach (var movieEvent in dbMovies.MovieEvents)
                 {
                     Movie movie;
