@@ -27,7 +27,7 @@
 
     @functions 
     {
-        string FormatQueryString(decimal? minrating, bool notyetrated)
+        string FormatQueryString(decimal? minrating, bool notyetrated, Cert cert)
         {
             StringBuilder sb = null;
             if (minrating.HasValue)
@@ -47,65 +47,138 @@
                     sb.Append('&');
                 sb.Append("notyetrated=true");
             }
+            if (cert != Cert.all)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("cert=");
+                sb.Append(cert.ToString("g"));
+            }
             return sb?.ToString() ?? "";
         }
 
         string FormatQueryStringWithMinRating(decimal? minrating)
         {
-            return FormatQueryString(minrating, Model.NotYetRated);
+            return FormatQueryString(minrating, Model.FilterNotYetRated, Model.FilterCert);
         }
 
         string FormatQueryStringWithNotYetRated(bool notyetrated)
         {
-            return FormatQueryString(Model.MinRating, notyetrated);
+            return FormatQueryString(Model.FilterMinRating, notyetrated, Model.FilterCert);
+        }
+
+        string FormatQueryStringWithToggleCert(Cert cert)
+        {
+            if (cert != Cert.all)
+                cert = Model.FilterCert ^ cert;
+            return FormatQueryString(Model.FilterMinRating, Model.FilterNotYetRated, cert);
         }
 
         string GetFilterStyle(bool hasValue)
         {
             if (hasValue)
-                return "btn-success";
+                return "success";
             else
-                return "btn-default";
+                return "default";
         }
     }
     
-    <table class="table">
-    <tbody>
-            Filter:
-            <div class="btn-group">
-            
-                <a href="?@FormatQueryStringWithMinRating(null)" class="btn @GetFilterStyle(Model.MinRating.HasValue)">
-                    IMDB Sterren
-                    @if (Model.MinRating.HasValue)
-                    {
-                        @: (@Model.MinRating.Value)
-                    }
-                </a>
-                <button type="button" class="btn @GetFilterStyle(Model.MinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
-                    <span class="caret"></span>  <!-- caret -->
-                    <span class="sr-only">IMDB Sterren</span>
-                </button>
-                
-                <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-                    <li><a href="?@FormatQueryStringWithMinRating(5.0m)">5 of meer</a></li>
-                    <li><a href="?@FormatQueryStringWithMinRating(6.0m)">6 of meer</a></li>
-                    <li><a href="?@FormatQueryStringWithMinRating(7.0m)">7 of meer</a></li>
-                    <li><a href="?@FormatQueryStringWithMinRating(8.0m)">8 of meer</a></li>
-                    <li><a href="?@FormatQueryStringWithMinRating(9.0m)">9 of meer</a></li>
-                </ul>
-            </div>
+    Filters:
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithMinRating(null)" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue)">
+            IMDB Sterren
+            @if (Model.FilterMinRating.HasValue)
+            {
+                @: (@(Model.FilterMinRating.Value.ToString("0.#"))+)
+            }
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>  <!-- caret -->
+            <span class="sr-only">IMDB Sterren</span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
+            <li><a href="?@FormatQueryStringWithMinRating(null)" class="btn-@GetFilterStyle(!Model.FilterMinRating.HasValue)">Toon alle films (@Model.Count)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(7.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@Model.CountMinRating7)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(8.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@Model.CountMinRating8)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(9.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 9.0m)">Enkel met 9+ sterren (@Model.CountMinRating9)</a></li>
+        </ul>
+    </div>
 
-            <a href="?@FormatQueryStringWithNotYetRated(!Model.NotYetRated)" class="btn @GetFilterStyle(Model.NotYetRated)">
-                @if (Model.NotYetRated)
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all)">
+            Certifiëring
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>  <!-- caret -->
+            <span class="sr-only">Certifiëring</span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.g)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.g) != 0)">G (@Model.CountCertG)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg) != 0)">PG (@Model.CountCertPG)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg13) != 0)">PG-13 (@Model.CountCertPG13)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.r)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.r) != 0)">R (@Model.CountCertR)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.nc17) != 0)">NC-17 (@Model.CountCertNC17)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.other) != 0)">Other (@Model.CountCertOther)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(Model.FilterCert == Cert.all)">Alle films tonen (@Model.Count)</a></li>
+        </ul>
+    </div>
+
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithNotYetRated(false)" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated)">
+            Reeds bekeken
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>  <!-- caret -->
+            <span class="sr-only">IMDB Sterren</span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
+            <li><a href="?@FormatQueryStringWithNotYetRated(false)" class="btn-@GetFilterStyle(!Model.FilterNotYetRated)">Alle films tonen (@Model.Count)</a></li>
+            <li><a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(Model.FilterNotYetRated)">Enkel films tonen die nog niet zijn bekeken (@Model.CountNotYetRated)</a></li>
+            <li class="divider"></li>
+
+            @if (string.IsNullOrEmpty(Model.ImdbUserId))
+            {
+                <li class="dropdown-header">IMDB gebruiker is niet ingesteld</li>
+            }
+            else
+            {
+                @if (Model.RefreshRequestTime.HasValue)
                 {
-                    @: Nog niet gezien
+                    <li class="dropdown-header">
+                        Er is een refresh van je IMDB ratings gepland.<br/>
+                        Refresh de pagina binnen enkele minuten om het resultaat te zien.
+                    </li>
+                }
+                else if (Model.LastRefreshRatingsTime.HasValue)
+                {
+                    <li class="dropdown-header">
+                        Je IMDB ratings werden laatst herladen op @Model.LastRefreshRatingsTime.Value
+                    </li>
                 }
                 else
                 {
-                    @: Reeds gezien
+                    <li class="dropdown-header">
+                        Je IMDB ratings werden nog niet opgehaald.
+                    </li>
                 }
-            </a>
+                <li><a href="/ImdbUser?forcerefresh=true">IMDB ratings nu geforceerd herladen</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">IMDB Gebruiker: @(Model.ImdbUserId)</li>
+            }
+            <li><a href="/ImdbUser">IMDB gebruiker instellen</a></li>
+        </ul>
+    </div>
 
+
+    <table class="table">
+    <tbody>
         @{
             DateTime? lastDate = null;
             int moviesSinceLastAd = 0;
@@ -168,6 +241,19 @@
                     <h2>
                         @movieEvent.Title
                         <small>@movieEvent.Year</small>
+                        <small>
+                            @if (!string.IsNullOrEmpty(@movieEvent.Certification))
+                            {
+                                @if (@movieEvent.Certification.Substring(0, 3) == "US:")
+                                {
+                                    @movieEvent.Certification.Substring(3)
+                                }
+                                else
+                                {
+                                    @movieEvent.Certification
+                                }
+                            }
+                        </small>
                         <span style="white-space: nowrap; float: right;">
                             <small>
                                 @if (@movieEvent.YeloUrl != null)
@@ -186,7 +272,8 @@
                                             {
                                                 @((@movieEvent.ImdbRating.Value / 10.0).ToString("0.0"))
                                                 <span class="stars">
-                                                    <span style="width: @(Math.Round(16.0 * @movieEvent.ImdbRating.Value / 10, 0))px;" />
+                                                    <span style="width: @(Math.Round(16.0 * @movieEvent.ImdbRating.Value / 10, 0))px;">
+                                                    </span>
                                                 </span>
                                             }
                                     </a>
@@ -209,7 +296,8 @@
                         {
                             <p>
                                 <b>
-                                    Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating van "@record.UserRating.Rating".
+                                    Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating van 
+                                    <span class="badge">@record.UserRating.Rating</span>.
                                 </b>
                             </p>
                         }
