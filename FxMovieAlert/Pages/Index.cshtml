@@ -23,6 +23,16 @@
             padding: 0px;
             margin: 0px;
         }
+
+        td.collapsable {
+            display:block;
+        }
+
+        @@media only screen and (max-width: 1000px) {
+            td.collapsable {
+                display:none;
+            }
+        }
 	</style>
 
     @functions 
@@ -332,7 +342,7 @@
                     <br/>
                     @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
                 </td>
-                <td>
+                <td class="collapsable">
                     @if (@movieEvent.PosterS != null)
                     {
                         <img width=150 src=@(@movieEvent.PosterS) />
