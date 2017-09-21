@@ -135,46 +135,94 @@ namespace FxMovies.Grabber
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
                 DateTime now = DateTime.Now;
+                string result;
+                bool succeeded;
 
-                string url = string.Format("http://rss.imdb.com/user/{0}/ratings", imdbUserId);
-                var request = (HttpWebRequest)WebRequest.Create(url);
-                using (var response = request.GetResponse())
+                try
                 {
-                    var xmlDocument = new XmlDocument();
-                    xmlDocument.Load(response.GetResponseStream());
-                    foreach (XmlNode item in xmlDocument.DocumentElement["channel"].ChildNodes)
+                    string url = string.Format("http://rss.imdb.com/user/{0}/ratings", imdbUserId);
+                    var request = (HttpWebRequest)WebRequest.Create(url);
+                    using (var response = request.GetResponse())
                     {
-                        if (item.Name != "item")
-                            continue;
+                        var xmlDocument = new XmlDocument();
+                        xmlDocument.Load(response.GetResponseStream());
+
+                        db.UserRatings.RemoveRange(db.UserRatings.Where(ur => ur.ImdbUserId == imdbUserId));
+                        db.SaveChanges();
                         
-                        Console.WriteLine("{0} - {1} - {2}", item["pubDate"].InnerText, item["title"].InnerText, item["description"].InnerText);
+                        int count = xmlDocument.DocumentElement["channel"].ChildNodes.Count;
+                        string lastDescription = null;
+                        DateTime? lastDate = null;
 
-                        string imdbId = regexImdbId.Match(item["link"].InnerText)?.Groups?[1]?.Value;
-                        if (imdbId == null)
-                            continue;
-
-                        DateTime ratingDate = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
-                        string ratingText = regexRating.Match(item["description"].InnerText)?.Groups?[1]?.Value;
-                        if (ratingText == null)
-                            continue;
-
-                        int rating = int.Parse(ratingText);
-
-                        var userRating = db.UserRatings.Find(imdbUserId, imdbId);
-                        if (userRating == null)
+                        foreach (XmlNode item in xmlDocument.DocumentElement["channel"].ChildNodes)
                         {
-                            userRating = new UserRating();
-                            userRating.ImdbUserId = imdbUserId;
-                            userRating.ImdbMovieId = imdbId;
-                            db.UserRatings.Add(userRating);
-                        }
-                        userRating.RatingDate = ratingDate;
-                        userRating.Rating = rating;
+                            if (item.Name != "item")
+                                continue;
+                            
+                            Console.WriteLine("UpdateImdbUserRatings: {0} - {1} - {2}", item["pubDate"].InnerText, item["title"].InnerText, item["description"].InnerText);
 
-                        Console.WriteLine("{0} {1} {2} {3}", 
-                            userRating.ImdbUserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+                            string imdbId = regexImdbId.Match(item["link"].InnerText)?.Groups?[1]?.Value;
+                            if (imdbId == null)
+                                continue;
+                            
+                            string description = item["description"].InnerText.Trim();
+
+                            DateTime ratingDate = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
+                            string ratingText = regexRating.Match(description)?.Groups?[1]?.Value;
+                            if (ratingText == null)
+                                continue;
+
+                            int rating = int.Parse(ratingText);
+
+                            var userRating = db.UserRatings.Find(imdbUserId, imdbId);
+                            if (userRating == null)
+                            {
+                                userRating = new UserRating();
+                                userRating.ImdbUserId = imdbUserId;
+                                userRating.ImdbMovieId = imdbId;
+                                db.UserRatings.Add(userRating);
+                            }
+                            userRating.RatingDate = ratingDate;
+                            userRating.Rating = rating;
+
+                            if (ratingDate > lastDate.GetValueOrDefault(DateTime.MinValue))
+                            {
+                                lastDate = ratingDate;
+                                lastDescription = description;
+                            }
+
+                            Console.WriteLine("{0} {1} {2} {3}", 
+                                userRating.ImdbUserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+                        }
+
+                        Console.WriteLine("UpdateImdbUserRatings: Loaded {0} ratings", count);
+                        result = string.Format("{0} ratings geladen.", count);
+                        if (lastDate.HasValue)
+                        {
+                            result += string.Format("  Laatste rating gebeurde op {0} (\"{1}\")", lastDate.Value.ToString("yyyy-MM-dd"), lastDescription);
+                        }
+                        succeeded = true;
                     }
                 }
+                catch (WebException x)
+                {
+                    result = "Foutmelding: " + x.Message;
+                    succeeded = false;
+                }
+
+                User user = db.Users.Find(imdbUserId);
+                if (user == null)
+                {
+                    user = new User();
+                    user.ImdbUserId = imdbUserId;
+                    db.Users.Add(user);
+                }
+                user.LastRefreshRatingsTime = DateTime.Now;
+                user.LastRefreshRatingsResult = result;
+                user.LastRefreshSuccess = succeeded;
+                user.RefreshRequestTime = null;
+                user.RefreshCount++;
+
                 db.SaveChanges();
             }            
         }

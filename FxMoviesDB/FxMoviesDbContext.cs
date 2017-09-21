@@ -21,6 +21,7 @@ namespace FxMovies.FxMoviesDB
         public DbSet<Channel> Channels { get; set; }
         public DbSet<MovieEvent> MovieEvents { get; set; }
         public DbSet<UserRating> UserRatings { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 
     /// <summary>
