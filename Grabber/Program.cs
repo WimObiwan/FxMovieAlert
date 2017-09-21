@@ -377,6 +377,9 @@ namespace FxMovies.Grabber
                     movieEvent.ImdbId = movie.Id;
                     movieEvent.ImdbRating = movie.Rating;
                     movieEvent.ImdbVotes = movie.Votes;
+                    
+                    if (movieEvent.Certification == null)
+                        movieEvent.Certification = TheMovieDbGrabber.GetCertification(movieEvent.ImdbId) ?? "";
                 }
 
                 dbMovies.SaveChanges();
@@ -590,8 +593,11 @@ namespace FxMovies.Grabber
                 movieEvent.ImdbRating = movie.Rating;
                 movieEvent.ImdbVotes = movie.Votes;
 
+                movieEvent.Certification = TheMovieDbGrabber.GetCertification(movieEvent.ImdbId) ?? "";
+
                 dbMovies.SaveChanges();
             }
         }
     }
 }
+
