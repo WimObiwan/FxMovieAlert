@@ -1,0 +1,84 @@
+﻿@page
+@model ImdbUserModel
+@{
+    ViewData["Title"] = "IMDB Gebruiker configuratie";
+}
+
+<h3>IMDB Gebruikers ID</h3>
+
+<p>
+    Om te bepalen welke films reeds bekeken zijn gebruikt FilmsOpTV de (publieke) ratings op je IMDB gebruikersaccount.
+    FilmsOpTV heeft hiervoor je IMDB gebruikers ID nodig.  Deze wordt niet gebruikt om in te loggen, maar enkel om je publieke ratings op te vragen.
+    <ul>
+        <li>
+            Klik op deze link: <a href="https://www.imdb.com/profile" target="_new">https://www.imdb.com/profile</a>
+        </li>
+        <li>Je vindt in de adresbalk je IMDB Gebruikers ID. De IMDB gebruikers ID heeft het formaat "ur12345678".</li>
+    </ul>
+
+</p>
+
+<p>
+    Vul hier je IMDB gebruikerscode in: TODO
+</p>
+    
+<h3>Herladen van je IMDB ratings</h3>
+
+<p>
+    Voor actieve gebruikers worden dagelijks de laatste ratings afgehaald van IMDB.
+    Actieve gebruikers zijn gebruikers die de laatste tijd deze site hebben gebruikt met hun IMDB gebruikersaccount.
+    De ratings van de laatste 24 uur zijn dus niet automatisch beschikbaar.
+</p>
+
+<p>
+    @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
+    {
+        if (Model.LastRefreshSuccess.Value)
+        {
+            <div class="alert alert-info">
+                Jouw IMDB ratings werden succesvol opgehaald op <strong>@Model.LastRefreshRatingsTime.Value.ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToShortTimeString()</strong>.
+                <br/>
+                Extra info: @Model.LastRefreshRatingsResult
+                <br>
+                De ratings worden door FilmsOpTV opgehaald op deze publieke RSS feed: <a href="http://rss.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">http://rss.imdb.com/user/@Model.ImdbUserId/ratings</a>.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                Jouw IMDB ratings konden niet succesvol opgehaald worden op <strong>@Model.LastRefreshRatingsTime.Value.ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToShortTimeString()</strong>.
+                <br/>
+                Extra info: @Model.LastRefreshRatingsResult
+                <br>
+                De ratings worden door FilmsOpTV opgehaald op <a href="http://rss.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">deze publieke RSS feed</a>.
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Jouw IMDB ratings werden nog niet opgehaald.
+        </div>
+    }
+</p>
+
+<p>
+    @if (Model.RefreshRequestTime.HasValue)
+    {
+        <div class="alert alert-warning">
+            Het ophalen van je IMDB ratings is gepland (sinds @Model.RefreshRequestTime.Value.ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToShortTimeString()).
+            Herlaad deze pagina binnen enkele minuten om de laatste resultaten te zien.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            Om geforceerd je IMDB ratings zo snel mogelijk op te halen druk je op deze knop:<br/>
+            <a href="" class="btn btn-success">Ratings nu herladen</a>
+        </div>
+    }
+</p>    
+
+
+
+
