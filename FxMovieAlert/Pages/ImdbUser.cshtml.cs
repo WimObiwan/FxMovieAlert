@@ -11,7 +11,8 @@ namespace FxMovieAlert.Pages
 {
     public class ImdbUserModel : PageModel
     {
-        public bool? CookieStored = false;        
+        public string WarningMessage = null;        
+        public string ErrorMessage = null;        
         public string ImdbUserId = null;
         public DateTime? RefreshRequestTime = null;
         public DateTime? LastRefreshRatingsTime = null;
@@ -42,11 +43,11 @@ namespace FxMovieAlert.Pages
                     var imdbuserid = match.Groups[1].Value;
                     Response.Cookies.Append("ImdbUserId", imdbuserid);
                     ImdbUserId = setimdbuserid;
-                    CookieStored = true;
+                    WarningMessage = string.Format("Een cookie werd op je computer geplaatst om je IMDB Gebruikers ID {0} te onthouden.", imdbuserid);
                 }
                 else
                 {
-                    CookieStored = false;
+                    ErrorMessage = string.Format("Er werd een ongeldige IMDB Gebruikers ID opgegeven: {0}.", setimdbuserid);
                 }
             }
 

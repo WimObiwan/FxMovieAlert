@@ -27,7 +27,7 @@
 
     @functions 
     {
-        string FormatQueryString(decimal? minrating, bool notyetrated, Cert cert)
+        string FormatQueryString(decimal? minrating, bool? notyetrated, Cert cert)
         {
             StringBuilder sb = null;
             if (minrating.HasValue)
@@ -39,13 +39,16 @@
                 sb.Append("minrating=");
                 sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
             }
-            if (notyetrated)
+            if (notyetrated.HasValue)
             {
                 if (sb == null)
                     sb = new StringBuilder();
                 else
                     sb.Append('&');
-                sb.Append("notyetrated=true");
+                if (notyetrated.Value)
+                    sb.Append("notyetrated=true");
+                else
+                    sb.Append("notyetrated=false");
             }
             if (cert != Cert.all)
             {
@@ -64,7 +67,7 @@
             return FormatQueryString(minrating, Model.FilterNotYetRated, Model.FilterCert);
         }
 
-        string FormatQueryStringWithNotYetRated(bool notyetrated)
+        string FormatQueryStringWithNotYetRated(bool? notyetrated)
         {
             return FormatQueryString(Model.FilterMinRating, notyetrated, Model.FilterCert);
         }
@@ -79,9 +82,72 @@
         string GetFilterStyle(bool hasValue)
         {
             if (hasValue)
-                return "success";
+                return "primary";
             else
                 return "default";
+        }
+
+        string FormatCert(Cert cert)
+        {
+            StringBuilder sb = null;
+            if ((cert & Cert.none) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("Zonder");
+            }
+            if ((cert & Cert.g) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("G");
+            }
+            if ((cert & Cert.pg) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("PG");
+            }
+            if ((cert & Cert.pg13) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("PG-13");
+            }
+            if ((cert & Cert.r) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("R");
+            }
+            if ((cert & Cert.nc17) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("NC-17");
+            }
+            if ((cert & Cert.other) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("Overige");
+            }
+
+            return sb?.ToString() ?? "";
         }
     }
     
@@ -111,36 +177,71 @@
 
     <div class="btn-group">
         <a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all)">
-            Certifiëring
+            @if (Model.FilterCert == Cert.all)
+            {
+                @: Alle Certificaties
+            }
+            else
+            {
+                @: Certificaties (@FormatCert(Model.FilterCert))
+            }
         </a>
         <button type="button" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all) dropdown-toggle" data-toggle="dropdown">
             <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only">Certifiëring</span>
+            <span class="sr-only">Certificaties</span>
         </button>
         
         <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.none)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.none) != 0)">Zonder (@Model.CountCertNone)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.g)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.g) != 0)">G (@Model.CountCertG)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg) != 0)">PG (@Model.CountCertPG)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg13) != 0)">PG-13 (@Model.CountCertPG13)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.r)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.r) != 0)">R (@Model.CountCertR)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.nc17) != 0)">NC-17 (@Model.CountCertNC17)</a></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.other) != 0)">Other (@Model.CountCertOther)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.other) != 0)">Overige (@Model.CountCertOther)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(Model.FilterCert == Cert.all)">Alle films tonen (@Model.Count)</a></li>
         </ul>
     </div>
 
     <div class="btn-group">
-        <a href="?@FormatQueryStringWithNotYetRated(false)" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated)">
-            Reeds bekeken
+        <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue)">
+            @if (Model.FilterNotYetRated.HasValue)
+            {
+                @if (Model.FilterNotYetRated.Value)
+                {
+                    @: Enkel niet bekeken
+                }
+                else
+                {
+                    @: Enkel bekeken
+                }
+            }
+            else
+            {
+                @: Zowel bekeken als niet bekeken
+            }
         </a>
-        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated) dropdown-toggle" data-toggle="dropdown">
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue) dropdown-toggle" data-toggle="dropdown">
             <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only">IMDB Sterren</span>
+            <span class="sr-only"></span>
         </button>
         
         <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-            <li><a href="?@FormatQueryStringWithNotYetRated(false)" class="btn-@GetFilterStyle(!Model.FilterNotYetRated)">Alle films tonen (@Model.Count)</a></li>
-            <li><a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(Model.FilterNotYetRated)">Enkel films tonen die nog niet zijn bekeken (@Model.CountNotYetRated)</a></li>
+            <li>
+                <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn-@GetFilterStyle(!Model.FilterNotYetRated.HasValue)">
+                    Alle films tonen (@Model.Count)
+                </a>
+            </li>
+            <li class="@(string.IsNullOrEmpty(Model.ImdbUserId)? "disabled" : "")">
+                <a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue && Model.FilterNotYetRated.Value)">
+                    Enkel films tonen die nog niet bekeken zijn (@Model.CountNotYetRated)
+                </a>
+            </li>
+            <li class="@(string.IsNullOrEmpty(Model.ImdbUserId)? "disabled" : "")">
+                <a href="?@FormatQueryStringWithNotYetRated(false)" class="btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue && !Model.FilterNotYetRated.Value)">
+                    Enkel films tonen die wel bekeken zijn (@Model.CountRated)
+                </a>
+            </li>
             <li class="divider"></li>
 
             @if (string.IsNullOrEmpty(Model.ImdbUserId))
@@ -149,6 +250,7 @@
             }
             else
             {
+                <li class="dropdown-header">Je gebruikt IMDB gebruiker @(Model.ImdbUserId).</li>
                 @if (Model.RefreshRequestTime.HasValue)
                 {
                     <li class="dropdown-header">
@@ -168,9 +270,8 @@
                         Je IMDB ratings werden nog niet opgehaald.
                     </li>
                 }
-                <li><a href="/ImdbUser?forcerefresh=true">IMDB ratings nu geforceerd herladen</a></li>
-                <li class="divider"></li>
-                <li class="dropdown-header">IMDB Gebruiker: @(Model.ImdbUserId)</li>
+                <!--li><a href="/ImdbUser?forcerefresh=true">IMDB ratings nu geforceerd herladen</a></li-->
+                <!--li class="divider"></li-->
             }
             <li><a href="/ImdbUser">IMDB gebruiker instellen</a></li>
         </ul>
@@ -294,11 +395,11 @@
                         </p>
                         @if (record.UserRating != null)
                         {
-                            <p>
-                                <b>
-                                    Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating van 
-                                    <span class="badge">@record.UserRating.Rating</span>.
-                                </b>
+                            <p style="font-size: 20px">
+                                <span class="label label-success label-as-badge">
+                                    Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
+                                    @(record.UserRating.Rating)
+                                </span>
                             </p>
                         }
                     </div>

@@ -4,20 +4,18 @@
     ViewData["Title"] = "IMDB Gebruiker configuratie";
 }
 
-@if (Model.CookieStored.HasValue)
+@if (Model.ErrorMessage != null)
 {
-    if (Model.CookieStored.Value)
-    {
-        <div class="alert alert-warning">
-            Een cookie werd op je computer geplaatst om je IMDB Gebruikers ID <strong>@Model.ImdbUserId</strong> te onthouden.
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-danger">
-            Er werd een ongeldige IMDB Gebruikers ID opgegeven.
-        </div>
-    }
+    <div class="alert alert-danger">
+        @Model.ErrorMessage
+    </div>
+}
+
+@if (Model.WarningMessage != null)
+{
+    <div class="alert alert-warning">
+        @Model.WarningMessage
+    </div>
 }
 
 <h3>IMDB Gebruikers ID</h3>
@@ -35,7 +33,15 @@
 </p>
 
 <p>
-    Vul hier je IMDB gebruikerscode in: TODO @Model.ImdbUserId
+    <form action="#" method="GET">
+        Vul hier je IMDB gebruikerscode in:
+        <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" />
+        <input type="submit" value="Instellen" /> 
+    </form>
+    <form action="#" method="GET">
+        <input type="hidden" name="setimdbuserid" value="remove" />
+        <input type="submit" value="Resetten" /> 
+    </form>
 </p>
     
 <h3>Herladen van je IMDB ratings</h3>

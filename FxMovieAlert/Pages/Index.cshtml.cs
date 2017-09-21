@@ -39,7 +39,7 @@ namespace FxMovieAlert.Pages
         public bool? LastRefreshSuccess = null;       
 
         public decimal? FilterMinRating = null;
-        public bool FilterNotYetRated = false;
+        public bool? FilterNotYetRated = null;
         public Cert FilterCert = Cert.all;
 
         public int Count = 0;
@@ -49,6 +49,7 @@ namespace FxMovieAlert.Pages
         public int CountMinRating8 = 0;
         public int CountMinRating9 = 0;
         public int CountNotYetRated = 0;
+        public int CountRated = 0;
         public int CountCertNone = 0;
         public int CountCertG = 0;
         public int CountCertPG = 0;
@@ -57,7 +58,7 @@ namespace FxMovieAlert.Pages
         public int CountCertNC17 = 0;
         public int CountCertOther = 0;
 
-        public void OnGet(decimal? minrating = null, bool notyetrated = false, Cert cert = Cert.all)
+        public void OnGet(decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all)
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -75,19 +76,22 @@ namespace FxMovieAlert.Pages
             if (FilterCert == Cert.all2)
                 FilterCert = Cert.all;
 
-            ImdbUserId = configuration.GetSection("Temp")["ImdbUserId"];
+            ImdbUserId = Request.Cookies["ImdbUserId"];
 
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
-                var user = db.Users.Find(ImdbUserId);
-                if (user != null)
+                if (ImdbUserId != null)
                 {
-                    RefreshRequestTime = user.RefreshRequestTime;
-                    LastRefreshRatingsTime = user.LastRefreshRatingsTime;
-                    LastRefreshSuccess = user.LastRefreshSuccess;
-                    user.Usages++;
-                    user.LastUsageTime = DateTime.Now;
-                    db.SaveChanges();
+                    var user = db.Users.Find(ImdbUserId);
+                    if (user != null)
+                    {
+                        RefreshRequestTime = user.RefreshRequestTime;
+                        LastRefreshRatingsTime = user.LastRefreshRatingsTime;
+                        LastRefreshSuccess = user.LastRefreshSuccess;
+                        user.Usages++;
+                        user.LastUsageTime = DateTime.Now;
+                        db.SaveChanges();
+                    }
                 }
 
                 Count = db.MovieEvents.Count();
@@ -103,21 +107,23 @@ namespace FxMovieAlert.Pages
                 CountCertR =  db.MovieEvents.Where(m => m.Certification == "US:R").Count();
                 CountCertNC17 =  db.MovieEvents.Where(m => m.Certification == "US:NC-17").Count();
                 CountCertOther =  Count - CountCertNone - CountCertG - CountCertPG - CountCertPG13 - CountCertR - CountCertNC17;
+                CountRated = db.MovieEvents.Where(
+                    me => db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Any(ur => ur.ImdbMovieId == me.ImdbId)).Count();
+                CountNotYetRated = Count - CountRated;
 
                 Records = (
                     from me in db.MovieEvents.Include(m => m.Channel)
-                    join ur in db.UserRatings on me.ImdbId equals ur.ImdbMovieId into urGroup
+                    join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
                     where 
                         (!FilterMinRating.HasValue || me.ImdbRating >= FilterMinRating.Value * 10)
                         &&
-                        (!FilterNotYetRated || ur == null)
+                        (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (ur == null))
                         && 
                         (FilterCert == Cert.all || (ParseCertification(me.Certification) & FilterCert) != 0)
                     select new Record() { MovieEvent = me, UserRating = ur }
                 ).ToList();
 
-                CountNotYetRated = Records.Where(r => r.UserRating == null).Count();
                 // MovieEvents = db.MovieEvents.Include(m => m.Channel)
                 //     .Where(m => !MinRating.HasValue || m.ImdbRating >= MinRating.Value * 10)
                 //     .ToList();
