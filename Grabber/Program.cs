@@ -114,6 +114,12 @@ namespace FxMovies.Grabber
 
                 UpdateEpgDataWithImdbManual(int.Parse(arguments[0]), arguments[1]);
             }
+            else
+            {
+                Console.WriteLine("Unknown command");
+
+                Help();
+            }
 
             // sqlite3 /tmp/imdb.db "VACUUM;" -- 121MB => 103 MB
         }
