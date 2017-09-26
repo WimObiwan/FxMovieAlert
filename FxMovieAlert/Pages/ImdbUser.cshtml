@@ -90,15 +90,15 @@
         @if (Model.RefreshRequestTime.HasValue)
         {
             <div class="alert alert-warning">
-                Het ophalen van je IMDB ratings is gepland (sinds @Model.RefreshRequestTime.Value.ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToShortTimeString()).
-                Herlaad deze pagina binnen enkele minuten om de laatste resultaten te zien.
+                Het ophalen van je IMDB ratings is gepland (sinds @Model.RefreshRequestTime.Value.ToLongDateString() @Model.RefreshRequestTime.Value.ToShortTimeString()).
+                <a href="?">Herlaad</a> deze pagina binnen enkele minuten om de laatste resultaten te zien.
             </div>
         }
         else
         {
             <div class="alert alert-info">
                 Om geforceerd je IMDB ratings zo snel mogelijk op te halen druk je op deze knop:<br/>
-                <a href="" class="btn btn-success">Ratings nu herladen</a>
+                <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
             </div>
         }
     </p>    
