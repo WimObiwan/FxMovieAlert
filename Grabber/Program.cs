@@ -84,6 +84,16 @@ namespace FxMovies.Grabber
 
                 UpdateImdbUserRatings(arguments[0]);
             }
+            else if (command.Equals("AutoUpdateImdbUserRatings"))
+            {
+                if (arguments.Count != 0)
+                {
+                    Console.WriteLine("Manual: Invalid argument count");
+                    return;
+                }
+
+                AutoUpdateImdbUserRatings();
+            }
             else if (command.Equals("UpdateEPG"))
             {
                 if (arguments.Count != 0)
@@ -115,6 +125,8 @@ namespace FxMovies.Grabber
             Console.WriteLine("   Grabber Help");
             Console.WriteLine("   Grabber GenerateImdbDatabase");
             Console.WriteLine("   Grabber UpdateEPG");
+            Console.WriteLine("   Grabber UpdateImdbUserRatings <ImdbUserID(ur...)>");
+            Console.WriteLine("   Grabber AutoUpdateImdbUserRatings");
             Console.WriteLine("   Grabber Manual <MovieEventId> <ImdbID(tt...)>");
         }
 
@@ -225,6 +237,45 @@ namespace FxMovies.Grabber
 
                 db.SaveChanges();
             }            
+        }
+
+        static void AutoUpdateImdbUserRatings()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            Console.WriteLine("Using database: {0}", connectionString);
+
+            IList<User> users;
+
+            var refreshTime = DateTime.Now.AddDays(-1);
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
+                users = db.Users.Where (u => 
+                    u.RefreshRequestTime.HasValue || // requested to be refreshed, OR
+                    !u.LastRefreshRatingsTime.HasValue || // never refreshed before, OR
+                    u.LastRefreshRatingsTime.Value < refreshTime).ToList(); // last refresh is 24 hours ago
+            }
+
+            foreach (var user in users)
+            {
+                Console.WriteLine("User {0} needs a refresh of the IMDB User ratings", user.ImdbUserId);
+                if (user.RefreshRequestTime.HasValue)
+                    Console.WriteLine("   * RefreshRequestTime = {0} ({1} seconds ago)", 
+                        user.RefreshRequestTime.Value, (refreshTime - user.RefreshRequestTime.Value).TotalSeconds);
+                if (!user.LastRefreshRatingsTime.HasValue)
+                    Console.WriteLine("   * LastRefreshRatingsTime = null");
+                else 
+                    Console.WriteLine("   * LastRefreshRatingsTime = {0}", 
+                        user.LastRefreshRatingsTime.Value);
+                    
+                UpdateImdbUserRatings(user.ImdbUserId);
+            }
         }
 
         static void UpdateDatabaseEpg()
