@@ -369,7 +369,7 @@
                             <small>
                                 @if (@movieEvent.YeloUrl != null)
                                 {
-                                    <a href="@movieEvent.YeloUrl" target="_new">
+                                    <a href="@movieEvent.YeloUrl" target="_new" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
                                         <img src="/images/yeloplay.png" height="36px" />
                                     </a>
                                     
@@ -377,7 +377,7 @@
                                 &nbsp;
                                 @if (@movieEvent.ImdbId != null)
                                 {
-                                        <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new">
+                                        <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDB..." style="text-decoration: none">
                                             <img src="/images/imdb.png" height="24px" />
                                             @if (@movieEvent.ImdbRating.HasValue)
                                             {
