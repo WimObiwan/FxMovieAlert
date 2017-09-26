@@ -89,7 +89,7 @@ namespace FxMovieAlert.Pages
                         LastRefreshRatingsTime = user.LastRefreshRatingsTime;
                         LastRefreshSuccess = user.LastRefreshSuccess;
                         user.Usages++;
-                        user.LastUsageTime = DateTime.Now;
+                        user.LastUsageTime = DateTime.UtcNow;
                         db.SaveChanges();
                     }
                 }

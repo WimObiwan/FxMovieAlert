@@ -75,13 +75,13 @@ namespace FxMovieAlert.Pages
                     {
                         if (forcerefresh)
                         {
-                            user.RefreshRequestTime = DateTime.Now;
+                            user.RefreshRequestTime = DateTime.UtcNow;
                         }
                         RefreshRequestTime = user.RefreshRequestTime;
                         LastRefreshRatingsTime = user.LastRefreshRatingsTime;
                         LastRefreshRatingsResult = user.LastRefreshRatingsResult;
                         LastRefreshSuccess = user.LastRefreshSuccess;
-                        user.LastUsageTime = DateTime.Now;
+                        user.LastUsageTime = DateTime.UtcNow;
                         db.SaveChanges();
                     }
                 }

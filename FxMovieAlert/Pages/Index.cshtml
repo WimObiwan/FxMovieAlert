@@ -271,7 +271,7 @@
                 else if (Model.LastRefreshRatingsTime.HasValue)
                 {
                     <li class="dropdown-header">
-                        Je IMDB ratings werden laatst herladen op @Model.LastRefreshRatingsTime.Value
+                        Je IMDB ratings werden laatst herladen op @Model.LastRefreshRatingsTime.Value.ToLocalTime().
                     </li>
                 }
                 else

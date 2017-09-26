@@ -229,7 +229,7 @@ namespace FxMovies.Grabber
                     user.ImdbUserId = imdbUserId;
                     db.Users.Add(user);
                 }
-                user.LastRefreshRatingsTime = DateTime.Now;
+                user.LastRefreshRatingsTime = DateTime.UtcNow;
                 user.LastRefreshRatingsResult = result;
                 user.LastRefreshSuccess = succeeded;
                 user.RefreshRequestTime = null;
@@ -253,7 +253,7 @@ namespace FxMovies.Grabber
 
             IList<User> users;
 
-            var refreshTime = DateTime.Now.AddDays(-1);
+            var refreshTime = DateTime.UtcNow.AddDays(-1);
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
                 users = db.Users.Where (u => 
