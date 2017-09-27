@@ -167,7 +167,14 @@
             IMDB Sterren
             @if (Model.FilterMinRating.HasValue)
             {
-                @: (@(Model.FilterMinRating.Value.ToString("0.#"))+)
+                if (Model.FilterMinRating.Value == -1.0m)
+                {
+                    @: (no IMDB)
+                }
+                else
+                {
+                    @: (@(Model.FilterMinRating.Value.ToString("0.#"))+)
+                }
             }
         </a>
         <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
@@ -177,11 +184,14 @@
         
         <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
             <li><a href="?@FormatQueryStringWithMinRating(null)" class="btn-@GetFilterStyle(!Model.FilterMinRating.HasValue)">Toon alle films (@Model.Count)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(7.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@Model.CountMinRating7)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(8.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@Model.CountMinRating8)</a></li>
+            <li class="divider"></li>
             <li><a href="?@FormatQueryStringWithMinRating(9.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 9.0m)">Enkel met 9+ sterren (@Model.CountMinRating9)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(8.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@Model.CountMinRating8)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(7.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@Model.CountMinRating7)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithMinRating(-1.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == -1.0m)">Niet gevonden op IMDB (@Model.CountNotOnImdb)</a></li>
         </ul>
     </div>
 
@@ -202,14 +212,16 @@
         </button>
         
         <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.none)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.none) != 0)">Zonder (@Model.CountCertNone)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(Model.FilterCert == Cert.all)">Alle films tonen (@Model.Count)</a></li>
+            <li class="divider"></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.g)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.g) != 0)">G (@Model.CountCertG)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg) != 0)">PG (@Model.CountCertPG)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg13) != 0)">PG-13 (@Model.CountCertPG13)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.r)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.r) != 0)">R (@Model.CountCertR)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.nc17) != 0)">NC-17 (@Model.CountCertNC17)</a></li>
             <li><a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.other) != 0)">Overige (@Model.CountCertOther)</a></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(Model.FilterCert == Cert.all)">Alle films tonen (@Model.Count)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.none)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.none) != 0)">Zonder (@Model.CountCertNone)</a></li>
         </ul>
     </div>
 
@@ -242,6 +254,7 @@
                     Alle films tonen (@Model.Count)
                 </a>
             </li>
+            <li class="divider"></li>
             <li class="@(string.IsNullOrEmpty(Model.ImdbUserId)? "disabled" : "")">
                 <a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue && Model.FilterNotYetRated.Value)">
                     Enkel films tonen die nog niet bekeken zijn (@Model.CountNotYetRated)

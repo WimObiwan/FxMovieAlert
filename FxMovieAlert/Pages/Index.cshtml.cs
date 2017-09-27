@@ -48,6 +48,7 @@ namespace FxMovieAlert.Pages
         public int CountMinRating7 = 0;
         public int CountMinRating8 = 0;
         public int CountMinRating9 = 0;
+        public int CountNotOnImdb = 0;
         public int CountNotYetRated = 0;
         public int CountRated = 0;
         public int CountCertNone = 0;
@@ -100,6 +101,7 @@ namespace FxMovieAlert.Pages
                 CountMinRating7 = db.MovieEvents.Where(m => m.ImdbRating >= 70).Count();
                 CountMinRating8 = db.MovieEvents.Where(m => m.ImdbRating >= 80).Count();
                 CountMinRating9 = db.MovieEvents.Where(m => m.ImdbRating >= 90).Count();
+                CountNotOnImdb = db.MovieEvents.Where(m => m.ImdbId == null).Count();
                 CountCertNone =  db.MovieEvents.Where(m => string.IsNullOrEmpty(m.Certification)).Count();
                 CountCertG =  db.MovieEvents.Where(m => m.Certification == "US:G").Count();
                 CountCertPG =  db.MovieEvents.Where(m => m.Certification == "US:PG").Count();
@@ -116,7 +118,9 @@ namespace FxMovieAlert.Pages
                     join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
                     where 
-                        (!FilterMinRating.HasValue || me.ImdbRating >= FilterMinRating.Value * 10)
+                        (!FilterMinRating.HasValue 
+                            || (FilterMinRating.Value == -1.0m && me.ImdbId == null)
+                            || (FilterMinRating.Value != -1.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
                         &&
                         (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (ur == null))
                         && 
