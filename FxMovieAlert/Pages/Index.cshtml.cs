@@ -33,6 +33,7 @@ namespace FxMovieAlert.Pages
     public class IndexModel : PageModel
     {
         public const decimal NO_IMDB_ID = -1.0m;
+        public const decimal NO_IMDB_RATING = -2.0m;
         public IList<Record> Records = new List<Record>();
         public string ImdbUserId = null;
         public DateTime? RefreshRequestTime = null;
@@ -50,6 +51,7 @@ namespace FxMovieAlert.Pages
         public int CountMinRating8 = 0;
         public int CountMinRating9 = 0;
         public int CountNotOnImdb = 0;
+        public int CountNotRatedOnImdb = 0;
         public int CountNotYetRated = 0;
         public int CountRated = 0;
         public int CountCertNone = 0;
@@ -103,6 +105,7 @@ namespace FxMovieAlert.Pages
                 CountMinRating8 = db.MovieEvents.Where(m => m.ImdbRating >= 80).Count();
                 CountMinRating9 = db.MovieEvents.Where(m => m.ImdbRating >= 90).Count();
                 CountNotOnImdb = db.MovieEvents.Where(m => m.ImdbId == null).Count();
+                CountNotRatedOnImdb = db.MovieEvents.Where(m => m.ImdbRating == null).Count();
                 CountCertNone =  db.MovieEvents.Where(m => string.IsNullOrEmpty(m.Certification)).Count();
                 CountCertG =  db.MovieEvents.Where(m => m.Certification == "US:G").Count();
                 CountCertPG =  db.MovieEvents.Where(m => m.Certification == "US:PG").Count();
@@ -121,6 +124,7 @@ namespace FxMovieAlert.Pages
                     where 
                         (!FilterMinRating.HasValue 
                             || (FilterMinRating.Value == NO_IMDB_ID && me.ImdbId == null)
+                            || (FilterMinRating.Value == NO_IMDB_RATING && me.ImdbRating == null)
                             || (FilterMinRating.Value >= 0.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
                         &&
                         (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (ur == null))
