@@ -32,6 +32,7 @@ namespace FxMovieAlert.Pages
 
     public class IndexModel : PageModel
     {
+        public const decimal NO_IMDB_ID = -1.0m;
         public IList<Record> Records = new List<Record>();
         public string ImdbUserId = null;
         public DateTime? RefreshRequestTime = null;
@@ -119,8 +120,8 @@ namespace FxMovieAlert.Pages
                     from ur in urGroup.DefaultIfEmpty(null)
                     where 
                         (!FilterMinRating.HasValue 
-                            || (FilterMinRating.Value == -1.0m && me.ImdbId == null)
-                            || (FilterMinRating.Value != -1.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
+                            || (FilterMinRating.Value == NO_IMDB_ID && me.ImdbId == null)
+                            || (FilterMinRating.Value >= 0.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
                         &&
                         (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (ur == null))
                         && 

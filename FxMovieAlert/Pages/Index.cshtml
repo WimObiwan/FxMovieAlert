@@ -167,7 +167,7 @@
             IMDB Sterren
             @if (Model.FilterMinRating.HasValue)
             {
-                if (Model.FilterMinRating.Value == -1.0m)
+                if (Model.FilterMinRating.Value == IndexModel.NO_IMDB_ID)
                 {
                     @: (no IMDB)
                 }
@@ -191,7 +191,7 @@
             <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
             <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
             <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithMinRating(-1.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == -1.0m)">Niet gevonden op IMDB (@Model.CountNotOnImdb)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(IndexModel.NO_IMDB_ID)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == IndexModel.NO_IMDB_ID)">Niet gevonden op IMDB (@Model.CountNotOnImdb)</a></li>
         </ul>
     </div>
 
