@@ -44,7 +44,24 @@
     </form>
 </p>
     
-<h3>Herladen van je IMDB ratings</h3>
+<h3>Uploaden van de IMDB ratings</h3>
+
+<p>
+</p>
+
+<p>
+    <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
+        <div class="form-group">
+            <p>Upload one or more files using this form:</p>
+            <input type="file" name="files" multiple />
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Upload" />
+        </div>
+    </form>
+</p>
+
+<h3>Herladen van je recentste IMDB ratings</h3>
 
 <p>
     Voor actieve gebruikers worden dagelijks de laatste ratings afgehaald van IMDB.

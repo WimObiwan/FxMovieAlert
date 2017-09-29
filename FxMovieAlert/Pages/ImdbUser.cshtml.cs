@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FileHelpers;
 using FxMovies.FxMoviesDB;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
 
@@ -67,25 +71,126 @@ namespace FxMovieAlert.Pages
             }
 
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            if (ImdbUserId != null)
             {
-                if (ImdbUserId != null)
+                var user = db.Users.Find(ImdbUserId);
+                if (user != null)
                 {
-                    var user = db.Users.Find(ImdbUserId);
-                    if (user != null)
-                    {
-                        if (forcerefresh)
-                        {
-                            user.RefreshRequestTime = DateTime.UtcNow;
-                        }
-                        RefreshRequestTime = user.RefreshRequestTime;
-                        LastRefreshRatingsTime = user.LastRefreshRatingsTime;
-                        LastRefreshRatingsResult = user.LastRefreshRatingsResult;
-                        LastRefreshSuccess = user.LastRefreshSuccess;
-                        user.LastUsageTime = DateTime.UtcNow;
-                        db.SaveChanges();
-                    }
+                    if (forcerefresh)
+                        user.RefreshRequestTime = DateTime.UtcNow;
+
+                    RefreshRequestTime = user.RefreshRequestTime;
+                    LastRefreshRatingsTime = user.LastRefreshRatingsTime;
+                    LastRefreshRatingsResult = user.LastRefreshRatingsResult;
+                    LastRefreshSuccess = user.LastRefreshSuccess;
+                    user.LastUsageTime = DateTime.UtcNow;
+                    db.SaveChanges();
                 }
             }
         }
+
+        public IActionResult OnPost()
+        {
+            if (Request.Form.Files.Count == 0)
+            {
+                // Missing file
+                return new BadRequestResult();
+            }
+
+            string imdbUserId = Request.Cookies["ImdbUserId"];
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            foreach (var file in Request.Form.Files)
+            {
+                try
+                {
+                    var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
+                    
+                    using (var reader = new StreamReader(file.OpenReadStream()))
+                    using (engine.BeginReadStream(reader))
+                    foreach (var record in engine)
+                    {
+                        try
+                        {
+                            string _const = record.Const;
+                            decimal rating = decimal.Parse(record.YouRated);
+                            DateTime ratingDate = DateTime.ParseExact(record.Created, 
+                                new string[] {"ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
+                                CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
+
+                            var userRating = db.UserRatings.Find(imdbUserId, _const);
+                            if (userRating == null)
+                            {
+                                userRating = new UserRating();
+                                userRating.ImdbUserId = imdbUserId;
+                                userRating.ImdbMovieId = _const;
+                                db.UserRatings.Add(userRating);
+                                userRating.Rating = (int)(rating * 10);
+                                userRating.RatingDate = ratingDate;
+                            }
+                        }
+                        catch (Exception x)
+                        {
+                        }
+                    }
+                }
+                catch (Exception x)
+                {
+                    Console.WriteLine($"Failed to read file, Error: {x.ToString()}");
+                }
+            }
+
+            return Page();
+        }
+    }
+
+    [IgnoreFirst]
+    [DelimitedRecord(",")]
+    class ImdbUserRatingRecord
+    {
+        [FieldQuoted]
+        public string Position;
+        [FieldQuoted]
+        public string Const;
+        [FieldQuoted]
+        //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
+        // 'Wed Sep 20 00:00:00 2017'
+        public string Created;
+        //[FieldQuoted]
+        //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
+        // 'Wed Sep 20 00:00:00 2017'?
+        public string Modified;
+        [FieldQuoted]
+        public string description;
+        [FieldQuoted]
+        public string Title;
+        [FieldQuoted]
+        public string TitleType;
+        [FieldQuoted]
+        public string Directors;
+        [FieldQuoted]
+        public string YouRated;
+        [FieldQuoted]
+        public string IMDbRating;
+        [FieldQuoted]
+        public string Runtime;
+        [FieldQuoted]
+        public string Year;
+        [FieldQuoted]
+        public string Genres;
+        [FieldQuoted]
+        public string NumVotes;
+        [FieldQuoted]
+        //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
+        public string ReleaseDate;
+        [FieldQuoted]
+        public string URL;
+
     }
 }
