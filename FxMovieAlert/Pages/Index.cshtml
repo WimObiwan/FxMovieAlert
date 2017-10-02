@@ -313,7 +313,7 @@
             int moviesSinceLastAd = 0;
         }
 
-        @foreach (var record in Model.Records.Where(m => m.MovieEvent.EndTime >= DateTime.Now).OrderBy(m => m.MovieEvent.StartTime))
+        @foreach (var record in Model.Records.Where(m => m.MovieEvent.EndTime >= DateTime.Now && m.MovieEvent.StartTime >= DateTime.Now.AddHours(-1)).OrderBy(m => m.MovieEvent.StartTime))
         {
             var movieEvent = record.MovieEvent;
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
@@ -427,6 +427,22 @@
                                 <span class="label label-success label-as-badge">
                                     Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
                                     @(record.UserRating.Rating)
+                                </span>
+                            </p>
+                        }
+                        @if (movieEvent.StartTime <= DateTime.Now)
+                        {
+                            <p style="font-size: 20px">
+                                <span class="label label-danger label-as-badge">
+                                    Deze film is al @((int)(DateTime.Now - movieEvent.StartTime).TotalMinutes) minuten bezig.
+                                </span>
+                            </p>
+                        }
+                        else if (movieEvent.StartTime <= DateTime.Now.AddHours(1))
+                        {
+                            <p style="font-size: 20px">
+                                <span class="label label-warning label-as-badge">
+                                    Deze film begint over @((int)(movieEvent.StartTime - DateTime.Now).TotalMinutes) minuten.
                                 </span>
                             </p>
                         }
