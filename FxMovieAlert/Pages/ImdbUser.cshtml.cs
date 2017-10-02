@@ -22,6 +22,7 @@ namespace FxMovieAlert.Pages
         public DateTime? LastRefreshRatingsTime = null;
         public string LastRefreshRatingsResult = null;       
         public bool? LastRefreshSuccess = null;       
+        public int UserRatingCount = 0;
 
         public void OnGet(bool forcerefresh = false, string setimdbuserid = null)
         {
@@ -85,6 +86,8 @@ namespace FxMovieAlert.Pages
                     LastRefreshSuccess = user.LastRefreshSuccess;
                     user.LastUsageTime = DateTime.UtcNow;
                     db.SaveChanges();
+
+                    UserRatingCount = db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Count();
                 }
             }
         }
@@ -104,6 +107,9 @@ namespace FxMovieAlert.Pages
                 .AddEnvironmentVariables()
                 .Build();
 
+            int existingCount = 0;
+            int newCount = 0;
+
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             foreach (var file in Request.Form.Files)
@@ -119,7 +125,7 @@ namespace FxMovieAlert.Pages
                         try
                         {
                             string _const = record.Const;
-                            decimal rating = decimal.Parse(record.YouRated);
+                            int rating = int.Parse(record.YouRated);
                             DateTime ratingDate = DateTime.ParseExact(record.Created, 
                                 new string[] {"ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
                                 CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
@@ -131,9 +137,14 @@ namespace FxMovieAlert.Pages
                                 userRating.ImdbUserId = imdbUserId;
                                 userRating.ImdbMovieId = _const;
                                 db.UserRatings.Add(userRating);
-                                userRating.Rating = (int)(rating * 10);
-                                userRating.RatingDate = ratingDate;
+                                newCount++;
                             }
+                            else
+                            {
+                                existingCount++;
+                            }
+                            userRating.Rating = rating;
+                            userRating.RatingDate = ratingDate;
                         }
                         catch (Exception x)
                         {
@@ -144,7 +155,11 @@ namespace FxMovieAlert.Pages
                 {
                     Console.WriteLine($"Failed to read file, Error: {x.ToString()}");
                 }
+
+                db.SaveChanges();
             }
+
+            OnGet();
 
             return Page();
         }

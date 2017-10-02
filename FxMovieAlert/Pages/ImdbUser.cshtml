@@ -18,6 +18,23 @@
     </div>
 }
 
+@if (!string.IsNullOrEmpty(Model.ImdbUserId))
+{
+    <div class="alert alert-info">
+        Momenteel beschikken we over @Model.UserRatingCount ratings voor de IMDB gebruiker @(Model.ImdbUserId).
+    </div>
+}
+
+<h3>Koppeling met IMDB</h3>
+
+<p>
+    FilmOpTV kan gekoppeld worden met je IMDB ratings, zodat:
+    <ul>
+        <li>het film-overzicht aanduidt welke films je al hebt gezien (met de datum en waarde van je rating)</li>
+        <li>het film-overzicht kan gefiltered worden op films die je nog niet zag</li>
+    </ul> 
+</p>
+
 <h3>IMDB Gebruikers ID</h3>
 
 <p>
@@ -39,6 +56,7 @@
         <input type="submit" value="Instellen" /> 
     </form>
     <form action="#" method="GET">
+        Om je ingestelde IMDB gebruikerscode te resetten:  
         <input type="hidden" name="setimdbuserid" value="remove" />
         <input type="submit" value="Resetten" /> 
     </form>
@@ -47,16 +65,20 @@
 <h3>Uploaden van de IMDB ratings</h3>
 
 <p>
+    Het ophalen van de laatste IMDB ratings werkt enkel voor ongeveer de laatste 250 ratings.  Daarom kan het nuttig zijn om 
+    (éénmalig) al je ratings te importeren.  Zorg eerst dat je ingelogd bent op de IMDB site, en klik op
+    <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId">deze link</a> om je IMDB ratings
+    te exporteren naar een CSV bestand.  Daarna kun je het hieronder importeren.
 </p>
 
 <p>
     <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
         <div class="form-group">
-            <p>Upload one or more files using this form:</p>
+            <p>Kies hier het CSV bestand met je IMDB ratings:</p>
             <input type="file" name="files" multiple />
         </div>
         <div class="form-group">
-            <input type="submit" value="Upload" />
+            <input type="submit" value="Importeren" />
         </div>
     </form>
 </p>
