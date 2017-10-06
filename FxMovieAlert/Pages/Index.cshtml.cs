@@ -147,11 +147,14 @@ namespace FxMovieAlert.Pages
                     me => db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Any(ur => ur.ImdbMovieId == me.ImdbId)).Count();
                 CountNotYetRated = Count - CountRated;
 
+                var now = DateTime.Now;
                 Records = (
                     from me in db.MovieEvents.Include(m => m.Channel)
                     join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
                     where 
+                        (me.EndTime >= now && me.StartTime >= now.AddMinutes(-15))
+                        &&
                         (!FilterMinRating.HasValue 
                             || (FilterMinRating.Value == NO_IMDB_ID && me.ImdbId == null)
                             || (FilterMinRating.Value == NO_IMDB_RATING && me.ImdbRating == null)

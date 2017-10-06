@@ -313,7 +313,7 @@
             int moviesSinceLastAd = 0;
         }
 
-        @foreach (var record in Model.Records.Where(m => m.MovieEvent.EndTime >= DateTime.Now && m.MovieEvent.StartTime >= DateTime.Now.AddHours(-1)).OrderBy(m => m.MovieEvent.StartTime))
+        @foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.StartTime))
         {
             var movieEvent = record.MovieEvent;
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
