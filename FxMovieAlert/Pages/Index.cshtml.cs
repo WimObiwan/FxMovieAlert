@@ -45,6 +45,7 @@ namespace FxMovieAlert.Pages
         public decimal? FilterMinRating = null;
         public bool? FilterNotYetRated = null;
         public Cert FilterCert = Cert.all;
+        public int? MaxDays = 8;
 
         public int Count = 0;
         public int CountMinRating5 = 0;
@@ -65,7 +66,8 @@ namespace FxMovieAlert.Pages
         public int CountCertOther = 0;
         public bool AdminMode = false;
 
-        public void OnGet(decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all)
+        public void OnGet(decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
+            int? movieeventid = null, string setimdbid = null, string password = null, int? maxdays = null)
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -80,6 +82,9 @@ namespace FxMovieAlert.Pages
 
             if (minrating.HasValue)
                 FilterMinRating = minrating.Value;
+            
+            if (maxdays.HasValue)
+                MaxDays = maxdays;
 
             FilterNotYetRated = notyetrated;
             FilterCert = cert & Cert.all2;
@@ -153,6 +158,8 @@ namespace FxMovieAlert.Pages
                     join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
                     where 
+                        (!MaxDays.HasValue || me.StartTime.Date <= now.Date.AddDays(MaxDays.Value))
+                        &&
                         (me.EndTime >= now && me.StartTime >= now.AddMinutes(-15))
                         &&
                         (!FilterMinRating.HasValue 
