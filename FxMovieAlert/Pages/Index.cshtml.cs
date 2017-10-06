@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
+using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +63,7 @@ namespace FxMovieAlert.Pages
         public int CountCertR = 0;
         public int CountCertNC17 = 0;
         public int CountCertOther = 0;
+        public bool AdminMode = false;
 
         public void OnGet(decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all)
         {
@@ -71,6 +74,9 @@ namespace FxMovieAlert.Pages
 
             // Get the connection string
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
+            string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
+
+            AdminMode = !string.IsNullOrEmpty(password) && password == configuration["ManualImdbIdPassword"];
 
             if (minrating.HasValue)
                 FilterMinRating = minrating.Value;
@@ -84,6 +90,30 @@ namespace FxMovieAlert.Pages
 
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
+                if (AdminMode && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
+                {
+                    var match = Regex.Match(setimdbid, @"(tt\d+)");
+                    if (match.Success)
+                    {
+                        setimdbid = match.Groups[0].Value;
+                        var movieEvent = db.MovieEvents.Find(movieeventid.Value);
+                        if (movieEvent != null)
+                        {
+                            using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+                            {
+                                var imdbMovie = dbImdb.Movies.Find(setimdbid);
+                                if (imdbMovie != null)
+                                {
+                                    movieEvent.ImdbRating = imdbMovie.Rating;
+                                    movieEvent.ImdbVotes = imdbMovie.Votes;
+                                }
+                            }
+                            movieEvent.ImdbId = setimdbid;
+                            db.SaveChanges();
+                        } 
+                    }
+                }
+
                 if (ImdbUserId != null)
                 {
                     var user = db.Users.Find(ImdbUserId);

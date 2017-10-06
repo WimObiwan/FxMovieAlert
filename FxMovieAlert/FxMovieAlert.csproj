@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FxMoviesDB\FxMoviesDB.csproj" />
+    <ProjectReference Include="..\ImdbDB\ImdbDB.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json">
