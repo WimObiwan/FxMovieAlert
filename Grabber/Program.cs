@@ -301,64 +301,68 @@ namespace FxMovies.Grabber
 
             Console.WriteLine("Using database: {0}", connectionString);
 
+            DateTime now = DateTime.Now;
+
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
-                DateTime now = DateTime.Now;
-
                 // Remove all old MovieEvents
                 {
                     var set = db.MovieEvents;
                     set.RemoveRange(set.Where(x => x.StartTime < now.Date));
                 }
+                db.SaveChanges();
+            }
 
-                int maxDays;
-                if (!int.TryParse(configuration.GetSection("Grabber")["MaxDays"], out maxDays))
-                    maxDays = 7;
+            int maxDays;
+            if (!int.TryParse(configuration.GetSection("Grabber")["MaxDays"], out maxDays))
+                maxDays = 7;
 
-                for (int days = 0; days <= maxDays; days++)
+            for (int days = 0; days <= maxDays; days++)
+            {
+                DateTime date = now.Date.AddDays(days);
+                var movies = HumoGrabber.GetGuide(date).Result;
+
+                YeloGrabber.GetGuide(date, movies);
+
+                // Remove movies that should be ignored
+                Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
                 {
-                    DateTime date = now.Date.AddDays(days);
-                    var movies = HumoGrabber.GetGuide(date).Result;
-
-                    YeloGrabber.GetGuide(date, movies);
-
-                    // Remove movies that should be ignored
-                    Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
+                    foreach (var item in movieTitlesToIgnore)
                     {
-                        foreach (var item in movieTitlesToIgnore)
-                        {
-                            if (Regex.IsMatch(movieEvent.Title, item))
-                                return true;
-                        }
-                        return false;
-                    };
-                    foreach (var movie in movies.Where(isMovieIgnored))
-                    {
-                        Console.WriteLine("Ignoring movie: {0} {1}", movie.Id, movie.Title);
+                        if (Regex.IsMatch(movieEvent.Title, item))
+                            return true;
                     }
-                    movies = movies.Where(m => !isMovieIgnored(m)).ToList();
+                    return false;
+                };
+                foreach (var movie in movies.Where(isMovieIgnored))
+                {
+                    Console.WriteLine("Ignoring movie: {0} {1}", movie.Id, movie.Title);
+                }
+                movies = movies.Where(m => !isMovieIgnored(m)).ToList();
 
-                    // Transform movie titles
-                    foreach (var movie in movies)
+                // Transform movie titles
+                foreach (var movie in movies)
+                {
+                    foreach (var item in movieTitlesToTransform)
                     {
-                        foreach (var item in movieTitlesToTransform)
+                        var newTitle = Regex.Replace(movie.Title, item, "$1");
+                        var match = Regex.Match(movie.Title, item);
+                        if (movie.Title != newTitle)
                         {
-                            var newTitle = Regex.Replace(movie.Title, item, "$1");
-                            var match = Regex.Match(movie.Title, item);
-                            if (movie.Title != newTitle)
-                            {
-                                Console.WriteLine("Transforming movie {0} to {1}", movie.Title, newTitle);
-                                movie.Title = newTitle;
-                            }
+                            Console.WriteLine("Transforming movie {0} to {1}", movie.Title, newTitle);
+                            movie.Title = newTitle;
                         }
                     }
+                }
 
-                    Console.WriteLine(date.ToString());
-                    foreach (var movie in movies)
-                    {
-                        Console.WriteLine("{0} {1} {2} {4}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime);
-                    }
+                Console.WriteLine(date.ToString());
+                foreach (var movie in movies)
+                {
+                    Console.WriteLine("{0} {1} {2} {4}", movie.Channel.Name, movie.Title, movie.Year, movie.Channel.Name, movie.StartTime);
+                }
 
+                using (var db = FxMoviesDbContextFactory.Create(connectionString))
+                {
                     var existingMovies = db.MovieEvents.Where(x => x.StartTime.Date == date);
                     Console.WriteLine("Existing movies: {0}", existingMovies.Count());
                     Console.WriteLine("New movies: {0}", movies.Count());
