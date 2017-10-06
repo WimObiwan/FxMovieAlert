@@ -356,7 +356,7 @@
                     <br/>
                     @(@movieEvent.StartTime.ToShortDateString())
                     <br/>
-                    @(@movieEvent.StartTime.ToShortTimeString())
+                        <b>@(@movieEvent.StartTime.ToShortTimeString())</b>
                     <br/>
                     @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
                 </td>
