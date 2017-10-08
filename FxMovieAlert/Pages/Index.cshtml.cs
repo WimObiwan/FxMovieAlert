@@ -36,6 +36,7 @@ namespace FxMovieAlert.Pages
     {
         public const decimal NO_IMDB_ID = -1.0m;
         public const decimal NO_IMDB_RATING = -2.0m;
+        public const int FilterMaxDaysDefault = 8;
         public IList<Record> Records = new List<Record>();
         public string ImdbUserId = null;
         public DateTime? RefreshRequestTime = null;
@@ -45,7 +46,7 @@ namespace FxMovieAlert.Pages
         public decimal? FilterMinRating = null;
         public bool? FilterNotYetRated = null;
         public Cert FilterCert = Cert.all;
-        public int? MaxDays = 8;
+        public int FilterMaxDays = FilterMaxDaysDefault;
 
         public int Count = 0;
         public int CountMinRating5 = 0;
@@ -64,6 +65,9 @@ namespace FxMovieAlert.Pages
         public int CountCertR = 0;
         public int CountCertNC17 = 0;
         public int CountCertOther = 0;
+        public int Count3days = 0;
+        public int Count5days = 0;
+        public int Count8days = 0;
         public bool AdminMode = false;
 
         public void OnGet(decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
@@ -84,7 +88,7 @@ namespace FxMovieAlert.Pages
                 FilterMinRating = minrating.Value;
             
             if (maxdays.HasValue)
-                MaxDays = maxdays;
+                FilterMaxDays = maxdays.Value;
 
             FilterNotYetRated = notyetrated;
             FilterCert = cert & Cert.all2;
@@ -133,6 +137,8 @@ namespace FxMovieAlert.Pages
                     }
                 }
 
+                var now = DateTime.Now;
+
                 Count = db.MovieEvents.Count();
                 CountMinRating5 = db.MovieEvents.Where(m => m.ImdbRating >= 50).Count();
                 CountMinRating6 = db.MovieEvents.Where(m => m.ImdbRating >= 60).Count();
@@ -151,14 +157,16 @@ namespace FxMovieAlert.Pages
                 CountRated = db.MovieEvents.Where(
                     me => db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Any(ur => ur.ImdbMovieId == me.ImdbId)).Count();
                 CountNotYetRated = Count - CountRated;
+                Count3days =  db.MovieEvents.Where(m => m.StartTime.Date <= now.Date.AddDays(3)).Count();
+                Count5days =  db.MovieEvents.Where(m => m.StartTime.Date <= now.Date.AddDays(5)).Count();
+                Count8days =  db.MovieEvents.Where(m => m.StartTime.Date <= now.Date.AddDays(8)).Count();
 
-                var now = DateTime.Now;
                 Records = (
                     from me in db.MovieEvents.Include(m => m.Channel)
                     join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
                     where 
-                        (!MaxDays.HasValue || me.StartTime.Date <= now.Date.AddDays(MaxDays.Value))
+                        (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
                         &&
                         (me.EndTime >= now && me.StartTime >= now.AddMinutes(-15))
                         &&

@@ -37,7 +37,7 @@
 
     @functions 
     {
-        string FormatQueryString(decimal? minrating, bool? notyetrated, Cert cert)
+        string FormatQueryString(decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
         {
             StringBuilder sb = null;
             if (minrating.HasValue)
@@ -69,24 +69,38 @@
                 sb.Append("cert=");
                 sb.Append(cert.ToString("g"));
             }
+            if (maxdays != IndexModel.FilterMaxDaysDefault)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("maxdays=");
+                sb.Append(maxdays);
+            }
             return sb?.ToString() ?? "";
         }
 
         string FormatQueryStringWithMinRating(decimal? minrating)
         {
-            return FormatQueryString(minrating, Model.FilterNotYetRated, Model.FilterCert);
+            return FormatQueryString(minrating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithNotYetRated(bool? notyetrated)
         {
-            return FormatQueryString(Model.FilterMinRating, notyetrated, Model.FilterCert);
+            return FormatQueryString(Model.FilterMinRating, notyetrated, Model.FilterCert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithToggleCert(Cert cert)
         {
             if (cert != Cert.all)
                 cert = Model.FilterCert ^ cert;
-            return FormatQueryString(Model.FilterMinRating, Model.FilterNotYetRated, cert);
+            return FormatQueryString(Model.FilterMinRating, Model.FilterNotYetRated, cert, Model.FilterMaxDays);
+        }
+
+        string FormatQueryStringWithMaxDays(int maxdays)
+        {
+            return FormatQueryString(Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays);
         }
 
         string GetFilterStyle(bool hasValue)
@@ -305,6 +319,30 @@
         </ul>
     </div>
 
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithMaxDays(0)" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != IndexModel.FilterMaxDaysDefault)">
+            @if (Model.FilterMaxDays == 0)
+            {
+                @: Aantal dagen (maximum)
+            }
+            else
+            {
+                @: Aantal dagen (@Model.FilterMaxDays)
+            }
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != IndexModel.FilterMaxDaysDefault) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>  <!-- caret -->
+            <span class="sr-only">Certificaties</span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
+            <li><a href="?@FormatQueryStringWithMaxDays(0)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 0)">Maximum aantal dagen (@Model.Count)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithMaxDays(8)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 8)">8 dagen (@Model.Count8days)</a></li>
+            <li><a href="?@FormatQueryStringWithMaxDays(5)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 5)">5 dagen (@Model.Count5days)</a></li>
+            <li><a href="?@FormatQueryStringWithMaxDays(3)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 3)">3 dagen (@Model.Count3days)</a></li>
+        </ul>
+    </div>
 
     <table class="table">
     <tbody>
