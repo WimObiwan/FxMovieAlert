@@ -461,7 +461,23 @@
                                                 IMDB ID: <input type="edit" name="setimdbid" value="" /> <br/>
                                                 Password: <input type="password" name="password" value="" /> <br>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
-                                                <input type="hidden" name="minrating" value="-1.0" /> <br/>
+                                                // Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays
+                                                @if (Model.FilterMinRating.HasValue)
+                                                {
+                                                    <input type="hidden" name="minrating" value="@Model.FilterMinRating" /> <br/>
+                                                }
+                                                @if (Model.FilterNotYetRated.HasValue)
+                                                {
+                                                    <input type="hidden" name="notyetrated" value="@Model.FilterNotYetRated.ToString()" /> <br/>
+                                                }
+                                                @if (Model.FilterCert != Cert.all)
+                                                {
+                                                    <input type="hidden" name="cert" value="@Model.FilterCert.ToString("g")" /> <br/>
+                                                }
+                                                @if (Model.FilterMaxDays != IndexModel.FilterMaxDaysDefault)
+                                                {
+                                                    <input type="hidden" name="maxdays" value="@Model.FilterMaxDays" /> <br/>
+                                                }
                                                 <input type="submit" value="Set" /> 
                                             </form>
                                         </div>
