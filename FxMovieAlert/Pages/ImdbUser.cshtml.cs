@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileHelpers;
 using FxMovies.FxMoviesDB;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
@@ -58,7 +59,11 @@ namespace FxMovieAlert.Pages
                 if (match.Success)
                 {
                     var imdbuserid = match.Groups[1].Value;
-                    Response.Cookies.Append("ImdbUserId", imdbuserid);
+                    
+                    int expirationDays = configuration.GetValue("LoginCookieExpirationDays", 30);
+                    CookieOptions options = new CookieOptions();
+                    options.Expires = DateTime.Now.AddDays(expirationDays);
+                    Response.Cookies.Append("ImdbUserId", imdbuserid, options);
                     ImdbUserId = setimdbuserid;
 
                     forcerefresh = true;
