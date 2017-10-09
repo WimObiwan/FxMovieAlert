@@ -98,8 +98,8 @@ namespace FxMovieAlert.Pages
 
             if (!string.IsNullOrEmpty(password))
             {
-                string salt = configuration["ManualImdbIdPasswordSalt"];
-                string correctPassword = configuration["ManualImdbIdPassword"];
+                string salt = configuration["AdminPasswordSalt"];
+                string correctPassword = configuration["AdminPassword"];
                 string timeComponent = now.ToShortDateString() + now.ToString("HH");
                 string correctHash = Hash($"{salt}*{correctPassword}*{timeComponent}");
 
