@@ -150,48 +150,45 @@ namespace FxMovies.Grabber
 
             var regexImdbId = new Regex(@"/(tt\d+)/", RegexOptions.Compiled);
             var regexRating = new Regex(@"rated this (\d+)\.", RegexOptions.Compiled);
-            using (var db = FxMoviesDbContextFactory.Create(connectionString))
-            {
                 DateTime now = DateTime.Now;
                 string result;
                 bool succeeded;
 
-                try
+            try
+            {
+                string url = string.Format("http://rss.imdb.com/user/{0}/ratings", imdbUserId);
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                using (var response = request.GetResponse())
                 {
-                    string url = string.Format("http://rss.imdb.com/user/{0}/ratings", imdbUserId);
-                    var request = (HttpWebRequest)WebRequest.Create(url);
-                    using (var response = request.GetResponse())
+                    var xmlDocument = new XmlDocument();
+                    xmlDocument.Load(response.GetResponseStream());
+
+                    int count = xmlDocument.DocumentElement["channel"].ChildNodes.Count;
+                    string lastDescription = null;
+                    DateTime? lastDate = null;
+
+                    foreach (XmlNode item in xmlDocument.DocumentElement["channel"].ChildNodes)
                     {
-                        var xmlDocument = new XmlDocument();
-                        xmlDocument.Load(response.GetResponseStream());
-
-                        db.UserRatings.RemoveRange(db.UserRatings.Where(ur => ur.ImdbUserId == imdbUserId));
-                        db.SaveChanges();
+                        if (item.Name != "item")
+                            continue;
                         
-                        int count = xmlDocument.DocumentElement["channel"].ChildNodes.Count;
-                        string lastDescription = null;
-                        DateTime? lastDate = null;
+                        Console.WriteLine("UpdateImdbUserRatings: {0} - {1} - {2}", item["pubDate"].InnerText, item["title"].InnerText, item["description"].InnerText);
 
-                        foreach (XmlNode item in xmlDocument.DocumentElement["channel"].ChildNodes)
+                        string imdbId = regexImdbId.Match(item["link"].InnerText)?.Groups?[1]?.Value;
+                        if (imdbId == null)
+                            continue;
+                        
+                        string description = item["description"].InnerText.Trim();
+
+                        DateTime ratingDate = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
+                        string ratingText = regexRating.Match(description)?.Groups?[1]?.Value;
+                        if (ratingText == null)
+                            continue;
+
+                        int rating = int.Parse(ratingText);
+
+                        using (var db = FxMoviesDbContextFactory.Create(connectionString))
                         {
-                            if (item.Name != "item")
-                                continue;
-                            
-                            Console.WriteLine("UpdateImdbUserRatings: {0} - {1} - {2}", item["pubDate"].InnerText, item["title"].InnerText, item["description"].InnerText);
-
-                            string imdbId = regexImdbId.Match(item["link"].InnerText)?.Groups?[1]?.Value;
-                            if (imdbId == null)
-                                continue;
-                            
-                            string description = item["description"].InnerText.Trim();
-
-                            DateTime ratingDate = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
-                            string ratingText = regexRating.Match(description)?.Groups?[1]?.Value;
-                            if (ratingText == null)
-                                continue;
-
-                            int rating = int.Parse(ratingText);
-
                             var userRating = db.UserRatings.Find(imdbUserId, imdbId);
                             if (userRating == null)
                             {
@@ -203,31 +200,36 @@ namespace FxMovies.Grabber
                             userRating.RatingDate = ratingDate;
                             userRating.Rating = rating;
 
-                            if (ratingDate > lastDate.GetValueOrDefault(DateTime.MinValue))
-                            {
-                                lastDate = ratingDate;
-                                lastDescription = description;
-                            }
-
                             Console.WriteLine("{0} {1} {2} {3}", 
                                 userRating.ImdbUserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+
+                            db.SaveChanges();
                         }
 
-                        Console.WriteLine("UpdateImdbUserRatings: Loaded {0} ratings", count);
-                        result = string.Format("{0} ratings geladen.", count);
-                        if (lastDate.HasValue)
+                        if (ratingDate > lastDate.GetValueOrDefault(DateTime.MinValue))
                         {
-                            result += string.Format("  Laatste rating gebeurde op {0} (\"{1}\")", lastDate.Value.ToString("yyyy-MM-dd"), lastDescription);
+                            lastDate = ratingDate;
+                            lastDescription = description;
                         }
-                        succeeded = true;
                     }
-                }
-                catch (WebException x)
-                {
-                    result = "Foutmelding: " + x.Message;
-                    succeeded = false;
-                }
 
+                    Console.WriteLine("UpdateImdbUserRatings: Loaded {0} ratings", count);
+                    result = string.Format("{0} ratings geladen.", count);
+                    if (lastDate.HasValue)
+                    {
+                        result += string.Format("  Laatste rating gebeurde op {0} (\"{1}\")", lastDate.Value.ToString("yyyy-MM-dd"), lastDescription);
+                    }
+                    succeeded = true;
+                }
+            }
+            catch (WebException x)
+            {
+                result = "Foutmelding: " + x.Message;
+                succeeded = false;
+            }
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
                 User user = db.Users.Find(imdbUserId);
                 if (user == null)
                 {
