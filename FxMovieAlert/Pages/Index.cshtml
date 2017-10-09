@@ -470,18 +470,17 @@
                                                 IMDB ID: <input type="edit" name="setimdbid" value="" /> <br/>
                                                 Password: <input type="password" name="password" value="" /> <br>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
-                                                // Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays
                                                 @if (Model.FilterMinRating.HasValue)
                                                 {
                                                     <input type="hidden" name="password" value="@Model.Password" /> <br/>
                                                 }
                                                 @if (Model.FilterMinRating.HasValue)
                                                 {
-                                                    <input type="hidden" name="minrating" value="@Model.FilterMinRating" /> <br/>
+                                                    <input type="hidden" name="minrating" value="@Model.FilterMinRating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat)" /> <br/>
                                                 }
                                                 @if (Model.FilterNotYetRated.HasValue)
                                                 {
-                                                    <input type="hidden" name="notyetrated" value="@Model.FilterNotYetRated.ToString()" /> <br/>
+                                                    <input type="hidden" name="notyetrated" value="@Model.FilterNotYetRated.Value.ToString()" /> <br/>
                                                 }
                                                 @if (Model.FilterCert != Cert.all)
                                                 {
