@@ -40,6 +40,15 @@
         string FormatQueryString(decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
         {
             StringBuilder sb = null;
+            if (Model.Password != null)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("password=");
+                sb.Append(System.Text.Encodings.Web.UrlEncoder.Default.Encode(Model.Password));
+            }
             if (minrating.HasValue)
             {
                 if (sb == null)
@@ -462,6 +471,10 @@
                                                 Password: <input type="password" name="password" value="" /> <br>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
                                                 // Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays
+                                                @if (Model.FilterMinRating.HasValue)
+                                                {
+                                                    <input type="hidden" name="password" value="@Model.Password" /> <br/>
+                                                }
                                                 @if (Model.FilterMinRating.HasValue)
                                                 {
                                                     <input type="hidden" name="minrating" value="@Model.FilterMinRating" /> <br/>

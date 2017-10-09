@@ -69,6 +69,18 @@ namespace FxMovieAlert.Pages
         public int Count5days = 0;
         public int Count8days = 0;
         public bool AdminMode = false;
+        public string Password = null;
+
+        private string Hash(string password)
+        {
+            var bytes = (new System.Text.UTF8Encoding()).GetBytes(password);
+            byte[] hashBytes;
+            using (var algorithm = new System.Security.Cryptography.SHA512Managed())
+            {
+                hashBytes = algorithm.ComputeHash(bytes);
+            }
+            return Convert.ToBase64String(hashBytes);
+        }
 
         public void OnGet(decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
             int? movieeventid = null, string setimdbid = null, string password = null, int? maxdays = null)
@@ -78,12 +90,26 @@ namespace FxMovieAlert.Pages
                 .AddEnvironmentVariables()
                 .Build();
 
+            var now = DateTime.Now;
+
             // Get the connection string
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
             string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
 
-            AdminMode = !string.IsNullOrEmpty(password) && password == configuration["ManualImdbIdPassword"];
+            if (!string.IsNullOrEmpty(password))
+            {
+                string salt = configuration["ManualImdbIdPasswordSalt"];
+                string correctPassword = configuration["ManualImdbIdPassword"];
+                string timeComponent = now.ToShortDateString() + now.ToString("HH");
+                string correctHash = Hash($"{salt}*{correctPassword}*{timeComponent}");
 
+                if (password == correctPassword || password == correctHash)
+                {
+                    Password = correctHash;
+                    AdminMode = true;
+                }
+            }
+ 
             if (minrating.HasValue)
                 FilterMinRating = minrating.Value;
             
@@ -136,8 +162,6 @@ namespace FxMovieAlert.Pages
                         db.SaveChanges();
                     }
                 }
-
-                var now = DateTime.Now;
 
                 Count = db.MovieEvents.Count();
                 CountMinRating5 = db.MovieEvents.Where(m => m.ImdbRating >= 50).Count();
