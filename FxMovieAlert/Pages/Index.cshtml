@@ -524,3 +524,16 @@
         }
     </tbody>
 </table>
+
+@if (!Model.AdminMode)
+{
+    <a href="#adminlogin" data-toggle="collapse">
+        &pi;
+    </a>
+    <div id="adminlogin" class="collapse">
+        <form action="#" method="GET">
+            Admin login password: <input type="password" name="password" value="" />
+            <input type="submit" value="Login" /> 
+        </form>
+    </div>
+}
