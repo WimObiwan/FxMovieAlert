@@ -70,6 +70,7 @@ namespace FxMovieAlert.Pages
         public int Count8days = 0;
         public bool AdminMode = false;
         public string Password = null;
+        public int AdsInterval = 5;
 
         private string Hash(string password)
         {
@@ -95,6 +96,8 @@ namespace FxMovieAlert.Pages
             // Get the connection string
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
             string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
+
+            AdsInterval = configuration.GetValue("AdsInterval", AdsInterval);
 
             if (!string.IsNullOrEmpty(password))
             {

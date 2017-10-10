@@ -365,7 +365,7 @@
             var movieEvent = record.MovieEvent;
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
             {
-                if (lastDate != null && moviesSinceLastAd >= 6)
+                if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval)
                 {
                     <tr>
                         <td colspan="3">
