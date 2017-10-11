@@ -40,6 +40,11 @@ namespace FxMovies.Grabber
 
         static void Main(string[] args)
         {
+            // DB Migrations: (removing columns is NOT supported!)
+            // cd ./FxMoviesDB/
+            // dotnet ef migrations add InitialCreate --startup-project ../Grabber/
+            // dotnet ef database update --startup-project ../Grabber
+            
             // linux: 
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
@@ -398,8 +403,6 @@ namespace FxMovies.Grabber
                         {
                             existingChannel.Name = channel.Name;
                             existingChannel.LogoS = channel.LogoS;
-                            existingChannel.LogoM = channel.LogoM;
-                            existingChannel.LogoL = channel.LogoL;
                             db.Channels.Update(existingChannel);
                             foreach (var movie in movies.Where(m => m.Channel == channel))
                                 movie.Channel = existingChannel;
@@ -429,8 +432,6 @@ namespace FxMovies.Grabber
                             existingMovie.EndTime = movie.EndTime;
                             existingMovie.Channel = movie.Channel;
                             existingMovie.PosterS = movie.PosterS;
-                            existingMovie.PosterM = movie.PosterM;
-                            existingMovie.PosterL = movie.PosterL;
                             existingMovie.Duration = movie.Duration;
                             existingMovie.Genre = movie.Genre;
                             existingMovie.Content = movie.Content;

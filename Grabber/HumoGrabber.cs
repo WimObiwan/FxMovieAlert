@@ -129,8 +129,6 @@ namespace FxMovies.Grabber
                     Code = broadcaster.code,
                     Name = broadcaster.display_name,
                     LogoS = broadcaster.media.Find(m => m.link_type == "epg_logo")?.resized_urls?.small,
-                    LogoM = broadcaster.media.Find(m => m.link_type == "epg_logo")?.resized_urls?.medium,
-                    LogoL = broadcaster.media.Find(m => m.link_type == "epg_logo")?.resized_urls?.large,
                 };
 
                 foreach (var evnt in broadcaster.events)
@@ -145,8 +143,6 @@ namespace FxMovies.Grabber
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.endtime).ToLocalTime(),
                         Duration = evnt.properties.eventduration,
                         PosterS = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.small,
-                        PosterM = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.medium,
-                        PosterL = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.large,
                         Content = evnt.program.content_long,
                         Genre = evnt.program.description,
                     };

@@ -18,8 +18,10 @@ namespace FxMovies.FxMoviesDB
         public DateTime EndTime { get; set; }
         public Channel Channel { get; set; }
         public string PosterS { get; set; }
-        public string PosterM { get; set; }
-        public string PosterL { get; set; }
+        [Obsolete]
+        public string PosterM { get; set; } // Not used, to be removed when SQLite supports 'DropColumn' in migrations
+        [Obsolete]
+        public string PosterL { get; set; } // Not used, to be removed when SQLite supports 'DropColumn' in migrations
         public int Duration { get; set; }
         public string Genre { get; set; }
         public string Content { get; set; }
