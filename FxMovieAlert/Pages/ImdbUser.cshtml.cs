@@ -155,7 +155,7 @@ namespace FxMovieAlert.Pages
                             userRating.Rating = rating;
                             userRating.RatingDate = ratingDate;
                         }
-                        catch (Exception x)
+                        catch (Exception)
                         {
                         }
                     }
