@@ -17,6 +17,25 @@ namespace FxMovies.Grabber
 {
     class Program
     {
+        public class TemporaryDbContextFactory : IDesignTimeDbContextFactory<FxMoviesDbContext>
+        {
+            public FxMoviesDbContext CreateDbContext(string[] args)
+            {
+                var builder = new DbContextOptionsBuilder<FxMoviesDbContext>();
+
+                var configuration = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                    .AddEnvironmentVariables()
+                    .Build();
+
+                // Get the connection string
+                string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+                builder.UseSqlite(connectionString); 
+                return new FxMoviesDbContext(builder.Options); 
+            }
+        }
+
         static void Main(string[] args)
         {
             // linux: 
