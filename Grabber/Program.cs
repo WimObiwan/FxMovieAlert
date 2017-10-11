@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
 // Compile: 
