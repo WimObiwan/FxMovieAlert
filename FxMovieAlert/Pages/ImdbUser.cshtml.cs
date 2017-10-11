@@ -80,20 +80,24 @@ namespace FxMovieAlert.Pages
             if (ImdbUserId != null)
             {
                 var user = db.Users.Find(ImdbUserId);
-                if (user != null)
+                if (user == null)
                 {
-                    if (forcerefresh)
-                        user.RefreshRequestTime = DateTime.UtcNow;
-
-                    RefreshRequestTime = user.RefreshRequestTime;
-                    LastRefreshRatingsTime = user.LastRefreshRatingsTime;
-                    LastRefreshRatingsResult = user.LastRefreshRatingsResult;
-                    LastRefreshSuccess = user.LastRefreshSuccess;
-                    user.LastUsageTime = DateTime.UtcNow;
-                    db.SaveChanges();
-
-                    UserRatingCount = db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Count();
+                    user = new User();
+                    user.ImdbUserId = ImdbUserId;
+                    db.Users.Add(user);
                 }
+
+                if (forcerefresh)
+                    user.RefreshRequestTime = DateTime.UtcNow;
+
+                RefreshRequestTime = user.RefreshRequestTime;
+                LastRefreshRatingsTime = user.LastRefreshRatingsTime;
+                LastRefreshRatingsResult = user.LastRefreshRatingsResult;
+                LastRefreshSuccess = user.LastRefreshSuccess;
+                user.LastUsageTime = DateTime.UtcNow;
+                db.SaveChanges();
+
+                UserRatingCount = db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Count();
             }
         }
 
