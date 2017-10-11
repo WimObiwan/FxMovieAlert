@@ -479,7 +479,7 @@ namespace FxMovies.Grabber
                                 && (!m.Year.HasValue || (m.Year >= movieEvent.Year - imdbHuntingYearDiff) && (m.Year <= movieEvent.Year + imdbHuntingYearDiff))
                 );
 
-                foreach (var movieEvent in dbMovies.MovieEvents)
+                foreach (var movieEvent in dbMovies.MovieEvents.ToList())
                 {
                     Movie movie;
                     if (movieEvent.ImdbId != null)
