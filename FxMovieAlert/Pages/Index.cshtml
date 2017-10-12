@@ -182,6 +182,14 @@
 
             return sb?.ToString() ?? "";
         }
+
+        string GetImageUrl(string local, string remote)
+        {
+            if (string.IsNullOrEmpty(local))
+                return remote;
+            
+            return "/images/cache/" + local;
+        }
     }
     
     Filters:
@@ -397,7 +405,7 @@
 
             <tr>
                 <td>
-                    <img width=50 src=@(@movieEvent.Channel.LogoS) />
+                    <img width=50 src=@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS)) />
                     <br/>
                     @(@movieEvent.StartTime.ToString("dddd"))
                     <br/>
@@ -410,7 +418,7 @@
                 <td class="collapsable">
                     @if (@movieEvent.PosterS != null)
                     {
-                        <img width=150 src=@(@movieEvent.PosterS) />
+                        <img width=150 src=@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS)) />
                     }
                 </td>
                 <td>

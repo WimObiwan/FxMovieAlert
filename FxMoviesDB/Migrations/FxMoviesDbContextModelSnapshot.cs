@@ -30,6 +30,8 @@ namespace FxMoviesDB.Migrations
 
                     b.Property<string>("LogoS");
 
+                    b.Property<string>("LogoS_Local");
+
                     b.Property<string>("Name");
 
                     b.HasKey("Code");
@@ -65,6 +67,8 @@ namespace FxMoviesDB.Migrations
                     b.Property<string>("PosterM");
 
                     b.Property<string>("PosterS");
+
+                    b.Property<string>("PosterS_Local");
 
                     b.Property<DateTime>("StartTime");
 

@@ -30,5 +30,6 @@ namespace FxMovies.FxMoviesDB
         public int? ImdbVotes { get; set; }
         public string YeloUrl { get; set; }
         public string Certification { get; set; }
+        public string PosterS_Local { get; set; }
     }   
 }

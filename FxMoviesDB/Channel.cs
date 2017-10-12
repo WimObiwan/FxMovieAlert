@@ -20,5 +20,6 @@ namespace FxMovies.FxMoviesDB
         public string LogoM { get; set; } // Not used, to be removed when SQLite supports 'DropColumn' in migrations
         [Obsolete]
         public string LogoL { get; set; } // Not used, to be removed when SQLite supports 'DropColumn' in migrations
+        public string LogoS_Local { get; set; }
     }   
 }

@@ -128,6 +128,7 @@ namespace FxMovies.Grabber
                     return;
                 }
                 UpdateDatabaseEpg();
+                DownloadImageData();
                 UpdateEpgDataWithImdb();
             }
             else if (command.Equals("Manual"))
@@ -451,6 +452,138 @@ namespace FxMovies.Grabber
                 }
             }
         }
+
+        static void DownloadImageData()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+            
+            // Get the connection string
+            string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
+            string basePath = configuration.GetSection("Grabber")["ImageBasePath"];
+            if (!Directory.Exists(basePath))
+                Directory.CreateDirectory(basePath);
+
+            using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
+            {
+                foreach (var channel in dbMovies.Channels)
+                {
+                    string url = channel.LogoS;
+
+                    string ext;
+                    int extStart = url.LastIndexOf('.');
+                    if (extStart == -1)
+                        ext = ".jpg";
+                    else
+                        ext = url.Substring(extStart);
+
+                    string name = "channel-" + channel.Code + ext;
+                    string target = Path.Combine(basePath, name);
+
+                    // bool reset = false;
+                    
+                    // if (name != channel.LogoS_Local)
+                    // {
+                        channel.LogoS_Local = name;
+                    //     reset = true;
+                    // }
+                    // else if (!File.Exists(target))
+                    // {
+                    //     reset = true;
+                    // }
+
+                    // string eTag = reset ? null : channel.LogoS_ETag;
+                    // DateTime? lastModified = reset ? null : channel.LogoS_LastModified;
+
+                    DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+
+                    // channel.LogoS_ETag = eTag;
+                    // channel.LogoS_LastModified = lastModified;
+                }
+
+                foreach (var movieEvent in dbMovies.MovieEvents)
+                {
+                    string url = movieEvent.PosterS;
+
+                    if (url == null)
+                        continue;
+
+                    string ext;
+                    int extStart = url.LastIndexOf('.');
+                    if (extStart == -1)
+                        ext = ".jpg";
+                    else
+                        ext = url.Substring(extStart);
+
+                    string name = "movie-" + movieEvent.Id.ToString() + ext;
+                    string target = Path.Combine(basePath, name);
+
+                    movieEvent.PosterS_Local = name;
+
+                    DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+                }
+
+                dbMovies.SaveChanges();    
+            }
+        }
+
+        static void DownloadFile(string url, string target)
+        {
+            var req = (HttpWebRequest)WebRequest.Create(url);
+            using (var rsp = (HttpWebResponse)req.GetResponse())
+            {
+                using (var stm = rsp.GetResponseStream())
+                using (var fileStream = File.Create(target))
+                {
+                    stm.CopyTo(fileStream);
+                }
+            }
+        }
+
+        // static void DownloadFile(string url, string target, ref string eTag, ref DateTime? lastMod)
+        // {
+        //     var req = (HttpWebRequest)WebRequest.Create(url);
+        //     if (lastMod.HasValue)
+        //         req.IfModifiedSince = lastMod.Value;//note: must be UTC, use lastMod.Value.ToUniversalTime() if you store it somewhere that converts to localtime, like SQLServer does.
+        //     if (eTag != null)
+        //         req.Headers.Add("If-None-Match", eTag);
+        //     try
+        //     {
+        //         using (var rsp = (HttpWebResponse)req.GetResponse())
+        //         {
+        //             lastMod = rsp.LastModified;
+        //             if (lastMod.Value.Year == 1)//wasn't sent. We're just going to have to download the whole thing next time to be sure.
+        //                 lastMod = null;
+        //             eTag = rsp.GetResponseHeader("ETag");//will be null if absent.
+        //             using (var stm = rsp.GetResponseStream())
+        //             using (var fileStream = File.Create(target))
+        //             {
+        //                 stm.CopyTo(fileStream);
+        //             }
+        //         }
+        //     }
+        //     catch (WebException we)
+        //     {
+        //         var hrsp = we.Response as HttpWebResponse;
+        //         if (hrsp != null && hrsp.StatusCode == HttpStatusCode.NotModified)
+        //         {
+        //             //unfortunately, 304 when dealt with directly (rather than letting
+        //             //the IE cache be used automatically), is treated as an error. Which is a bit of
+        //             //a nuisance, but manageable. Note that if we weren't doing this manually,
+        //             //304s would be disguised to look like 200s to our code.
+
+        //             //update these, because possibly only one of them was the same.
+        //             lastMod = hrsp.LastModified;
+        //             if (lastMod.Value.Year == 1)//wasn't sent.
+        //                 lastMod = null;
+        //             eTag = hrsp.GetResponseHeader("ETag");//will be null if absent.
+        //         }
+        //         else //some other exception happened!
+        //             throw; //or other handling of your choosing
+        //     }
+        // }
 
         static void UpdateEpgDataWithImdb()
         {
