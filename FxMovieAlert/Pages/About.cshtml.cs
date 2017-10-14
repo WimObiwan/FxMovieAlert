@@ -12,7 +12,6 @@ namespace FxMovieAlert.Pages
 
         public void OnGet()
         {
-            Message = "Your application description page.";
         }
     }
 }

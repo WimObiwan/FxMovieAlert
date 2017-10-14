@@ -1,9 +1,76 @@
 ﻿@page
 @model AboutModel
 @{
-    ViewData["Title"] = "Over";
+    ViewData["Title"] = "Over FilmOpTV.be";
 }
 <h2>@ViewData["Title"]</h2>
-<h3>@Model.Message</h3>
 
-<p>Use this area to provide additional information.</p>
+<h3>Informatie</h3>
+
+<p>
+    Deze website is gemaakt in Microsoft ASP.net Core 2.0, en wordt ontwikkeld en gehost op Linux.
+    De broncode is opensource (<a href="https://github.com/WimObiwan/FxMovieAlert/blob/master/LICENSE" target="_new">GPLv3</a>), 
+    en vind je op <a href="https://github.com/WimObiwan/FxMovieAlert" target="_new">GitHub</a>.
+</p>
+
+<h3>Advertenties</h3>
+
+<p>
+    De Google Adsense advertenties worden gebruikt om (een deel van) de domein en hosting kosten te betalen.
+</p>
+
+<h3><a name="privacybeleid"></a>Privacybeleid</h3>
+
+<h4>Cookies</h4>
+
+Op deze website worden cookies gebruikt voor:
+<p>
+    <ul>
+        <li>
+            Bijhouden of de cookie melding werd getoond.<br/>
+            De melding wordt bij je eerste bezoek getoond en daarna niet meer, 
+            tenzij er meer dan 30 dagen zijn verlopen sinds je laatste bezoek aan de website. 
+        </li>
+        <li>
+            Bijhouden van de IMDb gebruikers login (optioneel).<br/>
+            Deze cookie kan verwijderd worden op de <a href="/ImdbUser">IMDb Gebruiker</a> pagina, 
+            door op de knop <i>Resetten</i> te klikken.
+        </li>
+        <li>Google Analytics statistieken</li>
+        <li>Google Adsense advertenties</li>
+    </ul>
+</p>
+<p>    
+    Cookies kun je uitsitschakelen in je browser. 
+    Meer uitleg vind je <a href="https://nl.wikihow.com/De-cookies-uit-een-browser-verwijderen">hier</a>.
+    Dit impliceert dat je geen gebruik kunt maken van de IMDb integratie.
+</p>
+
+<h4>Persoonlijke gegevens</h4>
+
+<p>
+    <ul>
+        <li>
+            Je kunt optioneel je IMDb Gebruikersnaam ingeven op de <a href="/ImdbUser">IMDb Gebruiker</a> pagina. 
+            Dit wordt bewaard in onze database.
+        </li>
+        <li>
+            Deze gebruikersnaam wordt gebruikt om je laatste IMDb ratings op te halen via een publieke RSS feed bij IMDb. 
+            Er wordt dus niet ingelogd met je gebruikersnaam bij IMDb, wat uiteraard ook niet kan zonder je IMDb wachtwoord.
+            Deze ratings, en status informatie (zoals het tijdstip en het resultaat van de laatste rating ophaling) worden 
+            opgeslagen in onze database.
+        </li>
+        <li>
+            Je kunt bijkomend ook ratings (geëxporteerd uit IMDb) opladen via een CSV bestand.
+            Deze ratings worden opgeslagen in onze database.
+        </li>
+    </ul>
+</p>
+<p>
+    Deze persoonlijke informatie kun je wissen uit onze database door op de 
+    <a href="/ImdbUser">IMDb Gebruiker</a> pagina op de knop <i>Resetten</i> te klikken.
+</p>
+<p>
+    Voor meer informatie over welke gegevens worden bijgehouden kun je terecht bij <a href="mailto:wim@obiwan.be">wim@obiwan.be</a>.
+</p>
+
