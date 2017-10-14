@@ -130,22 +130,35 @@ namespace FxMovieAlert.Pages
             {
                 if (AdminMode && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
                 {
+                    bool overwrite = false;
                     var match = Regex.Match(setimdbid, @"(tt\d+)");
                     if (match.Success)
                     {
                         setimdbid = match.Groups[0].Value;
+                        overwrite = true;
+                    }
+                    else if (setimdbid.Equals("remove", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        setimdbid = null;
+                        overwrite = true;
+                    }
+                    
+                    if (overwrite)
+                    {
                         var movieEvent = db.MovieEvents.Find(movieeventid.Value);
                         if (movieEvent != null)
                         {
-                            using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
-                            {
-                                var imdbMovie = dbImdb.Movies.Find(setimdbid);
-                                if (imdbMovie != null)
+                            if (setimdbid != null)
+                                using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
                                 {
-                                    movieEvent.ImdbRating = imdbMovie.Rating;
-                                    movieEvent.ImdbVotes = imdbMovie.Votes;
+                                    var imdbMovie = dbImdb.Movies.Find(setimdbid);
+                                    if (imdbMovie != null)
+                                    {
+                                        movieEvent.ImdbRating = imdbMovie.Rating;
+                                        movieEvent.ImdbVotes = imdbMovie.Votes;
+                                    }
                                 }
-                            }
+
                             movieEvent.ImdbId = setimdbid;
                             db.SaveChanges();
                         } 
