@@ -70,7 +70,14 @@
         <hr />
         <footer>
             <p>
-                This site is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  &copy; 2017 - Fox Innovations / Wim Devos
+                Versie 0.3 (2017-10-14).
+                Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
+                &copy; 2017
+                @if (DateTime.Now.Year > 2017)
+                {
+                    @: -@(DateTime.Now.Year)
+                }
+                 - Fox Innovations / Wim Devos
             </p>
         </footer>
     </div>
