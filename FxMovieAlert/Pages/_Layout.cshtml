@@ -35,6 +35,10 @@
     </environment>
 </head>
 <body>
+    <script>
+    // Detect JS support
+    document.body.className = document.body.className + " js_enabled";
+    </script>
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container">
             <div class="navbar-header">
@@ -55,7 +59,13 @@
             </div>
         </div>
     </nav>
-    <div class="container body-content">
+    <div class="container body-content">    
+        <div id="cookie-message" class="alert alert-warning">
+            <p>
+                <strong>FilmOpTV maakt gebruik van cookies en andere persoonlijke gegevens.</strong><br/>
+                <a href="/About#privacybeleid">Klik hier</a> om meer te lezen over het privacybeleid.
+            </p>
+        </div>
         @RenderBody()
         <hr />
         <footer>
@@ -69,6 +79,7 @@
         <script src="~/lib/jquery/dist/jquery.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="/js/cookie-message.js" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
         <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.2.0.min.js"

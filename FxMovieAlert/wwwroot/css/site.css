@@ -33,3 +33,7 @@ body {
         display: none;
     }
 }
+
+.js_enabled #cookie-message {
+    display: none;
+}
