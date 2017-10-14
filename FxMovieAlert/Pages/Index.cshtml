@@ -191,16 +191,16 @@
             return "/images/cache/" + local;
         }
     }
-    
+
     Filters:
     <div class="btn-group">
         <a href="?@FormatQueryStringWithMinRating(null)" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue)">
-            IMDB Sterren
+            IMDb Sterren
             @if (Model.FilterMinRating.HasValue)
             {
                 if (Model.FilterMinRating.Value == IndexModel.NO_IMDB_ID)
                 {
-                    @: (geen IMDB)
+                    @: (geen IMDb)
                 }
                 else if (Model.FilterMinRating.Value == IndexModel.NO_IMDB_RATING)
                 {
@@ -214,7 +214,7 @@
         </a>
         <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
             <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only">IMDB Sterren</span>
+            <span class="sr-only">IMDb Sterren</span>
         </button>
         
         <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
@@ -226,8 +226,8 @@
             <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
             <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
             <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithMinRating(IndexModel.NO_IMDB_ID)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == IndexModel.NO_IMDB_ID)">Niet gevonden op IMDB (@Model.CountNotOnImdb)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(IndexModel.NO_IMDB_RATING)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == IndexModel.NO_IMDB_RATING)">Niet beoordeeld op IMDB (@Model.CountNotRatedOnImdb)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(IndexModel.NO_IMDB_ID)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == IndexModel.NO_IMDB_ID)">Niet gevonden op IMDb (@Model.CountNotOnImdb)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(IndexModel.NO_IMDB_RATING)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == IndexModel.NO_IMDB_RATING)">Niet beoordeeld op IMDb (@Model.CountNotRatedOnImdb)</a></li>
         </ul>
     </div>
 
@@ -305,34 +305,34 @@
 
             @if (string.IsNullOrEmpty(Model.ImdbUserId))
             {
-                <li class="dropdown-header">IMDB gebruiker is niet ingesteld</li>
+                <li class="dropdown-header">IMDb gebruiker is niet ingesteld</li>
             }
             else
             {
-                <li class="dropdown-header">Je gebruikt IMDB gebruiker @(Model.ImdbUserId).</li>
+                <li class="dropdown-header">Je gebruikt IMDb gebruiker @(Model.ImdbUserId).</li>
                 @if (Model.RefreshRequestTime.HasValue)
                 {
                     <li class="dropdown-header">
-                        Er is een refresh van je IMDB ratings gepland.<br/>
+                        Er is een refresh van je IMDb ratings gepland.<br/>
                         Refresh de pagina binnen enkele minuten om het resultaat te zien.
                     </li>
                 }
                 else if (Model.LastRefreshRatingsTime.HasValue)
                 {
                     <li class="dropdown-header">
-                        Je IMDB ratings werden laatst herladen op @Model.LastRefreshRatingsTime.Value.ToLocalTime().
+                        Je IMDb ratings werden laatst herladen op @Model.LastRefreshRatingsTime.Value.ToLocalTime().
                     </li>
                 }
                 else
                 {
                     <li class="dropdown-header">
-                        Je IMDB ratings werden nog niet opgehaald.
+                        Je IMDb ratings werden nog niet opgehaald.
                     </li>
                 }
-                <!--li><a href="/ImdbUser?forcerefresh=true">IMDB ratings nu geforceerd herladen</a></li-->
+                <!--li><a href="/ImdbUser?forcerefresh=true">IMDb ratings nu geforceerd herladen</a></li-->
                 <!--li class="divider"></li-->
             }
-            <li><a href="/ImdbUser">IMDB gebruiker instellen</a></li>
+            <li><a href="/ImdbUser">IMDb gebruiker instellen</a></li>
         </ul>
     </div>
 
@@ -452,7 +452,7 @@
                                 &nbsp;
                                 @if (@movieEvent.ImdbId != null)
                                 {
-                                        <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDB..." style="text-decoration: none">
+                                        <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
                                             <img src="/images/imdb.png" height="24px" />
                                             @if (@movieEvent.ImdbRating.HasValue)
                                             {
@@ -475,9 +475,9 @@
                                             MovieEventId: @movieEvent.Id <br/>
                                             <form action="#" method="GET">
                                                 Manual input: 
-                                                <a href="http://www.imdb.com/search/title?release_date=@(movieEvent.Year-1)-07-01,@(movieEvent.Year+1)-07-01&title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_new">IMDB advanced search</a>
+                                                <a href="http://www.imdb.com/search/title?release_date=@(movieEvent.Year-1)-07-01,@(movieEvent.Year+1)-07-01&title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_new">IMDb advanced search</a>
                                                 <br/>
-                                                IMDB ID: <input type="edit" name="setimdbid" value="" /> <br/>
+                                                IMDb ID: <input type="edit" name="setimdbid" value="" /> <br/>
                                                 Password: <input type="password" name="password" value="" /> <br>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
                                                 @if (Model.FilterMinRating.HasValue)

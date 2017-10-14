@@ -68,11 +68,11 @@ namespace FxMovieAlert.Pages
 
                     forcerefresh = true;
 
-                    WarningMessage = string.Format("Een cookie werd op je computer geplaatst om je IMDB Gebruikers ID {0} te onthouden.", imdbuserid);
+                    WarningMessage = string.Format("Een cookie werd op je computer geplaatst om je IMDb Gebruikers ID {0} te onthouden.", imdbuserid);
                 }
                 else
                 {
-                    ErrorMessage = string.Format("Er werd een ongeldige IMDB Gebruikers ID opgegeven: {0}.", setimdbuserid);
+                    ErrorMessage = string.Format("Er werd een ongeldige IMDb Gebruikers ID opgegeven: {0}.", setimdbuserid);
                 }
             }
 

@@ -299,7 +299,7 @@ namespace FxMovies.Grabber
 
             foreach (var user in users)
             {
-                Console.WriteLine("User {0} needs a refresh of the IMDB User ratings", user.ImdbUserId);
+                Console.WriteLine("User {0} needs a refresh of the IMDb User ratings", user.ImdbUserId);
                 if (user.RefreshRequestTime.HasValue)
                     Console.WriteLine("   * RefreshRequestTime = {0} ({1} seconds ago)", 
                         user.RefreshRequestTime.Value, (refreshTime - user.RefreshRequestTime.Value).TotalSeconds);
@@ -635,7 +635,7 @@ namespace FxMovies.Grabber
                     
                     if (movie == null)
                     {
-                        Console.WriteLine("UpdateEpgDataWithImdb: Could not find movie '{0} ({1})' in IMDB", movieEvent.Title, movieEvent.Year);
+                        Console.WriteLine("UpdateEpgDataWithImdb: Could not find movie '{0} ({1})' in IMDb", movieEvent.Title, movieEvent.Year);
                         continue;
                     }
 
@@ -734,7 +734,7 @@ namespace FxMovies.Grabber
                         db.Movies.Add(movie);
                     }
 
-                    Console.WriteLine("IMDB movies scanned: {0}", count);
+                    Console.WriteLine("IMDb movies scanned: {0}", count);
                 }
 
                 db.SaveChanges();
@@ -812,7 +812,7 @@ namespace FxMovies.Grabber
                             movie.Rating = (int)(rating * 10);
                     }
 
-                    Console.WriteLine("IMDB ratings scanned: {0}", count);
+                    Console.WriteLine("IMDb ratings scanned: {0}", count);
                 }
 
                 db.SaveChanges();
@@ -848,11 +848,11 @@ namespace FxMovies.Grabber
 
                 if (movie == null)
                 {
-                    Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find IMDB movie with ID {0}", imdbId);
+                    Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find IMDb movie with ID {0}", imdbId);
                     return;
                 }
 
-                Console.WriteLine("IMDB: {0} ({1}), ImdbID={2}", 
+                Console.WriteLine("IMDb: {0} ({1}), ImdbID={2}", 
                     movie.PrimaryTitle, movie.Year, movie.Id);
                     
                 movieEvent.ImdbId = movie.Id;

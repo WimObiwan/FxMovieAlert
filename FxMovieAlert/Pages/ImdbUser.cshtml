@@ -1,7 +1,7 @@
 ﻿@page
 @model ImdbUserModel
 @{
-    ViewData["Title"] = "IMDB Gebruiker configuratie";
+    ViewData["Title"] = "IMDb Gebruiker configuratie";
 }
 
 @if (Model.ErrorMessage != null)
@@ -21,60 +21,60 @@
 @if (!string.IsNullOrEmpty(Model.ImdbUserId))
 {
     <div class="alert alert-info">
-        Momenteel beschikken we over @Model.UserRatingCount ratings voor de IMDB gebruiker @(Model.ImdbUserId).
+        Momenteel beschikken we over @Model.UserRatingCount ratings voor de IMDb gebruiker @(Model.ImdbUserId).
     </div>
 }
 
-<h3>Koppeling met IMDB</h3>
+<h3>Koppeling met IMDb</h3>
 
 <p>
-    FilmOpTV kan gekoppeld worden met je IMDB ratings, zodat:
+    FilmOpTV kan gekoppeld worden met je IMDb ratings, zodat:
     <ul>
         <li>het film-overzicht aanduidt welke films je al hebt gezien (met de datum en waarde van je rating)</li>
         <li>het film-overzicht kan gefiltered worden op films die je nog niet zag</li>
     </ul> 
 </p>
 
-<h3>IMDB Gebruikers ID</h3>
+<h3>IMDb Gebruikers ID</h3>
 
 <p>
-    Om te bepalen welke films reeds bekeken zijn gebruikt FilmOpTV de (publieke) ratings op je IMDB gebruikersaccount.
+    Om te bepalen welke films reeds bekeken zijn gebruikt FilmOpTV de (publieke) ratings op je IMDb gebruikersaccount.
     Dit is niet verplicht: de site zal ook werken zonder, maar er kan dan niet gefiltered worden op films die je nog niet gezien hebt.
-    FilmOpTV heeft hiervoor je IMDB gebruikers ID nodig.  Deze wordt niet gebruikt om in te loggen, maar enkel om je publieke ratings op te vragen.
+    FilmOpTV heeft hiervoor je IMDb gebruikers ID nodig.  Deze wordt niet gebruikt om in te loggen, maar enkel om je publieke ratings op te vragen.
     <ul>
         <li>
             Klik op deze link: <a href="https://www.imdb.com/profile" target="_new">https://www.imdb.com/profile</a>
         </li>
-        <li>Je vindt in de adresbalk je IMDB Gebruikers ID. De IMDB gebruikers ID heeft het formaat "ur12345678".</li>
+        <li>Je vindt in de adresbalk je IMDb Gebruikers ID. De IMDb gebruikers ID heeft het formaat "ur12345678".</li>
     </ul>
 </p>
 
 <p>
     <form action="#" method="GET">
-        Vul hier je IMDB gebruikerscode in:
+        Vul hier je IMDb gebruikerscode in:
         <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" />
         <input type="submit" value="Instellen" /> 
     </form>
     <form action="#" method="GET">
-        Om je ingestelde IMDB gebruikerscode te resetten:  
+        Om je ingestelde IMDb gebruikerscode te resetten:  
         <input type="hidden" name="setimdbuserid" value="remove" />
         <input type="submit" value="Resetten" /> 
     </form>
 </p>
     
-<h3>Uploaden van de IMDB ratings</h3>
+<h3>Uploaden van de IMDb ratings</h3>
 
 <p>
-    Het ophalen van de laatste IMDB ratings werkt enkel voor ongeveer de laatste 250 ratings.  Daarom kan het nuttig zijn om 
-    (éénmalig) al je ratings te importeren.  Zorg eerst dat je ingelogd bent op de IMDB site, en klik op
-    <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId">deze link</a> om je IMDB ratings
+    Het ophalen van de laatste IMDb ratings werkt enkel voor ongeveer de laatste 250 ratings.  Daarom kan het nuttig zijn om 
+    (éénmalig) al je ratings te importeren.  Zorg eerst dat je ingelogd bent op de IMDb site, en klik op
+    <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId">deze link</a> om je IMDb ratings
     te exporteren naar een CSV bestand.  Daarna kun je het hieronder importeren.
 </p>
 
 <p>
     <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
         <div class="form-group">
-            <p>Kies hier het CSV bestand met je IMDB ratings:</p>
+            <p>Kies hier het CSV bestand met je IMDb ratings:</p>
             <input type="file" name="files" multiple />
         </div>
         <div class="form-group">
@@ -83,11 +83,11 @@
     </form>
 </p>
 
-<h3>Herladen van je recentste IMDB ratings</h3>
+<h3>Herladen van je recentste IMDb ratings</h3>
 
 <p>
-    Voor actieve gebruikers worden dagelijks de laatste ratings afgehaald van IMDB.
-    Actieve gebruikers zijn gebruikers die de laatste tijd deze site hebben gebruikt met hun IMDB gebruikersaccount.
+    Voor actieve gebruikers worden dagelijks de laatste ratings afgehaald van IMDb.
+    Actieve gebruikers zijn gebruikers die de laatste tijd deze site hebben gebruikt met hun IMDb gebruikersaccount.
     De ratings van de laatste 24 uur zijn dus niet automatisch beschikbaar.
 </p>
 
@@ -99,7 +99,7 @@
             if (Model.LastRefreshSuccess.Value)
             {
                 <div class="alert alert-info">
-                    Jouw IMDB ratings werden succesvol opgehaald op <strong>@Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()</strong>.
+                    Jouw IMDb ratings werden succesvol opgehaald op <strong>@Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()</strong>.
                     <br/>
                     Extra info: @Model.LastRefreshRatingsResult
                     <br>
@@ -109,7 +109,7 @@
             else
             {
                 <div class="alert alert-danger">
-                    Jouw IMDB ratings konden niet succesvol opgehaald worden op <strong>@Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()</strong>.
+                    Jouw IMDb ratings konden niet succesvol opgehaald worden op <strong>@Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()</strong>.
                     <br/>
                     Extra info: @Model.LastRefreshRatingsResult
                     <br>
@@ -120,7 +120,7 @@
         else
         {
             <div class="alert alert-warning">
-                Jouw IMDB ratings werden nog niet opgehaald.
+                Jouw IMDb ratings werden nog niet opgehaald.
             </div>
         }
     </p>
@@ -129,14 +129,14 @@
         @if (Model.RefreshRequestTime.HasValue)
         {
             <div class="alert alert-warning">
-                Het ophalen van je IMDB ratings is gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).
+                Het ophalen van je IMDb ratings is gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).
                 <a href="?">Herlaad</a> deze pagina binnen enkele minuten om de laatste resultaten te zien.
             </div>
         }
         else
         {
             <div class="alert alert-info">
-                Om geforceerd je IMDB ratings zo snel mogelijk op te halen druk je op deze knop:<br/>
+                Om geforceerd je IMDb ratings zo snel mogelijk op te halen druk je op deze knop:<br/>
                 <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
             </div>
         }
@@ -145,6 +145,6 @@
 else
 {
     <div class="alert alert-warning">
-        Je moet eerst een IMDB Gebruikers ID configureren.
+        Je moet eerst een IMDb Gebruikers ID configureren.
     </div>
 }
