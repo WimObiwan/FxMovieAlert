@@ -45,6 +45,13 @@ namespace FxMovies.Grabber
             // dotnet ef migrations add InitialCreate --startup-project ../Grabber/
             // dotnet ef database update --startup-project ../Grabber
             
+            // Minify CSS/JS:
+            // cd FxMovieAlert
+            // dotnet bundle
+            
+            // Deploy:
+            // dotnet publish -c Release
+
             // linux: 
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
