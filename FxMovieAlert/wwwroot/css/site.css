@@ -37,3 +37,42 @@ body {
 .js_enabled #cookie-message {
     display: none;
 }
+
+.sideBar {
+    position: fixed;
+    z-index: 1000;
+    display: none;
+    /*visibility: hidden;*/
+    /*display: none;*/
+}
+/*.sideBar.is-visible {
+    visibility: visible;
+}*/
+.sideBar.boxLeft {
+    top: 100px;
+    height: 0px;
+    width: 0px;
+    float:right;
+    padding: 0px 0px 0px 0px;
+    right:0px;
+}
+
+@media only screen and (min-width: 1500px) {
+    .sideBar {
+        position: fixed;
+        z-index: 1000;
+        /*visibility: hidden;*/
+        /*display: none;*/
+    }
+    /*.sideBar.is-visible {
+        visibility: visible;
+    }*/
+    .sideBar.boxLeft {
+        top: 100px;
+        height: 800px;
+        width: 200px;
+        float:right;
+        padding: 0px 0px 0px 0px;
+        right:0px;
+    }
+}
