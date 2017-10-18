@@ -518,7 +518,7 @@
                         @if (record.UserRating != null)
                         {
                             <p style="font-size: 20px">
-                                <span class="label label-success label-as-badge">
+                                <span class="label label-success label-as-badge" style="word-wrap:break-word;white-space: normal;">
                                     Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
                                     @(record.UserRating.Rating)
                                 </span>
@@ -527,7 +527,7 @@
                         @if (movieEvent.StartTime <= DateTime.Now)
                         {
                             <p style="font-size: 20px">
-                                <span class="label label-danger label-as-badge">
+                                <span class="label label-danger label-as-badge" style="word-wrap:break-word;white-space: normal;">
                                     Deze film is al @((int)(DateTime.Now - movieEvent.StartTime).TotalMinutes) minuten bezig.
                                 </span>
                             </p>
@@ -535,7 +535,7 @@
                         else if (movieEvent.StartTime <= DateTime.Now.AddHours(1))
                         {
                             <p style="font-size: 20px">
-                                <span class="label label-warning label-as-badge">
+                                <span class="label label-warning label-as-badge" style="word-wrap:break-word;white-space: normal;">
                                     Deze film begint over @((int)(movieEvent.StartTime - DateTime.Now).TotalMinutes) minuten.
                                 </span>
                             </p>
