@@ -454,6 +454,12 @@
                                     @movieEvent.Certification
                                 }
                             }
+                            @if (Model.AdminMode)
+                            {
+                                <small>
+                                    <a href="//filmoptv.be/#@movieEvent.Id">&pi;</a>
+                                </small>
+                            }
                         </small>
                         <span style="white-space: nowrap; float: right;">
                             <small>
