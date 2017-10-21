@@ -443,6 +443,7 @@ namespace FxMovies.Grabber
                             existingMovie.Duration = movie.Duration;
                             existingMovie.Genre = movie.Genre;
                             existingMovie.Content = movie.Content;
+                            existingMovie.YeloUrl = movie.YeloUrl;
                         }
                         else
                         {
