@@ -630,17 +630,41 @@ namespace FxMovies.Grabber
             using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
             using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
             {
-                var huntingProcedure = new List<Func<MovieEvent, Movie, bool>>();
+                var huntingProcedure = new List<object>();
+
                 // Search for PrimaryTitle (Year)
-                huntingProcedure.Add(
+                huntingProcedure.Add((Func<MovieEvent, Movie, bool>)
+                (
                     (movieEvent, m) => m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
                                 && (!m.Year.HasValue || m.Year == movieEvent.Year)
-                );
+                ));
+
+                // Search for AlternativeTitle (Year)
+                huntingProcedure.Add(Tuple.Create(
+                    (Func<MovieEvent, MovieAlternative, bool>)(
+                        (movieEvent, ma) => ma.AlternativeTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase)
+                    ),
+                    (Func<MovieEvent, Movie, bool>)(
+                        (movieEvent, m) => !m.Year.HasValue || m.Year == movieEvent.Year
+                    )
+                ));
+
                 // Search for PrimaryTitle (+/-Year)
-                huntingProcedure.Add(
+                huntingProcedure.Add((Func<MovieEvent, Movie, bool>)
+                (
                     (movieEvent, m) => m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
                                 && (!m.Year.HasValue || (m.Year >= movieEvent.Year - imdbHuntingYearDiff) && (m.Year <= movieEvent.Year + imdbHuntingYearDiff))
-                );
+                ));
+
+                // Search for AlternativeTitle (+/-Year)
+                huntingProcedure.Add(Tuple.Create(
+                    (Func<MovieEvent, MovieAlternative, bool>)(
+                        (movieEvent, ma) => ma.AlternativeTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase)
+                    ),
+                    (Func<MovieEvent, Movie, bool>)(
+                        (movieEvent, m) => !m.Year.HasValue || (m.Year >= movieEvent.Year - imdbHuntingYearDiff) && (m.Year <= movieEvent.Year + imdbHuntingYearDiff)
+                    )
+                ));
 
                 foreach (var movieEvent in dbMovies.MovieEvents.ToList())
                 {
@@ -654,7 +678,21 @@ namespace FxMovies.Grabber
                         movie = null;
                         foreach (var hunt in huntingProcedure)
                         {
-                            movie = dbImdb.Movies.FirstOrDefault(m => hunt(movieEvent, m));
+                            if (hunt is Func<MovieEvent, Movie, bool> huntTyped1)
+                            {
+                                movie = dbImdb.Movies.FirstOrDefault(m => huntTyped1(movieEvent, m));
+                            }
+                            else if (hunt is Tuple<Func<MovieEvent, MovieAlternative, bool>, Func<MovieEvent, Movie, bool>> huntTyped2)
+                            {
+                                var movieAlternatives = dbImdb.MovieAlternatives.Where(m => huntTyped2.Item1(movieEvent, m));
+                                movie = dbImdb.Movies.Join(movieAlternatives, m => m.Id, ma => ma.Id, (m, ma) => m)
+                                    .FirstOrDefault(m => huntTyped2.Item2(movieEvent, m));
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException($"Unknown hunt type {hunt}");
+                            }
+
                             if (movie != null)
                                 break;
                         }
@@ -692,6 +730,7 @@ namespace FxMovies.Grabber
             using (var db = ImdbDbContextFactory.Create(connectionString))
             {
                 db.Movies.RemoveRange(db.Movies);
+                db.MovieAlternatives.RemoveRange(db.MovieAlternatives);
                 db.SaveChanges();
 
                 var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbMoviesList"]);
@@ -699,7 +738,7 @@ namespace FxMovies.Grabber
                 using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
                 using (var textReader = new StreamReader(decompressionStream))
                 {
-                    int count = 0, skipped = 0;
+                    int count = 0, countAlternatives = 0, skipped = 0;
                     string text;
 
                     // tconst	titleType	primaryTitle	originalTitle	isAdult	startYear	endYear	runtimeMinutes	genres
@@ -725,9 +764,10 @@ namespace FxMovies.Grabber
 
                         if (count % 10000 == 0)
                         {
-                            Console.WriteLine("UpdateImdbDataWithMovies: {1} records done ({0}%), {2} records skipped ({3}%)", 
+                            Console.WriteLine("UpdateImdbDataWithMovies: {1} records done ({0}%), {2} alternatives, {3} records skipped ({4}%)", 
                                 originalFileStream.Position * 100 / originalFileStream.Length, 
-                                count, 
+                                count,
+                                countAlternatives, 
                                 skipped, 
                                 skipped * 100 / count);
                             db.SaveChanges();
@@ -750,15 +790,23 @@ namespace FxMovies.Grabber
                         string movieId = match.Groups[1].Value;
 
                         var movie = new ImdbDB.Movie();
-                        movie.Id = match.Groups[1].Value;
+                        movie.Id = movieId;
                         movie.PrimaryTitle = match.Groups[3].Value;
-                        //movie.OriginalTitle = match.Groups[4].Value;
-                        //if (string.Equals(movie.PrimaryTitle, movie.OriginalTitle, StringComparison.InvariantCultureIgnoreCase))
-                        //    movie.OriginalTitle = null;
+                        string originalTitle = match.Groups[4].Value;
+
                         if (int.TryParse(match.Groups[5].Value, out int startYear))
                             movie.Year = startYear;
 
                         db.Movies.Add(movie);
+
+                        if (!string.Equals(movie.PrimaryTitle, originalTitle, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            countAlternatives++;
+                            var movieAlternative = new MovieAlternative();
+                            movieAlternative.Id = movieId;
+                            movieAlternative.AlternativeTitle = originalTitle;
+                            db.MovieAlternatives.Add(movieAlternative);
+                        }
                     }
 
                     Console.WriteLine("IMDb movies scanned: {0}", count);

@@ -10,9 +10,10 @@ using System;
 namespace ImdbDB.Migrations
 {
     [DbContext(typeof(ImdbDbContext))]
-    partial class ImdbDbContextModelSnapshot : ModelSnapshot
+    [Migration("20171021193401_AddedMovieAlternatives")]
+    partial class AddedMovieAlternatives
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
