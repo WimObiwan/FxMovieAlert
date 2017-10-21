@@ -8,6 +8,13 @@
 
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
 	<style type="text/css">
+        a.anchor {
+            display: block;
+            position: relative;
+            top: -60px;
+            visibility: hidden;
+        }
+
 		span.stars, span.stars span {
 			display: inline-block;
 			background: url(/images/stars.png) 0 -16px repeat-x;
@@ -431,6 +438,7 @@
                     }
                 </td>
                 <td>
+                    <a class="anchor" name="@movieEvent.Id" ></a>
                     <h2>
                         @movieEvent.Title
                         <small>@movieEvent.Year</small>
