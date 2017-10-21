@@ -19,7 +19,7 @@ namespace FxMovies.Grabber
 {
     class Program
     {
-        public class TemporaryDbContextFactory : IDesignTimeDbContextFactory<FxMoviesDbContext>
+        public class TemporaryFxMoviesDbContextFactory : IDesignTimeDbContextFactory<FxMoviesDbContext>
         {
             public FxMoviesDbContext CreateDbContext(string[] args)
             {
@@ -35,6 +35,25 @@ namespace FxMovies.Grabber
 
                 builder.UseSqlite(connectionString); 
                 return new FxMoviesDbContext(builder.Options); 
+            }
+        }
+
+        public class TemporaryImdbDbContextFactory : IDesignTimeDbContextFactory<ImdbDbContext>
+        {
+            public ImdbDbContext CreateDbContext(string[] args)
+            {
+                var builder = new DbContextOptionsBuilder<ImdbDbContext>();
+
+                var configuration = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                    .AddEnvironmentVariables()
+                    .Build();
+
+                // Get the connection string
+                string connectionString = configuration.GetConnectionString("ImdbDb");
+
+                builder.UseSqlite(connectionString); 
+                return new ImdbDbContext(builder.Options); 
             }
         }
 
