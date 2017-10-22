@@ -157,6 +157,16 @@ namespace FxMovies.Grabber
                 DownloadImageData();
                 UpdateEpgDataWithImdb();
             }
+            else if (command.Equals("TwitterBot"))
+            {
+                if (arguments.Count != 0)
+                {
+                    Console.WriteLine("TwitterBot: Invalid argument count");
+                    return;
+                }
+
+                TwitterBot();
+            }
             else if (command.Equals("Manual"))
             {
                 if (arguments.Count != 2)
@@ -937,6 +947,46 @@ namespace FxMovies.Grabber
                 movieEvent.Certification = TheMovieDbGrabber.GetCertification(movieEvent.ImdbId) ?? "";
 
                 dbMovies.SaveChanges();
+            }
+        }
+
+        static void TwitterBot()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
+            string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
+            string twitterMessageTemplate = configuration.GetSection("Grabber")["TwitterMessageTemplate"];
+            var twitterChannelHashtags = configuration.GetSection("Grabber").GetSection("TwitterChannelHashtags");
+
+            using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
+            using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+            {
+                var movieEvent = 
+                    dbMovies.MovieEvents
+                        .Where(m => m.StartTime.Date == DateTime.Now.Date && m.StartTime.TimeOfDay.Hours >= 20)
+                        .OrderByDescending(m => m.ImdbRating)
+                        .Include(m => m.Channel)
+                        .FirstOrDefault();
+                
+                if (movieEvent?.ImdbRating >= 70)
+                {
+                    string shortUrl = $"https://filmoptv.be/#{movieEvent.Id}";
+                    string twitterChannelHashtag = twitterChannelHashtags[movieEvent.Channel.Code];
+                    var message = string.Format(
+                        twitterMessageTemplate,
+                        movieEvent.Title,
+                        twitterChannelHashtag ?? movieEvent.Channel.Name,
+                        movieEvent.StartTime,
+                        movieEvent.ImdbRating / 10d,
+                        shortUrl);
+                    Console.WriteLine("TwitterBot:");
+                    Console.WriteLine(message);
+                }
             }
         }
     }
