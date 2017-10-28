@@ -421,7 +421,7 @@
 
             <tr>
                 <td>
-                    <img width=50 src=@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS)) />
+                    <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
                     @(@movieEvent.StartTime.ToString("dddd"))
                     <br/>
@@ -434,7 +434,7 @@
                 <td class="collapsable">
                     @if (@movieEvent.PosterS != null)
                     {
-                        <img width=150 src=@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS)) />
+                        <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" alt="movieEvent.Title" width=150 />
                     }
                 </td>
                 <td>
@@ -466,7 +466,7 @@
                                 @if (@movieEvent.YeloUrl != null)
                                 {
                                     <a href="@movieEvent.YeloUrl" target="_new" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
-                                        <img src="/images/yeloplay.png" height="36px" />
+                                        <img src="/images/yeloplay.png" alt="Yelo" height="36px" />
                                     </a>
                                     
                                 }
@@ -474,7 +474,7 @@
                                 @if (@movieEvent.ImdbId != null)
                                 {
                                         <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
-                                            <img src="/images/imdb.png" height="24px" />
+                                            <img src="/images/imdb.png" alt="IMDb" height="24px" />
                                             @if (@movieEvent.ImdbRating.HasValue)
                                             {
                                                 @((@movieEvent.ImdbRating.Value / 10.0).ToString("0.0"))
