@@ -47,6 +47,7 @@
             //"args": [ "--environment=Development", "UpdateEPG" ],
             //"args": [ "--environment=Development", "AutoUpdateImdbUserRatings" ],
             //"args": [ "--environment=Development", "GenerateImdbDatabase" ],
+            "args": [ "--environment=Development", "TwitterBot" ],
             "cwd": "${workspaceRoot}/Grabber",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
             "console": "internalConsole",
