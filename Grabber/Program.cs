@@ -201,6 +201,35 @@ namespace FxMovies.Grabber
 
         static void UpdateImdbUserRatings(string imdbUserId)
         {
+            UpdateImdbUserRatings(imdbUserId, false);
+            UpdateImdbUserRatings(imdbUserId, true);
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
+                User user = db.Users.Find(imdbUserId);
+                if (user == null)
+                {
+                    user = new User();
+                    user.ImdbUserId = imdbUserId;
+                    db.Users.Add(user);
+                }
+                user.RefreshRequestTime = null;
+                user.RefreshCount++;
+
+                db.SaveChanges();
+            }
+        }
+
+        static void UpdateImdbUserRatings(string imdbUserId, bool watchlist)
+        {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
@@ -219,7 +248,8 @@ namespace FxMovies.Grabber
 
             try
             {
-                string url = string.Format("http://rss.imdb.com/user/{0}/ratings", imdbUserId);
+                string suffix = watchlist ? "watchlist" : "ratings";
+                string url = $"http://rss.imdb.com/user/{imdbUserId}/{suffix}";
                 var request = (HttpWebRequest)WebRequest.Create(url);
                 using (var response = request.GetResponse())
                 {
@@ -243,35 +273,53 @@ namespace FxMovies.Grabber
                         
                         string description = item["description"].InnerText.Trim();
 
-                        DateTime ratingDate = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
-                        string ratingText = regexRating.Match(description)?.Groups?[1]?.Value;
-                        if (ratingText == null)
-                            continue;
-
-                        int rating = int.Parse(ratingText);
+                        DateTime date = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
 
                         using (var db = FxMoviesDbContextFactory.Create(connectionString))
                         {
-                            var userRating = db.UserRatings.Find(imdbUserId, imdbId);
-                            if (userRating == null)
+                            if (watchlist)
                             {
-                                userRating = new UserRating();
-                                userRating.ImdbUserId = imdbUserId;
-                                userRating.ImdbMovieId = imdbId;
-                                db.UserRatings.Add(userRating);
-                            }
-                            userRating.RatingDate = ratingDate;
-                            userRating.Rating = rating;
+                                var userWatchListItem = db.UserWatchLists.Find(imdbUserId, imdbId);
+                                if (userWatchListItem == null)
+                                {
+                                    userWatchListItem = new UserWatchListItem();
+                                    userWatchListItem.ImdbUserId = imdbUserId;
+                                    userWatchListItem.ImdbMovieId = imdbId;
+                                    db.UserWatchLists.Add(userWatchListItem);
+                                }
+                                userWatchListItem.AddedDate = date;
 
-                            Console.WriteLine("{0} {1} {2} {3}", 
-                                userRating.ImdbUserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+                                Console.WriteLine("UserId={0} IMDbId={1} Added={2}", 
+                                    userWatchListItem.ImdbUserId, userWatchListItem.ImdbMovieId, userWatchListItem.AddedDate);
+                            }
+                            else
+                            {
+                                string ratingText = regexRating.Match(description)?.Groups?[1]?.Value;
+                                if (ratingText == null)
+                                    continue;
+                                int rating = int.Parse(ratingText);
+
+                                var userRating = db.UserRatings.Find(imdbUserId, imdbId);
+                                if (userRating == null)
+                                {
+                                    userRating = new UserRating();
+                                    userRating.ImdbUserId = imdbUserId;
+                                    userRating.ImdbMovieId = imdbId;
+                                    db.UserRatings.Add(userRating);
+                                }
+                                userRating.RatingDate = date;
+                                userRating.Rating = rating;
+
+                                Console.WriteLine("UserId={0} IMDbId={1} Added={2} Rating={3}", 
+                                    userRating.ImdbUserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+                            }
 
                             db.SaveChanges();
                         }
 
-                        if (ratingDate > lastDate.GetValueOrDefault(DateTime.MinValue))
+                        if (date > lastDate.GetValueOrDefault(DateTime.MinValue))
                         {
-                            lastDate = ratingDate;
+                            lastDate = date;
                             lastDescription = description;
                         }
                     }
@@ -300,11 +348,18 @@ namespace FxMovies.Grabber
                     user.ImdbUserId = imdbUserId;
                     db.Users.Add(user);
                 }
-                user.LastRefreshRatingsTime = DateTime.UtcNow;
-                user.LastRefreshRatingsResult = result;
-                user.LastRefreshSuccess = succeeded;
-                user.RefreshRequestTime = null;
-                user.RefreshCount++;
+                if (watchlist)
+                {
+                    user.WatchListLastRefreshTime = DateTime.UtcNow;
+                    user.WatchListLastRefreshResult = result;
+                    user.WatchListLastRefreshSuccess = succeeded;
+                }
+                else
+                {
+                    user.LastRefreshRatingsTime = DateTime.UtcNow;
+                    user.LastRefreshRatingsResult = result;
+                    user.LastRefreshSuccess = succeeded;
+                }
 
                 db.SaveChanges();
             }            

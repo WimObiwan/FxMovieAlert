@@ -16,6 +16,7 @@ namespace FxMovieAlert.Pages
     {
         public MovieEvent MovieEvent { get; set; }
         public UserRating UserRating { get; set; }
+        public UserWatchListItem UserWatchListItem { get; set; }
     }
 
     [Flags]
@@ -205,6 +206,8 @@ namespace FxMovieAlert.Pages
                     from me in db.MovieEvents.Include(m => m.Channel)
                     join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
+                    join uw in db.UserWatchLists.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals uw.ImdbMovieId into uwGroup
+                    from uw in uwGroup.DefaultIfEmpty(null)
                     where 
                         (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
                         &&
@@ -218,7 +221,7 @@ namespace FxMovieAlert.Pages
                         (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (ur == null))
                         && 
                         (FilterCert == Cert.all || (ParseCertification(me.Certification) & FilterCert) != 0)
-                    select new Record() { MovieEvent = me, UserRating = ur }
+                    select new Record() { MovieEvent = me, UserRating = ur, UserWatchListItem = uw }
                 ).ToList();
 
                 // MovieEvents = db.MovieEvents.Include(m => m.Channel)

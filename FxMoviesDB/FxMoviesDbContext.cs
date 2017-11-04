@@ -16,11 +16,14 @@ namespace FxMovies.FxMoviesDB
         {
             modelBuilder.Entity<UserRating>()
                 .HasKey(u => new { u.ImdbUserId, u.ImdbMovieId });
+            modelBuilder.Entity<UserWatchListItem>()
+                .HasKey(u => new { u.ImdbUserId, u.ImdbMovieId });
         }
 
         public DbSet<Channel> Channels { get; set; }
         public DbSet<MovieEvent> MovieEvents { get; set; }
         public DbSet<UserRating> UserRatings { get; set; }
+        public DbSet<UserWatchListItem> UserWatchLists { get; set; }
         public DbSet<User> Users { get; set; }
     }
 
