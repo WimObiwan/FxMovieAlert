@@ -71,6 +71,9 @@ namespace FxMovies.Grabber
             // Deploy:
             // dotnet publish -c Release
 
+            // Generate SQL Script, for production upgrades
+            // dotnet ef migrations script --startup-project ../Grabber --context FxMoviesDbContext
+
             // linux: 
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
