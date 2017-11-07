@@ -1050,8 +1050,9 @@ namespace FxMovies.Grabber
             {
                 var movieEvent = 
                     dbMovies.MovieEvents
-                        .Where(m => m.StartTime.Date == DateTime.Now.Date && m.StartTime.TimeOfDay.Hours >= 20)
-                        .OrderByDescending(m => m.ImdbRating)
+                        .Where(m => m.StartTime >= DateTime.Now.AddHours(1.0) && m.StartTime.TimeOfDay.Hours >= 20)
+                        .OrderBy(m => m.StartTime.Date)
+                        .ThenByDescending(m => m.ImdbRating)
                         .Include(m => m.Channel)
                         .FirstOrDefault();
                 
