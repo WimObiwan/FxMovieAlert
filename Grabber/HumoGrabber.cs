@@ -143,6 +143,7 @@ namespace FxMovies.Grabber
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.endtime).ToLocalTime(),
                         Duration = evnt.properties.eventduration,
                         PosterS = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.small,
+                        PosterM = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.medium,
                         Content = evnt.program.content_long,
                         Genre = evnt.program.description,
                     };

@@ -527,6 +527,7 @@ namespace FxMovies.Grabber
                             existingMovie.EndTime = movie.EndTime;
                             existingMovie.Channel = movie.Channel;
                             existingMovie.PosterS = movie.PosterS;
+                            existingMovie.PosterM = movie.PosterM;
                             existingMovie.Duration = movie.Duration;
                             existingMovie.Genre = movie.Genre;
                             existingMovie.Content = movie.Content;
@@ -600,24 +601,46 @@ namespace FxMovies.Grabber
 
                 foreach (var movieEvent in dbMovies.MovieEvents)
                 {
-                    string url = movieEvent.PosterS;
+                    {
+                        string url = movieEvent.PosterS;
 
-                    if (url == null)
-                        continue;
+                        if (url == null)
+                            continue;
 
-                    string ext;
-                    int extStart = url.LastIndexOf('.');
-                    if (extStart == -1)
-                        ext = ".jpg";
-                    else
-                        ext = url.Substring(extStart);
+                        string ext;
+                        int extStart = url.LastIndexOf('.');
+                        if (extStart == -1)
+                            ext = ".jpg";
+                        else
+                            ext = url.Substring(extStart);
 
-                    string name = "movie-" + movieEvent.Id.ToString() + ext;
-                    string target = Path.Combine(basePath, name);
+                        string name = "movie-" + movieEvent.Id.ToString() + "-S" + ext;
+                        string target = Path.Combine(basePath, name);
 
-                    movieEvent.PosterS_Local = name;
+                        movieEvent.PosterS_Local = name;
 
-                    DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+                        DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+                    }
+                    {
+                        string url = movieEvent.PosterM;
+
+                        if (url == null)
+                            continue;
+
+                        string ext;
+                        int extStart = url.LastIndexOf('.');
+                        if (extStart == -1)
+                            ext = ".jpg";
+                        else
+                            ext = url.Substring(extStart);
+
+                        string name = "movie-" + movieEvent.Id.ToString() + "-M" + ext;
+                        string target = Path.Combine(basePath, name);
+
+                        movieEvent.PosterM_Local = name;
+
+                        DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+                    }
                 }
 
                 dbMovies.SaveChanges();    
@@ -626,6 +649,7 @@ namespace FxMovies.Grabber
 
         static void DownloadFile(string url, string target)
         {
+            Console.WriteLine($"Downloading {url} to {target}");
             var req = (HttpWebRequest)WebRequest.Create(url);
             using (var rsp = (HttpWebResponse)req.GetResponse())
             {
