@@ -14,11 +14,47 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play." />
-    <meta property="og:title" content="FilmOpTV" />
+    @if(ViewData.ContainsKey("og:title"))
+    {
+        <meta property="og:title" content="@ViewData["og:title"] - FilmOpTV" />
+    }
+    else
+    {
+        <meta property="og:title" content="FilmOpTV" />
+    }
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.filmoptv.be" />
-    <meta property="og:image" content="https://www.filmoptv.be/images/film-256x256.png" />
-    <meta property="og:description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play." />
+    @if(ViewData.ContainsKey("og:url"))
+    {
+        <meta property="og:url" content="@("https://www.filmoptv.be" + ViewData["og:url"])" />
+    }
+    else
+    {
+        <meta property="og:url" content="https://www.filmoptv.be" />
+    }
+    @if(ViewData.ContainsKey("og:image"))
+    {
+        <meta property="og:image" content="@("https://www.filmoptv.be" + ViewData["og:image"])" />
+    }
+    else
+    {
+        <meta property="og:image" content="https://www.filmoptv.be/images/film-256x256.png" />
+    }
+    @if(ViewData.ContainsKey("og:image:secure_url"))
+    {
+        <meta property="og:image:secure_url" content="@("https://www.filmoptv.be" + ViewData["og:image"])" />
+    }
+    else
+    {
+        <meta property="og:image:secure_url" content="https://www.filmoptv.be/images/film-256x256.png" />
+    }
+    @if(ViewData.ContainsKey("og:description"))
+    {
+        <meta property="og:description" content="@ViewData["og:description"]" />
+    }
+    else
+    {
+        <meta property="og:description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play." />
+    }
 
     <title>@ViewData["Title"] - FilmOpTV</title>
 
