@@ -7,6 +7,15 @@
     ViewData["Canonical"] = "/";
 }
 
+    @if (Model.MovieEvent != null)
+    {
+        <script type="text/javascript">
+            window.onload = function (event) {
+                window.location.hash = "#@Model.MovieEvent.Id";
+            };
+        </script>
+    }
+
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
 	<style type="text/css">
         a.anchor {

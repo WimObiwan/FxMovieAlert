@@ -37,6 +37,7 @@ namespace FxMovieAlert.Pages
     {
         public const decimal NO_IMDB_ID = -1.0m;
         public const decimal NO_IMDB_RATING = -2.0m;
+        public MovieEvent MovieEvent = null;
         public IList<Record> Records = new List<Record>();
         public string ImdbUserId = null;
         public DateTime? RefreshRequestTime = null;
@@ -84,7 +85,7 @@ namespace FxMovieAlert.Pages
             return Convert.ToBase64String(hashBytes);
         }
 
-        public void OnGet(decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
+        public void OnGet(int? m = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
             int? movieeventid = null, string setimdbid = null, string password = null, int? maxdays = null)
         {
             var configuration = new ConfigurationBuilder()
@@ -182,30 +183,33 @@ namespace FxMovieAlert.Pages
                     }
                 }
 
+                if (m.HasValue)
+                    MovieEvent = db.MovieEvents.Find(m.Value);
+
                 Count = db.MovieEvents.Count();
-                CountMinRating5 = db.MovieEvents.Where(m => m.ImdbRating >= 50).Count();
-                CountMinRating6 = db.MovieEvents.Where(m => m.ImdbRating >= 60).Count();
-                CountMinRating7 = db.MovieEvents.Where(m => m.ImdbRating >= 70).Count();
-                CountMinRating8 = db.MovieEvents.Where(m => m.ImdbRating >= 80).Count();
-                CountMinRating9 = db.MovieEvents.Where(m => m.ImdbRating >= 90).Count();
-                CountNotOnImdb = db.MovieEvents.Where(m => m.ImdbId == null).Count();
-                CountNotRatedOnImdb = db.MovieEvents.Where(m => m.ImdbRating == null).Count();
-                CountCertNone =  db.MovieEvents.Where(m => string.IsNullOrEmpty(m.Certification)).Count();
-                CountCertG =  db.MovieEvents.Where(m => m.Certification == "US:G").Count();
-                CountCertPG =  db.MovieEvents.Where(m => m.Certification == "US:PG").Count();
-                CountCertPG13 =  db.MovieEvents.Where(m => m.Certification == "US:PG-13").Count();
-                CountCertR =  db.MovieEvents.Where(m => m.Certification == "US:R").Count();
-                CountCertNC17 =  db.MovieEvents.Where(m => m.Certification == "US:NC-17").Count();
+                CountMinRating5 = db.MovieEvents.Where(me => me.ImdbRating >= 50).Count();
+                CountMinRating6 = db.MovieEvents.Where(me => me.ImdbRating >= 60).Count();
+                CountMinRating7 = db.MovieEvents.Where(me => me.ImdbRating >= 70).Count();
+                CountMinRating8 = db.MovieEvents.Where(me => me.ImdbRating >= 80).Count();
+                CountMinRating9 = db.MovieEvents.Where(me => me.ImdbRating >= 90).Count();
+                CountNotOnImdb = db.MovieEvents.Where(me => me.ImdbId == null).Count();
+                CountNotRatedOnImdb = db.MovieEvents.Where(me => me.ImdbRating == null).Count();
+                CountCertNone =  db.MovieEvents.Where(me => string.IsNullOrEmpty(me.Certification)).Count();
+                CountCertG =  db.MovieEvents.Where(me => me.Certification == "US:G").Count();
+                CountCertPG =  db.MovieEvents.Where(me => me.Certification == "US:PG").Count();
+                CountCertPG13 =  db.MovieEvents.Where(me => me.Certification == "US:PG-13").Count();
+                CountCertR =  db.MovieEvents.Where(me => me.Certification == "US:R").Count();
+                CountCertNC17 =  db.MovieEvents.Where(me => me.Certification == "US:NC-17").Count();
                 CountCertOther =  Count - CountCertNone - CountCertG - CountCertPG - CountCertPG13 - CountCertR - CountCertNC17;
                 CountRated = db.MovieEvents.Where(
                     me => db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Any(ur => ur.ImdbMovieId == me.ImdbId)).Count();
                 CountNotYetRated = Count - CountRated;
-                Count3days =  db.MovieEvents.Where(m => m.StartTime.Date <= now.Date.AddDays(3)).Count();
-                Count5days =  db.MovieEvents.Where(m => m.StartTime.Date <= now.Date.AddDays(5)).Count();
-                Count8days =  db.MovieEvents.Where(m => m.StartTime.Date <= now.Date.AddDays(8)).Count();
+                Count3days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(3)).Count();
+                Count5days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(5)).Count();
+                Count8days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(8)).Count();
 
                 Records = (
-                    from me in db.MovieEvents.Include(m => m.Channel)
+                    from me in db.MovieEvents.Include(me => me.Channel)
                     join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
                     join uw in db.UserWatchLists.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals uw.ImdbMovieId into uwGroup
