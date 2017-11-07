@@ -93,7 +93,7 @@
                 sb.Append("cert=");
                 sb.Append(cert.ToString("g"));
             }
-            if (maxdays != IndexModel.FilterMaxDaysDefault)
+            if (maxdays != Model.FilterMaxDaysDefault)
             {
                 if (sb == null)
                     sb = new StringBuilder();
@@ -352,7 +352,7 @@
     </div>
 
     <div class="btn-group">
-        <a href="?@FormatQueryStringWithMaxDays(0)" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != IndexModel.FilterMaxDaysDefault)">
+        <a href="?@FormatQueryStringWithMaxDays(0)" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != Model.FilterMaxDaysDefault)">
             @if (Model.FilterMaxDays == 0)
             {
                 @: Aantal dagen (maximum)
@@ -362,7 +362,7 @@
                 @: Aantal dagen (@Model.FilterMaxDays)
             }
         </a>
-        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != IndexModel.FilterMaxDaysDefault) dropdown-toggle" data-toggle="dropdown">
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != Model.FilterMaxDaysDefault) dropdown-toggle" data-toggle="dropdown">
             <span class="caret"></span>  <!-- caret -->
             <span class="sr-only">Certificaties</span>
         </button>
@@ -518,7 +518,7 @@
                                                 {
                                                     <input type="hidden" name="cert" value="@Model.FilterCert.ToString("g")" /> <br/>
                                                 }
-                                                @if (Model.FilterMaxDays != IndexModel.FilterMaxDaysDefault)
+                                                @if (Model.FilterMaxDays != Model.FilterMaxDaysDefault)
                                                 {
                                                     <input type="hidden" name="maxdays" value="@Model.FilterMaxDays" /> <br/>
                                                 }

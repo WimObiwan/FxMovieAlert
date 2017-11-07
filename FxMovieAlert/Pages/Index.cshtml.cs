@@ -37,7 +37,6 @@ namespace FxMovieAlert.Pages
     {
         public const decimal NO_IMDB_ID = -1.0m;
         public const decimal NO_IMDB_RATING = -2.0m;
-        public const int FilterMaxDaysDefault = 8;
         public IList<Record> Records = new List<Record>();
         public string ImdbUserId = null;
         public DateTime? RefreshRequestTime = null;
@@ -47,7 +46,8 @@ namespace FxMovieAlert.Pages
         public decimal? FilterMinRating = null;
         public bool? FilterNotYetRated = null;
         public Cert FilterCert = Cert.all;
-        public int FilterMaxDays = FilterMaxDaysDefault;
+        public int FilterMaxDaysDefault = 8;
+        public int FilterMaxDays = 8;
 
         public int Count = 0;
         public int CountMinRating5 = 0;
@@ -99,6 +99,8 @@ namespace FxMovieAlert.Pages
             string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
 
             AdsInterval = configuration.GetValue("AdsInterval", AdsInterval);
+            FilterMaxDaysDefault = configuration.GetValue("DefaultMaxDays", FilterMaxDaysDefault);
+            FilterMaxDays = FilterMaxDaysDefault;
 
             if (!string.IsNullOrEmpty(password))
             {
