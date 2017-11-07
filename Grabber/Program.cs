@@ -1057,6 +1057,7 @@ namespace FxMovies.Grabber
                 
                 if (movieEvent?.ImdbRating >= 70)
                 {
+                    System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("nl-BE");
                     string shortUrl = $"https://filmoptv.be/#{movieEvent.Id}";
                     string twitterChannelHashtag = twitterChannelHashtags[movieEvent.Channel.Code];
                     var message = string.Format(
@@ -1066,6 +1067,7 @@ namespace FxMovies.Grabber
                         movieEvent.StartTime,
                         movieEvent.ImdbRating / 10d,
                         shortUrl);
+                    message = char.ToUpper(message[0]) + message.Substring(1);
                     Console.WriteLine("TwitterBot:");
                     Console.WriteLine(message);
                 }
