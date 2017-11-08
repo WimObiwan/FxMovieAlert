@@ -28,6 +28,15 @@
         </script>
     }
 
+    <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = 'https://connect.facebook.net/nl_NL/sdk.js#xfbml=1&version=v2.11';
+    fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+    </script>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
 	<style type="text/css">
         a.anchor {
@@ -476,10 +485,17 @@
                                     @movieEvent.Certification
                                 }
                             }
+                            
+                            @{
+                                var shareUrl = $"https://filmoptv.be/?m={movieEvent.Id}";
+                            }
+
+                            <div class="fb-share-button" data-href="@shareUrl" data-layout="button" data-size="small" data-mobile-iframe="true"></div>
+
                             @if (Model.AdminMode)
                             {
                                 <small>
-                                    <a href="//filmoptv.be/#@movieEvent.Id">&pi;</a>
+                                    <a href="@shareUrl">&pi;</a>
                                 </small>
                             }
                         </small>
