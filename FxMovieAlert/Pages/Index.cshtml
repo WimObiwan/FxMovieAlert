@@ -9,7 +9,7 @@
     {
         ViewData["og:title"] = Model.MovieEvent.Title;
         //ViewData["og:description"] = Model.MovieEvent.Content;
-        var description = string.Format("{2:dddd} FilmOpTV '{0}' op {1} om {2:HH:mm} - {3}/10 op IMDb",
+        var description = string.Format("{2:dddd} FilmOpTV.be '{0}' op {1} om {2:HH:mm} - {3}/10 op IMDb",
             Model.MovieEvent.Title, Model.MovieEvent.Channel.Name, Model.MovieEvent.StartTime, Model.MovieEvent.ImdbRating/10.0);
         description = char.ToUpper(description[0]) + description.Substring(1);
         ViewData["og:description"] = description;

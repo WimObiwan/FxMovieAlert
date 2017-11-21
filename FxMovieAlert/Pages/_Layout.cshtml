@@ -16,11 +16,11 @@
     <meta name="description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play." />
     @if(ViewData.ContainsKey("og:title"))
     {
-        <meta property="og:title" content="@ViewData["og:title"] - FilmOpTV" />
+        <meta property="og:title" content="@ViewData["og:title"] - FilmOpTV.be" />
     }
     else
     {
-        <meta property="og:title" content="FilmOpTV" />
+        <meta property="og:title" content="FilmOpTV.be" />
     }
     <meta property="og:type" content="website" />
     @if(ViewData.ContainsKey("og:url"))
@@ -56,7 +56,7 @@
         <meta property="og:description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play." />
     }
 
-    <title>@ViewData["Title"] - FilmOpTV</title>
+    <title>@ViewData["Title"] - FilmOpTV.be</title>
 
     @if (!string.IsNullOrEmpty(@ViewData["Canonical"] as string))
     {
@@ -111,13 +111,13 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a asp-page="/Index" class="navbar-brand">FilmOpTV</a>
+                <a asp-page="/Index" class="navbar-brand">FilmOpTV.be</a>
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     <li><a asp-page="/Index">Films</a></li>
                     <li><a asp-page="/ImdbUser">IMDb Gebruiker</a></li>
-                    <li><a asp-page="/About">Over FilmOpTV</a></li>
+                    <li><a asp-page="/About">Over FilmOpTV.be</a></li>
                 </ul>
             </div>
         </div>
