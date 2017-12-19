@@ -18,133 +18,285 @@
     </div>
 }
 
-@if (!string.IsNullOrEmpty(Model.ImdbUserId))
-{
-    <div class="alert alert-info">
-        Momenteel beschikken we over @Model.UserRatingCount ratings voor de IMDb gebruiker @(Model.ImdbUserId).
-    </div>
-}
-
 <h3>Koppeling met IMDb</h3>
 
 <p>
-    FilmOpTV kan gekoppeld worden met je IMDb ratings, zodat:
+    FilmOpTV.be kan aanduiden welke films je al bekeken hebt, en welke je nog wilt zien.
+</p>
+<p>
     <ul>
-        <li>het film-overzicht aanduidt welke films je al hebt gezien (met de datum en waarde van je rating)</li>
-        <li>het film-overzicht kan gefiltered worden op films die je nog niet zag</li>
+        <li>Voor de bekeken films worden je publieke <i>IMDb Ratings</i> gebruikt.</li>
+        <li>De publieke <i>IMDb Watchlist</i> wordt gebruikt voor de films die je nog wilt zien.</li>
     </ul> 
+</p>
+<p>
+    Deze beide lijsten moeten publiek zijn.  
+    Het enige wat we nodig hebben is een IMDb Gebruikers ID, zonder paswoord.
 </p>
 
 <h3>IMDb Gebruikers ID</h3>
 
 <p>
-    Om te bepalen welke films reeds bekeken zijn gebruikt FilmOpTV de (publieke) ratings op je IMDb gebruikersaccount.
-    Dit is niet verplicht: de site zal ook werken zonder, maar er kan dan niet gefiltered worden op films die je nog niet gezien hebt.
-    FilmOpTV heeft hiervoor je IMDb gebruikers ID nodig.  Deze wordt niet gebruikt om in te loggen, maar enkel om je publieke ratings op te vragen.
-    <ul>
-        <li>
-            Klik op deze link: <a href="https://www.imdb.com/profile" target="_new">https://www.imdb.com/profile</a>
-        </li>
-        <li>Je vindt in de adresbalk je IMDb Gebruikers ID. De IMDb gebruikers ID heeft het formaat "ur12345678".</li>
-    </ul>
+    De IMDb Gebruikers ID heeft het formaat <i>ur98765432</i>.  Surf naar 
+    <a href="https://www.imdb.com/profile" target="_new">https://www.imdb.com/profile</a>,
+    waarna je je gebruikersnaam vindt in de adresbalk. 
 </p>
 
 <p>
+@if (string.IsNullOrEmpty(Model.ImdbUserId))
+{
     <form action="#" method="GET">
-        Vul hier je IMDb gebruikerscode in:
+        Vul hier je IMDb Gebruikers ID in:
         <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" />
-        <input type="submit" value="Instellen" /> 
+        <input type="submit" value="Inloggen" /> 
     </form>
-    <form action="#" method="GET">
-        Om je ingestelde IMDb gebruikerscode te resetten:  
-        <input type="hidden" name="setimdbuserid" value="remove" />
-        <input type="submit" value="Resetten" /> 
-    </form>
-</p>
-    
-<h3>Uploaden van de IMDb ratings</h3>
-
-<p>
-    Het ophalen van de laatste IMDb ratings werkt enkel voor ongeveer de laatste 250 ratings.  Daarom kan het nuttig zijn om 
-    (éénmalig) al je ratings te importeren.  Zorg eerst dat je ingelogd bent op de IMDb site, en klik op
-    <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId">deze link</a> om je IMDb ratings
-    te exporteren naar een CSV bestand.  Daarna kun je het hieronder importeren.
-</p>
-
-<p>
-    <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
-        <div class="form-group">
-            <p>Kies hier het CSV bestand met je IMDb ratings:</p>
-            <input type="file" name="files" multiple />
-        </div>
-        <div class="form-group">
-            <input type="submit" value="Importeren" />
-        </div>
-    </form>
-</p>
-
-<h3>Herladen van je recentste IMDb ratings</h3>
-
-<p>
-    Voor actieve gebruikers worden dagelijks de laatste ratings afgehaald van IMDb.
-    Actieve gebruikers zijn gebruikers die de laatste tijd deze site hebben gebruikt met hun IMDb gebruikersaccount.
-    De ratings van de laatste 24 uur zijn dus niet automatisch beschikbaar.
-</p>
-
+}
 @if (!string.IsNullOrEmpty(Model.ImdbUserId))
 {
-    <p>
-        @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
+    <div class="alert alert-warning">
+        Je bent ingelogd met IMDb Gebruikers ID @(Model.ImdbUserId).
+    </div>
+    <form action="#" method="GET">  
+        <input type="hidden" name="setimdbuserid" value="remove" />
+        <input type="submit" value="Uitloggen" /> 
+    </form>
+}
+</p>
+
+    
+@if (!string.IsNullOrEmpty(Model.ImdbUserId))
+{
+<h3>Informatie gedownload van IMDb</h3>
+
+<div class="table-responsive">  
+<table class="table">
+<tr>
+    <td>
+    </td>
+    <td>
+        Ratings
+    </td>
+    <td>
+        Watchlist
+    </td>
+</tr>
+<tr>
+    <td>
+        Totaal aantal films
+    </td>
+    <td>
+        @Model.UserRatingCount films
+    </td>
+    <td>
+        @Model.UserWatchListCount films
+    </td>
+</tr>
+<tr>
+    <td>
+        Laatste toevoeging
+    </td>
+    <td>
+        @if (Model.RatingLastDate.HasValue && Model.RatingLastMovie != null && Model.RatingLastRating.HasValue)
         {
-            if (Model.LastRefreshSuccess.Value)
-            {
-                <div class="alert alert-info">
-                    Jouw IMDb ratings werden succesvol opgehaald op <strong>@Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()</strong>.
-                    <br/>
-                    Extra info: @Model.LastRefreshRatingsResult
-                    <br>
-                    De ratings worden door FilmOpTV opgehaald op deze publieke RSS feed: <a href="http://rss.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">http://rss.imdb.com/user/@Model.ImdbUserId/ratings</a>.
-                </div>
-            }
-            else
-            {
-                <div class="alert alert-danger">
-                    Jouw IMDb ratings konden niet succesvol opgehaald worden op <strong>@Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString() @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()</strong>.
-                    <br/>
-                    Extra info: @Model.LastRefreshRatingsResult
-                    <br>
-                    De ratings worden door FilmOpTV opgehaald op <a href="http://rss.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">deze publieke RSS feed</a>.
-                </div>
-            }
+            @Model.RatingLastDate.Value.ToLocalTime().ToLongDateString()
+            <br/>
+            @Model.RatingLastMovie
+            <br/>            
+            @: @(Model.RatingLastRating) / 10
+        }
+    </td>
+    <td>
+        @if (Model.WatchListLastDate.HasValue && Model.WatchListLastMovie != null)
+        {
+            @Model.WatchListLastDate.Value.ToLocalTime().ToLongDateString()
+            <br/>
+            @Model.WatchListLastMovie
+        }
+    </td>
+</tr>
+<tr>
+    <td colspan="3">
+        <strong>Automatische download</strong>
+    </td>
+</tr>
+<tr>
+    <td>
+        IMDb RSS feed
+    </td>
+    <td>
+        <a href="http://rss.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">http://rss.imdb.com/user/@Model.ImdbUserId/ratings</a>
+    </td>
+    <td>
+        <a href="http://rss.imdb.com/user/@Model.ImdbUserId/watchlist" target="_new">http://rss.imdb.com/user/@Model.ImdbUserId/watchlist</a>
+    </td>
+</tr>
+<tr>
+    <td colspan="3">
+        <strong>Laatste download</strong>
+    </td>
+</tr>
+<tr>
+    <td>
+        Tijdstip
+    </td>
+    <td>
+    @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
+    {
+        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString()<br/>
+        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Nog niet opgehaald.
+        </div>
+    }
+    </td>
+    <td>
+    @if (Model.WatchListLastRefreshSuccess.HasValue && Model.WatchListLastRefreshTime.HasValue)
+    {
+        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToLongDateString()<br/>
+        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToShortTimeString()
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Nog niet opgehaald.
+        </div>
+    }
+    </td>
+</tr>
+<tr>
+    <td>
+        Resultaat
+    </td>
+    <td>
+    @if (Model.LastRefreshSuccess.HasValue)
+    {
+        @if (Model.LastRefreshSuccess.Value)
+        {
+            <div class="alert alert-success">
+                Gelukt
+            </div>
         }
         else
         {
-            <div class="alert alert-warning">
-                Jouw IMDb ratings werden nog niet opgehaald.
+            <div class="alert alert-danger">
+                Mislukt
             </div>
         }
-    </p>
-
-    <p>
+    }
+    else
+    {
+        <div>
+            N/A
+        </div>
+    }
+    </td>
+    <td>
+    @if (Model.WatchListLastRefreshSuccess.HasValue)
+    {
+        @if (Model.WatchListLastRefreshSuccess.Value)
+        {
+            <div class="alert alert-success">
+                Gelukt
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                Mislukt
+            </div>
+        }
+    }
+    else
+    {
+        <div>
+            N/A
+        </div>
+    }
+    </td>
+</tr>
+<tr>
+    <td>
+        Extra info
+    </td>
+    <td>
+        @Model.LastRefreshRatingsResult
+    </td>
+    <td>
+        @Model.WatchListLastRefreshRatingsResult
+    </td>
+</tr>
+<tr>
+    <td>
+        Volgende automatische download
+    </td>
+    <td colspan="2">
         @if (Model.RefreshRequestTime.HasValue)
         {
             <div class="alert alert-warning">
-                Het ophalen van je IMDb ratings is gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).
+                Gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).<br/>
                 <a href="?">Herlaad</a> deze pagina binnen enkele minuten om de laatste resultaten te zien.
             </div>
         }
         else
         {
-            <div class="alert alert-info">
-                Om geforceerd je IMDb ratings zo snel mogelijk op te halen druk je op deze knop:<br/>
-                <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
-            </div>
+            <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
         }
-    </p>    
-}
-else
-{
-    <div class="alert alert-warning">
-        Je moet eerst een IMDb Gebruikers ID configureren.
-    </div>
+    </td>
+</tr>
+<tr>
+    <td colspan="3">
+        <strong>Manuele import</strong>
+    </td>
+</tr>
+<tr>
+    <td>
+        IMDb CSV import
+    </td>
+    <td>
+        <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_new">IMDb Ratings export</a>
+    </td>
+    <td>
+        <a href="http://www.imdb.com/list/export?list_id=watchlist&author_id=@Model.ImdbUserId" target="_new">IMDb Watchlist export</a>
+    </td>
+</tr>
+<tr>
+    <td>
+        Manuele import
+    </td>
+    <td>
+        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
+            <div class="form-group">
+                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
+                <input type="file" name="files" multiple />
+                <input type="hidden" name="type" value="ratings" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Importeren" />
+            </div>
+        </form>
+    </td>
+    <td>
+        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
+            <div class="form-group">
+                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
+                <input type="file" name="files" multiple />
+                <input type="hidden" name="type" value="watchlist" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Importeren" />
+            </div>
+        </form>
+    </td>
+</tr>
+</table>
+</div>
+
+<p>
+    Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel voor ongeveer de laatste 250 ratings.
+    Als je ratings of watchlist langer zijn, kan het daarom nuttig zijn om hieronder (éénmalig) de lijst te importeren met een CSV bestand.  
+</p>
+
 }
