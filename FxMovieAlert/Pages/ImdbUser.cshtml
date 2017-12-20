@@ -18,6 +18,25 @@
     </div>
 }
 
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.4;
+}
+</style>
+
 <h3>Koppeling met IMDb</h3>
 
 <p>
@@ -71,14 +90,14 @@
 <div class="table-responsive">  
 <table class="table">
 <tr>
-    <td>
-    </td>
-    <td>
+    <th>
+    </th>
+    <th>
         Ratings
-    </td>
-    <td>
+    </th>
+    <th>
         Watchlist
-    </td>
+    </th>
 </tr>
 <tr>
     <td>
@@ -117,9 +136,21 @@
 <tr>
     <td colspan="3">
         <strong>Automatische download</strong>
+        <div class="alert alert-warning">
+            <strong>Opgelet!</strong>
+            Het automatisch downloaden van je laatste IMDb ratings &amp; watchlist via RSS is niet langer mogelijk,
+            na wijzigingen aan de IMDb website.
+            We bekijken wat mogelijk is om dit te verhelpen.
+            Voorlopig kunt u enkel ratings &amp; watchlist manueel opladen, zie hieronder.
+        </div>
+        <small class="disabled">
+            Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel voor ongeveer de laatste 250 ratings. 
+            Als je ratings of watchlist langer zijn, kan het daarom nuttig zijn om hieronder (éénmalig) de lijst te importeren 
+            met een CSV bestand. 
+        </small>
     </td>
 </tr>
-<tr>
+<tr class="disabled">
     <td>
         IMDb RSS feed
     </td>
@@ -130,14 +161,9 @@
         <a href="http://rss.imdb.com/user/@Model.ImdbUserId/watchlist" target="_new">http://rss.imdb.com/user/@Model.ImdbUserId/watchlist</a>
     </td>
 </tr>
-<tr>
-    <td colspan="3">
-        <strong>Laatste download</strong>
-    </td>
-</tr>
-<tr>
+<tr class="disabled">
     <td>
-        Tijdstip
+        Laatste download tijdstip
     </td>
     <td>
     @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
@@ -166,7 +192,7 @@
     }
     </td>
 </tr>
-<tr>
+<tr class="disabled">
     <td>
         Resultaat
     </td>
@@ -217,7 +243,7 @@
     }
     </td>
 </tr>
-<tr>
+<tr class="disabled">
     <td>
         Extra info
     </td>
@@ -228,7 +254,7 @@
         @Model.WatchListLastRefreshRatingsResult
     </td>
 </tr>
-<tr>
+<tr class="disabled">
     <td>
         Volgende automatische download
     </td>
@@ -293,10 +319,4 @@
 </tr>
 </table>
 </div>
-
-<p>
-    Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel voor ongeveer de laatste 250 ratings.
-    Als je ratings of watchlist langer zijn, kan het daarom nuttig zijn om hieronder (éénmalig) de lijst te importeren met een CSV bestand.  
-</p>
-
 }
