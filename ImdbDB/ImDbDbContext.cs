@@ -17,7 +17,9 @@ namespace FxMovies.ImdbDB
             modelBuilder.Entity<Movie>()
                 .HasIndex(m => new { m.PrimaryTitle, m.Year });
             modelBuilder.Entity<MovieAlternative>()
-                .HasIndex(m => new { m.AlternativeTitle });
+                .HasKey(ma => new {ma.Id, ma.No});
+            modelBuilder.Entity<MovieAlternative>()
+                .HasIndex(ma => new { ma.AlternativeTitle });
         }
 
         public DbSet<Movie> Movies { get; set; }

@@ -127,6 +127,7 @@ namespace FxMovies.Grabber
                     return;
                 }
                 ImportImdbData_Movies();
+                ImportImdbData_AlsoKnownAs();
                 ImportImdbData_Ratings();
             }
             else if (command.Equals("UpdateImdbUserRatings"))
@@ -977,6 +978,135 @@ namespace FxMovies.Grabber
                 db.SaveChanges();
             }
         }        
+
+        static void ImportImdbData_AlsoKnownAs()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("ImdbDb");
+
+            using (var db = ImdbDbContextFactory.Create(connectionString))
+            {
+                var fileToDecompress = new FileInfo(configuration.GetSection("Grabber")["ImdbAlsoKnownAsList"]);
+                using (var originalFileStream = fileToDecompress.OpenRead())
+                using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
+                using (var textReader = new StreamReader(decompressionStream))
+                {
+                    int count = 0, countAlternatives = 0, skipped = 0;
+                    string text;
+
+                    // 1        2           3       4       5           6       7           8
+                    // titleId	ordering	title	region	language	types	attributes	isOriginalTitle
+                    // tt0000001	1	Carmencita - spanyol tánc	HU	\N	imdbDisplay	\N	0
+                    // "tt0033100\t3\tLilla lögnerskan\tSE\t\\N\t\\N\t\\N\t0"
+                    //                       (1)       2       (3)       (4)       (5)       6       7       8
+                    var regex = new Regex(@"^([^\t]*)\t[^\t]*\t([^\t]*)\t([^\t]*)\t([^\t]*)\t[^\t]*\t[^\t]*\t[^\t]*$",
+                        RegexOptions.Compiled);
+
+                    // Skip header
+                    textReader.ReadLine();
+
+                    var FilterRegion = new string[]
+                    {
+                        "BE",
+                        "NL",
+                    };
+                    // var FilterLanguage = new string[]
+                    // {
+                    // };
+
+                    string lastMovieId = null;
+                    List<string> lastMovieAlternativesToAdd = new List<string>();
+                    IQueryable<MovieAlternative> lastMovieAlternatives = null;
+
+                    while ((text = textReader.ReadLine()) != null)
+                    {
+                        count++;
+
+                        if (count % 10000 == 0)
+                        {
+                            Console.WriteLine("UpdateImdbDataWithAkas: {1} records done ({0}%), {2} alternatives, {3} records skipped ({4}%)", 
+                                originalFileStream.Position * 100 / originalFileStream.Length, 
+                                count,
+                                countAlternatives, 
+                                skipped, 
+                                skipped * 100 / count);
+                            db.SaveChanges();
+                        }
+
+                        var match = regex.Match(text);
+                        if (!match.Success)
+                        {
+                            Console.WriteLine("Unable to parse line {0}: {1}", count, text);
+                            continue;
+                        }
+
+                        // Filter on movie|video|short|tvMovie|tvMiniSeries
+                        if (!FilterRegion.Contains(match.Groups[3].Value)
+                            // && !FilterLanguage.Contains(match.Groups[4].Value)
+                            )
+                        {
+                            skipped++;
+                            continue;
+                        }
+
+                        string movieId = match.Groups[1].Value;
+                        Movie movie = db.Movies.Find(movieId);
+                        if (movie == null)
+                        {
+                            skipped++;
+                            continue;
+                        }
+
+                        string alternativeTitle = match.Groups[2].Value;
+
+                        if (movieId != lastMovieId)
+                        {
+                            if (lastMovieId != null)
+                            {   
+                                AddMovieAlternatives(db, lastMovieId, lastMovieAlternatives.Select(ma => ma.No).DefaultIfEmpty(0).Max(),
+                                    lastMovieAlternativesToAdd);
+                            }
+
+                            lastMovieId = movieId;
+                            lastMovieAlternativesToAdd.Clear();
+                            lastMovieAlternatives = db.MovieAlternatives.Where(ma => ma.Id == movieId);
+                        }
+
+                        if (!lastMovieAlternatives.Any(ma => string.Equals(ma.AlternativeTitle, alternativeTitle, StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            lastMovieAlternativesToAdd.Add(alternativeTitle);
+                            countAlternatives++;
+                        }
+                    }
+
+                    AddMovieAlternatives(db, lastMovieId, lastMovieAlternatives.Select(ma => ma.No).DefaultIfEmpty(0).Max(),
+                        lastMovieAlternativesToAdd);
+
+                    Console.WriteLine("IMDb movies scanned: {0}", count);
+                }
+
+                db.SaveChanges();
+            }
+        }
+
+        static void AddMovieAlternatives(ImdbDbContext db, string movieId, int lastNo, List<string> alternativesToAdd)
+        {
+            foreach (string alternativeTitle in alternativesToAdd)
+            {
+                var movieAlternative = new MovieAlternative();
+                movieAlternative.Id = movieId;
+                movieAlternative.No = ++lastNo;
+                movieAlternative.AlternativeTitle = alternativeTitle;
+                db.MovieAlternatives.Add(movieAlternative);
+                // db.SaveChangesAsync();
+            }
+        }
+
         static void ImportImdbData_Ratings()
         {
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
