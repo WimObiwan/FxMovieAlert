@@ -159,6 +159,7 @@ namespace FxMovies.Grabber
                 UpdateDatabaseEpg();
                 DownloadImageData();
                 UpdateEpgDataWithImdb();
+                UpdateDatabaseEpgHistory();
             }
             else if (command.Equals("TwitterBot"))
             {
@@ -546,6 +547,75 @@ namespace FxMovies.Grabber
 
                     db.SaveChanges();
                 }
+            }
+        }
+
+        static void UpdateDatabaseEpgHistory()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+            string connectionStringHistory = configuration.GetConnectionString("FxMoviesHistoryDb");
+
+            Console.WriteLine("Using database: {0}", connectionString);
+            Console.WriteLine("Using database: {0}", connectionStringHistory);
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            using (var dbHistory = FxMoviesDbContextFactory.Create(connectionStringHistory))
+            {
+                foreach (var channel in db.Channels)
+                {
+                    var channelHistory = dbHistory.Channels.Find(channel.Code);
+                    if (channelHistory == null)
+                    {
+                        channelHistory = new Channel();
+                        channelHistory.Code = channel.Code;
+                        dbHistory.Channels.Add(channelHistory);
+                    }
+                    channelHistory.Name = channel.Name;
+                    channelHistory.LogoS = channel.LogoS;
+                    channelHistory.LogoS_Local = channel.LogoS_Local;
+                }
+                dbHistory.SaveChanges();
+
+                var min = db.MovieEvents.Where(i => i.StartTime >= DateTime.Now).Select(i => i.StartTime).Min();
+                var movieEventsToRemove = dbHistory.MovieEvents.Where(i => i.StartTime >= min);
+                dbHistory.MovieEvents.RemoveRange(movieEventsToRemove);
+                int lastId = dbHistory.MovieEvents.Select(i => i.Id).DefaultIfEmpty(0).Max();
+                foreach (var movieEvent in db.MovieEvents)
+                {
+                    var movieEventHistory = dbHistory.MovieEvents.Find(movieEvent.Id);
+                    if (movieEventHistory != null)
+                        dbHistory.MovieEvents.Remove(movieEventHistory);
+
+                    var channelHistory = dbHistory.Channels.Find(movieEvent.Channel.Code);
+
+                    movieEventHistory = new MovieEvent();
+                    movieEventHistory.Id = ++lastId;
+                    movieEventHistory.Title = movieEvent.Title;
+                    movieEventHistory.Year = movieEvent.Year;
+                    movieEventHistory.StartTime = movieEvent.StartTime;
+                    movieEventHistory.EndTime = movieEvent.EndTime;
+                    movieEventHistory.Channel = channelHistory;
+                    movieEventHistory.PosterS = movieEvent.PosterS;
+                    movieEventHistory.PosterM = movieEvent.PosterM;
+                    movieEventHistory.Duration = movieEvent.Duration;
+                    movieEventHistory.Genre = movieEvent.Genre;
+                    movieEventHistory.Content = movieEvent.Content;
+                    movieEventHistory.ImdbId = movieEvent.ImdbId;
+                    movieEventHistory.ImdbRating = movieEvent.ImdbRating;
+                    movieEventHistory.ImdbVotes = movieEvent.ImdbVotes;
+                    movieEventHistory.YeloUrl = null;
+                    movieEventHistory.Certification = movieEvent.Certification;
+                    movieEventHistory.PosterS_Local = movieEvent.PosterS_Local;
+                    movieEventHistory.PosterM_Local = movieEvent.PosterM_Local;
+                    dbHistory.MovieEvents.Add(movieEventHistory);
+                }
+                dbHistory.SaveChanges();
             }
         }
 
