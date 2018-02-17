@@ -71,12 +71,15 @@ namespace FxMovies.Grabber
             // Deploy:
             // dotnet publish -c Release
 
+            // Compact DB:
+            // 
+
             // Generate SQL Script, for production upgrades
             // dotnet ef migrations script --startup-project ../Grabber --context FxMoviesDbContext
 
             // linux: 
-            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
-            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
+            // http://www.imdb.com/interfaces/
+            // https://datasets.imdbws.com/
             // export ConnectionStrings__FxMoviesDb='Data Source=/mnt/data/tmp/fxmovies.db'
             // export ConnectionStrings__ImdbDb='Data Source=/mnt/data/tmp/imdb.db'
             // cd <solutiondir>
@@ -523,13 +526,28 @@ namespace FxMovies.Grabber
                         var existingMovie = db.MovieEvents.Find(movie.Id);
                         if (existingMovie != null)
                         {
-                            existingMovie.Title = movie.Title;
+                            if (existingMovie.Title != movie.Title)
+                            {
+                                existingMovie.Title = movie.Title;
+                                existingMovie.ImdbId = null;
+                                existingMovie.ImdbRating = null;
+                                existingMovie.ImdbVotes = null;
+                                existingMovie.Certification = null;
+                            }
                             existingMovie.Year = movie.Year;
                             existingMovie.StartTime = movie.StartTime;
                             existingMovie.EndTime = movie.EndTime;
                             existingMovie.Channel = movie.Channel;
-                            existingMovie.PosterS = movie.PosterS;
-                            existingMovie.PosterM = movie.PosterM;
+                            if (existingMovie.PosterS != movie.PosterS)
+                            {
+                                existingMovie.PosterS = movie.PosterS;
+                                existingMovie.PosterS_Local = null;
+                            }
+                            if (existingMovie.PosterM != movie.PosterM)
+                            {
+                                existingMovie.PosterM = movie.PosterM;
+                                existingMovie.PosterM_Local = null;
+                            }
                             existingMovie.Duration = movie.Duration;
                             existingMovie.Genre = movie.Genre;
                             existingMovie.Content = movie.Content;
