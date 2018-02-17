@@ -11,9 +11,10 @@ using System;
 namespace FxMoviesDB.Migrations
 {
     [DbContext(typeof(FxMoviesDbContext))]
-    partial class FxMoviesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180217181948_AddedVodMovies")]
+    partial class AddedVodMovies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

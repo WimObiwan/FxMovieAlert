@@ -18,6 +18,8 @@ namespace FxMovies.FxMoviesDB
                 .HasKey(u => new { u.ImdbUserId, u.ImdbMovieId });
             modelBuilder.Entity<UserWatchListItem>()
                 .HasKey(u => new { u.ImdbUserId, u.ImdbMovieId });
+            modelBuilder.Entity<VodMovie>()
+                .HasKey(m => new { m.Provider, m.ProviderCategory, m.ProviderId });
         }
 
         public DbSet<Channel> Channels { get; set; }
@@ -25,6 +27,7 @@ namespace FxMovies.FxMoviesDB
         public DbSet<UserRating> UserRatings { get; set; }
         public DbSet<UserWatchListItem> UserWatchLists { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<VodMovie> VodMovies { get; set; }
     }
 
     /// <summary>

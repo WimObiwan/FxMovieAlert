@@ -5,7 +5,7 @@ namespace FxMovies.FxMoviesDB
     /// <summary>
     /// A simple class representing a MovieEvent
     /// </summary>
-    public class MovieEvent
+    public class MovieEvent : IHasImdbLink
     {
         public MovieEvent()
         {
@@ -13,7 +13,7 @@ namespace FxMovies.FxMoviesDB
 
         public int Id { get; set; }
         public string Title { get; set; }
-        public int Year { get; set; }
+        public int? Year { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public Channel Channel { get; set; }

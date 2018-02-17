@@ -165,6 +165,11 @@ namespace FxMovies.Grabber
                 UpdateEpgDataWithImdb();
                 UpdateDatabaseEpgHistory();
             }
+            else if (command.Equals("UpdateVod"))
+            {
+                UpdateDatabaseVod_YeloPlay();
+                UpdateVodDataWithImdb();
+            }
             else if (command.Equals("TwitterBot"))
             {
                 if (arguments.Count != 0)
@@ -569,6 +574,76 @@ namespace FxMovies.Grabber
             }
         }
 
+        static void UpdateDatabaseVod_YeloPlay()
+        {
+            List<VodMovie> vodMovies = YeloPlayGrabber.Get();
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            Console.WriteLine("Using database: {0}", connectionString);
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
+                var existingMovies = db.VodMovies.Where(m => YeloPlayGrabber.Provider == m.Provider);
+                // Console.WriteLine("Existing movies: {0}", existingMovies.Count());
+                // Console.WriteLine("New movies: {0}", movies.Count());
+
+                // Remove exising movies that don't appear in new movies
+                {
+                    var remove = existingMovies.Where(m1 => 
+                        !vodMovies.Any(
+                            m2 => m2.Provider == m1.Provider
+                            && m2.ProviderCategory == m1.ProviderCategory
+                            && m2.ProviderId == m1.ProviderId));
+                    Console.WriteLine("Existing movies to be removed: {0}", remove.Count());
+                    db.RemoveRange(remove);
+                }
+
+                // Update movies
+                foreach (var vodMovie in vodMovies)
+                {
+                    var existingVodMovie = db.VodMovies.Find(vodMovie.Provider, vodMovie.ProviderCategory, vodMovie.ProviderId);
+                    if (existingVodMovie != null)
+                    {
+                        if (existingVodMovie.Title != vodMovie.Title)
+                        {
+                            existingVodMovie.Title = vodMovie.Title;
+                            existingVodMovie.ImdbId = null;
+                            existingVodMovie.ImdbRating = null;
+                            existingVodMovie.ImdbVotes = null;
+                            existingVodMovie.Certification = null;
+                        }
+                        if (existingVodMovie.Image != vodMovie.Image)
+                        {
+                            existingVodMovie.Image = vodMovie.Image;
+                            existingVodMovie.Image_Local = null;
+                        }
+                        existingVodMovie.ProviderMask = vodMovie.ProviderMask;
+                        existingVodMovie.Price = vodMovie.Price;
+                        existingVodMovie.ValidFrom = vodMovie.ValidFrom;
+                        existingVodMovie.ValidUntil = vodMovie.ValidUntil;
+                    }
+                    else
+                    {
+                        db.VodMovies.Add(vodMovie);
+                    }
+                }
+
+                // {
+                //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
+                //     db.SaveChanges();
+                // }
+
+                db.SaveChanges();
+            }
+        }
+
         static void UpdateDatabaseEpgHistory()
         {
             var configuration = new ConfigurationBuilder()
@@ -795,6 +870,17 @@ namespace FxMovies.Grabber
 
         static void UpdateEpgDataWithImdb()
         {
+            UpdateGenericDataWithImdb<MovieEvent>((dbMovies) => dbMovies.MovieEvents);
+        }
+
+        static void UpdateVodDataWithImdb()
+        {
+            UpdateGenericDataWithImdb<VodMovie>((dbMovies) => dbMovies.VodMovies);
+        }
+
+        static void UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies) 
+        where T : IHasImdbLink
+        {
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
             var configuration = new ConfigurationBuilder()
@@ -814,60 +900,83 @@ namespace FxMovies.Grabber
                 var huntingProcedure = new List<object>();
 
                 // Search for PrimaryTitle (Year)
-                huntingProcedure.Add((Func<MovieEvent, Movie, bool>)
+                huntingProcedure.Add((Func<IHasImdbLink, Movie, bool>)
                 (
-                    (movieEvent, m) => m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
-                                && (!m.Year.HasValue || m.Year == movieEvent.Year)
+                    (movieWithImdbLink, m) => m.PrimaryTitle.Equals(movieWithImdbLink.Title, StringComparison.InvariantCultureIgnoreCase) 
+                                && (!m.Year.HasValue || !movieWithImdbLink.Year.HasValue || m.Year == movieWithImdbLink.Year)
                 ));
 
                 // Search for AlternativeTitle (Year)
                 huntingProcedure.Add(Tuple.Create(
-                    (Func<MovieEvent, MovieAlternative, bool>)(
-                        (movieEvent, ma) => ma.AlternativeTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase)
+                    (Func<IHasImdbLink, MovieAlternative, bool>)(
+                        (movieWithImdbLink, ma) => ma.AlternativeTitle.Equals(movieWithImdbLink.Title, StringComparison.InvariantCultureIgnoreCase)
                     ),
-                    (Func<MovieEvent, Movie, bool>)(
-                        (movieEvent, m) => !m.Year.HasValue || m.Year == movieEvent.Year
+                    (Func<IHasImdbLink, Movie, bool>)(
+                        (movieWithImdbLink, m) => !m.Year.HasValue || !movieWithImdbLink.Year.HasValue || m.Year == movieWithImdbLink.Year
                     )
                 ));
 
                 // Search for PrimaryTitle (+/-Year)
-                huntingProcedure.Add((Func<MovieEvent, Movie, bool>)
+                huntingProcedure.Add((Func<IHasImdbLink, Movie, bool>)
                 (
-                    (movieEvent, m) => m.PrimaryTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase) 
-                                && (!m.Year.HasValue || (m.Year >= movieEvent.Year - imdbHuntingYearDiff) && (m.Year <= movieEvent.Year + imdbHuntingYearDiff))
+                    (movieWithImdbLink, m) => m.PrimaryTitle.Equals(movieWithImdbLink.Title, StringComparison.InvariantCultureIgnoreCase) 
+                                && (!m.Year.HasValue || !movieWithImdbLink.Year.HasValue || (m.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (m.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff))
                 ));
 
                 // Search for AlternativeTitle (+/-Year)
                 huntingProcedure.Add(Tuple.Create(
-                    (Func<MovieEvent, MovieAlternative, bool>)(
-                        (movieEvent, ma) => ma.AlternativeTitle.Equals(movieEvent.Title, StringComparison.InvariantCultureIgnoreCase)
+                    (Func<IHasImdbLink, MovieAlternative, bool>)(
+                        (movieWithImdbLink, ma) => ma.AlternativeTitle.Equals(movieWithImdbLink.Title, StringComparison.InvariantCultureIgnoreCase)
                     ),
-                    (Func<MovieEvent, Movie, bool>)(
-                        (movieEvent, m) => !m.Year.HasValue || (m.Year >= movieEvent.Year - imdbHuntingYearDiff) && (m.Year <= movieEvent.Year + imdbHuntingYearDiff)
+                    (Func<IHasImdbLink, Movie, bool>)(
+                        (movieWithImdbLink, m) => !m.Year.HasValue || !movieWithImdbLink.Year.HasValue || (m.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (m.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)
                     )
                 ));
 
-                foreach (var movieEvent in dbMovies.MovieEvents.ToList())
+                var groups = fnGetMovies(dbMovies).GroupBy(m => new { m.Title, m.Year });
+                int totalCount = groups.Count();
+                int current = 0;
+                foreach (var group in groups) //.ToList())
                 {
-                    Movie movie;
-                    if (movieEvent.ImdbId != null)
+                    if (group.Any(m => m.ImdbId != null))
                     {
-                        movie = dbImdb.Movies.Find(movieEvent.ImdbId);
+                        var first = group.First(m => m.ImdbId != null);
+                        foreach (var other in group.Where(m => m.ImdbId == null))
+                        {
+                            other.ImdbId = first.ImdbId;
+                            other.ImdbVotes = first.ImdbVotes;
+                            other.ImdbRating = first.ImdbRating;
+                            other.Certification = first.Certification;
+                        }
+                        continue;
+                    }
+
+                    var firstMovieWithImdbLink = group.First(m => m.ImdbId == null);
+
+                    Movie movie;
+                    if (firstMovieWithImdbLink.ImdbId != null)
+                    {
+                        movie = dbImdb.Movies.Find(firstMovieWithImdbLink.ImdbId);
                     }
                     else
                     {
                         movie = null;
                         foreach (var hunt in huntingProcedure)
                         {
-                            if (hunt is Func<MovieEvent, Movie, bool> huntTyped1)
+                            if (hunt is Func<IHasImdbLink, Movie, bool> huntTyped1)
                             {
-                                movie = dbImdb.Movies.FirstOrDefault(m => huntTyped1(movieEvent, m));
+                                movie = dbImdb.Movies
+                                    .Where(m => huntTyped1(firstMovieWithImdbLink, m))
+                                    .OrderByDescending(m => m.Votes)
+                                    .FirstOrDefault();
                             }
-                            else if (hunt is Tuple<Func<MovieEvent, MovieAlternative, bool>, Func<MovieEvent, Movie, bool>> huntTyped2)
+                            else if (hunt is Tuple<Func<IHasImdbLink, MovieAlternative, bool>, Func<IHasImdbLink, Movie, bool>> huntTyped2)
                             {
-                                var movieAlternatives = dbImdb.MovieAlternatives.Where(m => huntTyped2.Item1(movieEvent, m));
+                                var movieAlternatives = dbImdb.MovieAlternatives.Where(m => huntTyped2.Item1(firstMovieWithImdbLink, m));
                                 movie = dbImdb.Movies.Join(movieAlternatives, m => m.Id, ma => ma.Id, (m, ma) => m)
-                                    .FirstOrDefault(m => huntTyped2.Item2(movieEvent, m));
+                                    .Where(m => huntTyped2.Item2(firstMovieWithImdbLink, m))
+                                    .OrderByDescending(m => m.Votes)
+                                    .FirstOrDefault();
                             }
                             else
                             {
@@ -881,17 +990,35 @@ namespace FxMovies.Grabber
                     
                     if (movie == null)
                     {
-                        Console.WriteLine("UpdateEpgDataWithImdb: Could not find movie '{0} ({1})' in IMDb", movieEvent.Title, movieEvent.Year);
+                        foreach (var movieWithImdbLink in group)
+                        {
+                            movieWithImdbLink.ImdbId = "";
+                        }
+                        dbMovies.SaveChanges();
+                        Console.WriteLine("UpdateEpgDataWithImdb: Could not find movie '{0} ({1})' in IMDb", firstMovieWithImdbLink.Title, firstMovieWithImdbLink.Year);
                         continue;
                     }
 
-                    Console.WriteLine("{0} ({1}) ==> {2}", movieEvent.Title, movieEvent.Year, movie.Id);
-                    movieEvent.ImdbId = movie.Id;
-                    movieEvent.ImdbRating = movie.Rating;
-                    movieEvent.ImdbVotes = movie.Votes;
-                    
-                    if (movieEvent.Certification == null)
-                        movieEvent.Certification = TheMovieDbGrabber.GetCertification(movieEvent.ImdbId) ?? "";
+                    Console.WriteLine("{3}% {0} ({1}) ==> {2}, duplicity={4}", 
+                        firstMovieWithImdbLink.Title, 
+                        firstMovieWithImdbLink.Year, 
+                        movie.Id,
+                        (100 * current++) / totalCount,
+                        group.Count());
+
+                    foreach (var movieWithImdbLink in group)
+                    {
+                        if (movieWithImdbLink.ImdbId != movie.Id)
+                            movieWithImdbLink.Certification = null;
+                        movieWithImdbLink.ImdbId = movie.Id;
+                        movieWithImdbLink.ImdbRating = movie.Rating;
+                        movieWithImdbLink.ImdbVotes = movie.Votes;
+                        
+                        if (movieWithImdbLink.Certification == null)
+                            movieWithImdbLink.Certification = TheMovieDbGrabber.GetCertification(movieWithImdbLink.ImdbId) ?? "";
+                    }
+
+                    dbMovies.SaveChanges();
                 }
 
                 dbMovies.SaveChanges();
