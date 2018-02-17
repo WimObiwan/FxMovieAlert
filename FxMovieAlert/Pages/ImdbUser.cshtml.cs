@@ -35,6 +35,7 @@ namespace FxMovieAlert.Pages
         public DateTime? WatchListLastDate = null;
         public string WatchListLastMovie = null;
         
+        public readonly List<Tuple<string, string, string>> LastImportErrors = new List<Tuple<string, string, string>>();
 
         public void OnGet(bool forcerefresh = false, string setimdbuserid = null)
         {
@@ -198,6 +199,8 @@ namespace FxMovieAlert.Pages
                 {
                     var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
                     
+                    var movieIdsInFile = new SortedSet<string>(); 
+                    
                     using (var reader = new StreamReader(file.OpenReadStream()))
                     using (engine.BeginReadStream(reader))
                     foreach (var record in engine)
@@ -205,6 +208,8 @@ namespace FxMovieAlert.Pages
                         try
                         {
                             string _const = record.Const;
+                            movieIdsInFile.Add(_const);
+
                             DateTime date = DateTime.ParseExact(record.DateAdded, 
                                 new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
                                 CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
@@ -231,12 +236,38 @@ namespace FxMovieAlert.Pages
                         }
                         catch (Exception x)
                         {
+                            LastImportErrors.Add(
+                                Tuple.Create(
+                                    $"Lijn {engine.LineNumber - 1} uit het ratings bestand '{file.FileName}' kon niet verwerkt worden.\n"
+                                    + "De meest voorkomende reden is een aanpassing aan het bestandsformaat door IMDb.",
+                                    x.ToString(),
+                                    "danger"));
                         }
                     }
+
+                    List<UserRating> itemsToRemove = 
+                        db.UserRatings
+                            .Where(ur => !movieIdsInFile.Contains(ur.ImdbMovieId))
+                            .ToList();
+
+                    db.UserRatings.RemoveRange(itemsToRemove);
+
+                    LastImportErrors.Add(
+                        Tuple.Create(
+                            $"Het ratings bestand '{file.FileName}' werd ingelezen. "
+                            + $"{newCount} nieuwe en {existingCount} bestaande films.  {itemsToRemove.Count} films verwijderd.",
+                            (string)null,
+                            "success"));
                 }
                 catch (Exception x)
                 {
-                    Console.WriteLine($"Failed to read file, Error: {x.ToString()}");
+                    LastImportErrors.Add(
+                        Tuple.Create(
+                            $"Het ratings bestand '{file.FileName}' kon niet ingelezen worden.\n"
+                            + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
+                            + "het bestandsformaat door IMDb.",
+                            x.ToString(),
+                            "danger"));
                 }
 
                 db.SaveChanges();
@@ -255,6 +286,8 @@ namespace FxMovieAlert.Pages
             int existingCount = 0;
             int newCount = 0;
 
+            LastImportErrors.Clear();
+
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             foreach (var file in Request.Form.Files)
@@ -262,6 +295,8 @@ namespace FxMovieAlert.Pages
                 try
                 {
                     var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
+
+                    var movieIdsInFile = new SortedSet<string>(); 
                     
                     using (var reader = new StreamReader(file.OpenReadStream()))
                     using (engine.BeginReadStream(reader))
@@ -270,6 +305,8 @@ namespace FxMovieAlert.Pages
                         try
                         {
                             string _const = record.Const;
+                            movieIdsInFile.Add(_const);
+
                             DateTime date = DateTime.ParseExact(record.Created, 
                                 new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
                                 CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
@@ -293,12 +330,38 @@ namespace FxMovieAlert.Pages
                         }
                         catch (Exception x)
                         {
+                            LastImportErrors.Add(
+                                Tuple.Create(
+                                    $"Lijn {engine.LineNumber - 1} uit het watchlist bestand '{file.FileName}' kon niet verwerkt worden. "
+                                    + "De meest voorkomende reden is een aanpassing aan het bestandsformaat door IMDb.",
+                                    x.ToString(),
+                                    "danger"));
                         }
                     }
+
+                    List<UserWatchListItem> itemsToRemove = 
+                        db.UserWatchLists
+                            .Where(ur => ur.ImdbUserId == imdbUserId && !movieIdsInFile.Contains(ur.ImdbMovieId))
+                            .ToList();
+
+                    db.UserWatchLists.RemoveRange(itemsToRemove);
+                    
+                    LastImportErrors.Add(
+                        Tuple.Create(
+                            $"Het watchlist bestand '{file.FileName}' werd ingelezen. "
+                            + $"{newCount} nieuwe en {existingCount} bestaande films.  {itemsToRemove.Count} films verwijderd.",
+                            (string)null,
+                            "success"));
                 }
                 catch (Exception x)
                 {
-                    Console.WriteLine($"Failed to read file, Error: {x.ToString()}");
+                    LastImportErrors.Add(
+                        Tuple.Create(
+                            $"Het watchlist bestand '{file.FileName}' kon niet ingelezen worden.\n"
+                            + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
+                            + "het bestandsformaat door IMDb.",
+                            x.ToString(),
+                            "danger"));
                 }
 
                 db.SaveChanges();
@@ -385,6 +448,10 @@ namespace FxMovieAlert.Pages
         public string ReleaseDate;
         [FieldQuoted]
         public string Directors;
+        [FieldQuoted]
+        public string YourRating;
+        [FieldQuoted]
+        public string Rated;
 
     }
 

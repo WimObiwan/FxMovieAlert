@@ -135,13 +135,93 @@ td, th {
 </tr>
 <tr>
     <td colspan="3">
-        <strong>Automatische download</strong>
+        <strong>Manuele import</strong>
+    </td>
+</tr>
+<tr>
+    <td>
+        IMDb CSV import
+    </td>
+    <td>
+        <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_new">IMDb Ratings export</a>
+    </td>
+    <td>
+        <a href="http://www.imdb.com/list/export?list_id=watchlist&author_id=@Model.ImdbUserId" target="_new">IMDb Watchlist export</a>
+    </td>
+</tr>
+<tr>
+    <td>
+        Manuele import
+    </td>
+    <td>
+        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
+            <div class="form-group">
+                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
+                <input type="file" name="files" multiple />
+                <input type="hidden" name="type" value="ratings" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Importeren" />
+            </div>
+        </form>
+    </td>
+    <td>
+        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
+            <div class="form-group">
+                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
+                <input type="file" name="files" multiple />
+                <input type="hidden" name="type" value="watchlist" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Importeren" />
+            </div>
+        </form>
+    </td>
+</tr>
+@if (Model.LastImportErrors.Any())
+{
+<tr>
+    <td>
+        Laatste import resultaat
+    </td>
+    <td colspan="2">
+        @{
+            int cnt = 0;
+        }
+        @foreach (var item in Model.LastImportErrors.Take(10))
+        {
+            cnt++;
+            <div class="alert alert-@item.Item3">
+                <p>
+                </p>
+                @item.Item1
+                @if (!string.IsNullOrEmpty(item.Item2))
+                {
+                <p>
+                    <small>
+                        <a href="#lastImportError-@cnt" data-toggle="collapse">
+                            Details...
+                        </a>
+                        <div id="lastImportError-@cnt" class="collapse">
+                            @item.Item2
+                        </div>
+                    </small>
+                </p>
+                }
+            </div>            
+        }
+    </td>
+</tr>
+}
+<tr>
+    <td colspan="3">
+        <strong>Automatische import</strong>
         <div class="alert alert-warning">
             <strong>Opgelet!</strong>
             Het automatisch downloaden van je laatste IMDb ratings &amp; watchlist via RSS is niet langer mogelijk,
             na wijzigingen aan de IMDb website.
             We bekijken wat mogelijk is om dit te verhelpen.
-            Voorlopig kunt u enkel ratings &amp; watchlist manueel opladen, zie hieronder.
+            Voorlopig kunt u enkel ratings &amp; watchlist manueel opladen, zie hierboven.
         </div>
         <small class="disabled">
             Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel voor ongeveer de laatste 250 ratings. 
@@ -270,51 +350,6 @@ td, th {
         {
             <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
         }
-    </td>
-</tr>
-<tr>
-    <td colspan="3">
-        <strong>Manuele import</strong>
-    </td>
-</tr>
-<tr>
-    <td>
-        IMDb CSV import
-    </td>
-    <td>
-        <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_new">IMDb Ratings export</a>
-    </td>
-    <td>
-        <a href="http://www.imdb.com/list/export?list_id=watchlist&author_id=@Model.ImdbUserId" target="_new">IMDb Watchlist export</a>
-    </td>
-</tr>
-<tr>
-    <td>
-        Manuele import
-    </td>
-    <td>
-        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
-            <div class="form-group">
-                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
-                <input type="file" name="files" multiple />
-                <input type="hidden" name="type" value="ratings" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Importeren" />
-            </div>
-        </form>
-    </td>
-    <td>
-        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
-            <div class="form-group">
-                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
-                <input type="file" name="files" multiple />
-                <input type="hidden" name="type" value="watchlist" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Importeren" />
-            </div>
-        </form>
     </td>
 </tr>
 </table>
