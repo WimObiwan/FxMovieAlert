@@ -81,6 +81,8 @@ namespace FxMovieAlert.Pages
         public void OnGet(int? m = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
             int? movieeventid = null, string setimdbid = null, int? maxdays = null)
         {
+            string userId = ClaimChecker.UserId(User.Identity);
+
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
@@ -108,8 +110,6 @@ namespace FxMovieAlert.Pages
             FilterCert = cert & Cert.all2;
             if (FilterCert == Cert.all2)
                 FilterCert = Cert.all;
-
-            ImdbUserId = Request.Cookies["ImdbUserId"];
 
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
@@ -150,9 +150,9 @@ namespace FxMovieAlert.Pages
                     }
                 }
 
-                if (ImdbUserId != null)
+                if (userId != null)
                 {
-                    var user = db.Users.Find(ImdbUserId);
+                    var user = db.Users.Find(userId);
                     if (user != null)
                     {
                         RefreshRequestTime = user.RefreshRequestTime;
@@ -173,7 +173,7 @@ namespace FxMovieAlert.Pages
                 CountMinRating7 = db.MovieEvents.Where(me => me.ImdbRating >= 70).Count();
                 CountMinRating8 = db.MovieEvents.Where(me => me.ImdbRating >= 80).Count();
                 CountMinRating9 = db.MovieEvents.Where(me => me.ImdbRating >= 90).Count();
-                CountNotOnImdb = db.MovieEvents.Where(me => me.ImdbId == null).Count();
+                CountNotOnImdb = db.MovieEvents.Where(me => string.IsNullOrEmpty(me.ImdbId)).Count();
                 CountNotRatedOnImdb = db.MovieEvents.Where(me => me.ImdbRating == null).Count();
                 CountCertNone =  db.MovieEvents.Where(me => string.IsNullOrEmpty(me.Certification)).Count();
                 CountCertG =  db.MovieEvents.Where(me => me.Certification == "US:G").Count();
@@ -183,7 +183,7 @@ namespace FxMovieAlert.Pages
                 CountCertNC17 =  db.MovieEvents.Where(me => me.Certification == "US:NC-17").Count();
                 CountCertOther =  Count - CountCertNone - CountCertG - CountCertPG - CountCertPG13 - CountCertR - CountCertNC17;
                 CountRated = db.MovieEvents.Where(
-                    me => db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Any(ur => ur.ImdbMovieId == me.ImdbId)).Count();
+                    me => db.UserRatings.Where(ur => ur.UserId == userId).Any(ur => ur.ImdbMovieId == me.ImdbId)).Count();
                 CountNotYetRated = Count - CountRated;
                 Count3days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(3)).Count();
                 Count5days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(5)).Count();
@@ -191,9 +191,9 @@ namespace FxMovieAlert.Pages
 
                 Records = (
                     from me in db.MovieEvents.Include(me => me.Channel)
-                    join ur in db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals ur.ImdbMovieId into urGroup
+                    join ur in db.UserRatings.Where(ur => ur.UserId == userId) on me.ImdbId equals ur.ImdbMovieId into urGroup
                     from ur in urGroup.DefaultIfEmpty(null)
-                    join uw in db.UserWatchLists.Where(ur => ur.ImdbUserId == ImdbUserId) on me.ImdbId equals uw.ImdbMovieId into uwGroup
+                    join uw in db.UserWatchLists.Where(ur => ur.UserId == userId) on me.ImdbId equals uw.ImdbMovieId into uwGroup
                     from uw in uwGroup.DefaultIfEmpty(null)
                     where 
                         (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
@@ -201,7 +201,7 @@ namespace FxMovieAlert.Pages
                         (me.EndTime >= now && me.StartTime >= now.AddMinutes(-15))
                         &&
                         (!FilterMinRating.HasValue 
-                            || (FilterMinRating.Value == NO_IMDB_ID && me.ImdbId == null)
+                            || (FilterMinRating.Value == NO_IMDB_ID && string.IsNullOrEmpty(me.ImdbId))
                             || (FilterMinRating.Value == NO_IMDB_RATING && me.ImdbRating == null)
                             || (FilterMinRating.Value >= 0.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
                         &&

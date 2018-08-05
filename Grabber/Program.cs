@@ -92,7 +92,7 @@ namespace FxMovies.Grabber
             // dotnet build --configuration release
             // dotnet .\Grabber\bin\Release\netcoreapp2.0\Grabber.dll GenerateImdbDatabase
             // dotnet .\Grabber\bin\Release\netcoreapp2.0\Grabber.dll UpdateEPG
-            // dotnet .\Grabber\bin\Release\netcoreapp2.0\Grabber.dll UpdateImdbUserRatings ur27490911
+            // dotnet .\Grabber\bin\Release\netcoreapp2.0\Grabber.dll UpdateImdbUserRatings userid ur27490911
 
             string command = null;
             var arguments = new List<string>();
@@ -135,13 +135,13 @@ namespace FxMovies.Grabber
             }
             else if (command.Equals("UpdateImdbUserRatings"))
             {
-                if (arguments.Count != 1)
+                if (arguments.Count != 2)
                 {
                     Console.WriteLine("Manual: Invalid argument count");
                     return;
                 }
 
-                UpdateImdbUserRatings(arguments[0]);
+                UpdateImdbUserRatings(arguments[0], arguments[1]);
             }
             else if (command.Equals("AutoUpdateImdbUserRatings"))
             {
@@ -212,10 +212,10 @@ namespace FxMovies.Grabber
             Console.WriteLine("   Grabber Manual <MovieEventId> <ImdbID(tt...)>");
         }
 
-        static void UpdateImdbUserRatings(string imdbUserId)
+        static void UpdateImdbUserRatings(string userId, string imdbUserId)
         {
-            UpdateImdbUserRatings(imdbUserId, false);
-            UpdateImdbUserRatings(imdbUserId, true);
+            UpdateImdbUserRatings(userId, imdbUserId, false);
+            UpdateImdbUserRatings(userId, imdbUserId, true);
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -241,7 +241,7 @@ namespace FxMovies.Grabber
             }
         }
 
-        static void UpdateImdbUserRatings(string imdbUserId, bool watchlist)
+        static void UpdateImdbUserRatings(string userId, string imdbUserId, bool watchlist)
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -292,18 +292,18 @@ namespace FxMovies.Grabber
                         {
                             if (watchlist)
                             {
-                                var userWatchListItem = db.UserWatchLists.Find(imdbUserId, imdbId);
+                                var userWatchListItem = db.UserWatchLists.Find(userId, imdbId);
                                 if (userWatchListItem == null)
                                 {
                                     userWatchListItem = new UserWatchListItem();
-                                    userWatchListItem.ImdbUserId = imdbUserId;
+                                    userWatchListItem.UserId = userId;
                                     userWatchListItem.ImdbMovieId = imdbId;
                                     db.UserWatchLists.Add(userWatchListItem);
                                 }
                                 userWatchListItem.AddedDate = date;
 
                                 Console.WriteLine("UserId={0} IMDbId={1} Added={2}", 
-                                    userWatchListItem.ImdbUserId, userWatchListItem.ImdbMovieId, userWatchListItem.AddedDate);
+                                    userWatchListItem.UserId, userWatchListItem.ImdbMovieId, userWatchListItem.AddedDate);
                             }
                             else
                             {
@@ -312,11 +312,11 @@ namespace FxMovies.Grabber
                                     continue;
                                 int rating = int.Parse(ratingText);
 
-                                var userRating = db.UserRatings.Find(imdbUserId, imdbId);
+                                var userRating = db.UserRatings.Find(userId, imdbId);
                                 if (userRating == null)
                                 {
                                     userRating = new UserRating();
-                                    userRating.ImdbUserId = imdbUserId;
+                                    userRating.UserId = userId;
                                     userRating.ImdbMovieId = imdbId;
                                     db.UserRatings.Add(userRating);
                                 }
@@ -324,7 +324,7 @@ namespace FxMovies.Grabber
                                 userRating.Rating = rating;
 
                                 Console.WriteLine("UserId={0} IMDbId={1} Added={2} Rating={3}", 
-                                    userRating.ImdbUserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+                                    userRating.UserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
                             }
 
                             db.SaveChanges();
@@ -413,7 +413,7 @@ namespace FxMovies.Grabber
                     Console.WriteLine("   * LastRefreshRatingsTime = {0}", 
                         user.LastRefreshRatingsTime.Value);
                     
-                UpdateImdbUserRatings(user.ImdbUserId);
+                UpdateImdbUserRatings(user.UserId, user.ImdbUserId);
             }
         }
 

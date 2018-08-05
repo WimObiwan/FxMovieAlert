@@ -44,15 +44,24 @@ td, th {
 </p>
 <p>
     <ul>
-        <li>Voor de bekeken films worden je publieke <i>IMDb Ratings</i> gebruikt.</li>
-        <li>De publieke <i>IMDb Watchlist</i> wordt gebruikt voor de films die je nog wilt zien.</li>
+        <li>Voor de bekeken films worden je <i>IMDb Ratings</i> gebruikt.</li>
+        <li>De <i>IMDb Watchlist</i> wordt gebruikt voor de films die je nog wilt zien.</li>
     </ul> 
 </p>
+@if (User.Identity.IsAuthenticated)
+{
 <p>
-    Deze beide lijsten moeten publiek zijn.  
-    Het enige wat we nodig hebben is een IMDb Gebruikers ID, zonder paswoord.
+    Je kunt deze hieronder manueel uploaden.
 </p>
+}
+else
+{
+<p>
+    Je dient eerst <a asp-page="/Account" asp-page-handler="login">in te loggen</a>.
+</p>
+}
 
+<!--
 <h3>IMDb Gebruikers ID</h3>
 
 <p>
@@ -60,31 +69,18 @@ td, th {
     <a href="https://www.imdb.com/profile" target="_new">https://www.imdb.com/profile</a>,
     waarna je je gebruikersnaam vindt in de adresbalk. 
 </p>
+-->
 
-<p>
-@if (string.IsNullOrEmpty(Model.ImdbUserId))
+@if (User.Identity.IsAuthenticated)
 {
+<p>
     <form action="#" method="GET">
         Vul hier je IMDb Gebruikers ID in:
         <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" />
-        <input type="submit" value="Inloggen" /> 
+        <input type="submit" value="Bewaren" /> 
     </form>
-}
-@if (!string.IsNullOrEmpty(Model.ImdbUserId))
-{
-    <div class="alert alert-warning">
-        Je bent ingelogd met IMDb Gebruikers ID @(Model.ImdbUserId).
-    </div>
-    <form action="#" method="GET">  
-        <input type="hidden" name="setimdbuserid" value="remove" />
-        <input type="submit" value="Uitloggen" /> 
-    </form>
-}
 </p>
 
-    
-@if (!string.IsNullOrEmpty(Model.ImdbUserId))
-{
 <h3>Informatie gedownload van IMDb</h3>
 
 <div class="table-responsive">  
@@ -143,10 +139,14 @@ td, th {
         IMDb CSV import
     </td>
     <td>
-        <a href="http://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_new">IMDb Ratings export</a>
+        Exporteer eerst je ratings op de IMDb website met deze link:<br/>
+        <a href="https://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_new">IMDb Ratings export</a><br/>
+        En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
     </td>
     <td>
-        <a href="http://www.imdb.com/list/export?list_id=watchlist&author_id=@Model.ImdbUserId" target="_new">IMDb Watchlist export</a>
+        Exporteer eerst je watchlist op de IMDb website met deze link:<br/>
+        <a href="https://www.imdb.com/user/@(Model.ImdbUserId)/watchlist" target="_new">IMDb Watchlist export</a><br/>
+        En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
     </td>
 </tr>
 <tr>

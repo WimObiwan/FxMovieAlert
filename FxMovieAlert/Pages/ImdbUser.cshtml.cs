@@ -39,6 +39,13 @@ namespace FxMovieAlert.Pages
 
         public void OnGet(bool forcerefresh = false, string setimdbuserid = null)
         {
+            string userId = ClaimChecker.UserId(User.Identity);
+
+            if (userId == null)
+            {
+                return;
+            }
+
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
@@ -49,21 +56,24 @@ namespace FxMovieAlert.Pages
 
             if (setimdbuserid == null)
             {
-                ImdbUserId = Request.Cookies["ImdbUserId"];
+                using (var db = FxMoviesDbContextFactory.Create(connectionStringMovies))
+                {
+                    var user = db.Users.Find(userId);
+                    if (user != null)
+                    {
+                        ImdbUserId = user.ImdbUserId;
+                    }
+                }
             }
             else if (setimdbuserid == "remove")
             {
                 using (var db = FxMoviesDbContextFactory.Create(connectionStringMovies))
                 {
-                    if (ImdbUserId != null)
-                    {
-                        db.Users.Remove(db.Users.Find(ImdbUserId));
-                        db.UserRatings.RemoveRange(db.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId));
-                    }
+                    db.Users.Remove(db.Users.Find(userId));
+                    db.UserRatings.RemoveRange(db.UserRatings.Where(ur => ur.UserId == userId));
                     db.SaveChanges();
                 }
 
-                Response.Cookies.Delete("ImdbUserId");
                 ImdbUserId = null;
             }
             else
@@ -76,12 +86,9 @@ namespace FxMovieAlert.Pages
                     int expirationDays = configuration.GetValue("LoginCookieExpirationDays", 30);
                     CookieOptions options = new CookieOptions();
                     options.Expires = DateTime.Now.AddDays(expirationDays);
-                    Response.Cookies.Append("ImdbUserId", imdbuserid, options);
-                    ImdbUserId = setimdbuserid;
+                    ImdbUserId = imdbuserid;
 
                     forcerefresh = true;
-
-                    WarningMessage = string.Format("Een cookie werd op je computer geplaatst om je IMDb Gebruikers ID {0} te onthouden.", imdbuserid);
                 }
                 else
                 {
@@ -93,10 +100,11 @@ namespace FxMovieAlert.Pages
             using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
             if (ImdbUserId != null)
             {
-                var user = dbMovies.Users.Find(ImdbUserId);
+                var user = dbMovies.Users.Find(userId);
                 if (user == null)
                 {
                     user = new User();
+                    user.UserId = userId;
                     user.ImdbUserId = ImdbUserId;
                     dbMovies.Users.Add(user);
                 }
@@ -114,10 +122,10 @@ namespace FxMovieAlert.Pages
                 user.LastUsageTime = DateTime.UtcNow;
                 dbMovies.SaveChanges();
 
-                UserRatingCount = dbMovies.UserRatings.Where(ur => ur.ImdbUserId == ImdbUserId).Count();
-                UserWatchListCount = dbMovies.UserWatchLists.Where(ur => ur.ImdbUserId == ImdbUserId).Count();
+                UserRatingCount = dbMovies.UserRatings.Where(ur => ur.UserId == userId).Count();
+                UserWatchListCount = dbMovies.UserWatchLists.Where(ur => ur.UserId == userId).Count();
                 var ratingLast = dbMovies.UserRatings
-                    .Where(ur => ur.ImdbUserId == ImdbUserId)
+                    .Where(ur => ur.UserId == userId)
                     .OrderByDescending(ur => ur.RatingDate)
                     .FirstOrDefault();
                 if (ratingLast != null)
@@ -132,7 +140,7 @@ namespace FxMovieAlert.Pages
                     }
                 }
                 var watchListLast = dbMovies.UserWatchLists
-                    .Where(uw => uw.ImdbUserId == ImdbUserId)
+                    .Where(uw => uw.UserId == userId)
                     .OrderByDescending(uw => uw.AddedDate)
                     .FirstOrDefault();
                 if (watchListLast != null)
@@ -181,7 +189,7 @@ namespace FxMovieAlert.Pages
 
         private void OnPostRatings()
         {
-            string imdbUserId = Request.Cookies["ImdbUserId"];
+            string userId = ClaimChecker.UserId(User.Identity);
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -218,11 +226,11 @@ namespace FxMovieAlert.Pages
                             // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
                             int rating = int.Parse(record.YourRating);
 
-                            var userRating = db.UserRatings.Find(imdbUserId, _const);
+                            var userRating = db.UserRatings.Find(userId, _const);
                             if (userRating == null)
                             {
                                 userRating = new UserRating();
-                                userRating.ImdbUserId = imdbUserId;
+                                userRating.UserId = userId;
                                 userRating.ImdbMovieId = _const;
                                 db.UserRatings.Add(userRating);
                                 newCount++;
@@ -276,7 +284,7 @@ namespace FxMovieAlert.Pages
 
         private void OnPostWatchlist()
         {
-            string imdbUserId = Request.Cookies["ImdbUserId"];
+            string userId = ClaimChecker.UserId(User.Identity);
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -313,11 +321,11 @@ namespace FxMovieAlert.Pages
 
                             // Watchlist
                             // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                            var userWatchList = db.UserWatchLists.Find(imdbUserId, _const);
+                            var userWatchList = db.UserWatchLists.Find(userId, _const);
                             if (userWatchList == null)
                             {
                                 userWatchList = new UserWatchListItem();
-                                userWatchList.ImdbUserId = imdbUserId;
+                                userWatchList.UserId = userId;
                                 userWatchList.ImdbMovieId = _const;
                                 db.UserWatchLists.Add(userWatchList);
                                 newCount++;
@@ -341,7 +349,7 @@ namespace FxMovieAlert.Pages
 
                     List<UserWatchListItem> itemsToRemove = 
                         db.UserWatchLists
-                            .Where(ur => ur.ImdbUserId == imdbUserId && !movieIdsInFile.Contains(ur.ImdbMovieId))
+                            .Where(ur => ur.UserId == userId && !movieIdsInFile.Contains(ur.ImdbMovieId))
                             .ToList();
 
                     db.UserWatchLists.RemoveRange(itemsToRemove);

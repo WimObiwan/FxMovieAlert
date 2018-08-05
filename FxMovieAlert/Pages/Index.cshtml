@@ -500,7 +500,7 @@
                                     
                                 }
                                 &nbsp;
-                                @if (@movieEvent.ImdbId != null)
+                                @if (!string.IsNullOrEmpty(@movieEvent.ImdbId))
                                 {
                                         <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
                                             <img src="/images/imdb.png" alt="IMDb" height="24px" />

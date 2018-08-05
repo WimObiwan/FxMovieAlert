@@ -15,9 +15,9 @@ namespace FxMovies.FxMoviesDB
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<UserRating>()
-                .HasKey(u => new { u.ImdbUserId, u.ImdbMovieId });
+                .HasKey(u => new { u.UserId, u.ImdbMovieId });
             modelBuilder.Entity<UserWatchListItem>()
-                .HasKey(u => new { u.ImdbUserId, u.ImdbMovieId });
+                .HasKey(u => new { u.UserId, u.ImdbMovieId });
             modelBuilder.Entity<VodMovie>()
                 .HasKey(m => new { m.Provider, m.ProviderCategory, m.ProviderId });
         }

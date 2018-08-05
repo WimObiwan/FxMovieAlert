@@ -13,6 +13,7 @@ namespace FxMovies.FxMoviesDB
         }
 
         [Key]
+        public string UserId { get; set; }
         public string ImdbUserId { get; set; }
         public DateTime? RefreshRequestTime { get; set; }
         public DateTime? LastRefreshRatingsTime { get; set; }

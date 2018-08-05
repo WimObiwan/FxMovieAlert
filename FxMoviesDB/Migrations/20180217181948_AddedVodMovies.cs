@@ -8,12 +8,12 @@ namespace FxMoviesDB.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<int>(
-                name: "Year",
-                table: "MovieEvents",
-                type: "INTEGER",
-                nullable: true,
-                oldClrType: typeof(int));
+            // migrationBuilder.AlterColumn<int>(
+            //     name: "Year",
+            //     table: "MovieEvents",
+            //     type: "INTEGER",
+            //     nullable: true,
+            //     oldClrType: typeof(int));
 
             migrationBuilder.CreateTable(
                 name: "VodMovies",
@@ -47,13 +47,13 @@ namespace FxMoviesDB.Migrations
             migrationBuilder.DropTable(
                 name: "VodMovies");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Year",
-                table: "MovieEvents",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER",
-                oldNullable: true);
+            // migrationBuilder.AlterColumn<int>(
+            //     name: "Year",
+            //     table: "MovieEvents",
+            //     nullable: false,
+            //     oldClrType: typeof(int),
+            //     oldType: "INTEGER",
+            //     oldNullable: true);
         }
     }
 }
