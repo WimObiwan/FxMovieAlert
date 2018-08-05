@@ -1,5 +1,5 @@
 ﻿@page
-@model IndexModel
+@model ZendersModel
 @using System.Text;
 @using System.Globalization;
 @{
@@ -85,15 +85,6 @@
         string FormatQueryString(decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
         {
             StringBuilder sb = null;
-            if (Model.Password != null)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("password=");
-                sb.Append(System.Text.Encodings.Web.UrlEncoder.Default.Encode(Model.Password));
-            }
             if (minrating.HasValue)
             {
                 if (sb == null)
@@ -243,11 +234,11 @@
             IMDb Sterren
             @if (Model.FilterMinRating.HasValue)
             {
-                if (Model.FilterMinRating.Value == IndexModel.NO_IMDB_ID)
+                if (Model.FilterMinRating.Value == ZendersModel.NO_IMDB_ID)
                 {
                     @: (geen IMDb)
                 }
-                else if (Model.FilterMinRating.Value == IndexModel.NO_IMDB_RATING)
+                else if (Model.FilterMinRating.Value == ZendersModel.NO_IMDB_RATING)
                 {
                     @: (geen Sterren)
                 }
@@ -271,8 +262,8 @@
             <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
             <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
             <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithMinRating(IndexModel.NO_IMDB_ID)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == IndexModel.NO_IMDB_ID)">Niet gevonden op IMDb (@Model.CountNotOnImdb)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(IndexModel.NO_IMDB_RATING)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == IndexModel.NO_IMDB_RATING)">Niet beoordeeld op IMDb (@Model.CountNotRatedOnImdb)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(ZendersModel.NO_IMDB_ID)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == ZendersModel.NO_IMDB_ID)">Niet gevonden op IMDb (@Model.CountNotOnImdb)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(ZendersModel.NO_IMDB_RATING)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == ZendersModel.NO_IMDB_RATING)">Niet beoordeeld op IMDb (@Model.CountNotRatedOnImdb)</a></li>
         </ul>
     </div>
 
@@ -490,7 +481,7 @@
                                 var shareUrl = $"https://filmoptv.be/?m={movieEvent.Id}";
                             }
 
-                            @if (Model.AdminMode)
+                            @if (Model.EditImdbLinks)
                             {
                                 <small>
                                     <a href="@shareUrl">&pi;</a>
@@ -524,7 +515,7 @@
                                     </a>
                                 }
 
-                                @if (Model.AdminMode)
+                                @if (Model.EditImdbLinks)
                                 {
                                     <small>
                                         <a href="#manualImdbLink-@movieEvent.Id" data-toggle="collapse">
@@ -539,12 +530,7 @@
                                                 <a href="http://www.imdb.com/search/title?release_date=@(movieEvent.Year-1)-07-01,@(movieEvent.Year+1)-07-01&title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_new">advanced</a>
                                                 <br/>
                                                 IMDb ID: <input type="edit" name="setimdbid" value="" /> <br/>
-                                                Password: <input type="password" name="password" value="" /> <br>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
-                                                @if (Model.FilterMinRating.HasValue)
-                                                {
-                                                    <input type="hidden" name="password" value="@Model.Password" /> <br/>
-                                                }
                                                 @if (Model.FilterMinRating.HasValue)
                                                 {
                                                     <input type="hidden" name="minrating" value="@Model.FilterMinRating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat)" /> <br/>
@@ -615,16 +601,3 @@
         }
     </tbody>
 </table>
-
-@if (!Model.AdminMode)
-{
-    <a href="#adminlogin" data-toggle="collapse">
-        &pi;
-    </a>
-    <div id="adminlogin" class="collapse">
-        <form action="#" method="GET">
-            Admin login password: <input type="password" name="password" value="" />
-            <input type="submit" value="Login" /> 
-        </form>
-    </div>
-}

@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -33,10 +35,13 @@ namespace FxMovieAlert.Pages
         all2 = 127,
     }
 
-    public class IndexModel : PageModel
+    [AllowAnonymous]
+    public class ZendersModel : PageModel
     {
         public const decimal NO_IMDB_ID = -1.0m;
         public const decimal NO_IMDB_RATING = -2.0m;
+        const string ClaimEditImdbLinks = "edit:imdblinks";
+        public bool EditImdbLinks = false;
         public MovieEvent MovieEvent = null;
         public IList<Record> Records = new List<Record>();
         public string ImdbUserId = null;
@@ -70,23 +75,11 @@ namespace FxMovieAlert.Pages
         public int Count3days = 0;
         public int Count5days = 0;
         public int Count8days = 0;
-        public bool AdminMode = false;
-        public string Password = null;
         public int AdsInterval = 5;
 
-        private string Hash(string password)
-        {
-            var bytes = (new System.Text.UTF8Encoding()).GetBytes(password);
-            byte[] hashBytes;
-            using (var algorithm = new System.Security.Cryptography.SHA512Managed())
-            {
-                hashBytes = algorithm.ComputeHash(bytes);
-            }
-            return Convert.ToBase64String(hashBytes);
-        }
 
         public void OnGet(int? m = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
-            int? movieeventid = null, string setimdbid = null, string password = null, int? maxdays = null)
+            int? movieeventid = null, string setimdbid = null, int? maxdays = null)
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -103,20 +96,8 @@ namespace FxMovieAlert.Pages
             FilterMaxDaysDefault = configuration.GetValue("DefaultMaxDays", FilterMaxDaysDefault);
             FilterMaxDays = FilterMaxDaysDefault;
 
-            if (!string.IsNullOrEmpty(password))
-            {
-                string salt = configuration["AdminPasswordSalt"];
-                string correctPassword = configuration["AdminPassword"];
-                string timeComponent = now.ToShortDateString() + now.ToString("HH");
-                string correctHash = Hash($"{salt}*{correctPassword}*{timeComponent}");
+            EditImdbLinks = ClaimChecker.Has(User.Identity, ClaimEditImdbLinks);
 
-                if (password == correctPassword || password == correctHash)
-                {
-                    Password = correctHash;
-                    AdminMode = true;
-                }
-            }
- 
             if (minrating.HasValue)
                 FilterMinRating = minrating.Value;
             
@@ -132,7 +113,7 @@ namespace FxMovieAlert.Pages
 
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
             {
-                if (AdminMode && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
+                if (EditImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
                 {
                     bool overwrite = false;
                     var match = Regex.Match(setimdbid, @"(tt\d+)");
@@ -257,5 +238,11 @@ namespace FxMovieAlert.Pages
                     return Cert.other;
             }
         }
+
+        public async Task OnGetLogin(string returnUrl = "/")
+        {
+            await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties() { RedirectUri = returnUrl });
+        }
+
     }
 }

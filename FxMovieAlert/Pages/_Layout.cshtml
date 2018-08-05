@@ -115,9 +115,25 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li><a asp-page="/Index">Films</a></li>
+                    <li><a asp-page="/Index">Vlaamse zenders</a></li>
+                    <li><a asp-page="/YeloPlay">Yelo Play</a></li>
                     <li><a asp-page="/ImdbUser">IMDb Gebruiker</a></li>
                     <li><a asp-page="/About">Over FilmOpTV.be</a></li>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li>
+                            <a asp-page="/Account" asp-page-handler="logout">Afloggen (@User.Identity.Name)
+                                @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
+                                {
+                                    @("[Admin]")
+                                }
+                            </a>
+                        </li>
+                    }                    
+                    else
+                    {
+                        <li><a asp-page="/Account" asp-page-handler="login">Inloggen</a></li>
+                    }
                 </ul>
             </div>
         </div>
@@ -136,7 +152,7 @@
         <hr />
         <footer>
             <p>
-                Versie 0.17 (2018-02-14).
+                Versie 0.18 (2018-08-04).
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
                 &copy; 2017
                 @if (DateTime.Now.Year > 2017)
