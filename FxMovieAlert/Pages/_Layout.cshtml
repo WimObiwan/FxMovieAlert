@@ -115,24 +115,44 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li><a asp-page="/Index">Vlaamse zenders</a></li>
-                    <li><a asp-page="/YeloPlay">Yelo Play</a></li>
-                    <li><a asp-page="/ImdbUser">IMDb Gebruiker</a></li>
-                    <li><a asp-page="/About">Over FilmOpTV.be</a></li>
+                    <li><a asp-page="/Index"><span class="glyphicon glyphicon-flag"></span>
+                        &nbsp;<span class="hidden-sm">Vlaamse zenders</span>
+                    </a></li>
+                    <li><a asp-page="/YeloPlay"><span class="glyphicon glyphicon-eur"></span>
+                        &nbsp;<span class="hidden-sm">Yelo Play</span>
+                    </a></li>
+                    <li><a asp-page="/ImdbUser"><span class="glyphicon glyphicon-film"></span>
+                        &nbsp;<span class="hidden-sm">IMDb Gebruiker</span>
+                    </a></li>
+                    <li><a asp-page="/About"><span class="glyphicon glyphicon-info-sign"></span>
+                        &nbsp;<span class="hidden-sm">Over FilmOpTV.be</span>
+                    </a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
                     @if (User.Identity.IsAuthenticated)
                     {
+                        @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
+                        {
+                            <li><a href="#">Admin</a></li>
+                        }
+                        var picture = User.FindFirst("picture")?.Value;
                         <li>
-                            <a asp-page="/Account" asp-page-handler="logout">Afloggen (@User.Identity.Name)
-                                @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
+                            <a asp-page="/Account" asp-page-handler="logout">
+                                <!--p title="Afloggen (@User.Identity.Name)"-->
+                                @if (!string.IsNullOrEmpty(picture))
                                 {
-                                    @("[Admin]")
+                                    <div class="avatar">
+                                        <img src="@picture" alt="avatar" />
+                                    </div>
                                 }
                             </a>
                         </li>
                     }                    
                     else
                     {
-                        <li><a asp-page="/Account" asp-page-handler="login">Inloggen</a></li>
+                        <li><a asp-page="/Account" asp-page-handler="login"><span class="glyphicon glyphicon-user"></span>
+                            &nbsp;<span class="hidden-sm">Inloggen</span>
+                        </a></li>
                     }
                 </ul>
             </div>
@@ -152,12 +172,16 @@
         <hr />
         <footer>
             <p>
-                Versie 0.19 (2018-08-05).
+                Versie 0.20 (2018-10-09).
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
-                &copy; 2017
+                &copy;
                 @if (DateTime.Now.Year > 2017)
                 {
-                    @: -@(DateTime.Now.Year)
+                    @: 2017-@(DateTime.Now.Year)
+                }
+                else
+                {
+                    @: 2017
                 }
                  - Fox Innovations / Wim Devos
             </p>
