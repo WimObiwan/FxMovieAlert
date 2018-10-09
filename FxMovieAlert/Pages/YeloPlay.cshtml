@@ -1,9 +1,557 @@
 ﻿@page
 @model YeloPlayModel
+
+@using System.Text;
+@using System.Globalization;
 @{
     ViewData["Title"] = "Yelo Play";
+    ViewData["Canonical"] = "/";
+    @*
+    if (Model.vodMovie != null)
+    {
+        ViewData["og:title"] = Model.vodMovie.Title;
+        //ViewData["og:description"] = Model.vodMovie.Content;
+        var description = string.Format("{2:dddd} FilmOpTV.be '{0}' op {1} om {2:HH:mm} - {3}/10 op IMDb",
+            Model.vodMovie.Title, Model.vodMovie.Channel.Name, Model.vodMovie.StartTime, Model.vodMovie.ImdbRating/10.0);
+        description = char.ToUpper(description[0]) + description.Substring(1);
+        ViewData["og:description"] = description;
+        ViewData["og:url"] = $"/?m={@Model.vodMovie.Id}";
+        ViewData["og:image"] = GetImageUrl(Model.vodMovie.PosterM_Local, Model.vodMovie.PosterM);
+        ViewData["og:image:secure_url"] = GetImageUrl(Model.vodMovie.PosterM_Local, Model.vodMovie.PosterM);
+    }
+    *@
 }
 
-<p>
-    Deze pagina is in ontwikkeling...
-</p>
+@*
+    @if (Model.vodMovie != null)
+    {
+        <script type="text/javascript">
+            window.onload = function (event) {
+                window.location.hash = "#@Model.vodMovie.Id";
+            };
+        </script>
+    }
+*@
+
+    <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = 'https://connect.facebook.net/nl_NL/sdk.js#xfbml=1&version=v2.11';
+    fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+    </script>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+	<style type="text/css">
+        a.anchor {
+            display: block;
+            position: relative;
+            top: -60px;
+            visibility: hidden;
+        }
+
+		span.stars, span.stars span {
+			display: inline-block;
+			background: url(/images/stars.png) 0 -16px repeat-x;
+			width: 160px;
+			height: 16px;
+		}
+	
+		span.stars span {
+			background-position: 0 0;
+		}
+
+        h2 {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        td.collapsable {
+            display:block;
+        }
+
+        @@media only screen and (max-width: 1000px) {
+            td.collapsable {
+                display:none;
+            }
+
+            span.stars, span.stars span {
+                display: none;
+                background: url(/images/stars.png) 0 -16px repeat-x;
+                width: 160px;
+                height: 16px;
+            }
+        }
+	</style>
+
+    @functions 
+    {
+        string FormatQueryString(decimal? minrating, bool? notyetrated, Cert cert)
+        {
+            StringBuilder sb = null;
+            if (minrating.HasValue)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("minrating=");
+                sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
+            }
+            if (notyetrated.HasValue)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                if (notyetrated.Value)
+                    sb.Append("notyetrated=true");
+                else
+                    sb.Append("notyetrated=false");
+            }
+            if (cert != Cert.all)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("cert=");
+                sb.Append(cert.ToString("g"));
+            }
+            return sb?.ToString() ?? "";
+        }
+
+        string FormatQueryStringWithMinRating(decimal? minrating)
+        {
+            return FormatQueryString(minrating, Model.FilterNotYetRated, Model.FilterCert);
+        }
+
+        string FormatQueryStringWithNotYetRated(bool? notyetrated)
+        {
+            return FormatQueryString(Model.FilterMinRating, notyetrated, Model.FilterCert);
+        }
+
+        string FormatQueryStringWithToggleCert(Cert cert)
+        {
+            if (cert != Cert.all)
+                cert = Model.FilterCert ^ cert;
+            return FormatQueryString(Model.FilterMinRating, Model.FilterNotYetRated, cert);
+        }
+
+        string GetFilterStyle(bool hasValue)
+        {
+            if (hasValue)
+                return "primary";
+            else
+                return "default";
+        }
+
+        string FormatCert(Cert cert)
+        {
+            StringBuilder sb = null;
+            if ((cert & Cert.none) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("Zonder");
+            }
+            if ((cert & Cert.g) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("G");
+            }
+            if ((cert & Cert.pg) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("PG");
+            }
+            if ((cert & Cert.pg13) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("PG-13");
+            }
+            if ((cert & Cert.r) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("R");
+            }
+            if ((cert & Cert.nc17) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("NC-17");
+            }
+            if ((cert & Cert.other) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("Overige");
+            }
+
+            return sb?.ToString() ?? "";
+        }
+
+        string GetImageUrl(string local, string remote)
+        {
+            if (string.IsNullOrEmpty(local))
+                return remote;
+            
+            return "/images/cache/" + local;
+        }
+    }
+
+    Filters:
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithMinRating(null)" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue)">
+            IMDb Sterren
+            @if (Model.FilterMinRating.HasValue)
+            {
+                if (Model.FilterMinRating.Value == ZendersModel.NO_IMDB_ID)
+                {
+                    @: (geen IMDb)
+                }
+                else if (Model.FilterMinRating.Value == ZendersModel.NO_IMDB_RATING)
+                {
+                    @: (geen Sterren)
+                }
+                else
+                {
+                    @: (@(Model.FilterMinRating.Value.ToString("0.#"))+)
+                }
+            }
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+            <span class="sr-only">IMDb Sterren</span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="?@FormatQueryStringWithMinRating(null)" class="btn-@GetFilterStyle(!Model.FilterMinRating.HasValue)">Toon alle films (@Model.Count)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithMinRating(9.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 9.0m)">Enkel met 9+ sterren (@Model.CountMinRating9)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(8.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@Model.CountMinRating8)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(7.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@Model.CountMinRating7)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithMinRating(ZendersModel.NO_IMDB_ID)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == ZendersModel.NO_IMDB_ID)">Niet gevonden op IMDb (@Model.CountNotOnImdb)</a></li>
+            <li><a href="?@FormatQueryStringWithMinRating(ZendersModel.NO_IMDB_RATING)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == ZendersModel.NO_IMDB_RATING)">Niet beoordeeld op IMDb (@Model.CountNotRatedOnImdb)</a></li>
+        </ul>
+    </div>
+
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all)">
+            @if (Model.FilterCert == Cert.all)
+            {
+                @: Alle Certificaties
+            }
+            else
+            {
+                @: Certificaties (@FormatCert(Model.FilterCert))
+            }
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+            <span class="sr-only">Certificaties</span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(Model.FilterCert == Cert.all)">Alle films tonen (@Model.Count)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.g)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.g) != 0)">G (@Model.CountCertG)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg) != 0)">PG (@Model.CountCertPG)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg13) != 0)">PG-13 (@Model.CountCertPG13)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.r)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.r) != 0)">R (@Model.CountCertR)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.nc17) != 0)">NC-17 (@Model.CountCertNC17)</a></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.other) != 0)">Overige (@Model.CountCertOther)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithToggleCert(Cert.none)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.none) != 0)">Zonder (@Model.CountCertNone)</a></li>
+        </ul>
+    </div>
+
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue)">
+            @if (Model.FilterNotYetRated.HasValue)
+            {
+                @if (Model.FilterNotYetRated.Value)
+                {
+                    @: Enkel niet bekeken
+                }
+                else
+                {
+                    @: Enkel bekeken
+                }
+            }
+            else
+            {
+                @: Zowel bekeken als niet bekeken
+            }
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+            <span class="sr-only"></span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu">
+            <li>
+                <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn-@GetFilterStyle(!Model.FilterNotYetRated.HasValue)">
+                    Alle films tonen (@Model.Count)
+                </a>
+            </li>
+            <li class="divider"></li>
+            <li class="@(string.IsNullOrEmpty(Model.ImdbUserId)? "disabled" : "")">
+                <a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue && Model.FilterNotYetRated.Value)">
+                    Enkel films tonen die nog niet bekeken zijn (@Model.CountNotYetRated)
+                </a>
+            </li>
+            <li class="@(string.IsNullOrEmpty(Model.ImdbUserId)? "disabled" : "")">
+                <a href="?@FormatQueryStringWithNotYetRated(false)" class="btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue && !Model.FilterNotYetRated.Value)">
+                    Enkel films tonen die wel bekeken zijn (@Model.CountRated)
+                </a>
+            </li>
+            <li class="divider"></li>
+
+            @if (string.IsNullOrEmpty(Model.ImdbUserId))
+            {
+                <li class="dropdown-header">IMDb gebruiker is niet ingesteld</li>
+            }
+            else
+            {
+                <li class="dropdown-header">Je gebruikt IMDb gebruiker @(Model.ImdbUserId).</li>
+                @if (Model.RefreshRequestTime.HasValue)
+                {
+                    <li class="dropdown-header">
+                        Er is een refresh van je IMDb ratings gepland.<br/>
+                        Refresh de pagina binnen enkele minuten om het resultaat te zien.
+                    </li>
+                }
+                else if (Model.LastRefreshRatingsTime.HasValue)
+                {
+                    <li class="dropdown-header">
+                        Je IMDb ratings werden laatst herladen op @Model.LastRefreshRatingsTime.Value.ToLocalTime().
+                    </li>
+                }
+                else
+                {
+                    <li class="dropdown-header">
+                        Je IMDb ratings werden nog niet opgehaald.
+                    </li>
+                }
+            }
+            <li><a href="/ImdbUser">IMDb gebruiker instellen</a></li>
+        </ul>
+    </div>
+
+    <table class="table">
+    <tbody>
+        @*
+        @{
+            DateTime? lastDate = null;
+            int moviesSinceLastAd = 0;
+        }
+        *@
+
+        @foreach (var record in Model.Records)
+        {
+            var vodMovie = record.VodMovie;
+            @*
+            @if (lastDate == null || lastDate != vodMovie.StartTime.Date)
+            {
+                if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval)
+                {
+                    <tr>
+                        <td colspan="3">
+
+                            <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+                            <ins class="adsbygoogle"
+                                style="display:block"
+                                data-ad-client="ca-pub-6612546844038667"
+                                data-ad-slot="4129964976"
+                                data-ad-format="auto"></ins>
+                            <script>
+                            (adsbygoogle = window.adsbygoogle || []).push({});
+                            </script>
+
+                        </td>
+                    </tr>
+                    moviesSinceLastAd = 0;
+                }
+
+                <tr>
+                    <td colspan="3">
+                        <h1>@(@vodMovie.StartTime.ToLongDateString())</h1>
+                    </td>
+                </tr>
+
+                lastDate = vodMovie.StartTime.Date;
+            }
+
+            moviesSinceLastAd++;
+            *@
+
+            <tr>
+                <td>
+                </td>
+                <td class="collapsable">
+                    @if (@vodMovie.Image != null)
+                    {
+                        <img src="@(GetImageUrl(vodMovie.Image_Local, vodMovie.Image))" alt="@vodMovie.Title" width=150 />
+                    }
+                </td>
+                <td>
+                    <a class="anchor" name="@vodMovie.Id" ></a>
+                    <h2>
+                        @vodMovie.Title
+                        <small>@vodMovie.Year</small>
+                        <small>
+                            @if (!string.IsNullOrEmpty(@vodMovie.Certification))
+                            {
+                                @if (@vodMovie.Certification.Substring(0, 3) == "US:")
+                                {
+                                    @vodMovie.Certification.Substring(3)
+                                }
+                                else
+                                {
+                                    @vodMovie.Certification
+                                }
+                            }
+                            
+                            @{
+                                var shareUrl = $"https://filmoptv.be/?m={vodMovie.Id}";
+                            }
+
+                            @if (Model.EditImdbLinks)
+                            {
+                                <small>
+                                    <a href="@shareUrl">&pi;</a>
+                                </small>
+                            }
+                        </small>
+                        <span style="white-space: nowrap; float: right;">
+                            <small>
+                                <div class="fb-share-button" data-href="@shareUrl" data-layout="button" data-size="small" data-mobile-iframe="true"></div>
+                                &nbsp;
+                                @if (@vodMovie.YeloUrl != null)
+                                {
+                                    <a href="@vodMovie.YeloUrl" target="_new" title="Programmeer @vodMovie.Title op je digicorder..." style="text-decoration: none">
+                                        <img src="/images/yeloplay.png" alt="Yelo" height="36px" />
+                                    </a>
+                                    
+                                }
+                                &nbsp;
+                                @if (!string.IsNullOrEmpty(@vodMovie.ImdbId))
+                                {
+                                        <a href="http://www.imdb.com/title/@vodMovie.ImdbId" target="_new" title="Raadpleeg @vodMovie.Title op IMDb..." style="text-decoration: none">
+                                            <img src="/images/imdb.png" alt="IMDb" height="24px" />
+                                            @if (@vodMovie.ImdbRating.HasValue)
+                                            {
+                                                @((@vodMovie.ImdbRating.Value / 10.0).ToString("0.0"))
+                                                <span class="stars">
+                                                    <span style="width: @(Math.Round(16.0 * @vodMovie.ImdbRating.Value / 10, 0))px;">
+                                                    </span>
+                                                </span>
+                                            }
+                                    </a>
+                                }
+
+                                @if (Model.EditImdbLinks)
+                                {
+                                    <small>
+                                        <a href="#manualImdbLink-@vodMovie.Id" data-toggle="collapse">
+                                            <span class="glyphicon glyphicon-film"></span>
+                                        </a>
+                                        <div id="manualImdbLink-@vodMovie.Id" class="collapse">
+                                            vodMovieId: @vodMovie.Id <br/>
+                                            <form action="#" method="GET">
+                                                Manual input: 
+                                                IMDb search 
+                                                <a href="http://www.imdb.com/find?q=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(vodMovie.Title))&s=all" target="_new">all</a>
+                                                <a href="http://www.imdb.com/search/title?release_date=@(vodMovie.Year-1)-07-01,@(vodMovie.Year+1)-07-01&title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(vodMovie.Title))" target="_new">advanced</a>
+                                                <br/>
+                                                IMDb ID: <input type="edit" name="setimdbid" value="" /> <br/>
+                                                <input type="hidden" name="vodMovieid" value="@vodMovie.Id" /> <br/>
+                                                @if (Model.FilterMinRating.HasValue)
+                                                {
+                                                    <input type="hidden" name="minrating" value="@Model.FilterMinRating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat)" /> <br/>
+                                                }
+                                                @if (Model.FilterNotYetRated.HasValue)
+                                                {
+                                                    <input type="hidden" name="notyetrated" value="@Model.FilterNotYetRated.Value.ToString()" /> <br/>
+                                                }
+                                                @if (Model.FilterCert != Cert.all)
+                                                {
+                                                    <input type="hidden" name="cert" value="@Model.FilterCert.ToString("g")" /> <br/>
+                                                }
+                                                <input type="submit" value="Set" /> 
+                                            </form>
+                                        </div>
+                                    </small>
+                                }
+                            </small>
+                        </span>
+                    </h2>
+                    <div style="clear: both;">
+                        <p>
+                            @vodMovie.Genre
+                        </p>
+                        <p>
+                            @vodMovie.Content
+                        </p>
+                        @if (record.UserRating != null)
+                        {
+                            <p style="font-size: 20px">
+                                <span class="label label-info label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                                    Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
+                                    @(record.UserRating.Rating)
+                                </span>
+                            </p>
+                        }
+                        @if (record.UserWatchListItem != null)
+                        {
+                            <p style="font-size: 20px">
+                                <span class="label label-success label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                                    Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
+                                </span>
+                            </p>
+                        }
+                        @if (vodMovie.StartTime <= DateTime.Now)
+                        {
+                            <p style="font-size: 20px">
+                                <span class="label label-danger label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                                    Deze film is al @((int)(DateTime.Now - vodMovie.StartTime).TotalMinutes) minuten bezig.
+                                </span>
+                            </p>
+                        }
+                        else if (vodMovie.StartTime <= DateTime.Now.AddHours(1))
+                        {
+                            <p style="font-size: 20px">
+                                <span class="label label-warning label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                                    Deze film begint over @((int)(vodMovie.StartTime - DateTime.Now).TotalMinutes) minuten.
+                                </span>
+                            </p>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
