@@ -69,6 +69,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/manifest.json">
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <meta name="theme-color" content="#ffffff">
 
     <environment include="Development">
@@ -115,10 +116,10 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li><a asp-page="/Index"><span class="glyphicon glyphicon-flag"></span>
+                    <li><a asp-page="/Index"><i class="fas fa-tv"></i></span>
                         &nbsp;<span class="hidden-sm">Vlaamse zenders</span>
                     </a></li>
-                    <li><a asp-page="/YeloPlay"><span class="glyphicon glyphicon-eur"></span>
+                    <li><a asp-page="/YeloPlay"><i class="far fa-eye"></i></span>
                         &nbsp;<span class="hidden-sm">Yelo Play</span>
                     </a></li>
                     <li><a asp-page="/ImdbUser"><span class="glyphicon glyphicon-film"></span>
@@ -172,7 +173,7 @@
         <hr />
         <footer>
             <p>
-                Versie 0.20 (2018-10-09).
+                Versie 0.21 (2018-10-10).
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
                 &copy;
                 @if (DateTime.Now.Year > 2017)
