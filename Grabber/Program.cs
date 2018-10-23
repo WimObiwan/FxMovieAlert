@@ -61,8 +61,8 @@ namespace FxMovies.Grabber
         {
             // DB Migrations: (removing columns is NOT supported!)
             // cd ./FxMoviesDB/
-            // dotnet ef migrations add InitialCreate --startup-project ../Grabber/
-            // dotnet ef database update --startup-project ../Grabber
+            // dotnet ef migrations add InitialCreate --startup-project ../Grabber/ --context FxMoviesDbContext
+            // dotnet ef database update --startup-project ../Grabber --context FxMoviesDbContext
             
             // Minify CSS/JS:
             // cd FxMovieAlert
@@ -556,6 +556,7 @@ namespace FxMovies.Grabber
                             existingMovie.Duration = movie.Duration;
                             existingMovie.Genre = movie.Genre;
                             existingMovie.Content = movie.Content;
+                            existingMovie.Opinion = movie.Opinion;
                             existingMovie.YeloUrl = movie.YeloUrl;
                         }
                         else

@@ -562,6 +562,14 @@
                         <p>
                             @movieEvent.Content
                         </p>
+                        @if (!string.IsNullOrEmpty(movieEvent.Opinion))
+                        {
+                            <p>
+                                <i>
+                                    @movieEvent.Opinion
+                                </i>
+                            </p>
+                        }
                         @if (record.UserRating != null)
                         {
                             <p style="font-size: 20px">

@@ -43,6 +43,7 @@ namespace FxMovies.Grabber
         {
             public int id { get; set; }
             public int episodenumber { get; set; }
+            public string opinion { get; set; }
             public string title { get; set; }
             public int year { get; set; }
             public string description { get; set; }
@@ -145,6 +146,7 @@ namespace FxMovies.Grabber
                         PosterS = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.small,
                         PosterM = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.medium,
                         Content = evnt.program.content_long,
+                        Opinion = evnt.program.opinion,
                         Genre = evnt.program.description,
                     };
 
