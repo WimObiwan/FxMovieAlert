@@ -463,7 +463,10 @@
                     <a class="anchor" name="@movieEvent.Id" ></a>
                     <h2>
                         @movieEvent.Title
-                        <small>@movieEvent.Year</small>
+                        @if (movieEvent.Year > 0)
+                        {
+                            <small>@movieEvent.Year</small>
+                        }
                         <small>
                             @if (!string.IsNullOrEmpty(@movieEvent.Certification))
                             {
