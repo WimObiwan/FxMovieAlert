@@ -557,6 +557,7 @@ namespace FxMovies.Grabber
                             existingMovie.Genre = movie.Genre;
                             existingMovie.Content = movie.Content;
                             existingMovie.Opinion = movie.Opinion;
+                            existingMovie.Type = movie.Type;
                             existingMovie.YeloUrl = movie.YeloUrl;
                         }
                         else
@@ -1065,6 +1066,7 @@ namespace FxMovies.Grabber
                         "short",
                         "tvMovie",
                         "tvMiniSeries",
+                        "tvSeries",
                     };
 
                     while ((text = textReader.ReadLine()) != null)

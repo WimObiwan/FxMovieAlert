@@ -66,6 +66,11 @@ namespace FxMovies.Grabber
             public List<string> labels { get; set; }
             public EventProperties properties { get; set; }
             public EventProgram program { get; set; }
+
+            public bool IsMovie() => labels != null && labels.Contains("film");
+            public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
+            public bool IsShort() => endtime - starttime < 3600;
+
         }
 
         [DebuggerDisplay("display_name = {display_name}")]
@@ -116,13 +121,7 @@ namespace FxMovies.Grabber
         {
             foreach (var broadcaster in humo.broadcasters)
             {
-                broadcaster.events.RemoveAll(e =>
-                    // keep films
-                    !(e.labels != null && e.labels.Contains("film"))
-                    &&
-                    // keep series which episode is 1 (of any year)
-                    !(e.program.genres != null && e.program.genres.Any(g => g.StartsWith("serie-")) && e.program.episodenumber == 1)
-                );
+                broadcaster.events.RemoveAll(e => !e.IsMovie() && ! e.IsFirstOfSerieSeason());
             }
 
             humo.broadcasters.RemoveAll(b => (b.events.Count == 0));
@@ -148,6 +147,19 @@ namespace FxMovies.Grabber
                         description += $" (SERIE: begin van seizoen {evnt.program.episodeseason})";
                     }
 
+                    int type;
+                    if (evnt.IsMovie())
+                    {
+                        if (evnt.IsShort())
+                            type = 2; // short
+                        else
+                            type = 1; // movie
+                    }
+                    else
+                    {
+                        type = 3; // serie
+                    }
+
                     var movie = new MovieEvent()
                     {
                         Id = evnt.id,
@@ -162,6 +174,7 @@ namespace FxMovies.Grabber
                         Content = evnt.program.content_long,
                         Opinion = evnt.program.opinion,
                         Genre = description,
+                        Type = type,
                     };
 
                     movies.Add(movie);
