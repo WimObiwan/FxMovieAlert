@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
@@ -43,6 +44,7 @@ namespace FxMovies.Grabber
         {
             public int id { get; set; }
             public int episodenumber { get; set; }
+            public int episodeseason { get; set; }
             public string opinion { get; set; }
             public string title { get; set; }
             public int year { get; set; }
@@ -114,7 +116,13 @@ namespace FxMovies.Grabber
         {
             foreach (var broadcaster in humo.broadcasters)
             {
-                broadcaster.events.RemoveAll(e => e.labels == null || !e.labels.Contains("film"));
+                broadcaster.events.RemoveAll(e =>
+                    // keep films
+                    !(e.labels != null && e.labels.Contains("film"))
+                    &&
+                    // keep series which episode is 1 (of any year)
+                    !(e.program.genres != null && e.program.genres.Any(g => g.StartsWith("serie-")) && e.program.episodenumber == 1)
+                );
             }
 
             humo.broadcasters.RemoveAll(b => (b.events.Count == 0));
@@ -134,6 +142,12 @@ namespace FxMovies.Grabber
 
                 foreach (var evnt in broadcaster.events)
                 {
+                    string description = evnt.program.description;
+                    if (evnt.program.episodenumber != 0 && evnt.program.episodeseason != 0)
+                    {
+                        description += $" (SERIE: begin van seizoen {evnt.program.episodeseason})";
+                    }
+
                     var movie = new MovieEvent()
                     {
                         Id = evnt.id,
@@ -147,7 +161,7 @@ namespace FxMovies.Grabber
                         PosterM = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.medium,
                         Content = evnt.program.content_long,
                         Opinion = evnt.program.opinion,
-                        Genre = evnt.program.description,
+                        Genre = description,
                     };
 
                     movies.Add(movie);
