@@ -82,9 +82,18 @@
 
     @functions 
     {
-        string FormatQueryString(decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
+        string FormatQueryString(int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
         {
             StringBuilder sb = null;
+            if (typeMask != Model.FilterTypeMaskDefault)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("typemask=");
+                sb.Append(typeMask);
+            }
             if (minrating.HasValue)
             {
                 if (sb == null)
@@ -126,26 +135,33 @@
             return sb?.ToString() ?? "";
         }
 
+        string FormatQueryStringWithTypeMask(int typeMask)
+        {
+            //if (typeMask != 7 && Model.FilterTypeMask != 7)
+            //    typeMask = Model.FilterTypeMask ^ typeMask;
+            return FormatQueryString(typeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
+        }
+
         string FormatQueryStringWithMinRating(decimal? minrating)
         {
-            return FormatQueryString(minrating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
+            return FormatQueryString(Model.FilterTypeMask, minrating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithNotYetRated(bool? notyetrated)
         {
-            return FormatQueryString(Model.FilterMinRating, notyetrated, Model.FilterCert, Model.FilterMaxDays);
+            return FormatQueryString(Model.FilterTypeMask, Model.FilterMinRating, notyetrated, Model.FilterCert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithToggleCert(Cert cert)
         {
             if (cert != Cert.all)
                 cert = Model.FilterCert ^ cert;
-            return FormatQueryString(Model.FilterMinRating, Model.FilterNotYetRated, cert, Model.FilterMaxDays);
+            return FormatQueryString(Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, cert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithMaxDays(int maxdays)
         {
-            return FormatQueryString(Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays);
+            return FormatQueryString(Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays);
         }
 
         string GetFilterStyle(bool hasValue)
@@ -229,6 +245,43 @@
     }
 
     Filters:
+
+    <div class="btn-group">
+        <a href="?@FormatQueryStringWithTypeMask(Model.FilterTypeMaskDefault)" class="btn btn-@GetFilterStyle(Model.FilterTypeMask != 7)">
+            @if (Model.FilterTypeMask == 7)
+            {
+                @: Alle soorten
+            }
+            else 
+            {
+                if ((Model.FilterTypeMask & 1) != 0)
+                {
+                    @: Films
+                }
+                if ((Model.FilterTypeMask & 2) != 0)
+                {
+                    @: Kortfilms
+                }
+                if ((Model.FilterTypeMask & 4) != 0)
+                {
+                    @: Series
+                }
+            }
+        </a>
+        <button type="button" class="btn btn-@GetFilterStyle(Model.FilterTypeMask != 7) dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>  <!-- caret -->
+            <span class="sr-only">Soorten</span>
+        </button>
+        
+        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
+            <li><a href="?@FormatQueryStringWithTypeMask(7)" class="btn-@GetFilterStyle(Model.FilterTypeMask == 7)">Toon alle (@Model.Count)</a></li>
+            <li class="divider"></li>
+            <li><a href="?@FormatQueryStringWithTypeMask(1)" class="btn-@GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 1) != 0)">Enkel films (@Model.CountTypeFilm)</a></li>
+            <li><a href="?@FormatQueryStringWithTypeMask(2)" class="btn-@GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 2) != 0)">Enkel kortfilms (@Model.CountTypeShort)</a></li>
+            <li><a href="?@FormatQueryStringWithTypeMask(4)" class="btn-@GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 4) != 0)">Enkel series (@Model.CountTypeSerie)</a></li>
+        </ul>
+    </div>
+
     <div class="btn-group">
         <a href="?@FormatQueryStringWithMinRating(null)" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue)">
             IMDb Sterren
@@ -534,6 +587,10 @@
                                                 <br/>
                                                 IMDb ID: <input type="edit" name="setimdbid" value="" /> <br/>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
+                                                @if (Model.FilterTypeMask != Model.FilterTypeMaskDefault)
+                                                {
+                                                    <input type="hidden" name="minrating" value="@Model.FilterTypeMask.ToString()" /> <br/>
+                                                }
                                                 @if (Model.FilterMinRating.HasValue)
                                                 {
                                                     <input type="hidden" name="minrating" value="@Model.FilterMinRating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat)" /> <br/>
@@ -569,7 +626,7 @@
                         {
                             <p>
                                 <i>
-                                    @movieEvent.Opinion
+                                    Humo: &ldquo;@movieEvent.Opinion&rdquo;
                                 </i>
                             </p>
                         }

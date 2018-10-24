@@ -49,6 +49,8 @@ namespace FxMovieAlert.Pages
         public DateTime? LastRefreshRatingsTime = null;
         public bool? LastRefreshSuccess = null;       
 
+        public int FilterTypeMask = 1;
+        public int FilterTypeMaskDefault = 1;
         public decimal? FilterMinRating = null;
         public bool? FilterNotYetRated = null;
         public Cert FilterCert = Cert.all;
@@ -56,6 +58,9 @@ namespace FxMovieAlert.Pages
         public int FilterMaxDays = 8;
 
         public int Count = 0;
+        public int CountTypeFilm = 0;
+        public int CountTypeShort = 0;
+        public int CountTypeSerie = 0;
         public int CountMinRating5 = 0;
         public int CountMinRating6 = 0;
         public int CountMinRating7 = 0;
@@ -78,7 +83,7 @@ namespace FxMovieAlert.Pages
         public int AdsInterval = 5;
 
 
-        public void OnGet(int? m = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
+        public void OnGet(int? m = null, int? typeMask = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
             int? movieeventid = null, string setimdbid = null, int? maxdays = null)
         {
             string userId = ClaimChecker.UserId(User.Identity);
@@ -97,8 +102,12 @@ namespace FxMovieAlert.Pages
             AdsInterval = configuration.GetValue("AdsInterval", AdsInterval);
             FilterMaxDaysDefault = configuration.GetValue("DefaultMaxDays", FilterMaxDaysDefault);
             FilterMaxDays = FilterMaxDaysDefault;
+            FilterTypeMask = FilterTypeMaskDefault;
 
             EditImdbLinks = ClaimChecker.Has(User.Identity, ClaimEditImdbLinks);
+
+            if (typeMask.HasValue)
+                FilterTypeMask = typeMask.Value;
 
             if (minrating.HasValue)
                 FilterMinRating = minrating.Value;
@@ -160,6 +169,7 @@ namespace FxMovieAlert.Pages
                         LastRefreshSuccess = user.LastRefreshSuccess;
                         user.Usages++;
                         user.LastUsageTime = DateTime.UtcNow;
+                        ImdbUserId = user.ImdbUserId;
                         db.SaveChanges();
                     }
                 }
@@ -168,6 +178,9 @@ namespace FxMovieAlert.Pages
                     MovieEvent = db.MovieEvents.Find(m.Value);
 
                 Count = db.MovieEvents.Count();
+                CountTypeFilm = db.MovieEvents.Where(me => me.Type == 1).Count();
+                CountTypeShort = db.MovieEvents.Where(me => me.Type == 2).Count();
+                CountTypeSerie = db.MovieEvents.Where(me => me.Type == 3).Count();
                 CountMinRating5 = db.MovieEvents.Where(me => me.ImdbRating >= 50).Count();
                 CountMinRating6 = db.MovieEvents.Where(me => me.ImdbRating >= 60).Count();
                 CountMinRating7 = db.MovieEvents.Where(me => me.ImdbRating >= 70).Count();
@@ -199,6 +212,12 @@ namespace FxMovieAlert.Pages
                         (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
                         &&
                         (me.EndTime >= now && me.StartTime >= now.AddMinutes(-15))
+                        &&
+                        (
+                            ((FilterTypeMask & 1) == 1 && me.Type == 1)
+                            || ((FilterTypeMask & 2) == 2 && me.Type == 2)
+                            || ((FilterTypeMask & 4) == 4 && me.Type == 3)
+                        )
                         &&
                         (!FilterMinRating.HasValue 
                             || (FilterMinRating.Value == NO_IMDB_ID && string.IsNullOrEmpty(me.ImdbId))
