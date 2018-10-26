@@ -48,13 +48,7 @@ td, th {
         <li>De <i>IMDb Watchlist</i> wordt gebruikt voor de films die je nog wilt zien.</li>
     </ul> 
 </p>
-@if (User.Identity.IsAuthenticated)
-{
-<p>
-    Je kunt deze hieronder manueel uploaden.
-</p>
-}
-else
+@if (!User.Identity.IsAuthenticated)
 {
 <p>
     Je dient eerst <a asp-page="/Account" asp-page-handler="login">in te loggen</a>.
@@ -76,7 +70,9 @@ else
 <p>
     <form action="#" method="GET">
         Vul hier je IMDb Gebruikers ID in:
-        <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" />
+        <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" /><br/>
+        Vul hier je IMDb Watchlist ID in:
+        <input type="edit" name="setimdbwatchlistid" value="@Model.ImdbWatchListId" /><br/>
         <input type="submit" value="Bewaren" /> 
     </form>
 </p>

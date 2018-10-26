@@ -44,9 +44,9 @@
             "program": "${workspaceRoot}/Grabber/bin/Debug/netcoreapp2.0/Grabber.dll",
             // One of the 'args' below needs to be uncommented
             //"args": [ "--environment=Development", "UpdateImdbUserRatings", "ur27490911" ],
-            "args": [ "--environment=Development", "UpdateEPG" ],
+            //"args": [ "--environment=Development", "UpdateEPG" ],
             //"args": [ "--environment=Development", "UpdateVod" ],
-            //"args": [ "--environment=Development", "AutoUpdateImdbUserRatings" ],
+            "args": [ "--environment=Development", "AutoUpdateImdbUserRatings" ],
             //"args": [ "--environment=Development", "GenerateImdbDatabase" ],
             //"args": [ "--environment=Development", "TwitterBot" ],
             "cwd": "${workspaceRoot}/Grabber",

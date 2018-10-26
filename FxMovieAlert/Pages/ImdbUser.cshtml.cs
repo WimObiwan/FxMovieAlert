@@ -18,8 +18,9 @@ namespace FxMovieAlert.Pages
     public class ImdbUserModel : PageModel
     {
         public string WarningMessage = null;        
-        public string ErrorMessage = null;        
+        public string ErrorMessage = null;
         public string ImdbUserId = null;
+        public string ImdbWatchListId = null;
         public DateTime? RefreshRequestTime = null;
         public DateTime? LastRefreshRatingsTime = null;
         public string LastRefreshRatingsResult = null;
@@ -37,7 +38,7 @@ namespace FxMovieAlert.Pages
         
         public readonly List<Tuple<string, string, string>> LastImportErrors = new List<Tuple<string, string, string>>();
 
-        public void OnGet(bool forcerefresh = false, string setimdbuserid = null)
+        public void OnGet(bool forcerefresh = false, string setimdbuserid = null, string setimdbwatchlistid = null)
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
@@ -71,6 +72,7 @@ namespace FxMovieAlert.Pages
                 {
                     db.Users.Remove(db.Users.Find(userId));
                     db.UserRatings.RemoveRange(db.UserRatings.Where(ur => ur.UserId == userId));
+                    db.UserWatchLists.RemoveRange(db.UserWatchLists.Where(uw => uw.UserId == userId));
                     db.SaveChanges();
                 }
 
@@ -83,9 +85,9 @@ namespace FxMovieAlert.Pages
                 {
                     var imdbuserid = match.Groups[1].Value;
                     
-                    int expirationDays = configuration.GetValue("LoginCookieExpirationDays", 30);
-                    CookieOptions options = new CookieOptions();
-                    options.Expires = DateTime.Now.AddDays(expirationDays);
+                    // int expirationDays = configuration.GetValue("LoginCookieExpirationDays", 30);
+                    // CookieOptions options = new CookieOptions();
+                    // options.Expires = DateTime.Now.AddDays(expirationDays);
                     ImdbUserId = imdbuserid;
 
                     forcerefresh = true;
@@ -96,9 +98,40 @@ namespace FxMovieAlert.Pages
                 }
             }
 
+            if (setimdbwatchlistid == null)
+            {
+                using (var db = FxMoviesDbContextFactory.Create(connectionStringMovies))
+                {
+                    var user = db.Users.Find(userId);
+                    if (user != null)
+                    {
+                        ImdbWatchListId = user.ImdbWatchlistId;
+                    }
+                }
+            }
+            else
+            {
+                var match = Regex.Match(setimdbwatchlistid, @"(ls\d+)");
+                if (match.Success)
+                {
+                    var imdbwatchlistid = match.Groups[1].Value;
+                    
+                    // int expirationDays = configuration.GetValue("LoginCookieExpirationDays", 30);
+                    // CookieOptions options = new CookieOptions();
+                    // options.Expires = DateTime.Now.AddDays(expirationDays);
+                    ImdbWatchListId = imdbwatchlistid;
+
+                    forcerefresh = true;
+                }
+                else
+                {
+                    ErrorMessage = string.Format("Er werd een ongeldige IMDb Watchlist ID opgegeven: {0}.", setimdbwatchlistid);
+                }
+            }
+
             using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
             using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
-            if (ImdbUserId != null)
+            if (ImdbUserId != null || ImdbWatchListId != null)
             {
                 var user = dbMovies.Users.Find(userId);
                 if (user == null)
@@ -106,6 +139,7 @@ namespace FxMovieAlert.Pages
                     user = new User();
                     user.UserId = userId;
                     user.ImdbUserId = ImdbUserId;
+                    user.ImdbWatchlistId = ImdbWatchListId;
                     dbMovies.Users.Add(user);
                 }
 

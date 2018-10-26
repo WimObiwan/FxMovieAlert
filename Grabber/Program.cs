@@ -261,8 +261,15 @@ namespace FxMovies.Grabber
 
             try
             {
-                string suffix = watchlist ? "watchlist" : "ratings";
-                string url = $"http://rss.imdb.com/user/{imdbUserId}/{suffix}";
+                string url;
+                if (watchlist)
+                {
+                    url = $"https://www.imdb.com/list/export?list_id={imdbUserId}";
+                }
+                else
+                {
+                    //???? url = $"https://www.imdb.com/list/export?list_id={imdbUserId}";
+                }
                 var request = (HttpWebRequest)WebRequest.Create(url);
                 using (var response = request.GetResponse())
                 {
