@@ -45,6 +45,7 @@ namespace FxMovies.Grabber
             public int id { get; set; }
             public int episodenumber { get; set; }
             public int episodeseason { get; set; }
+            public string appreciation { get; set; }
             public string opinion { get; set; }
             public string title { get; set; }
             public int year { get; set; }
@@ -160,6 +161,20 @@ namespace FxMovies.Grabber
                         type = 3; // serie
                     }
 
+                    string opinion = evnt.program.opinion;
+                    if (!string.IsNullOrEmpty(evnt.program.appreciation) 
+                        && int.TryParse(evnt.program.appreciation, out int appreciation)
+                        && appreciation > 0 && appreciation <= 50)
+                    {
+                        string stars = new string('★', appreciation / 10);
+                        if (appreciation % 10 > 0)
+                            stars += '½';
+                        if (string.IsNullOrEmpty(opinion))
+                            opinion = stars;
+                        else
+                            opinion = stars + " " + opinion;
+                    }
+
                     var movie = new MovieEvent()
                     {
                         Id = evnt.id,
@@ -172,7 +187,7 @@ namespace FxMovies.Grabber
                         PosterS = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.small,
                         PosterM = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.medium,
                         Content = evnt.program.content_long,
-                        Opinion = evnt.program.opinion,
+                        Opinion = opinion,
                         Genre = description,
                         Type = type,
                     };
