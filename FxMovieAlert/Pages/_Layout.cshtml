@@ -11,6 +11,12 @@
     gtag('config', 'UA-2703249-19');
     </script>
 
+    <script>
+    function hide(selector) {
+        $(selector).fadeOut();
+    }
+    </script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play." />
@@ -163,9 +169,12 @@
         <!--googleoff: all-->
         <div id="cookie-message" class="alert alert-warning">
             <p>
-                <strong>Privacy melding</strong>
-                FilmOpTV.be maakt gebruik van cookies, en bepaalde persoonlijke gegevens kunnen worden bijgehouden.<br/>
-                <a href="/About#privacybeleid">Klik hier</a> om meer te lezen over het privacybeleid.
+                <small>
+                    <strong>De obligatoire GDPR privacy melding bij je eerste bezoek aan FilmOpTV.be</strong>
+                    - De site maakt gebruik van cookies, en als je ervoor kiest om in te loggen worden bepaalde gegevens bijgehouden.
+                    <a href="/About#privacybeleid">Klik hier</a> om meer te lezen over het privacybeleid.  
+                    Deze boodschap <a href="#" onclick="hide('#cookie-message');">verbergen</a>.
+                </small>
             </p>
         </div>
         <!--googleon: all-->
@@ -173,7 +182,7 @@
         <hr />
         <footer>
             <p>
-                Versie 0.24 (2018-10-24).
+                Versie 0.25 (2018-10-26).
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
                 &copy;
                 @if (DateTime.Now.Year > 2017)

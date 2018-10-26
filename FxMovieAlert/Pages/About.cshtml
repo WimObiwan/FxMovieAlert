@@ -5,7 +5,85 @@
 }
 <h2>@ViewData["Title"]</h2>
 
-<h3>Informatie</h3>
+<h3>Waarom?</h3>
+
+<p>
+    Wel, simpel: ik was het beu om telkens na 5 minuten te constateren dat ik de film al gezien had.  Aangezien ik alle bekeken films bijhou 
+    op IMDb was een koppeling tussen een programmagids en IMDb voor mij de ideale oplossing.<br/>
+    Anderzijds is dit project een ideale manier om .net Core te leren kennen.
+</p>
+
+<h3>Hoe werkt het?</h3>
+
+<p>
+    De website is een handige programma-gids die alle films toont op de Vlaamse (en bepaalde Nederlandse) zenders.
+</p>
+<p>
+    Op de onderstaande schermafbeelding wordt getoond hoe de integratie met IMDb werkt.
+    <ul>
+        <li>
+            <span class="label label-success label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                In het groen worden de films aangeduid die op je &ldquo;watchlist&rdquo; staan.
+            </span>
+        </li>
+        <li>
+            <span class="label label-info label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                In het blauw de films die in je reeds bekeken hebt.
+            </span>
+        </li>
+        <li>
+            <span class="label label-warning label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                Films die binnenkort beginnen worden met oranje aangeduid.
+            </span>
+        </li>
+        <li>
+            <span class="label label-danger label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                In het rood worden films getoond die pas begonnen zijn.
+            </span>
+        </li>
+        <li>
+            <p>
+                <img src="/images/imdb.png" height="24px" style="float:left; margin-right: 5px;" />
+                Met het IMDb icoontje kun je doorklikken naar de pagina over deze film op IMDb. <br/> 
+                De score op IMDb wordt getoond,
+                en als de breedte van je toestel voldoende is, wordt dit ook in sterren aangeduid.
+            </p>
+        </li>
+        <li>
+            <p>
+                <img src="/images/yeloplay.png" height="36px" style="float:left; margin-right: 5px;" />
+                Met het Yelo icoontje kun je de film meteen programmeren op je Digicorder via de Telenet Yelo site.  
+                Hiervoor moet je reeds ingelogd zijn op de Yelo website.  Om on-line je Digicorder te kunnen programmeren moet je 
+                Digicorder &ldquo;interactief&rdquo; verbonden zijn.  Meer uitleg vind je op de 
+                <a href="https://www2.telenet.be/nl/business/klantenservice/digibox-digicorder-interactief-maken/" target="_blank">
+                    klantenservice website van Telenet
+                </a>.
+            </p>
+        </li>
+    </ul>
+    <img src="images/About_ImdbIntegration.png" width="80%" style="display:block; margin-left:auto; margin-right:auto; border: 1px solid lightgray;"/>
+</p>
+<p>
+    Als je ook gebruik wilt maken van de (handige, maar optionele) IMDb intagratie, zijn dit de stappen die je moet doorlopen:
+    <ol>
+        <li>
+            <a asp-page="/Account" asp-page-handler="login"><span class="glyphicon glyphicon-user"></span>
+                &nbsp;Inloggen
+            </a>.  Dit kan door een nieuwe account aan te maken, maar eenvoudiger is om in te loggen via je Google account.
+        </li>
+        <li>
+            De link leggen naar je IMDb account op de pagina 
+            <a asp-page="/ImdbUser"><span class="glyphicon glyphicon-film"></span>
+                        &nbsp;IMDb Gebruiker
+            </a>.
+        </li>
+        <li>
+            Op diezelfde pagina de stappen volgen om je ratings en/of watchlist op te laden.
+        </li>
+    </ol>
+</p>
+
+<h3>Technologie</h3>
 
 <p>
     Deze website is gemaakt in Microsoft ASP.net Core 2.0, en wordt ontwikkeld en gehost op Linux.
@@ -16,10 +94,13 @@
 <h3>Advertenties</h3>
 
 <p>
-    De Google Adsense advertenties worden gebruikt om (een deel van) de domein en hosting kosten te betalen.
+    De Google Adsense advertenties worden gebruikt om (een fractie van) de domein- en hosting-kosten te betalen.
 </p>
 
 <h3><a name="privacybeleid"></a>Privacybeleid</h3>
+
+Conform de Europese wetgeving over <a href="https://nl.wikipedia.org/wiki/Algemene_verordening_gegevensbescherming">GDPR / AVG</a> geef
+ik nog wat uitleg over wat er bijgehouden wordt.
 
 <h4>Cookies</h4>
 
@@ -31,19 +112,15 @@ Op deze website worden cookies gebruikt voor:
             De melding wordt bij je eerste bezoek getoond en daarna niet meer, 
             tenzij er meer dan 30 dagen zijn verlopen sinds je laatste bezoek aan de website. 
         </li>
-        <li>
-            Bijhouden van de IMDb gebruikers login (optioneel).<br/>
-            Deze cookie kan verwijderd worden op de <a href="/ImdbUser">IMDb Gebruiker</a> pagina, 
-            door op de knop <i>Resetten</i> te klikken.
-        </li>
+        <li>Auth0 authenticatie (OAuth2)</li>
         <li>Google Analytics statistieken</li>
         <li>Google Adsense advertenties</li>
     </ul>
 </p>
 <p>    
-    Cookies kun je uitsitschakelen in je browser. 
+    Cookies kun je uitschakelen in je browser. 
     Meer uitleg vind je <a href="https://nl.wikihow.com/De-cookies-uit-een-browser-verwijderen">hier</a>.
-    Dit impliceert dat je geen gebruik kunt maken van de IMDb integratie.
+    Dit impliceert dat bepaalde functionaliteit niet (of beperkt) zal werken.
 </p>
 
 <h4>Persoonlijke gegevens</h4>
