@@ -485,6 +485,7 @@
 
                 <tr>
                     <td colspan="3">
+                        <a class="anchor" name="day@(movieEvent.StartTime.ToString("yyyyMMdd"))" ></a>
                         <h1>@(@movieEvent.StartTime.ToLongDateString())</h1>
                     </td>
                 </tr>
@@ -669,3 +670,25 @@
         }
     </tbody>
 </table>
+
+@if (Model.FilterMaxDays > 0 && Model.FilterMaxDays < 10)
+{
+    string  ref_load_more = "?";
+    if (Model.FilterMaxDays <= 3)
+    {
+        ref_load_more += FormatQueryStringWithMaxDays(5);
+    }
+    else if (Model.FilterMaxDays <= 5)
+    {
+        ref_load_more += FormatQueryStringWithMaxDays(8);
+    }
+    else
+    {
+        ref_load_more += FormatQueryStringWithMaxDays(0);
+    }
+    ref_load_more += "#day" + DateTime.Now.Date.AddDays(Model.FilterMaxDays + 1).ToString("yyyyMMdd");
+
+    <div style="text-align: right;">
+        <a href="@ref_load_more" class="btn btn-info">Volgende dagen laden...</a>
+    </div>
+}
