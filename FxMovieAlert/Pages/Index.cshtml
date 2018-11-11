@@ -39,7 +39,62 @@
     }(document, 'script', 'facebook-jssdk'));
     </script>
     -->
+
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+
+    <script>
+        // Update the count down every 1 minute
+        function eachMinute() {
+            // Get todays date and time
+            var now = new Date().getTime();
+
+            var timingElements = document.getElementsByClassName("timing");
+
+            [].forEach.call(timingElements, function (timingElement) {
+                var startTime = new Date(timingElement.getAttribute("data-timing"));
+
+                var minutes = Math.floor((startTime - now) / 60000);
+
+                if (minutes > 60) {
+                    timingElement.innerHTML = "";
+                    timingElement.classList.remove("alert-warning");
+                    timingElement.classList.remove("alert-danger");
+                    timingElement.style.display = "none";
+                } else if (minutes >= 2) {
+                    timingElement.classList.add("alert-warning");
+                    timingElement.classList.remove("alert-danger");
+                    timingElement.innerHTML = `Deze film begint over ${minutes} minuten.`;
+                    timingElement.style.display = "block";
+                } else if (minutes >= -1) {
+                    timingElement.classList.add("alert-warning");
+                    timingElement.classList.remove("alert-danger");
+                    timingElement.innerHTML = `Deze film begint nu.`;
+                    timingElement.style.display = "block";
+                } else {
+                    timingElement.classList.remove("alert-warning");
+                    timingElement.classList.add("alert-danger");
+                    timingElement.innerHTML = `Deze film is al ${-minutes} minuten bezig.`;
+                    timingElement.style.display = "block";
+                }
+
+                //document.getElementById("demo").innerHTML = days + "d " + hours + "h "
+                //  + minutes + "m " + seconds + "s ";
+
+                //// If the count down is finished, write some text
+                //if (distance < 0) {
+                //  clearInterval(x);
+                //  document.getElementById("demo").innerHTML = "EXPIRED"; -->
+                //}
+            });
+        }
+        
+        var interval = setInterval(eachMinute, 20000);
+        window.onload = function (event) {
+            eachMinute();
+        };
+
+    </script>
+
 	<style type="text/css">
         a.anchor {
             display: block;
@@ -645,36 +700,27 @@
                         }
                         @if (record.UserRating != null)
                         {
-                            <p style="font-size: 20px">
-                                <span class="label label-info label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                            <strong>
+                                <div class="alert alert-info" style="word-wrap: break-word; white-space: normal;">
                                     Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
                                     @(record.UserRating.Rating)
-                                </span>
-                            </p>
+                                </div>
+                            </strong>
                         }
                         @if (record.UserWatchListItem != null)
                         {
-                            <p style="font-size: 20px">
-                                <span class="label label-success label-as-badge" style="word-wrap:break-word;white-space: normal;">
+                            <strong>
+                                <div class="alert alert-success" style="word-wrap: break-word; white-space: normal;">
                                     Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
-                                </span>
-                            </p>
+                                </div>
+                            </strong>
                         }
-                        @if (movieEvent.StartTime <= DateTime.Now)
+                        @if (movieEvent.StartTime <= DateTime.Now.AddHours(2))
                         {
-                            <p style="font-size: 20px">
-                                <span class="label label-danger label-as-badge" style="word-wrap:break-word;white-space: normal;">
-                                    Deze film is al @((int)(DateTime.Now - movieEvent.StartTime).TotalMinutes) minuten bezig.
-                                </span>
-                            </p>
-                        }
-                        else if (movieEvent.StartTime <= DateTime.Now.AddHours(1))
-                        {
-                            <p style="font-size: 20px">
-                                <span class="label label-warning label-as-badge" style="word-wrap:break-word;white-space: normal;">
-                                    Deze film begint over @((int)(movieEvent.StartTime - DateTime.Now).TotalMinutes) minuten.
-                                </span>
-                            </p>
+                            <strong>
+                                <div class="timing alert alert-warning" style="word-wrap: break-word; white-space: normal; display: none;" data-timing="@movieEvent.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                </div>
+                            </strong>
                         }
                     </div>
                 </td>
