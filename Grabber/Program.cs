@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -786,6 +789,7 @@ namespace FxMovies.Grabber
                         movieEvent.PosterS_Local = name;
 
                         DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+                        ResizeFile(target, 150);
                     }
                     {
                         string url = movieEvent.PosterM;
@@ -810,6 +814,28 @@ namespace FxMovies.Grabber
                 }
 
                 dbMovies.SaveChanges();    
+            }
+        }
+
+        static void ResizeFile(string imageFile, int width)
+        {
+            using(FileStream imageStream = new FileStream(imageFile,FileMode.Open, FileAccess.Read))
+            using(var image = new Bitmap(imageStream))
+            {
+                if (image.Width > width * 11 / 10)
+                {
+                    int height = (int)Math.Round((decimal)(image.Height * width) / image.Width);
+                    Console.WriteLine($"Resizing image {imageFile} from {image.Width}x{image.Height} to {width}x{height}");
+                    var resized = new Bitmap(width, height);
+                    using (var graphics = Graphics.FromImage(resized))
+                    {
+                        graphics.CompositingQuality = CompositingQuality.HighSpeed;
+                        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        graphics.CompositingMode = CompositingMode.SourceCopy;
+                        graphics.DrawImage(image, 0, 0, width, height);
+                        resized.Save(imageFile, ImageFormat.Jpeg);
+                    }
+                }
             }
         }
 
