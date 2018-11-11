@@ -23,6 +23,7 @@ namespace FxMovies.Grabber
             public string title { get; set; }
             public int starttime { get; set; }
             public int endtime { get; set; }
+            public string image { get; set; }
         }
 
         [DebuggerDisplay("display_name = {name}")]
@@ -111,6 +112,15 @@ namespace FxMovies.Grabber
                 Console.WriteLine("{0} {1} {2} FOUND {3}", channel, movieEvent.StartTime, movieEvent.Title, yeloBroadcast.mapurl);
 
                 movieEvent.YeloUrl = "https://www.yeloplay.be" + yeloBroadcast.mapurl;
+
+                if (string.IsNullOrEmpty(movieEvent.PosterM))
+                {
+                    movieEvent.PosterM = yeloBroadcast.image;
+                }
+                if (string.IsNullOrEmpty(movieEvent.PosterS))
+                {
+                    movieEvent.PosterS = yeloBroadcast.image;
+                }
             }
         }
     }
