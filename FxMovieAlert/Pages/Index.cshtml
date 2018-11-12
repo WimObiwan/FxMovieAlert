@@ -85,9 +85,14 @@
             });
         }
         
+        var time = new Date(),
+            secondsRemaining = (60 - time.getSeconds()) * 1000;
+
+
         setTimeout(function() {
             setInterval(eachMinute, 60000);
-        }, (60 - (new Date()).getSeconds()) * 1000);
+            eachMinute();
+        }, secondsRemaining);
 
         window.onload = function (event) {
             eachMinute();
