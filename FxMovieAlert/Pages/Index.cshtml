@@ -80,7 +80,10 @@
             });
         }
         
-        var interval = setInterval(eachMinute, 20000);
+        setTimeout(function() {
+            setInterval(eachMinute, 60000);
+        }, (60 - (new Date()).getSeconds()) * 1000);
+
         window.onload = function (event) {
             eachMinute();
         };
