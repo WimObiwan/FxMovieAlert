@@ -75,8 +75,12 @@
                     timingElement.classList.add("alert-danger");
                     timingElement.innerHTML = `Deze film is al ${-minutes} minuten bezig.`;
                     timingElement.style.display = "block";
-                }
 
+                    if (minutes < -30)
+                    {
+                        timingElement.closest("tr").remove();
+                    }
+                }
             });
         }
         
