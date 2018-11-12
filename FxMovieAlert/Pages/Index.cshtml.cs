@@ -216,7 +216,7 @@ namespace FxMovieAlert.Pages
                     where 
                         (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
                         &&
-                        (me.EndTime >= now && me.StartTime >= now.AddMinutes(-15))
+                        (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30))
                         &&
                         (
                             ((FilterTypeMask & 1) == 1 && me.Type == 1)
