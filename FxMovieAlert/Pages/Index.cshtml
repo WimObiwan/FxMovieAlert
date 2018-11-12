@@ -17,6 +17,7 @@
         ViewData["og:image"] = GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
         ViewData["og:image:secure_url"] = GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
     }
+    DateTime now = DateTime.Now;
 }
 
     @if (Model.MovieEvent != null)
@@ -706,7 +707,7 @@
                                 </div>
                             </strong>
                         }
-                        @if (movieEvent.StartTime <= DateTime.Now.AddHours(2))
+                        @if (movieEvent.StartTime <= now.AddHours(2))
                         {
                             <strong>
                                 <div class="timing alert alert-warning" style="word-wrap: break-word; white-space: normal; display: none;" data-timing="@movieEvent.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")">
@@ -743,7 +744,7 @@
     {
         ref_load_more += FormatQueryStringWithMaxDays(0);
     }
-    ref_load_more += "#day" + DateTime.Now.Date.AddDays(Model.FilterMaxDays + 1).ToString("yyyyMMdd");
+    ref_load_more += "#day" + now.Date.AddDays(Model.FilterMaxDays + 1).ToString("yyyyMMdd");
 
     <div style="text-align: right;">
         <a href="@ref_load_more" class="btn btn-info">Volgende dagen laden...</a>
