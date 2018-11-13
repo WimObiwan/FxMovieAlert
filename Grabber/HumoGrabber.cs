@@ -143,6 +143,10 @@ namespace FxMovies.Grabber
                 foreach (var evnt in broadcaster.events)
                 {
                     string description = evnt.program.description;
+                    int year = evnt.program.year;
+
+                    description = description.Replace($" ({year})", "");
+
                     if (evnt.program.episodenumber != 0 && evnt.program.episodeseason != 0)
                     {
                         description += $" (SERIE: begin van seizoen {evnt.program.episodeseason})";
@@ -180,7 +184,7 @@ namespace FxMovies.Grabber
                         Id = evnt.id,
                         Channel = channel,
                         Title = evnt.program.title,
-                        Year = evnt.program.year,
+                        Year = year,
                         StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.starttime).ToLocalTime(),
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.endtime).ToLocalTime(),
                         Duration = evnt.properties.eventduration,
