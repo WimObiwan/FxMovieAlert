@@ -64,17 +64,17 @@
                     timingElement.classList.add("alert-warning");
                     timingElement.classList.remove("alert-danger");
                     timingElement.innerHTML = `Deze film begint over ${minutes} minuten.`;
-                    timingElement.style.display = "block";
+                    timingElement.style.display = null;
                 } else if (minutes >= -1) {
                     timingElement.classList.add("alert-warning");
                     timingElement.classList.remove("alert-danger");
                     timingElement.innerHTML = `Deze film begint nu.`;
-                    timingElement.style.display = "block";
+                    timingElement.style.display = null;
                 } else {
                     timingElement.classList.remove("alert-warning");
                     timingElement.classList.add("alert-danger");
                     timingElement.innerHTML = `Deze film is al ${-minutes} minuten bezig.`;
-                    timingElement.style.display = "block";
+                    timingElement.style.display = null;
 
                     if (minutes < -30)
                     {
@@ -125,6 +125,21 @@
 
         td.collapsable {
             display:block;
+        }
+
+        div.small-alert {
+            padding-left: 10px; 
+            padding-right: 10px; 
+            padding-top: 3px;
+            padding-bottom: 3px;
+            margin-bottom: 0px;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        p.slim {
+            padding: 0px;
+            margin: 0px;
         }
 
         @@media only screen and (max-width: 1000px) {
@@ -704,27 +719,21 @@
                         }
                         @if (record.UserRating != null)
                         {
-                            <strong>
-                                <div class="alert alert-info" style="word-wrap: break-word; white-space: normal;">
-                                    Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
-                                    @(record.UserRating.Rating)
-                                </div>
-                            </strong>
+                            <p class="slim"><div class="alert alert-info small-alert">
+                                Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
+                                @(record.UserRating.Rating)
+                            </div></p>
                         }
                         @if (record.UserWatchListItem != null)
                         {
-                            <strong>
-                                <div class="alert alert-success" style="word-wrap: break-word; white-space: normal;">
-                                    Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
-                                </div>
-                            </strong>
+                            <p class="slim"><div class="alert alert-success small-alert">
+                                Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
+                            </div></p>
                         }
                         @if (movieEvent.StartTime <= now.AddHours(2))
                         {
-                            <strong>
-                                <div class="timing alert alert-warning" style="word-wrap: break-word; white-space: normal; display: none;" data-timing="@movieEvent.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")">
-                                </div>
-                            </strong>
+                            <p class="slim"><div class="timing alert alert-warning small-alert" style="display: none;" data-timing="@movieEvent.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")">
+                            </div></p>
                         }
                     </div>
                 </td>
