@@ -84,15 +84,15 @@
             eachMinute();
         }, secondsRemaining);
 
-        @if (Model.MovieEvent != null)
-        {
-            @: setTimeout(function() { window.location.hash = "#@Model.MovieEvent.Id"; }
-        }
-        
         window.onload = function (event) {
             eachMinute();
         };
 
+        @if (Model.MovieEvent != null)
+        {
+            @: setTimeout(function() { window.location.hash = "#@Model.MovieEvent.Id"; })
+        }
+        
     </script>
 
 	<style type="text/css">
