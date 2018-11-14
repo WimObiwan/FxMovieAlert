@@ -119,10 +119,6 @@
             margin: 0px;
         }
 
-        td.collapsable {
-            display:block;
-        }
-
         div.small-alert {
             padding-left: 10px; 
             padding-right: 10px; 
@@ -138,9 +134,17 @@
             margin: 0px;
         }
 
+        div.reverse-collapsible {
+            display: none;
+        }
+
         @@media only screen and (max-width: 1000px) {
-            td.collapsable {
-                display:none;
+            td.collapsible {
+                display: none;
+            }
+
+            div.reverse-collapsible {
+                display: inline-block;
             }
 
             span.stars, span.stars span {
@@ -571,7 +575,7 @@
             moviesSinceLastAd++;
 
             <tr>
-                <td>
+                <td class="collapsible">
                     <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
                     @(@movieEvent.StartTime.ToString("dddd"))
@@ -582,7 +586,7 @@
                     <br/>
                     @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
                 </td>
-                <td class="collapsable">
+                <td class="collapsible">
                     @if (@movieEvent.PosterS != null)
                     {
                         <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" alt="@movieEvent.Title" width=150 />
@@ -590,6 +594,16 @@
                 </td>
                 <td>
                     <a class="anchor" name="@movieEvent.Id" ></a>
+                    <div class="reverse-collapsible">
+                        <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
+                        &nbsp;
+                        @(@movieEvent.StartTime.ToString("dddd"))
+                        @(@movieEvent.StartTime.ToShortDateString())
+                        &nbsp;
+                        <b>@(@movieEvent.StartTime.ToShortTimeString())</b>
+                        &nbsp;
+                        (@(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm")))
+                    </div>
                     <h2>
                         @movieEvent.Title
                         @if (movieEvent.Year > 0)
