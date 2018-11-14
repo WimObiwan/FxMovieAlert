@@ -574,7 +574,7 @@
 
             moviesSinceLastAd++;
 
-            <tr>
+            <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
                 <td class="collapsible">
                     <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
