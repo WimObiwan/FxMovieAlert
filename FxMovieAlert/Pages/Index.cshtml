@@ -679,8 +679,8 @@
                                             <form action="#" method="GET">
                                                 Manual input: 
                                                 IMDb search 
-                                                <a href="http://www.imdb.com/find?q=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))&s=all" target="_new">all</a>
-                                                <a href="http://www.imdb.com/search/title?release_date=@(movieEvent.Year-1)-07-01,@(movieEvent.Year+1)-07-01&title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_new">advanced</a>
+                                                <a href="http://www.imdb.com/find?q=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))&amp;s=all" target="_new">all</a>
+                                                <a href="http://www.imdb.com/search/title?release_date=@(movieEvent.Year-1)-07-01,@(movieEvent.Year+1)-07-01&amp;title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_new">advanced</a>
                                                 <br/>
                                                 IMDb ID: <input type="edit" name="setimdbid" value="" /> <br/>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
