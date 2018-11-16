@@ -745,13 +745,12 @@ namespace FxMovies.Grabber
                         ext = url.Substring(extStart);
 
                     string name = "channel-" + channel.Code + ext;
-                    string target = Path.Combine(basePath, name);
 
                     // bool reset = false;
                     
                     // if (name != channel.LogoS_Local)
                     // {
-                        channel.LogoS_Local = name;
+                    //    channel.LogoS_Local = name;
                     //     reset = true;
                     // }
                     // else if (!File.Exists(target))
@@ -761,8 +760,9 @@ namespace FxMovies.Grabber
 
                     // string eTag = reset ? null : channel.LogoS_ETag;
                     // DateTime? lastModified = reset ? null : channel.LogoS_LastModified;
-
-                    DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+                    //
+                    
+                    channel.LogoS_Local = DownloadFile(url, basePath, name, false);
 
                     // channel.LogoS_ETag = eTag;
                     // channel.LogoS_LastModified = lastModified;
@@ -784,12 +784,8 @@ namespace FxMovies.Grabber
                             ext = url.Substring(extStart);
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-S" + ext;
-                        string target = Path.Combine(basePath, name);
 
-                        movieEvent.PosterS_Local = name;
-
-                        DownloadFile(url, target /*, ref eTag, ref lastModified*/);
-                        ResizeFile(target, 150);
+                        movieEvent.PosterS_Local = DownloadFile(url, basePath, name, true);
                     }
                     {
                         string url = movieEvent.PosterM;
@@ -805,11 +801,8 @@ namespace FxMovies.Grabber
                             ext = url.Substring(extStart);
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-M" + ext;
-                        string target = Path.Combine(basePath, name);
 
-                        movieEvent.PosterM_Local = name;
-
-                        DownloadFile(url, target /*, ref eTag, ref lastModified*/);
+                        movieEvent.PosterM_Local = DownloadFile(url, basePath, name, false);
                     }
                 }
 
@@ -839,18 +832,40 @@ namespace FxMovies.Grabber
             }
         }
 
-        static void DownloadFile(string url, string target)
+        static string DownloadFile(string url, string basePath, string name, bool resize)
         {
-            Console.WriteLine($"Downloading {url} to {target}");
-            var req = (HttpWebRequest)WebRequest.Create(url);
-            using (var rsp = (HttpWebResponse)req.GetResponse())
+            if (string.IsNullOrEmpty(url))
             {
-                using (var stm = rsp.GetResponseStream())
-                using (var fileStream = File.Create(target))
+                return null;
+            }
+
+            string target = Path.Combine(basePath, name);
+
+            try
+            {
+                Console.WriteLine($"Downloading {url} to {target}");
+                var req = (HttpWebRequest)WebRequest.Create(url);
+                using (var rsp = (HttpWebResponse)req.GetResponse())
                 {
-                    stm.CopyTo(fileStream);
+                    using (var stm = rsp.GetResponseStream())
+                    using (var fileStream = File.Create(target))
+                    {
+                        stm.CopyTo(fileStream);
+                    }
                 }
             }
+            catch (Exception x)
+            {
+                Console.WriteLine($"FAILED download of {url}, Exception={x.Message}");
+                return null;
+            }
+
+            if (resize)
+            {
+                ResizeFile(target, 150);
+            }
+
+            return name;
         }
 
         // static void DownloadFile(string url, string target, ref string eTag, ref DateTime? lastMod)
