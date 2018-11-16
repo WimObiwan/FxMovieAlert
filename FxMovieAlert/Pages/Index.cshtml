@@ -736,8 +736,7 @@
                         @if (record.UserRating != null)
                         {
                             <p class="slim"><div class="alert alert-info small-alert">
-                                Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating 
-                                @(record.UserRating.Rating)
+                                Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating @(record.UserRating.Rating)
                             </div></p>
                         }
                         @if (record.UserWatchListItem != null)
