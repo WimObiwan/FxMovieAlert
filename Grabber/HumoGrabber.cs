@@ -109,7 +109,13 @@ namespace FxMovies.Grabber
                     //     outputFile.WriteLine(json);
                     // }
 
-                    var humo = JsonConvert.DeserializeObject<Humo>(json);
+                    var settings = new JsonSerializerSettings();
+                    settings.Error += (sender, args) =>
+                    {
+                        args.ErrorContext.Handled = true;
+                    };
+
+                    var humo = JsonConvert.DeserializeObject<Humo>(json, settings);
 
                     FilterMovies(humo);
 
