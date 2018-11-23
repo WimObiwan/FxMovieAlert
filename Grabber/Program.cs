@@ -762,7 +762,8 @@ namespace FxMovies.Grabber
                     // DateTime? lastModified = reset ? null : channel.LogoS_LastModified;
                     //
                     
-                    channel.LogoS_Local = DownloadFile(url, basePath, name, false);
+                    // Resize to 50 gives black background on Vier, Vijf, ...
+                    channel.LogoS_Local = DownloadFile(url, basePath, name, 0);
 
                     // channel.LogoS_ETag = eTag;
                     // channel.LogoS_LastModified = lastModified;
@@ -785,7 +786,7 @@ namespace FxMovies.Grabber
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-S" + ext;
 
-                        movieEvent.PosterS_Local = DownloadFile(url, basePath, name, true);
+                        movieEvent.PosterS_Local = DownloadFile(url, basePath, name, 150);
                     }
                     {
                         string url = movieEvent.PosterM;
@@ -802,7 +803,7 @@ namespace FxMovies.Grabber
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-M" + ext;
 
-                        movieEvent.PosterM_Local = DownloadFile(url, basePath, name, false);
+                        movieEvent.PosterM_Local = DownloadFile(url, basePath, name, 0);
                     }
                 }
 
@@ -832,7 +833,7 @@ namespace FxMovies.Grabber
             }
         }
 
-        static string DownloadFile(string url, string basePath, string name, bool resize)
+        static string DownloadFile(string url, string basePath, string name, int resize)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -860,9 +861,9 @@ namespace FxMovies.Grabber
                 return null;
             }
 
-            if (resize)
+            if (resize > 0)
             {
-                ResizeFile(target, 150);
+                ResizeFile(target, resize);
             }
 
             return name;
