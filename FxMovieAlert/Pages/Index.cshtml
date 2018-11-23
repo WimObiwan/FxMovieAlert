@@ -34,127 +34,23 @@
 
 	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
 
+    <environment include="Development">
+        <script src="~/js/index.js" asp-append-version="true"></script>
+        <link rel="stylesheet" href="~/css/index.css" />
+    </environment>
+    <environment exclude="Development">
+        <script src="~/js/index.min.js" asp-append-version="true"></script>
+        <link rel="stylesheet" href="~/css/index.min.css" asp-append-version="true" />
+    </environment>
+
     <script>
-        // Update the count down every 1 minute
-        function eachMinute() {
-            // Get todays date and time
-            var now = new Date().getTime();
-
-            var timingElements = document.getElementsByClassName("timing");
-            [].forEach.call(timingElements, function (timingElement) {
-                var startTime = new Date(timingElement.getAttribute("data-timing"));
-
-                var minutes = Math.ceil((startTime - now) / 60000);
-
-                if (minutes > 60) {
-                    timingElement.innerHTML = "";
-                    timingElement.classList.remove("alert-warning");
-                    timingElement.classList.remove("alert-danger");
-                    timingElement.style.display = "none";
-                } else if (minutes >= 2) {
-                    timingElement.classList.add("alert-warning");
-                    timingElement.classList.remove("alert-danger");
-                    timingElement.innerHTML = `Deze film begint over ${minutes} minuten.`;
-                    timingElement.style.display = null;
-                } else if (minutes >= -1) {
-                    timingElement.classList.add("alert-warning");
-                    timingElement.classList.remove("alert-danger");
-                    timingElement.innerHTML = `Deze film begint nu.`;
-                    timingElement.style.display = null;
-                } else {
-                    timingElement.classList.remove("alert-warning");
-                    timingElement.classList.add("alert-danger");
-                    timingElement.innerHTML = `Deze film is al ${-minutes} minuten bezig.`;
-                    timingElement.style.display = null;
-
-                    if (minutes < -30)
-                    {
-                        timingElement.closest("tr").remove();
-                    }
-                }
-            });
-        }
-        
-        var time = new Date(),
-            secondsRemaining = (60 - time.getSeconds()) * 1000;
-
-
-        setTimeout(function() {
-            setInterval(eachMinute, 60000);
-            eachMinute();
-        }, secondsRemaining);
-
-        window.onload = function (event) {
-            eachMinute();
-        };
 
         @if (Model.MovieEvent != null)
         {
             @: setTimeout(function() { window.location.hash = "#@Model.MovieEvent.Id"; })
         }
-        
+
     </script>
-
-	<style type="text/css">
-        a.anchor {
-            display: block;
-            position: relative;
-            top: -60px;
-            visibility: hidden;
-        }
-
-		span.stars, span.stars span {
-			display: inline-block;
-			background: url(/images/stars.png) 0 -16px repeat-x;
-			width: 160px;
-			height: 16px;
-		}
-	
-		span.stars span {
-			background-position: 0 0;
-		}
-
-        h2 {
-            padding: 0px;
-            margin: 0px;
-        }
-
-        div.small-alert {
-            padding-left: 10px; 
-            padding-right: 10px; 
-            padding-top: 3px;
-            padding-bottom: 3px;
-            margin-bottom: 0px;
-            display: inline-block;
-            font-weight: bold;
-        }
-
-        p.slim {
-            padding: 0px;
-            margin: 0px;
-        }
-
-        div.reverse-collapsible {
-            display: none;
-        }
-
-        @@media only screen and (max-width: 1000px) {
-            td.collapsible {
-                display: none;
-            }
-
-            div.reverse-collapsible {
-                display: inline-block;
-            }
-
-            span.stars, span.stars span {
-                display: none;
-                background: url(/images/stars.png) 0 -16px repeat-x;
-                width: 160px;
-                height: 16px;
-            }
-        }
-	</style>
 
     @functions 
     {
