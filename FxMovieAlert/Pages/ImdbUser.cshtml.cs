@@ -378,6 +378,7 @@ namespace FxMovieAlert.Pages
 
     }
 
+    #pragma warning disable CS0649
     [IgnoreFirst]
     [DelimitedRecord(",")]
     class ImdbUserRatingRecord
