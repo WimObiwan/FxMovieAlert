@@ -533,18 +533,18 @@
                         <span style="white-space: nowrap; float: right;">
                             <small>
                                 <a href="@shareUrl" target="_new" title="Share link..." style="text-decoration: none">
-                                    <img src="/images/link.png" alt="Link" height="24px" />
+                                    <img src="/images/link-24x24.png" alt="Link" height="24px" />
                                 </a>
                                 &nbsp;
                                 <!--div class="fb-share-button" data-href="@shareUrl" data-layout="button" data-size="small" data-mobile-iframe="true"></div-->
                                 <a href="https://www.facebook.com/sharer/sharer.php?u=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(@shareUrl))" target="_new" title="Share op facebook..." style="text-decoration: none">
-                                    <img src="/images/facebook.png" alt="Facebook" height="36px" />
+                                    <img src="/images/facebook-36x36.png" alt="Facebook" height="36px" />
                                 </a>
                                 &nbsp;
                                 @if (@movieEvent.YeloUrl != null)
                                 {
                                     <a href="@movieEvent.YeloUrl" target="_new" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
-                                        <img src="/images/yeloplay.png" alt="Yelo" height="32px" />
+                                        <img src="/images/yeloplay-55x32.png" alt="Yelo" height="32px" />
                                     </a>
                                     
                                 }
@@ -552,7 +552,7 @@
                                 @if (!string.IsNullOrEmpty(@movieEvent.ImdbId))
                                 {
                                         <a href="http://www.imdb.com/title/@movieEvent.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
-                                            <img src="/images/imdb.png" alt="IMDb" height="24px" />
+                                            <img src="/images/imdb-50x24.png" alt="IMDb" height="24px" />
                                             @if (@movieEvent.ImdbRating.HasValue)
                                             {
                                                 @((@movieEvent.ImdbRating.Value / 10.0).ToString("0.0"))
