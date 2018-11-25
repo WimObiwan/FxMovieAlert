@@ -173,19 +173,10 @@
             </div>
         </div>
     </nav>
+
+    <partial name="_CookieConsentPartial" />
+
     <div class="container body-content">
-        <!--googleoff: all-->
-        <div id="cookie-message" class="alert alert-warning">
-            <p>
-                <small>
-                    <strong>De obligatoire GDPR privacy melding bij je eerste bezoek aan FilmOpTV.be</strong>
-                    - De site maakt gebruik van cookies, en als je ervoor kiest om in te loggen worden bepaalde gegevens bijgehouden.
-                    <a href="/About#privacybeleid">Klik hier</a> om meer te lezen over het privacybeleid.  
-                    Deze boodschap <a href="#" onclick="hide('#cookie-message');">verbergen</a>.
-                </small>
-            </p>
-        </div>
-        <!--googleon: all-->
         @RenderBody()
         <hr />
         <footer>
@@ -210,7 +201,6 @@
         <script src="~/lib/jquery/dist/jquery.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
-        <script src="/js/cookie-message.js" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
         <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.2.0.min.js"

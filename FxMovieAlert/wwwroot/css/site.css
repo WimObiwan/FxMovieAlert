@@ -34,10 +34,6 @@ body {
     }
 }
 
-.js_enabled #cookie-message {
-    display: none;
-}
-
 .sideBar {
     position: fixed;
     z-index: 1000;
