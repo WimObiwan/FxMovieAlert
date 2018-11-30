@@ -15,6 +15,8 @@ using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using CommandLine;
+using CommandLine.Text;
 
 // Compile: 
 
@@ -60,7 +62,55 @@ namespace FxMovies.Grabber
             }
         }
 
-        static void Main(string[] args)
+        [Verb("Help", HelpText = "Shows help about Grabber.")]
+        class HelpOptions
+        {
+        }
+
+        [Verb("GenerateImdbDatabase", HelpText = "Generate IMDb database.")]
+        class GenerateImdbDatabaseOptions
+        {
+        }
+
+        [Verb("UpdateImdbUserRatings", HelpText = "Update IMDb user ratings.")]
+        class UpdateImdbUserRatingsOptions
+        {
+            [Option("userid", Required = true, HelpText = "User ID")]
+            public string UserId { get; set; }
+            [Option("imdbuserid", Required = true, HelpText = "IMDb user ID")]
+            public string ImdbUserId { get; set; }
+        }
+
+        [Verb("AutoUpdateImdbUserRatings", HelpText = "Auto update IMDb user ratings.")]
+        class AutoUpdateImdbUserRatingsOptions
+        {
+        }
+
+        [Verb("UpdateEPG", HelpText = "Update EPG.")]
+        class UpdateEpgOptions
+        {
+        }
+
+        [Verb("UpdateVod", HelpText = "Update VOD.")]
+        class UpdateVodOptions
+        {
+        }
+
+        [Verb("TwitterBot", HelpText = "Twitter Bot.")]
+        class TwitterBotOptions
+        {
+        }
+
+        [Verb("Manual", HelpText = "Manual.")]
+        class ManualOptions
+        {
+            [Option("movieeventid", Required = true, HelpText = "Movie event ID")]
+            public int MovieEventId { get; set; }
+            [Option("imdbid", Required = true, HelpText = "IMDb ID")]
+            public string ImdbId { get; set; }
+        }
+
+        static int Main(string[] args)
         {
             // DB Migrations: (removing columns is NOT supported!)
             // cd ./FxMoviesDB/
@@ -97,123 +147,83 @@ namespace FxMovies.Grabber
             // dotnet .\Grabber\bin\Release\netcoreapp2.1\Grabber.dll UpdateEPG
             // dotnet .\Grabber\bin\Release\netcoreapp2.1\Grabber.dll UpdateImdbUserRatings userid ur27490911
 
-            string command = null;
-            var arguments = new List<string>();
-            foreach (var arg in args)
-                if (arg.StartsWith('-'))
-                {
-                    continue;
-                }
-                else if (command == null)
-                {
-                    command = arg;
-                }
-                else
-                {
-                    arguments.Add(arg);
-                }
-            
-            if (command == null)
-            {                
-                // Usage
-                Help();
-
-                return;
-            }
-
-            if (command.Equals("Help", StringComparison.InvariantCultureIgnoreCase))
-            {
-                Help();
-            } 
-            else if (command.Equals("GenerateImdbDatabase"))
-            {
-                if (arguments.Count != 0)
-                {
-                    Console.WriteLine("GenerateImdbDatabase: Invalid argument count");
-                    return;
-                }
-                ImportImdbData_Movies();
-                ImportImdbData_AlsoKnownAs();
-                ImportImdbData_Ratings();
-            }
-            else if (command.Equals("UpdateImdbUserRatings"))
-            {
-                if (arguments.Count != 2)
-                {
-                    Console.WriteLine("Manual: Invalid argument count");
-                    return;
-                }
-
-                UpdateImdbUserRatings(arguments[0], arguments[1]);
-            }
-            else if (command.Equals("AutoUpdateImdbUserRatings"))
-            {
-                if (arguments.Count != 0)
-                {
-                    Console.WriteLine("Manual: Invalid argument count");
-                    return;
-                }
-
-                AutoUpdateImdbUserRatings();
-            }
-            else if (command.Equals("UpdateEPG"))
-            {
-                if (arguments.Count != 0)
-                {
-                    Console.WriteLine("UpdateEPG: Invalid argument count");
-                    return;
-                }
-                UpdateDatabaseEpg();
-                DownloadImageData();
-                UpdateEpgDataWithImdb();
-                UpdateDatabaseEpgHistory();
-            }
-            else if (command.Equals("UpdateVod"))
-            {
-                UpdateDatabaseVod_YeloPlay();
-                UpdateVodDataWithImdb();
-            }
-            else if (command.Equals("TwitterBot"))
-            {
-                if (arguments.Count != 0)
-                {
-                    Console.WriteLine("TwitterBot: Invalid argument count");
-                    return;
-                }
-
-                TwitterBot();
-            }
-            else if (command.Equals("Manual"))
-            {
-                if (arguments.Count != 2)
-                {
-                    Console.WriteLine("Manual: Invalid argument count");
-                    return;
-                }
-
-                UpdateEpgDataWithImdbManual(int.Parse(arguments[0]), arguments[1]);
-            }
-            else
-            {
-                Console.WriteLine("Unknown command");
-
-                Help();
-            }
-
-            // sqlite3 /tmp/imdb.db "VACUUM;" -- 121MB => 103 MB
+            return Parser.Default
+                .ParseArguments<
+                    HelpOptions,
+                    GenerateImdbDatabaseOptions,
+                    UpdateImdbUserRatingsOptions,
+                    AutoUpdateImdbUserRatingsOptions,
+                    UpdateEpgOptions,
+                    UpdateVodOptions,
+                    TwitterBotOptions,
+                    ManualOptions
+                    >(args)
+                .MapResult(
+                    (HelpOptions o) => Run(o),
+                    (GenerateImdbDatabaseOptions o) => Run(o),
+                    (UpdateImdbUserRatingsOptions o) => Run(o),
+                    (AutoUpdateImdbUserRatingsOptions o) => Run(o),
+                    (UpdateEpgOptions o) => Run(o),
+                    (UpdateVodOptions o) => Run(o),
+                    (TwitterBotOptions o) => Run(o),
+                    (ManualOptions o) => Run(o),
+                    errs => 1);
         }
 
-        static void Help()
+        private static int Run(HelpOptions options)
         {
-            Console.WriteLine("Grabber");
-            Console.WriteLine("Usage:");
-            Console.WriteLine("   Grabber Help");
-            Console.WriteLine("   Grabber GenerateImdbDatabase");
-            Console.WriteLine("   Grabber UpdateEPG");
-            Console.WriteLine("   Grabber UpdateImdbUserRatings <ImdbUserID(ur...)>");
-            Console.WriteLine("   Grabber AutoUpdateImdbUserRatings");
-            Console.WriteLine("   Grabber Manual <MovieEventId> <ImdbID(tt...)>");
+            return 0;
         }
+
+        private static int Run(GenerateImdbDatabaseOptions options)
+        {
+            ImportImdbData_Movies();
+            ImportImdbData_AlsoKnownAs();
+            ImportImdbData_Ratings();
+            return 0;
+        }
+
+        private static int Run(UpdateImdbUserRatingsOptions options)
+        {
+            UpdateImdbUserRatings(options.UserId, options.ImdbUserId);
+            return 0;
+        }
+
+        private static int Run(AutoUpdateImdbUserRatingsOptions options)
+        {
+            AutoUpdateImdbUserRatings();
+            return 0;
+        }
+
+        private static int Run(UpdateEpgOptions options)
+        {
+            UpdateDatabaseEpg();
+            DownloadImageData();
+            UpdateEpgDataWithImdb();
+            UpdateDatabaseEpgHistory();
+            return 0;
+        }
+
+        private static int Run(UpdateVodOptions options)
+        {
+            UpdateDatabaseVod_YeloPlay();
+            UpdateVodDataWithImdb();
+            return 0;
+        }
+
+        private static int Run(TwitterBotOptions options)
+        {
+            TwitterBot();
+            return 0;
+        }
+
+        private static int Run(ManualOptions options)
+        {
+            UpdateEpgDataWithImdbManual(options.MovieEventId, options.ImdbId);
+            return 0;
+        }
+
+        // sqlite3 /tmp/imdb.db "VACUUM;" -- 121MB => 103 MB
 
         static void UpdateImdbUserRatings(string userId, string imdbUserId)
         {
