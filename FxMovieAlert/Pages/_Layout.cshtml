@@ -199,6 +199,10 @@
                     @: 2017
                 }
                  - Fox Innovations / Wim Devos
+                @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
+                {
+                    <a href="" onclick="throw &quot;Sentry test message!&quot;">&pi;</a>
+                }
             </p>
         </footer>
     </div>
