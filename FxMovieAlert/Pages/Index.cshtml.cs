@@ -176,10 +176,17 @@ namespace FxMovieAlert.Pages
 
                 if (m.HasValue)
                 {
-                    MovieEvent = db.MovieEvents.Find(m.Value);
-                    int days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
-                    if (FilterMaxDays < days)
-                        FilterMaxDays = days;
+                    if (m.Value == -2)
+                    {
+                        throw new Exception("Sentry test exception");
+                    }
+                    else
+                    {
+                        MovieEvent = db.MovieEvents.Find(m.Value);
+                        int days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
+                        if (FilterMaxDays < days)
+                            FilterMaxDays = days;
+                    }
                 }
 
                 Count = db.MovieEvents.Count();
