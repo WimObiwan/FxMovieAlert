@@ -183,9 +183,12 @@ namespace FxMovieAlert.Pages
                     else
                     {
                         MovieEvent = db.MovieEvents.Find(m.Value);
-                        int days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
-                        if (FilterMaxDays < days)
-                            FilterMaxDays = days;
+                        if (MovieEvent != null)
+                        {
+                            int days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
+                            if (FilterMaxDays < days)
+                                FilterMaxDays = days;
+                        }
                     }
                 }
 
