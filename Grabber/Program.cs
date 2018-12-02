@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using CommandLine;
 using CommandLine.Text;
+using Sentry;
 
 // Compile: 
 
@@ -110,6 +111,11 @@ namespace FxMovies.Grabber
             public string ImdbId { get; set; }
         }
 
+        [Verb("TestSentry", HelpText = "Test Sentry.")]
+        class TestSentryOptions
+        {
+        }
+
         static int Main(string[] args)
         {
             // DB Migrations: (removing columns is NOT supported!)
@@ -147,27 +153,32 @@ namespace FxMovies.Grabber
             // dotnet .\Grabber\bin\Release\netcoreapp2.1\Grabber.dll UpdateEPG
             // dotnet .\Grabber\bin\Release\netcoreapp2.1\Grabber.dll UpdateImdbUserRatings userid ur27490911
 
-            return Parser.Default
-                .ParseArguments<
-                    HelpOptions,
-                    GenerateImdbDatabaseOptions,
-                    UpdateImdbUserRatingsOptions,
-                    AutoUpdateImdbUserRatingsOptions,
-                    UpdateEpgOptions,
-                    UpdateVodOptions,
-                    TwitterBotOptions,
-                    ManualOptions
-                    >(args)
-                .MapResult(
-                    (HelpOptions o) => Run(o),
-                    (GenerateImdbDatabaseOptions o) => Run(o),
-                    (UpdateImdbUserRatingsOptions o) => Run(o),
-                    (AutoUpdateImdbUserRatingsOptions o) => Run(o),
-                    (UpdateEpgOptions o) => Run(o),
-                    (UpdateVodOptions o) => Run(o),
-                    (TwitterBotOptions o) => Run(o),
-                    (ManualOptions o) => Run(o),
-                    errs => 1);
+            using (SentrySdk.Init("https://3181503fa0264cdb827506614c8973f2@sentry.io/1335361"))
+            {
+                return Parser.Default
+                    .ParseArguments<
+                        HelpOptions,
+                        GenerateImdbDatabaseOptions,
+                        UpdateImdbUserRatingsOptions,
+                        AutoUpdateImdbUserRatingsOptions,
+                        UpdateEpgOptions,
+                        UpdateVodOptions,
+                        TwitterBotOptions,
+                        ManualOptions,
+                        TestSentryOptions
+                        >(args)
+                    .MapResult(
+                        (HelpOptions o) => Run(o),
+                        (GenerateImdbDatabaseOptions o) => Run(o),
+                        (UpdateImdbUserRatingsOptions o) => Run(o),
+                        (AutoUpdateImdbUserRatingsOptions o) => Run(o),
+                        (UpdateEpgOptions o) => Run(o),
+                        (UpdateVodOptions o) => Run(o),
+                        (TwitterBotOptions o) => Run(o),
+                        (ManualOptions o) => Run(o),
+                        (TestSentryOptions o) => Run(o),
+                        errs => 1);
+            }
         }
 
         private static int Run(HelpOptions options)
@@ -221,6 +232,11 @@ namespace FxMovies.Grabber
         {
             UpdateEpgDataWithImdbManual(options.MovieEventId, options.ImdbId);
             return 0;
+        }
+
+        private static int Run(TestSentryOptions options)
+        {
+            throw new Exception("Test Sentry");
         }
 
         // sqlite3 /tmp/imdb.db "VACUUM;" -- 121MB => 103 MB
