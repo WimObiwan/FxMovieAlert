@@ -20,6 +20,11 @@ namespace FxMovieAlert
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
+                    config.AddEnvironmentVariables();
+                })
                 .UseStartup<Startup>()
                 .UseSentry("https://44d07a7cb1df484ca9a745af1ca94a2f@sentry.io/1335368");
     }

@@ -37,6 +37,13 @@ namespace FxMovieAlert.Pages
         
         public readonly List<Tuple<string, string, string>> LastImportErrors = new List<Tuple<string, string, string>>();
 
+        private IConfiguration configuration;
+
+        public ImdbUserModel(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
+
         public void OnGet(bool forcerefresh = false, string setimdbuserid = null)
         {
             string userId = ClaimChecker.UserId(User.Identity);
@@ -45,11 +52,6 @@ namespace FxMovieAlert.Pages
             {
                 return;
             }
-
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
 
             string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
             string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
@@ -191,11 +193,6 @@ namespace FxMovieAlert.Pages
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
-
             int existingCount = 0;
             int newCount = 0;
 
@@ -285,11 +282,6 @@ namespace FxMovieAlert.Pages
         private void OnPostWatchlist()
         {
             string userId = ClaimChecker.UserId(User.Identity);
-
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
 
             int existingCount = 0;
             int newCount = 0;

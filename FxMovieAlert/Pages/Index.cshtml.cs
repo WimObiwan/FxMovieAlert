@@ -82,16 +82,17 @@ namespace FxMovieAlert.Pages
         public int Count8days = 0;
         public int AdsInterval = 5;
 
+        private IConfiguration configuration;
+
+        public ZendersModel(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
 
         public void OnGet(int? m = null, int? typeMask = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
             int? movieeventid = null, string setimdbid = null, int? maxdays = null)
         {
             string userId = ClaimChecker.UserId(User.Identity);
-
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
 
             var now = DateTime.Now;
 
