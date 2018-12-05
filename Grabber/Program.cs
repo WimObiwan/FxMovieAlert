@@ -118,6 +118,15 @@ namespace FxMovies.Grabber
 
         static int Main(string[] args)
         {
+            Console.WriteLine("Version " +
+                ThisAssembly.Git.SemVer.Major + "." +
+                ThisAssembly.Git.SemVer.Minor + "." +
+                ThisAssembly.Git.Commits + "-" +
+                ThisAssembly.Git.Branch + "+" +
+                ThisAssembly.Git.Commit +
+                (ThisAssembly.Git.IsDirty ? "*" : "")
+                );
+                
             // DB Migrations: (removing columns is NOT supported!)
             // cd ./FxMoviesDB/
             // dotnet ef migrations add InitialCreate --startup-project ../Grabber/ --context FxMoviesDbContext

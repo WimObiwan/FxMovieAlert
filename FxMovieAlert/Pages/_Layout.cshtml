@@ -1,3 +1,6 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -187,7 +190,7 @@
         <hr />
         <footer>
             <p>
-                Versie 0.47 (2018-12-04).
+                Versie @(Configuration["Version"]).
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
                 &copy;
                 @if (DateTime.Now.Year > 2017)

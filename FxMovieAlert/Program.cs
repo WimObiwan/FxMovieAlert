@@ -22,6 +22,18 @@ namespace FxMovieAlert
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
+                    config.AddInMemoryCollection(
+                        new List<KeyValuePair<string, string>>()
+                        {
+                            new KeyValuePair<string, string>("Version", 
+                                ThisAssembly.Git.SemVer.Major + "." +
+                                ThisAssembly.Git.SemVer.Minor + "." +
+                                ThisAssembly.Git.Commits + "-" +
+                                ThisAssembly.Git.Branch + "+" +
+                                ThisAssembly.Git.Commit +
+                                (ThisAssembly.Git.IsDirty ? "*" : ""))
+                        }
+                    );
                     config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
                     config.AddEnvironmentVariables();
                 })
