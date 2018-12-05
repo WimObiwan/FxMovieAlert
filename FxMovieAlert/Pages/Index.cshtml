@@ -437,7 +437,7 @@
             {
                 if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval)
                 {
-                    <tr>
+                    <tr class="ad">
                         <td colspan="3" style="border: none;">
                             <div style="overflow: hidden;">
                                 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -456,7 +456,7 @@
                     moviesSinceLastAd = 0;
                 }
 
-                <tr>
+                <tr class="date-header">
                     <td colspan="3">
                         @for (DateTime enumDate = (lastDate ?? movieEvent.StartTime).AddDays(1); enumDate <= movieEvent.StartTime; enumDate = enumDate.AddDays(1))
                         {

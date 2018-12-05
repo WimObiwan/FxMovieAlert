@@ -32,7 +32,20 @@ function eachMinute() {
 
             if (minutes < -30)
             {
-                timingElement.closest("tr").remove();
+                var current = timingElement.closest("tr");
+                var previous = current.previousElementSibling;
+                var next = current.nextElementSibling;
+                if (next != null && next.classList.contains("ad"))
+                {
+                    next = next.nextSibling;
+                }
+                current.remove();
+                if (previous != null && next != null 
+                    && previous.classList.contains("date-header")
+                    && next.classList.contains("date-header"))
+                {
+                    previous.remove();
+                }
             }
         }
     });
