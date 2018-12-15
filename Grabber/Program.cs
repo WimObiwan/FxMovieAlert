@@ -151,16 +151,16 @@ namespace FxMovies.Grabber
             // export ConnectionStrings__FxMoviesDb='Data Source=/mnt/data/tmp/fxmovies.db'
             // export ConnectionStrings__ImdbDb='Data Source=/mnt/data/tmp/imdb.db'
             // cd <solutiondir>
-            // dotnet ./Grabber/bin/Release/netcoreapp2.1/Grabber.dll GenerateImdbDatabase
-            // dotnet ./Grabber/bin/Release/netcoreapp2.1/Grabber.dll UpdateEPG
-            // dotnet ./Grabber/bin/Release/netcoreapp2.1/Grabber.dll UpdateImdbUserRatings ur27490911
-            // nice -n 16 dotnet ./Grabber/bin/Release/netcoreapp2.1/Grabber.dll UpdateImdbUserRatings ur27490911
+            // dotnet ./Grabber/bin/Release/netcoreapp2.2/Grabber.dll GenerateImdbDatabase
+            // dotnet ./Grabber/bin/Release/netcoreapp2.2/Grabber.dll UpdateEPG
+            // dotnet ./Grabber/bin/Release/netcoreapp2.2/Grabber.dll UpdateImdbUserRatings ur27490911
+            // nice -n 16 dotnet ./Grabber/bin/Release/netcoreapp2.2/Grabber.dll UpdateImdbUserRatings ur27490911
             // windows:
             // cd <solutiondir>
             // dotnet build --configuration release
-            // dotnet .\Grabber\bin\Release\netcoreapp2.1\Grabber.dll GenerateImdbDatabase
-            // dotnet .\Grabber\bin\Release\netcoreapp2.1\Grabber.dll UpdateEPG
-            // dotnet .\Grabber\bin\Release\netcoreapp2.1\Grabber.dll UpdateImdbUserRatings userid ur27490911
+            // dotnet .\Grabber\bin\Release\netcoreapp2.2\Grabber.dll GenerateImdbDatabase
+            // dotnet .\Grabber\bin\Release\netcoreapp2.2\Grabber.dll UpdateEPG
+            // dotnet .\Grabber\bin\Release\netcoreapp2.2\Grabber.dll UpdateImdbUserRatings userid ur27490911
 
             using (SentrySdk.Init("https://3181503fa0264cdb827506614c8973f2@sentry.io/1335361"))
             {
