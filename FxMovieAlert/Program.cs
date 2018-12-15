@@ -18,6 +18,16 @@ namespace FxMovieAlert
             CreateWebHostBuilder(args).Build().Run();
         }
 
+        public static string GetNetCoreVersion()
+        {
+            var assembly = typeof(System.Runtime.GCSettings).Assembly;
+            var assemblyPath = assembly.CodeBase.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            int netCoreAppIndex = Array.IndexOf(assemblyPath, "Microsoft.NETCore.App");
+            if (netCoreAppIndex > 0 && netCoreAppIndex < assemblyPath.Length - 2)
+                return assemblyPath[netCoreAppIndex + 1];
+            return null;
+        }
+
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
@@ -31,7 +41,10 @@ namespace FxMovieAlert
                                 ThisAssembly.Git.Commits + "-" +
                                 ThisAssembly.Git.Branch + "+" +
                                 ThisAssembly.Git.Commit +
-                                (ThisAssembly.Git.IsDirty ? "*" : ""))
+                                (ThisAssembly.Git.IsDirty ? "*" : "")),
+                            new KeyValuePair<string, string>("DotNetCoreVersion", 
+                                GetNetCoreVersion())
+
                         }
                     );
                     config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
