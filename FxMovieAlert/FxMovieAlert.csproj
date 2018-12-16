@@ -3,6 +3,12 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <!-- https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks -->
+    <PackageReference Include="AspNetCore.HealthChecks" Version="1.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="2.2.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="2.2.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="2.2.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="2.2.0" />
     <PackageReference Include="FileHelpers" Version="3.3.0" />
     <PackageReference Include="GitInfo" Version="2.0.20">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>

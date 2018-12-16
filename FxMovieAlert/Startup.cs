@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using HealthChecks.UI.Client;
 
 namespace FxMovieAlert
 {
@@ -128,6 +130,22 @@ namespace FxMovieAlert
                 options.ForwardedHeaders = 
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
+
+            services.AddHealthChecks()
+                .AddSqlite(
+                    sqliteConnectionString: Configuration.GetConnectionString("FxMoviesDB"), 
+                    name: "sqlite-FxMoviesDB")
+                .AddSqlite(
+                    sqliteConnectionString: Configuration.GetConnectionString("FxMoviesHistoryDb"), 
+                    name: "sqlite-FxMoviesHistoryDb")
+                .AddSqlite(
+                    sqliteConnectionString: Configuration.GetConnectionString("ImdbDb"),
+                    name: "sqlite-ImdbDb")
+                .AddIdentityServer(
+                    idSvrUri: new Uri($"https://{Configuration["Auth0:Domain"]}"),
+                    name: "idsvr-Auth0");
+
+            services.AddHealthChecksUI();
             
             // Add framework services.
             services.AddMvc()
@@ -180,6 +198,13 @@ namespace FxMovieAlert
             app.UseCookiePolicy();
 
             app.UseAuthentication();
+
+            app.UseHealthChecks("/health", new HealthCheckOptions()
+            {
+                Predicate = _ => true,
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
+            app.UseHealthChecksUI();
 
             app.UseMvc(routes =>
             {
