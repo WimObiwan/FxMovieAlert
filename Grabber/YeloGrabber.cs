@@ -43,23 +43,32 @@ namespace FxMovies.Grabber
         public static void GetGuide(DateTime date, IList<MovieEvent> movieEvents)
         {
             // https://www.yeloplay.be/api/pubba/v3/channels/all/outformat/json/platform/web/
-            // één 198
-            // canvas 236
-            // vtm 207
-            // q2 567
-            // vitaya 7
-            // caz 258
-            // vier 554
-            // vijf 555
-            // zes 801 
-            // npo1 22
-            // npo2 23
-            // npo3 24
             // channels must be ordered
             // https://www.yeloplay.be/api/pubba/v1/events/schedule-day/outformat/json/lng/nl/channel/7/channel/22/channel/23/channel/24/channel/198/channel/207/channel/236/channel/258/channel/554/channel/555/channel/567/channel/801/day/2017-09-24/platform/web/
 
             var dateYMD = date.ToString("yyyy-MM-dd");
-            var channels = new int[] {198, 236, 207, 567, 7, 258, 554, 555, 801, 22, 23, 24};
+            var channels = new int[] 
+            {
+                198, // één
+                236, // canvas
+                207, // vtm
+                567, // q2
+                7,   // vitaya
+                258, // caz = acht
+                554, // vier
+                555, // vijf
+                801, // zes
+                22,  // npo1
+                23,  // npo2
+                24,  // npo3
+                534, // ketnet
+                518, // nickelodeon
+                625, // fox
+                809, // viceland
+                283, // vtm kzoom = vtm kids
+                19,  // vtm jim = vtm kids jr (= kadet?)
+                291, // disney VL = disney channel?
+            };
             var sb = new StringBuilder("https://www.yeloplay.be/api/pubba/v1/events/schedule-day/outformat/json/lng/nl");
             foreach (var channel in channels.OrderBy(c => c))
             {
@@ -87,29 +96,63 @@ namespace FxMovies.Grabber
             }
         }
 
+        static Dictionary<string, string> humoToYeloChannelMapping = new Dictionary<string, string>()
+        {
+            { "eenhd", "198" },
+            { "canvas-hd", "236" },
+            { "vtm-hd", "207" },
+            { "2be-hd", "567" },
+            { "acht", "258" },
+            { "vitaya", "7" },
+            { "vier-hd", "554" },
+            { "vijf-hd", "555" },
+            { "zes", "801" },
+            { "npo1", "22" },
+            { "npo2", "23" },
+            { "npo3", "24" },
+            { "vice", "809" },
+            { "ketnet-op12-hd", "534" },
+            { "nickelodeon-nl", "518" },
+            { "vtmkzoom", "283" },
+            { "fox-hd", "625" },
+            { "kadet", "19" },
+            { "disney-channel-vl", "291" },
+        };
         private static void Merge(IList<MovieEvent> movieEvents, Yelo yelo)
         {
             foreach (var movieEvent in movieEvents)
             {
-                string channel = movieEvent.Channel.Name;
-                var yeloChannel = yelo.schedule.Where(c => 
-                    c.name.Equals(channel, StringComparison.InvariantCultureIgnoreCase) 
-                    || c.name.Equals(channel + " HD", StringComparison.InvariantCultureIgnoreCase)
-                    ).FirstOrDefault();
-                if (yeloChannel == null)
+                string humoChannelId = movieEvent.Channel.Code;
+                if (!humoToYeloChannelMapping.TryGetValue(humoChannelId, out string yeloChannelId))
                 {
-                    Console.WriteLine("Channel {0} not found in Yelo Channel list", channel);
+                    Console.WriteLine($"WARNING: No Humo to Yelo mapping for channel '{humoChannelId}'");
                     continue;
                 }
+
+                var yeloChannel = yelo.schedule.Where(c => c.channelid == yeloChannelId).SingleOrDefault();
+                if (yeloChannel == null)
+                {
+                    Console.WriteLine($"WARNING: Yelo channel {yeloChannelId}/{humoChannelId} not found in Yelo Channel list");
+                    continue;
+                }
+
                 var time_t = (movieEvent.StartTime.ToUniversalTime() - new DateTime (1970, 1, 1)).TotalSeconds;
                 var yeloBroadcast = yeloChannel.broadcast.Where(b => b.starttime == time_t).FirstOrDefault();
                 if (yeloBroadcast == null)
                 {
-                    Console.WriteLine("{0} {1} {2} not found in broadcast list", channel, movieEvent.StartTime, movieEvent.Title);
+                    Console.WriteLine($"WARNING: {yeloChannelId}/{humoChannelId} {movieEvent.StartTime} {movieEvent.Title} not found in broadcast list");
+                    
+                    Console.WriteLine("Other broadcasts:");
+                    foreach (var item in yeloChannel.broadcast.Where (b => b.starttime >= time_t - 3600 * 3 && b.starttime <= time_t + 3600 * 3))
+                    {
+                        DateTime dt = new DateTime(1970, 1, 1).AddSeconds(item.starttime).ToLocalTime();
+                        Console.WriteLine($"   - {dt} {item.title}");
+                    }
+
                     continue;
                 }
 
-                Console.WriteLine("{0} {1} {2} FOUND {3}", channel, movieEvent.StartTime, movieEvent.Title, yeloBroadcast.mapurl);
+                Console.WriteLine($"{yeloChannelId}/{humoChannelId} {movieEvent.StartTime} {movieEvent.Title} FOUND {yeloBroadcast.mapurl}");
 
                 movieEvent.YeloUrl = "https://www.yeloplay.be" + yeloBroadcast.mapurl;
 

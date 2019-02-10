@@ -92,11 +92,9 @@ namespace FxMovies.Grabber
         }
         #endregion
 
-        public static async Task<IList<MovieEvent>> GetGuide(DateTime date)
+        private static async Task<Humo> GetHumoData(string url)
         {
-            string dateYMD = date.ToString("yyyy-MM-dd");
-            string url = string.Format("http://www.humo.be/api/epg/humosite/schedule/main/{0}/full", dateYMD);
-
+            Console.WriteLine($"Retrieving from Humo: {url}");
             var request = WebRequest.CreateHttp(url);
             using (var response = await request.GetResponseAsync())
             {
@@ -117,11 +115,80 @@ namespace FxMovies.Grabber
 
                     var humo = JsonConvert.DeserializeObject<Humo>(json, settings);
 
-                    FilterMovies(humo);
-
-                    return MovieAdapter(humo);
+                    return humo;
                 }
             }
+        }
+
+        private static async Task<Humo> GetHumoDataWithRetry(string url)
+        {
+            try 
+            {
+                return await GetHumoData(url);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"First try failed\n{e.Message}");
+            }
+
+            await Task.Delay(5000);
+
+            try 
+            {
+                return await GetHumoData(url);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Second try failed\n{e.Message}");
+
+                throw;
+            }
+        }
+
+        public static async Task<IList<MovieEvent>> GetGuide(DateTime date)
+        {
+            string dateYMD = date.ToString("yyyy-MM-dd");
+            string urlMain = string.Format("http://www.humo.be/api/epg/humosite/schedule/main/{0}/full", dateYMD);
+            string urlRest = string.Format("http://www.humo.be/api/epg/humosite/schedule/rest/{0}/full", dateYMD);
+
+            Humo humoMain = await GetHumoDataWithRetry(urlMain);
+            Humo humoRest = await GetHumoDataWithRetry(urlRest);
+
+            FilterBroadcastersRest(humoRest);
+
+            FilterMovies(humoMain);
+            FilterMovies(humoRest);
+
+            List<MovieEvent> movieEvents = new List<MovieEvent>();
+            movieEvents.AddRange(MovieAdapter(humoMain));
+            movieEvents.AddRange(MovieAdapter(humoRest));
+            return movieEvents;
+        }
+
+        static string[] broadcastersRest =
+        {
+            "kadet",
+            "mtv-vlaanderen",
+            "vice",
+            "ketnet-op12-hd",
+            "vtmkzoom",
+            "studio-100-tv",
+            "disney-channel-vl",
+            "nickelodeon-nl",
+            "cartoon-network-nl",
+        };
+
+        private static void FilterBroadcastersRest(Humo humo)
+        {
+            foreach (string broadcaster in broadcastersRest)
+            {
+                if (!humo.broadcasters.Any(b => b.code == broadcaster))
+                {
+                    Console.WriteLine($"WARNING: No events found for broadcaster {broadcaster}");
+                }
+            }
+
+            humo.broadcasters.RemoveAll(b => !broadcastersRest.Contains(b.code));
         }
 
         private static void FilterMovies(Humo humo)
