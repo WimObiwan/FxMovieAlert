@@ -35,14 +35,14 @@ function eachMinute() {
                 var current = timingElement.closest("tr");
                 var previous = current.previousElementSibling;
                 var next = current.nextElementSibling;
-                if (next != null && next.classList.contains("ad"))
+                if (next != null && typeof next.classList !== 'undefined' && next.classList.contains("ad"))
                 {
                     next = next.nextSibling;
                 }
                 current.remove();
-                if (previous != null && next != null 
-                    && previous.classList.contains("date-header")
-                    && next.classList.contains("date-header"))
+                if (previous != null && next != null
+                    && typeof previous.classList !== 'undefined' && previous.classList.contains("date-header")
+                    && typeof next.classList !== 'undefined' && next.classList.contains("date-header"))
                 {
                     previous.remove();
                 }
