@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using Newtonsoft.Json;
+using Sentry;
 
 namespace FxMovies.Grabber
 {
@@ -89,9 +90,19 @@ namespace FxMovies.Grabber
                     //     outputFile.WriteLine(json);
                     // }
 
-                    var yelo = JsonConvert.DeserializeObject<Yelo>(json);
+                    try 
+                    {
+                        var yelo = JsonConvert.DeserializeObject<Yelo>(json);
 
-                    Merge(movieEvents, yelo);
+                        Merge(movieEvents, yelo);
+                    }
+                    catch (Exception x)
+                    {
+                        Console.WriteLine($"Fetching URL failed: {url}");
+                        Console.WriteLine(x);
+
+                        SentrySdk.CaptureException(x);
+                    }
                 }
             }
         }
