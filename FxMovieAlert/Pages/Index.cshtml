@@ -542,13 +542,16 @@
                                     <img src="/images/facebook-36x36.png" alt="Facebook" height="36px" />
                                 </a>
                                 &nbsp;
-                                @if (@movieEvent.YeloUrl != null)
-                                {
-                                    <a href="@movieEvent.YeloUrl" target="_new" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
-                                        <img src="/images/yeloplay-55x32.png" alt="Yelo" height="32px" />
-                                    </a>
-                                    
+                                @{
+                                    string yeloUrl = movieEvent.YeloUrl;
+                                    if (yeloUrl == null)
+                                    {
+                                        yeloUrl = "https://www.yeloplay.be/?action=search&q=" + System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title);
+                                    }
                                 }
+                                <a href="@yeloUrl" target="_new" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
+                                    <img src="/images/yeloplay-55x32.png" alt="Yelo" height="32px" />
+                                </a>
                                 &nbsp;
                                 @if (!string.IsNullOrEmpty(@movieEvent.ImdbId))
                                 {
