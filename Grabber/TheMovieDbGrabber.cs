@@ -27,6 +27,14 @@ namespace FxMovies.Grabber
         {
             public List<Country> countries { get; set; }
         }
+
+        private class Movie
+        {
+            public string backdrop_path { get; set; }
+            public string poster_path { get; set; }
+            public string original_title { get; set; }
+        }
+
         #endregion
 
         public static string GetCertification(string imdbId)
@@ -86,6 +94,68 @@ namespace FxMovies.Grabber
             }
 
             return null;
+        }
+
+        public static (string, string) GetImage(string imdbId)
+        {
+            // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            string theMovieDbKey = configuration.GetSection("Grabber")["TheMovieDbKey"];
+            string certificationCountryPreference = configuration.GetSection("Grabber")["CertificationCountryPreference"];
+
+            string url = string.Format("https://api.themoviedb.org/3/movie/{1}?api_key={0}&language=en-US",
+                theMovieDbKey, imdbId);
+
+            var request = WebRequest.CreateHttp(url);
+            try
+            {
+                using (var response = request.GetResponse())
+                {
+                    using (var textStream = new StreamReader(response.GetResponseStream()))
+                    {
+                        string json = textStream.ReadToEnd();
+
+                        var movie = JsonConvert.DeserializeObject<Movie>(json);
+                        
+                        Console.WriteLine("Image {0} ==> {1}", imdbId, movie.original_title);
+                        
+                        string baseUrl = "http://image.tmdb.org/t/p";
+                        string posterM, posterS;
+
+                        // Image sizes:
+                        // https://api.themoviedb.org/3/configuration?api_key=<key>&language=en-US
+
+                        if (movie.backdrop_path != null)
+                        {
+                            posterM = baseUrl + "/w780" + movie.backdrop_path;
+                            posterS = baseUrl + "/w300" + movie.backdrop_path;
+                        }
+                        else if (movie.poster_path != null)
+                        {
+                            posterM = baseUrl + "/w780" + movie.poster_path;
+                            posterS = baseUrl + "/w154" + movie.poster_path;
+                        }
+                        else
+                        {
+                            posterM = null;
+                            posterS = null;
+                        }
+
+                        return (posterM, posterS);
+                    }
+                }
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("Image {0} ==> EXCEPTION {1}", imdbId, e.Message);
+            }
+
+            return (null, null);
         }
     }
 }

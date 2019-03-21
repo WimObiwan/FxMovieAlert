@@ -218,6 +218,7 @@ namespace FxMovies.Grabber
         private static int Run(UpdateEpgOptions options)
         {
             UpdateDatabaseEpg();
+            UpdateMissingImageLinks();
             DownloadImageData();
             UpdateEpgDataWithImdb();
             UpdateDatabaseEpgHistory();
@@ -611,6 +612,36 @@ namespace FxMovies.Grabber
 
                     db.SaveChanges();
                 }
+            }
+        }
+
+        static void UpdateMissingImageLinks()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            Console.WriteLine("Using database: {0}", connectionString);
+
+            using (var db = FxMoviesDbContextFactory.Create(connectionString))
+            {
+                foreach (var movieEvent in db.MovieEvents)
+                {
+                    bool emptyPosterM = string.IsNullOrEmpty(movieEvent.PosterM);
+                    bool emptyPosterS = string.IsNullOrEmpty(movieEvent.PosterS);
+                    if ((emptyPosterM || emptyPosterS) && !string.IsNullOrEmpty(movieEvent.ImdbId))
+                    {
+                        string imageM, imageS;
+                        (imageM, imageS) = TheMovieDbGrabber.GetImage(movieEvent.ImdbId);
+                        movieEvent.PosterM = imageM;
+                        movieEvent.PosterS = imageS;
+                    }
+                }
+                db.SaveChanges();
             }
         }
 
