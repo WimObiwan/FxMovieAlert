@@ -796,6 +796,8 @@ namespace FxMovies.Grabber
             string basePath = configuration.GetSection("Grabber")["ImageBasePath"];
             if (!Directory.Exists(basePath))
                 Directory.CreateDirectory(basePath);
+            
+            var imageOverrideMap = configuration.GetSection("Grabber").GetSection("ImageOverrideMap");
 
             using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
             {
@@ -810,29 +812,39 @@ namespace FxMovies.Grabber
                     else
                         ext = url.Substring(extStart);
 
-                    string name = "channel-" + channel.Code + ext;
+                    string nameWithoutExt = "channel-" + channel.Code;
+                    string name = nameWithoutExt + ext;
 
-                    // bool reset = false;
-                    
-                    // if (name != channel.LogoS_Local)
-                    // {
-                    //    channel.LogoS_Local = name;
-                    //     reset = true;
-                    // }
-                    // else if (!File.Exists(target))
-                    // {
-                    //     reset = true;
-                    // }
+                    string imageOverride = imageOverrideMap[nameWithoutExt];
+                    if (imageOverride != null)
+                    {
+                        string target = Path.Combine(basePath, name);
+                        File.Copy(imageOverride, target, true);
+                    }
+                    else
+                    {
+                        // bool reset = false;
+                        
+                        // if (name != channel.LogoS_Local)
+                        // {
+                        //    channel.LogoS_Local = name;
+                        //     reset = true;
+                        // }
+                        // else if (!File.Exists(target))
+                        // {
+                        //     reset = true;
+                        // }
 
-                    // string eTag = reset ? null : channel.LogoS_ETag;
-                    // DateTime? lastModified = reset ? null : channel.LogoS_LastModified;
-                    //
-                    
-                    // Resize to 50 gives black background on Vier, Vijf, ...
-                    channel.LogoS_Local = DownloadFile(url, basePath, name, 0);
+                        // string eTag = reset ? null : channel.LogoS_ETag;
+                        // DateTime? lastModified = reset ? null : channel.LogoS_LastModified;
+                        //
+                        
+                        // Resize to 50 gives black background on Vier, Vijf, ...
+                        channel.LogoS_Local = DownloadFile(url, basePath, name, 0);
 
-                    // channel.LogoS_ETag = eTag;
-                    // channel.LogoS_LastModified = lastModified;
+                        // channel.LogoS_ETag = eTag;
+                        // channel.LogoS_LastModified = lastModified;
+                    }
                 }
 
                 foreach (var movieEvent in dbMovies.MovieEvents)
