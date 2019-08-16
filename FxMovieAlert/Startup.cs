@@ -143,7 +143,9 @@ namespace FxMovieAlert
                     name: "sqlite-ImdbDb")
                 .AddIdentityServer(
                     idSvrUri: new Uri($"https://{Configuration["Auth0:Domain"]}"),
-                    name: "idsvr-Auth0");
+                    name: "idsvr-Auth0")
+                .AddCheck<MovieDbDataCheck>("FxMoviesDB-data")
+                .AddCheck<MovieDbMissingImdbLinkCheck>("FxMoviesDB-missingImdbLink");
 
             services.AddHealthChecksUI();
             
@@ -199,12 +201,16 @@ namespace FxMovieAlert
 
             app.UseAuthentication();
 
-            app.UseHealthChecks("/health", new HealthCheckOptions()
+            app.UseHealthChecks(Configuration.GetValue("HealthCheck:Uri", "/hc"), new HealthCheckOptions()
             {
                 Predicate = _ => true,
                 ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
             });
-            app.UseHealthChecksUI();
+            // app.UseHealthChecksUI(o => 
+            // {
+            //     o.UIPath = "/hc-ui";
+            //     o.ApiPath = "/hc";
+            // });
 
             app.UseMvc(routes =>
             {
