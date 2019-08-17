@@ -180,15 +180,19 @@ namespace FxMovies.Grabber
 
         private static void FilterBroadcastersRest(Humo humo)
         {
+            if (humo == null || humo.broadcasters == null)
+            {
+                return;
+            }
             foreach (string broadcaster in broadcastersRest)
             {
-                if (!humo.broadcasters.Any(b => b.code == broadcaster))
+                if (!humo.broadcasters.Any(b => b != null && b.code == broadcaster))
                 {
                     Console.WriteLine($"WARNING: No events found for broadcaster {broadcaster}");
                 }
             }
 
-            humo.broadcasters.RemoveAll(b => !broadcastersRest.Contains(b.code));
+            humo.broadcasters.RemoveAll(b => b == null || !broadcastersRest.Contains(b.code));
         }
 
         private static void FilterMovies(Humo humo)
