@@ -197,16 +197,26 @@ namespace FxMovies.Grabber
 
         private static void FilterMovies(Humo humo)
         {
-            foreach (var broadcaster in humo.broadcasters)
+            if (humo == null || humo.broadcasters == null)
             {
-                broadcaster.events.RemoveAll(e => !e.IsMovie() && ! e.IsFirstOfSerieSeason());
+                return;
             }
 
-            humo.broadcasters.RemoveAll(b => (b.events.Count == 0));
+            foreach (var broadcaster in humo.broadcasters)
+            {
+                broadcaster.events?.RemoveAll(e => !e.IsMovie() && ! e.IsFirstOfSerieSeason());
+            }
+
+            humo.broadcasters.RemoveAll(b => (b.events == null) || (b.events.Count == 0));
         }
 
         private static IList<MovieEvent> MovieAdapter(Humo humo)
         {
+            if (humo == null || humo.broadcasters == null)
+            {
+                return new List<MovieEvent>();
+            }
+
             var movies = new List<MovieEvent>();
             foreach (var broadcaster in humo.broadcasters)
             {
