@@ -4,10 +4,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://browser.sentry-cdn.com/4.4.1/bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" crossorigin="anonymous"></script>
     <script>
     Sentry.init({ dsn: 'https://ab174f0f41fb45f48eea8d1d34918bcc@sentry.io/1334771',
-        blacklistUrls: ['pagead2.googlesyndication.com']});
+        whitelistUrls: [ /filmoptv\.be/, /www\.filmoptv\.be/ ]
+    });
     </script>
 
     <!-- Global Site Tag (gtag.js) - Google Analytics -->
@@ -212,7 +213,7 @@
                  - Fox Innovations / Wim Devos
                 @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
                 {
-                    <a href="" title="Client-side javascript Sentry test" onclick="throw &quot;Sentry test exception!&quot;">&pi;</a>
+                    <a href="#" title="Client-side javascript Sentry test" onclick="throw &quot;Sentry test exception!&quot;">&pi;</a>
                     <a href="/?m=-2" title="Server-side dotnet Core Sentry test">&pi;</a>
                 }
             </p>
