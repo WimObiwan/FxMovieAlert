@@ -669,22 +669,31 @@
 
 @if (Model.FilterMaxDays > 0 && Model.FilterMaxDays < 10)
 {
-    string ref_load_more = "?";
-    if (Model.FilterMaxDays <= 3)
+    if (User.Identity.IsAuthenticated)
     {
-        ref_load_more += FormatQueryStringWithMaxDays(5);
-    }
-    else if (Model.FilterMaxDays <= 5)
-    {
-        ref_load_more += FormatQueryStringWithMaxDays(8);
+        string ref_load_more = "?";
+        if (Model.FilterMaxDays <= 3)
+        {
+            ref_load_more += FormatQueryStringWithMaxDays(5);
+        }
+        else if (Model.FilterMaxDays <= 5)
+        {
+            ref_load_more += FormatQueryStringWithMaxDays(8);
+        }
+        else
+        {
+            ref_load_more += FormatQueryStringWithMaxDays(0);
+        }
+        ref_load_more += "#day" + now.Date.AddDays(Model.FilterMaxDays + 1).ToString("yyyyMMdd");
+
+        <div style="text-align: right;">
+            <a href="@ref_load_more" class="btn btn-info">Volgende dagen laden...</a>
+        </div>
     }
     else
     {
-        ref_load_more += FormatQueryStringWithMaxDays(0);
+        <div style="text-align: right;">
+            <small><a asp-page="/Account" asp-page-handler="login">Inloggen</a> om advertenties te verbergen of om meer dagen te tonen.</small> 
+        </div>
     }
-    ref_load_more += "#day" + now.Date.AddDays(Model.FilterMaxDays + 1).ToString("yyyyMMdd");
-
-    <div style="text-align: right;">
-        <a href="@ref_load_more" class="btn btn-info">Volgende dagen laden...</a>
-    </div>
 }

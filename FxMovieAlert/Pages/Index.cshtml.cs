@@ -113,7 +113,8 @@ namespace FxMovieAlert.Pages
             if (minrating.HasValue)
                 FilterMinRating = minrating.Value;
             
-            if (maxdays.HasValue)
+            // Only allow setting more days when authenticated
+            if (maxdays.HasValue && User.Identity.IsAuthenticated)
                 FilterMaxDays = maxdays.Value;
 
             FilterNotYetRated = notyetrated;
