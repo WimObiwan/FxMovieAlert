@@ -435,7 +435,7 @@
             var movieEvent = record.MovieEvent;
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
             {
-                if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval)
+                if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval && !User.Identity.IsAuthenticated)
                 {
                     <tr class="ad">
                         <td colspan="3" style="border: none;">
@@ -450,6 +450,8 @@
                                 <script>
                                 (adsbygoogle = window.adsbygoogle || []).push({});
                                 </script>
+                                <br/>
+                                <small><a asp-page="/Account" asp-page-handler="login">Inloggen</a> om advertenties te verbergen.</small> 
                             </div>
                         </td>
                     </tr>

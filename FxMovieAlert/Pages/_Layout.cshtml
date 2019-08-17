@@ -26,6 +26,8 @@
     }
     </script>
 
+@if (!User.Identity.IsAuthenticated)
+{
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <script>
      (adsbygoogle = window.adsbygoogle || []).push({
@@ -33,6 +35,7 @@
           enable_page_level_ads: true
      });
 </script>
+}
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -108,6 +111,8 @@
 </head>
 <body>
  
+@if (!User.Identity.IsAuthenticated)
+{
     <div id="ad" class="sideBar boxLeft">
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -120,7 +125,10 @@
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
 
+<br/>
+<small><a asp-page="/Account" asp-page-handler="login">Inloggen</a> om advertenties te verbergen.</small> 
     </div>
+}
  
     <script>
     // Detect JS support
