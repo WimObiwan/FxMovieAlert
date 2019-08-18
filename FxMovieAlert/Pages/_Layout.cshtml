@@ -127,7 +127,12 @@
 </script>
 
 <br/>
-<small><a asp-page="/Account" asp-page-handler="login">Inloggen</a> om advertenties te verbergen.</small> 
+<p class="text-muted">
+    <small>
+        <a asp-page="/Account" asp-page-handler="login">Inloggen</a> om advertenties te verbergen.
+    </small>
+</p>
+
     </div>
 }
  
@@ -198,7 +203,7 @@
         @RenderBody()
         <hr />
         <footer>
-            <p>
+            <p class="text-muted">
                 Versie @(Configuration["Version"]).  Running on .NET Core version @(Configuration["DotNetCoreVersion"]).<br/>                
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
                 &copy;
