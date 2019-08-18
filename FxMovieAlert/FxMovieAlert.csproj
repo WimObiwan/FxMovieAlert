@@ -5,11 +5,11 @@
   <ItemGroup>
     <!-- https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks -->
     <PackageReference Include="AspNetCore.HealthChecks" Version="1.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="2.2.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="2.2.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="2.2.32" />
+    <!--PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="2.2.4" /-->
     <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="2.2.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="2.2.0" />
-    <PackageReference Include="FileHelpers" Version="3.3.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="2.2.2" />
+    <PackageReference Include="FileHelpers" Version="3.4.0" />
     <PackageReference Include="GitInfo" Version="2.0.20">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -17,10 +17,10 @@
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="2.2.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="1.0.1-beta3" />
+    <PackageReference Include="Sentry.AspNetCore" Version="1.2.0" />
   </ItemGroup>
   <ItemGroup>
-    <DotNetCliToolReference Include="BundlerMinifier.Core" Version="2.8.391" />
+    <DotNetCliToolReference Include="BundlerMinifier.Core" Version="2.9.406" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FxMoviesDB\FxMoviesDB.csproj" />
