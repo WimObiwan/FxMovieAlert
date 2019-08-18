@@ -147,7 +147,7 @@ namespace FxMovieAlert
                 .AddCheck<MovieDbDataCheck>("FxMoviesDB-data")
                 .AddCheck<MovieDbMissingImdbLinkCheck>("FxMoviesDB-missingImdbLink");
 
-            services.AddHealthChecksUI();
+            //services.AddHealthChecksUI();
             
             // Add framework services.
             services.AddMvc()
