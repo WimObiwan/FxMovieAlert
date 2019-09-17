@@ -14,6 +14,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using HealthChecks.UI.Client;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace FxMovieAlert
 {
@@ -204,7 +209,8 @@ namespace FxMovieAlert
             app.UseHealthChecks(Configuration.GetValue("HealthCheck:Uri", "/hc"), new HealthCheckOptions()
             {
                 Predicate = _ => true,
-                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                ResponseWriter = WriteZabbixResponse
             });
             // app.UseHealthChecksUI(o => 
             // {
@@ -218,6 +224,29 @@ namespace FxMovieAlert
                     name: "default",
                     template: "{controller}/{action=Index}/{id?}");
             });
+        }
+
+        private static Task WriteZabbixResponse(HttpContext httpContext, HealthReport result)
+        {
+            httpContext.Response.ContentType = "application/json";
+
+            var json = new JObject(
+                new JProperty("status", result.Status),
+                new JProperty("statusText", result.Status.ToString()),
+                new JProperty("results", new JArray(result.Entries.Select(pair =>
+                {
+                    List<JProperty> properties = new List<JProperty>();
+                    properties.Add(new JProperty("name", pair.Key));
+                    properties.Add(new JProperty("status", pair.Value.Status));
+                    properties.Add(new JProperty("statusText", pair.Value.Status.ToString()));
+                    if (pair.Value.Description != null) 
+                        properties.Add(new JProperty("description", pair.Value.Description));
+                    if (pair.Value.Data.Any())
+                        properties.Add(new JProperty("data", 
+                            new JObject(pair.Value.Data.Select(p => new JProperty(p.Key, p.Value)))));
+                    return new JObject(properties);
+                }))));
+            return httpContext.Response.WriteAsync(json.ToString(Formatting.None));
         }
     }
 }
