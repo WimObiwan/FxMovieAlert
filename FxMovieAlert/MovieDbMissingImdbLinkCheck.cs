@@ -2,6 +2,7 @@ using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,13 +28,17 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
             count = db.MovieEvents.Count(me => string.IsNullOrEmpty(me.ImdbId) && me.Type == 1);
         }
 
-        string message = $"Missing Imdb link count is {count}";
+        HealthStatus status;
+        if (count <= this.configuration.GetValue("HealthCheck:CheckMissingImdbLinkCount", 15))
+            status = HealthStatus.Healthy;
+        else
+            status = HealthStatus.Unhealthy;
 
-        if (count <= this.configuration.GetValue("HealthCheck:CheckMissingImdbLinkCount", 0))
-        {
-            return Task.FromResult(HealthCheckResult.Healthy(message));
-        }
-
-        return Task.FromResult(HealthCheckResult.Unhealthy(message));
+        HealthCheckResult result = new HealthCheckResult(status, null, null, 
+            new Dictionary<string, object>() {
+                { "MissingImdbLinkCount", count }
+            });
+        
+        return Task.FromResult(result);
     }
 }
