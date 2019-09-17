@@ -2,6 +2,7 @@ using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,12 +28,19 @@ public class MovieDbDataCheck : IHealthCheck
             last = db.MovieEvents.Max(me => me.StartTime);
         }
 
-        string message = $"Last movie is on {last}";
-        if (last > DateTime.Now.AddDays(this.configuration.GetValue("HealthCheck:CheckLastMovieMoreThanDays", 9.0)))
-        {
-            return Task.FromResult(HealthCheckResult.Healthy(message));
-        }
+        var lastMovieAge = (last - DateTime.Now).TotalDays;
 
-        return Task.FromResult(HealthCheckResult.Unhealthy(message));
+        HealthStatus status;
+        if (lastMovieAge <= this.configuration.GetValue("HealthCheck:CheckLastMovieMoreThanDays", 4.0))
+            status = HealthStatus.Unhealthy;
+        else
+            status = HealthStatus.Healthy;
+
+        HealthCheckResult result = new HealthCheckResult(status, null, null, 
+            new Dictionary<string, object>() {
+                { "LastMovieAge", lastMovieAge }
+            });
+        
+        return Task.FromResult(result);
     }
 }
