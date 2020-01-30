@@ -13,82 +13,42 @@ namespace FxMovies.Grabber
     public static class HumoGrabber
     {
         #region JSonModel
-        private class Resized_Url
-        {
-            public string large { get; set; }
-            public string medium { get; set; }
-            public string small { get; set; }
-        }
-
-        [DebuggerDisplay("link_type = {link_type}")]
-        private class Media
-        {
-            public int id { get; set; }
-            public string link_type { get; set; }
-            public string media_type { get; set; }
-            public string caption { get; set; }
-            public Resized_Url resized_urls { get; set; }
-        }
-
-        private class EventProperties
-        {
-            public int eventduration { get; set; }
-            public int hd { get; set; }
-            public int live { get; set; }
-            public int part_of_series { get; set; }
-            public int series_id { get; set; }
-        }
 
         [DebuggerDisplay("title = {title}")]
-        private class EventProgram
+        private class HumoBroadcast
         {
-            public int id { get; set; }
-            public int episodenumber { get; set; }
-            public int episodeseason { get; set; }
-            public string appreciation { get; set; }
-            public string opinion { get; set; }
+            public Guid uuid { get; set; }
+            public long from { get; set; }
+            public long to { get; set; }
+            public int duration { get; set; }
+            public string playableType { get; set; }
             public string title { get; set; }
-            public int year { get; set; }
-            public string description { get; set; }
-            public string content_short { get; set; }
-            public string content_long { get; set; }
-            public List<string> genres { get; set; }
-            public List<Media> media { get; set; }
-        }
+            public string genre { get; set; }
+            public string[] subGenres { get; set; }
+            public string synopsis { get; set; }
+            public string imageUrl { get; set; }
+            public int? rating { get; set; }
 
-        [DebuggerDisplay("title = {program.title}")]
-        private class Event
-        {
-            public int id { get; set; }
-            public string url { get; set; }
-            public int event_id { get; set; }
-            public int starttime { get; set; }
-            public int endtime { get; set; }
-            public List<string> labels { get; set; }
-            public EventProperties properties { get; set; }
-            public EventProgram program { get; set; }
 
-            public bool IsMovie() => labels != null && labels.Contains("film");
-            public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
-            public bool IsShort() => endtime - starttime < 3600;
+            public bool IsMovie() => playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
+            //public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
+
+            public bool IsShort() => duration < 3600;
 
         }
 
-        [DebuggerDisplay("display_name = {display_name}")]
-        private class BroadCasters
+        [DebuggerDisplay("name = {name}")]
+        private class HumoChannel
         {
-            public int id { get; set; }
-            public string code { get; set; }
-            public string display_name { get; set; }
-            public List<Media> media { get; set; }
-            public List<Event> events { get; set; }
+            public string seoKey { get; set; }
+            public string name { get; set; }
+            public string channelLogoUrl { get; set; }
+            public List<HumoBroadcast> broadcasts { get; set; }
         }
 
         private class Humo
         {
-            public string platform { get; set; }
-            public string date { get; set; }
-            public List<BroadCasters> broadcasters { get; set; }
+            public List<HumoChannel> channels { get; set; }
         }
         #endregion
 
@@ -148,101 +108,116 @@ namespace FxMovies.Grabber
         public static async Task<IList<MovieEvent>> GetGuide(DateTime date)
         {
             string dateYMD = date.ToString("yyyy-MM-dd");
-            string urlMain = string.Format("http://www.humo.be/api/epg/humosite/schedule/main/{0}/full", dateYMD);
-            string urlRest = string.Format("http://www.humo.be/api/epg/humosite/schedule/rest/{0}/full", dateYMD);
+            string url = $"https://www.humo.be/tv-gids/api/v2/broadcasts/{dateYMD}";
 
-            Humo humoMain = await GetHumoDataWithRetry(urlMain);
-            Humo humoRest = await GetHumoDataWithRetry(urlRest);
+            Humo humo = await GetHumoDataWithRetry(url);
 
-            FilterBroadcastersRest(humoRest);
+            FilterBroadcasters(humo);
 
-            FilterMovies(humoMain);
-            FilterMovies(humoRest);
+            FilterMovies(humo);
 
             List<MovieEvent> movieEvents = new List<MovieEvent>();
-            movieEvents.AddRange(MovieAdapter(humoMain));
-            movieEvents.AddRange(MovieAdapter(humoRest));
+            movieEvents.AddRange(MovieAdapter(humo));
             return movieEvents;
         }
 
-        static string[] broadcastersRest =
+        static string[] channels =
         {
-            "kadet",
+            "een",
+            "canvas",
+            "vtm",
+            "vier",
+            "q2",
+            "vijf",
+            "zes",
+            "vitaya",
+            "caz",
+            "npo-1",
+            "npo-2",
+            "npo-3",
+            "vtm-kids-jr",
             "mtv-vlaanderen",
-            "vice",
-            "ketnet-op12-hd",
-            "vtmkzoom",
+            "viceland",
+            "ketnet",
+            "vtm-kids",
             "studio-100-tv",
-            "disney-channel-vl",
-            "nickelodeon-nl",
-            "cartoon-network-nl",
+            "disney-channel",
+            "nickelodeon-spike",
+            "cartoon24",
         };
 
-        private static void FilterBroadcastersRest(Humo humo)
+        private static void FilterBroadcasters(Humo humo)
         {
-            if (humo == null || humo.broadcasters == null)
+            if (humo == null || humo.channels == null)
             {
                 return;
             }
-            foreach (string broadcaster in broadcastersRest)
+            foreach (string channel in channels)
             {
-                if (!humo.broadcasters.Any(b => b != null && b.code == broadcaster))
+                if (!humo.channels.Any(b => b != null && b.seoKey == channel))
                 {
-                    Console.WriteLine($"WARNING: No events found for broadcaster {broadcaster}");
+                    Console.WriteLine($"WARNING: No broadcasts found for channel {channel}");
                 }
             }
 
-            humo.broadcasters.RemoveAll(b => b == null || !broadcastersRest.Contains(b.code));
+            humo.channels.RemoveAll(b => b == null || !channels.Contains(b.seoKey));
         }
 
         private static void FilterMovies(Humo humo)
         {
-            if (humo == null || humo.broadcasters == null)
+            if (humo == null || humo.channels == null)
             {
                 return;
             }
 
-            foreach (var broadcaster in humo.broadcasters)
+            foreach (var channel in humo.channels)
             {
-                broadcaster.events?.RemoveAll(e => !e.IsMovie() && ! e.IsFirstOfSerieSeason());
+                //channel.broadcasts.RemoveAll(b => !b.IsMovie() && ! b.IsFirstOfSerieSeason());
+                channel.broadcasts.RemoveAll(b => !b.IsMovie());
             }
 
-            humo.broadcasters.RemoveAll(b => (b.events == null) || (b.events.Count == 0));
+            humo.channels.RemoveAll(c => (c.broadcasts == null) || (c.broadcasts.Count == 0));
         }
 
         private static IList<MovieEvent> MovieAdapter(Humo humo)
         {
-            if (humo == null || humo.broadcasters == null)
+            if (humo == null || humo.channels == null)
             {
                 return new List<MovieEvent>();
             }
 
             var movies = new List<MovieEvent>();
-            foreach (var broadcaster in humo.broadcasters)
+            foreach (var humoChannel in humo.channels)
             {
                 var channel = new Channel()
                 {
-                    Code = broadcaster.code,
-                    Name = broadcaster.display_name,
-                    LogoS = broadcaster.media.Find(m => m.link_type == "epg_logo")?.resized_urls?.small,
+                    Code = humoChannel.seoKey,
+                    Name = humoChannel.name,
+                    LogoS = humoChannel.channelLogoUrl,
                 };
 
-                foreach (var evnt in broadcaster.events)
+                foreach (var broadcast in humoChannel.broadcasts)
                 {
-                    string description = evnt.program.description;
-                    int year = evnt.program.year;
+                    string description = broadcast.synopsis;
+                    int? year = null;
+                    // int year = broadcast.program.year;
 
-                    description = description.Replace($" ({year})", "");
+                    // description = description.Replace($" ({year})", "");
 
-                    if (evnt.program.episodenumber != 0 && evnt.program.episodeseason != 0)
-                    {
-                        description += $" (SERIE: begin van seizoen {evnt.program.episodeseason})";
-                    }
+                    // if (broadcast.program.episodenumber != 0 && broadcast.program.episodeseason != 0)
+                    // {
+                    //     description += $" (SERIE: begin van seizoen {broadcast.program.episodeseason})";
+                    // }
+
+                    string genre = broadcast.genre?.Trim() ?? "";
+                    if (genre != "")
+                        genre += " - ";
+                    genre += string.Join(' ', broadcast.subGenres);
 
                     int type;
-                    if (evnt.IsMovie())
+                    if (broadcast.IsMovie())
                     {
-                        if (evnt.IsShort())
+                        if (broadcast.IsShort())
                             type = 2; // short
                         else
                             type = 1; // movie
@@ -252,34 +227,46 @@ namespace FxMovies.Grabber
                         type = 3; // serie
                     }
 
-                    string opinion = evnt.program.opinion;
-                    if (!string.IsNullOrEmpty(evnt.program.appreciation) 
-                        && int.TryParse(evnt.program.appreciation, out int appreciation)
-                        && appreciation > 0 && appreciation <= 50)
+                    string opinion = null;
+                    // string opinion = broadcast.program.opinion;
+                    // if (!string.IsNullOrEmpty(broadcast.program.appreciation) 
+                    //     && int.TryParse(broadcast.program.appreciation, out int appreciation)
+                    //     && appreciation > 0 && appreciation <= 50)
+                    // {
+                    //     string stars = new string('★', appreciation / 10);
+                    //     if (appreciation % 10 > 0)
+                    //         stars += '½';
+                    //     if (string.IsNullOrEmpty(opinion))
+                    //         opinion = stars;
+                    //     else
+                    //         opinion = stars + " " + opinion;
+                    // }
+                    if (broadcast.rating.HasValue)
                     {
-                        string stars = new string('★', appreciation / 10);
-                        if (appreciation % 10 > 0)
-                            stars += '½';
-                        if (string.IsNullOrEmpty(opinion))
+                        int rating = broadcast.rating.Value;
+                        if (rating > 0 && rating <= 100)
+                        {
+                            string stars = new string('★', rating / 20);
+                            if (rating % 20 > 0)
+                                stars += '½';
                             opinion = stars;
-                        else
-                            opinion = stars + " " + opinion;
+                        }
                     }
 
                     var movie = new MovieEvent()
                     {
-                        Id = evnt.id,
+                        Id = broadcast.uuid.GetHashCode(),
                         Channel = channel,
-                        Title = evnt.program.title,
+                        Title = broadcast.title,
                         Year = year,
-                        StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.starttime).ToLocalTime(),
-                        EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(evnt.endtime).ToLocalTime(),
-                        Duration = evnt.properties.eventduration,
-                        PosterS = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.small,
-                        PosterM = evnt.program.media?.Find(m => m.link_type == "epg_program")?.resized_urls?.medium,
-                        Content = evnt.program.content_long,
+                        StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000).ToLocalTime(),
+                        EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000).ToLocalTime(),
+                        Duration = broadcast.duration,
+                        PosterS = broadcast.imageUrl,
+                        PosterM = broadcast.imageUrl,
+                        Content = broadcast.synopsis,
                         Opinion = opinion,
-                        Genre = description,
+                        Genre = genre,
                         Type = type,
                     };
 
