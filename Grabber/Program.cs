@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -855,12 +855,14 @@ namespace FxMovies.Grabber
                         if (url == null)
                             continue;
 
-                        string ext;
-                        int extStart = url.LastIndexOf('.');
-                        if (extStart == -1)
-                            ext = ".jpg";
-                        else
-                            ext = url.Substring(extStart);
+                        string ext = ".jpg";
+                        if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
+                        {
+                            string path = uri.PathAndQuery;
+                            int extStart = path.LastIndexOf('.');
+                            if (extStart != -1)
+                                ext = url.Substring(extStart);
+                        }
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-S" + ext;
 
@@ -872,12 +874,14 @@ namespace FxMovies.Grabber
                         if (url == null)
                             continue;
 
-                        string ext;
-                        int extStart = url.LastIndexOf('.');
-                        if (extStart == -1)
-                            ext = ".jpg";
-                        else
-                            ext = url.Substring(extStart);
+                        string ext = ".jpg";
+                        if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
+                        {
+                            string path = uri.PathAndQuery;
+                            int extStart = path.LastIndexOf('.');
+                            if (extStart != -1)
+                                ext = url.Substring(extStart);
+                        }
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-M" + ext;
 
