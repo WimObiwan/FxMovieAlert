@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -32,7 +32,7 @@ namespace FxMovies.Grabber
                 var builder = new DbContextOptionsBuilder<FxMoviesDbContext>();
 
                 var configuration = new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                     .AddEnvironmentVariables()
                     .Build();
 
@@ -51,7 +51,7 @@ namespace FxMovies.Grabber
                 var builder = new DbContextOptionsBuilder<ImdbDbContext>();
 
                 var configuration = new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                     .AddEnvironmentVariables()
                     .Build();
 
@@ -257,7 +257,7 @@ namespace FxMovies.Grabber
             UpdateImdbUserRatings(userId, imdbUserId, true);
 
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -283,7 +283,7 @@ namespace FxMovies.Grabber
         static void UpdateImdbUserRatings(string userId, string imdbUserId, bool watchlist)
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -420,7 +420,7 @@ namespace FxMovies.Grabber
         static void AutoUpdateImdbUserRatings()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -459,7 +459,7 @@ namespace FxMovies.Grabber
         static void UpdateDatabaseEpg()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -618,7 +618,7 @@ namespace FxMovies.Grabber
         static void UpdateMissingImageLinks()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -650,7 +650,7 @@ namespace FxMovies.Grabber
             List<VodMovie> vodMovies = YeloPlayGrabber.Get();
 
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -718,7 +718,7 @@ namespace FxMovies.Grabber
         static void UpdateDatabaseEpgHistory()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -787,7 +787,7 @@ namespace FxMovies.Grabber
         static void DownloadImageData()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
             
@@ -1006,7 +1006,7 @@ namespace FxMovies.Grabber
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -1150,7 +1150,7 @@ namespace FxMovies.Grabber
         static void ImportImdbData_Movies()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -1250,7 +1250,7 @@ namespace FxMovies.Grabber
         static void ImportImdbData_AlsoKnownAs()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -1381,7 +1381,7 @@ namespace FxMovies.Grabber
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
 
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -1457,7 +1457,7 @@ namespace FxMovies.Grabber
         static void UpdateEpgDataWithImdbManual(int movieEventId, string imdbId)
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
@@ -1503,7 +1503,7 @@ namespace FxMovies.Grabber
         static void TwitterBot()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddEnvironmentVariables()
                 .Build();
 
