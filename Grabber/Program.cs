@@ -762,7 +762,7 @@ namespace FxMovies.Grabber
                     movieEventHistory = new MovieEvent();
                     movieEventHistory.Id = ++lastId;
                     movieEventHistory.Title = movieEvent.Title;
-                    movieEventHistory.Year = movieEvent.Year;
+                    movieEventHistory.Year = movieEvent.Year ?? 0;
                     movieEventHistory.StartTime = movieEvent.StartTime;
                     movieEventHistory.EndTime = movieEvent.EndTime;
                     movieEventHistory.Channel = channelHistory;
