@@ -494,7 +494,7 @@ namespace FxMovies.Grabber
                 DateTime date = now.Date.AddDays(days);
                 var movies = HumoGrabber.GetGuide(date).Result;
 
-                YeloGrabber.GetGuide(date, movies);
+                //YeloGrabber.GetGuide(date, movies);
 
                 // Remove movies that should be ignored
                 Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
