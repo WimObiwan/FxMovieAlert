@@ -261,7 +261,7 @@ namespace FxMovies.Grabber
                         Year = year,
                         StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000).ToLocalTime(),
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000).ToLocalTime(),
-                        Duration = broadcast.duration,
+                        Duration = broadcast.duration / 60,
                         PosterS = broadcast.imageUrl,
                         PosterM = broadcast.imageUrl,
                         Content = broadcast.synopsis,
