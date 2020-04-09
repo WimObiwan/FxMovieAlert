@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using Newtonsoft.Json;
@@ -58,7 +59,17 @@ namespace FxMovies.Grabber
             var request = WebRequest.CreateHttp(url);
             using (var response = await request.GetResponseAsync())
             {
-                using (var textStream = new StreamReader(response.GetResponseStream()))
+                Encoding encoding;
+                if (response is HttpWebResponse httpWebResponse)
+                {
+                    encoding = Encoding.GetEncoding(httpWebResponse.CharacterSet);
+                }
+                else
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                using (var textStream = new StreamReader(response.GetResponseStream(), encoding))
                 {
                     string json = await textStream.ReadToEndAsync();
 
