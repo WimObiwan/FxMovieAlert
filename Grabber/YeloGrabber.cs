@@ -53,9 +53,9 @@ namespace FxMovies.Grabber
                 198, // één
                 236, // canvas
                 207, // vtm
-                567, // q2
-                7,   // vitaya
-                258, // caz = acht
+                567, // q2 --> vtm2
+                7,   // vitaya --> vtm3
+                258, // caz = acht --> vtm4
                 554, // vier
                 555, // vijf
                 801, // zes
