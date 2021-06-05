@@ -805,12 +805,17 @@ namespace FxMovies.Grabber
                 {
                     string url = channel.LogoS;
 
-                    string ext;
-                    int extStart = url.LastIndexOf('.');
-                    if (extStart == -1)
-                        ext = ".jpg";
-                    else
-                        ext = url.Substring(extStart);
+                    if (url == null)
+                        continue;
+
+                    string ext = ".jpg";
+                    if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
+                    {
+                        string path = uri.PathAndQuery;
+                        int extStart = path.LastIndexOf('.');
+                        if (extStart != -1)
+                            ext = url.Substring(extStart);
+                    }
 
                     string nameWithoutExt = "channel-" + channel.Code;
                     string name = nameWithoutExt + ext;
