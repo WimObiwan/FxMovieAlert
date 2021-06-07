@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FxMovies.ImdbDB
 {
-    public class Movie
+    public class ImdbMovie
     {
         [Key]
-        public string Id { get; set; }
+        public string ImdbId { get; set; }
         public string PrimaryTitle { get; set; }
         //public string OriginalTitle { get; set; }
         public int? Year {get; set; }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace FxMovieAlert
 {
@@ -10,7 +11,7 @@ namespace FxMovieAlert
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            CreateHostBuilder(args).Build().Run();
         }
 
         public static string GetNetCoreVersion()
@@ -23,7 +24,7 @@ namespace FxMovieAlert
             return null;
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+        public static IWebHostBuilder CreateHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
@@ -47,6 +48,7 @@ namespace FxMovieAlert
                     config.AddEnvironmentVariables();
                 })
                 .UseStartup<Startup>()
-                .UseSentry("https://44d07a7cb1df484ca9a745af1ca94a2f@sentry.io/1335368");
+                //.UseSentry("https://44d07a7cb1df484ca9a745af1ca94a2f@sentry.io/1335368")
+                ;
     }
 }

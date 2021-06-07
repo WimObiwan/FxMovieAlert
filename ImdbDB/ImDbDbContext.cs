@@ -14,7 +14,7 @@ namespace FxMovies.ImdbDB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Movie>()
+            modelBuilder.Entity<ImdbMovie>()
                 .HasIndex(m => new { m.PrimaryTitle, m.Year });
             modelBuilder.Entity<MovieAlternative>()
                 .HasKey(ma => new {ma.Id, ma.No});
@@ -22,7 +22,7 @@ namespace FxMovies.ImdbDB
                 .HasIndex(ma => new { ma.AlternativeTitle });
         }
 
-        public DbSet<Movie> Movies { get; set; }
+        public DbSet<ImdbMovie> Movies { get; set; }
 
         public DbSet<MovieAlternative> MovieAlternatives { get; set; }
     }

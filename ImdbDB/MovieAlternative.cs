@@ -9,5 +9,8 @@ namespace FxMovies.ImdbDB
         public string Id { get; set; }
         public int No { get; set; }
         public string AlternativeTitle { get; set; }
+
+        [ForeignKey("Id")]
+        public ImdbMovie Movie { get; set; }
     }
 }
