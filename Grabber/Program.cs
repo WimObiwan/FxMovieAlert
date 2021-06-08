@@ -17,7 +17,6 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using CommandLine;
 using CommandLine.Text;
-using Sentry;
 using System.Diagnostics;
 
 // Compile: 
@@ -163,7 +162,7 @@ namespace FxMovies.Grabber
             // dotnet .\Grabber\bin\Release\netcoreapp2.2\Grabber.dll UpdateEPG
             // dotnet .\Grabber\bin\Release\netcoreapp2.2\Grabber.dll UpdateImdbUserRatings userid ur27490911
 
-            using (SentrySdk.Init("https://3181503fa0264cdb827506614c8973f2@sentry.io/1335361"))
+            using (Sentry.SentrySdk.Init("https://3181503fa0264cdb827506614c8973f2@sentry.io/1335361"))
             {
                 return Parser.Default
                     .ParseArguments<

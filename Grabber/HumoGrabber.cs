@@ -5,9 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
-using Newtonsoft.Json;
 
 namespace FxMovies.Grabber
 {
@@ -21,7 +21,7 @@ namespace FxMovies.Grabber
             public Guid uuid { get; set; }
             public long from { get; set; }
             public long to { get; set; }
-            public int duration { get; set; }
+            public int? duration { get; set; }
             public string playableType { get; set; }
             public string title { get; set; }
             public string genre { get; set; }
@@ -78,13 +78,14 @@ namespace FxMovies.Grabber
                     //     outputFile.WriteLine(json);
                     // }
 
-                    var settings = new JsonSerializerSettings();
-                    settings.Error += (sender, args) =>
-                    {
-                        args.ErrorContext.Handled = true;
-                    };
+                    // var settings = new JsonSerializerSettings();
+                    // settings.Error += (sender, args) =>
+                    // {
+                    //     args.ErrorContext.Handled = true;
+                    // };
 
-                    var humo = JsonConvert.DeserializeObject<Humo>(json, settings);
+                    // var humo = JsonConvert.DeserializeObject<Humo>(json, settings);
+                    var humo = JsonSerializer.Deserialize<Humo>(json);
 
                     return humo;
                 }
@@ -272,7 +273,7 @@ namespace FxMovies.Grabber
                         Year = year,
                         StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000).ToLocalTime(),
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000).ToLocalTime(),
-                        Duration = broadcast.duration / 60,
+                        Duration = (broadcast.duration ?? 0) / 60,
                         PosterS = broadcast.imageUrl,
                         PosterM = broadcast.imageUrl,
                         Content = broadcast.synopsis,
