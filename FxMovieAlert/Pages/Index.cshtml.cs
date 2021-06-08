@@ -219,37 +219,67 @@ namespace FxMovieAlert.Pages
                 Count5days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(5)).Count();
                 Count8days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(8)).Count();
 
-                Records = (
-                    from me in db.MovieEvents.Include(me => me.Channel)
-                    join ur in db.UserRatings.Where(ur => ur.UserId == userId) on me.ImdbId equals ur.ImdbMovieId into urGroup
-                    from ur in urGroup.DefaultIfEmpty(null)
-                    join uw in db.UserWatchLists.Where(ur => ur.UserId == userId) on me.ImdbId equals uw.ImdbMovieId into uwGroup
-                    from uw in uwGroup.DefaultIfEmpty(null)
-                    where 
-                        (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
-                        &&
-                        (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30))
-                        &&
-                        (
-                            ((FilterTypeMask & 1) == 1 && me.Type == 1)
-                            || ((FilterTypeMask & 2) == 2 && me.Type == 2)
-                            || ((FilterTypeMask & 4) == 4 && me.Type == 3)
-                        )
-                        &&
-                        (!FilterMinRating.HasValue 
-                            || (FilterMinRating.Value == NO_IMDB_ID && string.IsNullOrEmpty(me.ImdbId))
-                            || (FilterMinRating.Value == NO_IMDB_RATING && me.ImdbRating == null)
-                            || (FilterMinRating.Value >= 0.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
-                        &&
-                        (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (ur == null))
-                        && 
-                        (FilterCert == Cert.all || (ParseCertification(me.Certification) & FilterCert) != 0)
-                    select new Record() { MovieEvent = me, UserRating = ur, UserWatchListItem = uw }
-                ).ToList();
-
-                // MovieEvents = db.MovieEvents.Include(m => m.Channel)
-                //     .Where(m => !MinRating.HasValue || m.ImdbRating >= MinRating.Value * 10)
-                //     .ToList();
+                Records = db.MovieEvents
+                    .Include(me => me.Channel)
+                    .Select(me => new Record()
+                        {
+                            MovieEvent = me,
+                            UserRating = null,
+                            UserWatchListItem = null //uwCollection.FirstOrDefault()
+                        }
+                    ).ToList();
+                // Records =
+                // (
+                //     from me in db.MovieEvents.Include(me => me.Channel)
+                //     // join ur 
+                //     //     // in (from ur in db.UserRatings where ur.UserId == userId select ur)
+                //     //     in db.UserRatings
+                //     //     on me.ImdbId equals ur.ImdbMovieId
+                //     //     into urCollection
+                //     // join uw
+                //     //     in (from uw in db.UserWatchLists where uw.UserId == userId select uw)
+                //     //     on me.ImdbId equals uw.ImdbMovieId
+                //     //     into uwCollection
+                //     select new Record()
+                //     {
+                //         MovieEvent = me,
+                //         UserRating = null,
+                //         UserWatchListItem = null //uwCollection.FirstOrDefault()
+                //     }
+                // ).ToList();
+                    // )
+                    // .Where(me =>
+                    //     (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
+                    //     // &&
+                    //     // (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30))
+                    //     // &&
+                    //     // (
+                    //     //     ((FilterTypeMask & 1) == 1 && me.Type == 1)
+                    //     //     || ((FilterTypeMask & 2) == 2 && me.Type == 2)
+                    //     //     || ((FilterTypeMask & 4) == 4 && me.Type == 3)
+                    //     // )
+                    //     // &&
+                    //     // (!FilterMinRating.HasValue 
+                    //     //     || (FilterMinRating.Value == NO_IMDB_ID && string.IsNullOrEmpty(me.ImdbId))
+                    //     //     || (FilterMinRating.Value == NO_IMDB_RATING && me.ImdbRating == null)
+                    //     //     || (FilterMinRating.Value >= 0.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
+                    //     // && 
+                    //     // (FilterCert == Cert.all || (ParseCertification(me.Certification) & FilterCert) != 0)
+                    // )
+                    // // TODO: This is obviously not OK... Workaround after dotnet 3.0 migration
+                    // .GroupJoin(
+                    //     db.UserRatings.Where(ur => ur.UserId == userId), 
+                    //     me => me.ImdbId, ur => ur.ImdbMovieId,
+                    //     (me, urCollection) => new { me, urCollection.FirstOrDefault() })
+                    // .ToList()
+                    // .Select(r => new Record()
+                    // {
+                    //     MovieEvent = r,
+                    //     UserRating = db.UserRatings.Where(ur => ur.UserId == userId && ur.ImdbMovieId == r.ImdbId).FirstOrDefault(),
+                    //     UserWatchListItem = db.UserWatchLists.Where(uw => uw.UserId == userId && uw.ImdbMovieId == r.ImdbId).FirstOrDefault()
+                    // })
+                    // // .Where(r => (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (r.UserRating == null)))
+                    // .ToList();
             }
         }
 

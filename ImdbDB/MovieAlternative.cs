@@ -6,11 +6,10 @@ namespace FxMovies.ImdbDB
 {
     public class MovieAlternative
     {
-        public string Id { get; set; }
-        public int No { get; set; }
+        public int Id { get; set; }
+        public Movie Movie { get; set; }
         public string AlternativeTitle { get; set; }
-
-        [ForeignKey("Id")]
-        public ImdbMovie Movie { get; set; }
+        public string Normalized { get; set; }
+        public int MovieId { get; set; }
     }
 }
