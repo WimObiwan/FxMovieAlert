@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -16,12 +16,7 @@ namespace FxMovieAlert
 
         public static string GetNetCoreVersion()
         {
-            var assembly = typeof(System.Runtime.GCSettings).Assembly;
-            var assemblyPath = assembly.CodeBase.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
-            int netCoreAppIndex = Array.IndexOf(assemblyPath, "Microsoft.NETCore.App");
-            if (netCoreAppIndex > 0 && netCoreAppIndex < assemblyPath.Length - 2)
-                return assemblyPath[netCoreAppIndex + 1];
-            return null;
+            return System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
         }
 
         public static IWebHostBuilder CreateHostBuilder(string[] args) =>
