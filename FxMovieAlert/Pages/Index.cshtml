@@ -481,7 +481,10 @@
                     <br/>
                         <b>@(@movieEvent.StartTime.ToShortTimeString())</b>
                     <br/>
-                    @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
+                    @if (movieEvent.Duration.HasValue)
+                    {
+                        @: @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
+                    }
                 </td>
                 <td class="collapsible">
                     @if (@movieEvent.PosterS != null)
