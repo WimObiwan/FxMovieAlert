@@ -97,19 +97,19 @@ namespace FxMovies.Grabber
         // {
         // }
 
-        [Verb("TwitterBot", HelpText = "Twitter Bot.")]
-        class TwitterBotOptions
-        {
-        }
+        // [Verb("TwitterBot", HelpText = "Twitter Bot.")]
+        // class TwitterBotOptions
+        // {
+        // }
 
-        [Verb("Manual", HelpText = "Manual.")]
-        class ManualOptions
-        {
-            [Option("movieeventid", Required = true, HelpText = "Movie event ID")]
-            public int MovieEventId { get; set; }
-            [Option("imdbid", Required = true, HelpText = "IMDb ID")]
-            public string ImdbId { get; set; }
-        }
+        // [Verb("Manual", HelpText = "Manual.")]
+        // class ManualOptions
+        // {
+        //     [Option("movieeventid", Required = true, HelpText = "Movie event ID")]
+        //     public int MovieEventId { get; set; }
+        //     [Option("imdbid", Required = true, HelpText = "IMDb ID")]
+        //     public string ImdbId { get; set; }
+        // }
 
         [Verb("TestSentry", HelpText = "Test Sentry.")]
         class TestSentryOptions
@@ -172,8 +172,8 @@ namespace FxMovies.Grabber
                         AutoUpdateImdbUserRatingsOptions,
                         UpdateEpgOptions,
                         // UpdateVodOptions,
-                        TwitterBotOptions,
-                        ManualOptions,
+                        // TwitterBotOptions,
+                        // ManualOptions,
                         TestSentryOptions
                         >(args)
                     .MapResult(
@@ -183,8 +183,8 @@ namespace FxMovies.Grabber
                         (AutoUpdateImdbUserRatingsOptions o) => Run(o),
                         (UpdateEpgOptions o) => Run(o),
                         // (UpdateVodOptions o) => Run(o),
-                        (TwitterBotOptions o) => Run(o),
-                        (ManualOptions o) => Run(o),
+                        // (TwitterBotOptions o) => Run(o),
+                        // (ManualOptions o) => Run(o),
                         (TestSentryOptions o) => Run(o),
                         errs => 1);
             }
@@ -223,7 +223,7 @@ namespace FxMovies.Grabber
             UpdateMissingImageLinks();
             DownloadImageData();
             UpdateEpgDataWithImdb();
-            UpdateDatabaseEpgHistory();
+            //UpdateDatabaseEpgHistory();
             return 0;
         }
 
@@ -234,17 +234,17 @@ namespace FxMovies.Grabber
         //     return 0;
         // }
 
-        private static int Run(TwitterBotOptions options)
-        {
-            TwitterBot();
-            return 0;
-        }
+        // private static int Run(TwitterBotOptions options)
+        // {
+        //     TwitterBot();
+        //     return 0;
+        // }
 
-        private static int Run(ManualOptions options)
-        {
-            UpdateEpgDataWithImdbManual(options.MovieEventId, options.ImdbId);
-            return 0;
-        }
+        // private static int Run(ManualOptions options)
+        // {
+        //     UpdateEpgDataWithImdbManual(options.MovieEventId, options.ImdbId);
+        //     return 0;
+        // }
 
         private static int Run(TestSentryOptions options)
         {
@@ -575,10 +575,7 @@ namespace FxMovies.Grabber
                             if (existingMovie.Title != movie.Title)
                             {
                                 existingMovie.Title = movie.Title;
-                                existingMovie.ImdbId = null;
-                                existingMovie.ImdbRating = null;
-                                existingMovie.ImdbVotes = null;
-                                existingMovie.Certification = null;
+                                existingMovie.Movie = null;
                             }
                             existingMovie.Year = movie.Year;
                             existingMovie.StartTime = movie.StartTime;
@@ -645,10 +642,10 @@ namespace FxMovies.Grabber
                 {
                     bool emptyPosterM = string.IsNullOrEmpty(movieEvent.PosterM);
                     bool emptyPosterS = string.IsNullOrEmpty(movieEvent.PosterS);
-                    if ((emptyPosterM || emptyPosterS) && !string.IsNullOrEmpty(movieEvent.ImdbId))
+                    if ((emptyPosterM || emptyPosterS) && !string.IsNullOrEmpty(movieEvent.Movie?.ImdbId))
                     {
                         string imageM, imageS;
-                        (imageM, imageS) = TheMovieDbGrabber.GetImage(movieEvent.ImdbId);
+                        (imageM, imageS) = TheMovieDbGrabber.GetImage(movieEvent.Movie.ImdbId);
                         movieEvent.PosterM = imageM;
                         movieEvent.PosterS = imageS;
                     }
@@ -727,74 +724,75 @@ namespace FxMovies.Grabber
         //     }
         // }
 
-        static void UpdateDatabaseEpgHistory()
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .Build();
+        // static void UpdateDatabaseEpgHistory()
+        // {
+        //     var configuration = new ConfigurationBuilder()
+        //         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+        //         .AddEnvironmentVariables()
+        //         .Build();
 
-            // Get the connection string
-            string connectionString = configuration.GetConnectionString("FxMoviesDb");
-            string connectionStringHistory = configuration.GetConnectionString("FxMoviesHistoryDb");
+        //     // Get the connection string
+        //     string connectionString = configuration.GetConnectionString("FxMoviesDb");
+        //     string connectionStringHistory = configuration.GetConnectionString("FxMoviesHistoryDb");
 
-            Console.WriteLine("Using database: {0}", connectionString);
-            Console.WriteLine("Using database: {0}", connectionStringHistory);
+        //     Console.WriteLine("Using database: {0}", connectionString);
+        //     Console.WriteLine("Using database: {0}", connectionStringHistory);
 
-            using (var db = FxMoviesDbContextFactory.Create(connectionString))
-            using (var dbHistory = FxMoviesDbContextFactory.Create(connectionStringHistory))
-            {
-                foreach (var channel in db.Channels)
-                {
-                    var channelHistory = dbHistory.Channels.Find(channel.Code);
-                    if (channelHistory == null)
-                    {
-                        channelHistory = new Channel();
-                        channelHistory.Code = channel.Code;
-                        dbHistory.Channels.Add(channelHistory);
-                    }
-                    channelHistory.Name = channel.Name;
-                    channelHistory.LogoS = channel.LogoS;
-                    channelHistory.LogoS_Local = channel.LogoS_Local;
-                }
-                dbHistory.SaveChanges();
+        //     using (var db = FxMoviesDbContextFactory.Create(connectionString))
+        //     using (var dbHistory = FxMoviesDbContextFactory.Create(connectionStringHistory))
+        //     {
+        //         foreach (var channel in db.Channels)
+        //         {
+        //             var channelHistory = dbHistory.Channels.Find(channel.Code);
+        //             if (channelHistory == null)
+        //             {
+        //                 channelHistory = new Channel();
+        //                 channelHistory.Code = channel.Code;
+        //                 dbHistory.Channels.Add(channelHistory);
+        //             }
+        //             channelHistory.Name = channel.Name;
+        //             channelHistory.LogoS = channel.LogoS;
+        //             channelHistory.LogoS_Local = channel.LogoS_Local;
+        //         }
+        //         dbHistory.SaveChanges();
 
-                var min = db.MovieEvents.Where(i => i.StartTime >= DateTime.Now).Select(i => i.StartTime).Min();
-                var movieEventsToRemove = dbHistory.MovieEvents.Where(i => i.StartTime >= min);
-                dbHistory.MovieEvents.RemoveRange(movieEventsToRemove);
-                int lastId = dbHistory.MovieEvents.Select(i => (int?)i.Id).Max() ?? 0;
-                foreach (var movieEvent in db.MovieEvents)
-                {
-                    var movieEventHistory = dbHistory.MovieEvents.Find(movieEvent.Id);
-                    if (movieEventHistory != null)
-                        dbHistory.MovieEvents.Remove(movieEventHistory);
+        //         var min = db.MovieEvents.Where(i => i.StartTime >= DateTime.Now).Select(i => i.StartTime).Min();
+        //         var movieEventsToRemove = dbHistory.MovieEvents.Where(i => i.StartTime >= min);
+        //         dbHistory.MovieEvents.RemoveRange(movieEventsToRemove);
+        //         int lastId = dbHistory.MovieEvents.Select(i => (int?)i.Id).Max() ?? 0;
+        //         foreach (var movieEvent in db.MovieEvents)
+        //         {
+        //             var movieEventHistory = dbHistory.MovieEvents.Find(movieEvent.Id);
+        //             if (movieEventHistory != null)
+        //                 dbHistory.MovieEvents.Remove(movieEventHistory);
 
-                    var channelHistory = dbHistory.Channels.Find(movieEvent.Channel.Code);
+        //             var channelHistory = dbHistory.Channels.Find(movieEvent.Channel.Code);
 
-                    movieEventHistory = new MovieEvent();
-                    movieEventHistory.Id = ++lastId;
-                    movieEventHistory.Title = movieEvent.Title;
-                    movieEventHistory.Year = movieEvent.Year ?? 0;
-                    movieEventHistory.StartTime = movieEvent.StartTime;
-                    movieEventHistory.EndTime = movieEvent.EndTime;
-                    movieEventHistory.Channel = channelHistory;
-                    movieEventHistory.PosterS = movieEvent.PosterS;
-                    movieEventHistory.PosterM = movieEvent.PosterM;
-                    movieEventHistory.Duration = movieEvent.Duration;
-                    movieEventHistory.Genre = movieEvent.Genre;
-                    movieEventHistory.Content = movieEvent.Content;
-                    movieEventHistory.ImdbId = movieEvent.ImdbId;
-                    movieEventHistory.ImdbRating = movieEvent.ImdbRating;
-                    movieEventHistory.ImdbVotes = movieEvent.ImdbVotes;
-                    movieEventHistory.YeloUrl = null;
-                    movieEventHistory.Certification = movieEvent.Certification;
-                    movieEventHistory.PosterS_Local = movieEvent.PosterS_Local;
-                    movieEventHistory.PosterM_Local = movieEvent.PosterM_Local;
-                    dbHistory.MovieEvents.Add(movieEventHistory);
-                }
-                dbHistory.SaveChanges();
-            }
-        }
+        //             movieEventHistory = new MovieEvent();
+        //             movieEventHistory.Id = ++lastId;
+        //             movieEventHistory.Title = movieEvent.Title;
+        //             movieEventHistory.Year = movieEvent.Year ?? 0;
+        //             movieEventHistory.Vod = movieEvent.Vod;                    
+        //             movieEventHistory.StartTime = movieEvent.StartTime;
+        //             movieEventHistory.EndTime = movieEvent.EndTime;
+        //             movieEventHistory.Channel = channelHistory;
+        //             movieEventHistory.PosterS = movieEvent.PosterS;
+        //             movieEventHistory.PosterM = movieEvent.PosterM;
+        //             movieEventHistory.Duration = movieEvent.Duration;
+        //             movieEventHistory.Genre = movieEvent.Genre;
+        //             movieEventHistory.Content = movieEvent.Content;
+        //             movieEventHistory.ImdbId = movieEvent.ImdbId;
+        //             movieEventHistory.ImdbRating = movieEvent.ImdbRating;
+        //             movieEventHistory.ImdbVotes = movieEvent.ImdbVotes;
+        //             movieEventHistory.YeloUrl = null;
+        //             movieEventHistory.Certification = movieEvent.Certification;
+        //             movieEventHistory.PosterS_Local = movieEvent.PosterS_Local;
+        //             movieEventHistory.PosterM_Local = movieEvent.PosterM_Local;
+        //             dbHistory.MovieEvents.Add(movieEventHistory);
+        //         }
+        //         dbHistory.SaveChanges();
+        //     }
+        // }
 
         static void DownloadImageData()
         {
@@ -1041,10 +1039,10 @@ namespace FxMovies.Grabber
             using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
             using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
             {
-                var huntingProcedure = new List<Func<IHasImdbLink, IQueryable<Movie>>>();
+                var huntingProcedure = new List<Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>>();
 
                 // Search for PrimaryTitle (Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<Movie>>)
+                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
                 (
                     (movieWithImdbLink) => {
                         string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
@@ -1058,7 +1056,7 @@ namespace FxMovies.Grabber
                 ));
 
                 // Search for AlternativeTitle (Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<Movie>>)
+                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
                 (
                     (movieWithImdbLink) => {
                         string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
@@ -1072,7 +1070,7 @@ namespace FxMovies.Grabber
                 ));
 
                 // Search for PrimaryTitle (+/-Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<Movie>>)
+                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
                 (
                     (movieWithImdbLink) => {
                         string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
@@ -1087,7 +1085,7 @@ namespace FxMovies.Grabber
                 ));
 
                 // Search for AlternativeTitle (+/-Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<Movie>>)
+                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
                 (
                     (movieWithImdbLink) => {
                         string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
@@ -1102,7 +1100,7 @@ namespace FxMovies.Grabber
                 ));
 
                 // Search for AlternativeTitle (+/-Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<Movie>>)
+                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
                 (
                     (movieWithImdbLink) => 
                         dbImdb.MovieAlternatives
@@ -1120,25 +1118,22 @@ namespace FxMovies.Grabber
                 {
                     current++;
                                         
-                    if (group.Any(m => m.ImdbId != null) && false)
-                    {
-                        var firstMovieWithImdbLink = group.First(m => m.ImdbId != null);
-                        foreach (var other in group.Where(m => m.ImdbId == null))
-                        {
-                            other.ImdbId = firstMovieWithImdbLink.ImdbId;
-                            other.ImdbVotes = firstMovieWithImdbLink.ImdbVotes;
-                            other.ImdbRating = firstMovieWithImdbLink.ImdbRating;
-                            other.Certification = firstMovieWithImdbLink.Certification;
-                        }
-                        continue;
-                    }
+                    // if (group.Any(m => m.Movie != null) && false)
+                    // {
+                    //     var firstMovieWithImdbLink = group.First(m => m.Movie != null);
+                    //     foreach (var other in group.Where(m => m.Movie == null))
+                    //     {
+                    //         other.Movie = firstMovieWithImdbLink.Movie;
+                    //     }
+                    //     continue;
+                    // }
 
-                    Movie movie = null;
+                    ImdbDB.Movie imdbMovie = null;
                     var first = group.First();
                     int huntNo = 0;
                     foreach (var hunt in huntingProcedure)
                     {                        
-                        movie = hunt(first)
+                        imdbMovie = hunt(first)
                             .OrderByDescending(m => m.Votes)
                             .FirstOrDefault();
 
@@ -1162,18 +1157,18 @@ namespace FxMovies.Grabber
                         //     throw new InvalidOperationException($"Unknown hunt type {hunt}");
                         // }
 
-                        if (movie != null)
+                        if (imdbMovie != null)
                             break;
                     
                         huntNo++;
                     }
                     
-                    if (movie == null)
+                    if (imdbMovie == null)
                     {
-                        foreach (var movieWithImdbLink in group)
-                        {
-                            movieWithImdbLink.ImdbId = "";
-                        }
+                        // foreach (var movieWithImdbLink in group)
+                        // {
+                        //     movieWithImdbLink.Movie.ImdbId = "";
+                        // }
                         dbMovies.SaveChanges();
                         Console.WriteLine("UpdateEpgDataWithImdb: Could not find movie '{0} ({1})' in IMDb", first.Title, first.Year);
                         continue;
@@ -1182,21 +1177,27 @@ namespace FxMovies.Grabber
                     Console.WriteLine("{3}% {0} ({1}) ==> {2}, duplicity={4}, HUNT#{5}", 
                         first.Title, 
                         first.Year, 
-                        movie.ImdbId,
+                        imdbMovie.ImdbId,
                         (100 * current) / totalCount,
                         group.Count(),
                         huntNo);
 
+                    var movie = dbMovies.Movies.SingleOrDefault(m => m.ImdbId == imdbMovie.ImdbId);
+
+                    if (movie == null)
+                    {
+                        movie = new FxMoviesDB.Movie();
+                        movie.ImdbId = imdbMovie.ImdbId;
+                    }
+
+                    movie.ImdbRating = imdbMovie.Rating;
+                    movie.ImdbVotes = imdbMovie.Votes;
+                    if (movie.Certification == null)
+                        movie.Certification = TheMovieDbGrabber.GetCertification(movie.ImdbId) ?? "";
+
                     foreach (var movieWithImdbLink in group)
                     {
-                        if (movieWithImdbLink.ImdbId != movie.ImdbId)
-                            movieWithImdbLink.Certification = null;
-                        movieWithImdbLink.ImdbId = movie.ImdbId;
-                        movieWithImdbLink.ImdbRating = movie.Rating;
-                        movieWithImdbLink.ImdbVotes = movie.Votes;
-                        
-                        if (movieWithImdbLink.Certification == null)
-                            movieWithImdbLink.Certification = TheMovieDbGrabber.GetCertification(movieWithImdbLink.ImdbId) ?? "";
+                        movieWithImdbLink.Movie = movie;
                     }
 
                     dbMovies.SaveChanges();
@@ -1448,7 +1449,7 @@ namespace FxMovies.Grabber
                             }
 
                             string movieId = match.Groups[1].Value;
-                            Movie movie = db.Movies.Include(m => m.MovieAlternatives).SingleOrDefault(m => m.ImdbId == movieId);
+                            ImdbDB.Movie movie = db.Movies.Include(m => m.MovieAlternatives).SingleOrDefault(m => m.ImdbId == movieId);
                             if (movie == null)
                             {
                                 skipped++;
@@ -1619,94 +1620,96 @@ namespace FxMovies.Grabber
             }            
         }
 
-        static void UpdateEpgDataWithImdbManual(int movieEventId, string imdbId)
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .Build();
+        // static void UpdateEpgDataWithImdbManual(int movieEventId, string imdbId)
+        // {
+        //     var configuration = new ConfigurationBuilder()
+        //         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+        //         .AddEnvironmentVariables()
+        //         .Build();
 
-            // Get the connection string
-            string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
-            string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
+        //     // Get the connection string
+        //     string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
+        //     string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
 
-            using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
-            using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
-            {
-                var movieEvent = dbMovies.MovieEvents.Find(movieEventId);
+        //     using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
+        //     using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+        //     {
+        //         var movieEvent = dbMovies.MovieEvents.Find(movieEventId);
 
-                if (movieEvent == null)
-                {
-                    Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find MovieEvent with ID {0}", movieEventId);
-                    return;
-                }
+        //         if (movieEvent == null)
+        //         {
+        //             Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find MovieEvent with ID {0}", movieEventId);
+        //             return;
+        //         }
 
-                Console.WriteLine("MovieEvent: {0} ({1}), ID {2}, Current ImdbID={3}", 
-                    movieEvent.Title, movieEvent.Year, movieEvent.Id, movieEvent.ImdbId);
+        //         Console.WriteLine("MovieEvent: {0} ({1}), ID {2}, Current ImdbID={3}", 
+        //             movieEvent.Title, movieEvent.Year, movieEvent.Id, movieEvent.Movie.ImdbId);
                     
-                var movie = dbImdb.Movies.Find(imdbId);
+        //         var movie = dbImdb.Movies.Find(imdbId);
 
-                if (movie == null)
-                {
-                    Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find IMDb movie with ID {0}", imdbId);
-                    return;
-                }
+        //         if (movie == null)
+        //         {
+        //             Console.WriteLine("UpdateEpgDataWithImdbManual: Unable to find IMDb movie with ID {0}", imdbId);
+        //             return;
+        //         }
 
-                Console.WriteLine("IMDb: {0} ({1}), ImdbID={2}", 
-                    movie.PrimaryTitle, movie.Year, movie.ImdbId);
+        //         Console.WriteLine("IMDb: {0} ({1}), ImdbID={2}", 
+        //             movie.PrimaryTitle, movie.Year, movie.ImdbId);
+
+        //         FxMoviesDB.Movie movie = null;
                     
-                movieEvent.ImdbId = movie.ImdbId;
-                movieEvent.ImdbRating = movie.Rating;
-                movieEvent.ImdbVotes = movie.Votes;
+        //         movieEvent.ImdbId = movie.ImdbId;
+        //         movieEvent.ImdbRating = movie.Rating;
+        //         movieEvent.ImdbVotes = movie.Votes;
 
-                movieEvent.Certification = TheMovieDbGrabber.GetCertification(movieEvent.ImdbId) ?? "";
+        //         movieEvent.Certification = TheMovieDbGrabber.GetCertification(movieEvent.ImdbId) ?? "";
 
-                dbMovies.SaveChanges();
-            }
-        }
+        //         dbMovies.SaveChanges();
+        //     }
+        // }
 
-        static void TwitterBot()
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .Build();
+        // static void TwitterBot()
+        // {
+        //     var configuration = new ConfigurationBuilder()
+        //         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+        //         .AddEnvironmentVariables()
+        //         .Build();
 
-            // Get the connection string
-            string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
-            string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
-            string twitterMessageTemplate = configuration.GetSection("Grabber")["TwitterMessageTemplate"];
-            var twitterChannelHashtags = configuration.GetSection("Grabber").GetSection("TwitterChannelHashtags");
+        //     // Get the connection string
+        //     string connectionStringMovies = configuration.GetConnectionString("FxMoviesDb");
+        //     string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
+        //     string twitterMessageTemplate = configuration.GetSection("Grabber")["TwitterMessageTemplate"];
+        //     var twitterChannelHashtags = configuration.GetSection("Grabber").GetSection("TwitterChannelHashtags");
 
-            using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
-            using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
-            {
-                var movieEvent = 
-                    dbMovies.MovieEvents
-                        .Where(m => m.StartTime >= DateTime.Now.AddHours(1.0) && m.StartTime.TimeOfDay.Hours >= 20)
-                        .OrderBy(m => m.StartTime.Date)
-                        .ThenByDescending(m => m.ImdbRating)
-                        .Include(m => m.Channel)
-                        .FirstOrDefault();
+        //     using (var dbMovies = FxMoviesDbContextFactory.Create(connectionStringMovies))
+        //     using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+        //     {
+        //         var movieEvent = 
+        //             dbMovies.MovieEvents
+        //                 .Where(m => m.StartTime >= DateTime.Now.AddHours(1.0) && m.StartTime.TimeOfDay.Hours >= 20)
+        //                 .OrderBy(m => m.StartTime.Date)
+        //                 .ThenByDescending(m => m.ImdbRating)
+        //                 .Include(m => m.Channel)
+        //                 .FirstOrDefault();
                 
-                if (movieEvent?.ImdbRating >= 70)
-                {
-                    System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("nl-BE");
-                    string shortUrl = $"https://filmoptv.be/#{movieEvent.Id}";
-                    string twitterChannelHashtag = twitterChannelHashtags[movieEvent.Channel.Code];
-                    var message = string.Format(
-                        twitterMessageTemplate,
-                        movieEvent.Title,
-                        twitterChannelHashtag ?? movieEvent.Channel.Name,
-                        movieEvent.StartTime,
-                        movieEvent.ImdbRating / 10d,
-                        shortUrl);
-                    message = char.ToUpper(message[0]) + message.Substring(1);
-                    Console.WriteLine("TwitterBot:");
-                    Console.WriteLine(message);
-                }
-            }
-        }
+        //         if (movieEvent?.ImdbRating >= 70)
+        //         {
+        //             System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("nl-BE");
+        //             string shortUrl = $"https://filmoptv.be/#{movieEvent.Id}";
+        //             string twitterChannelHashtag = twitterChannelHashtags[movieEvent.Channel.Code];
+        //             var message = string.Format(
+        //                 twitterMessageTemplate,
+        //                 movieEvent.Title,
+        //                 twitterChannelHashtag ?? movieEvent.Channel.Name,
+        //                 movieEvent.StartTime,
+        //                 movieEvent.ImdbRating / 10d,
+        //                 shortUrl);
+        //             message = char.ToUpper(message[0]) + message.Substring(1);
+        //             Console.WriteLine("TwitterBot:");
+        //             Console.WriteLine(message);
+        //         }
+        //     }
+        // }
     }
 }
 

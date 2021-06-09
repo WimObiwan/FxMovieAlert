@@ -271,6 +271,7 @@ namespace FxMovies.Grabber
                         Channel = channel,
                         Title = broadcast.title,
                         Year = year,
+                        Vod = false,
                         StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000).ToLocalTime(),
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000).ToLocalTime(),
                         Duration = broadcast.duration.HasValue ? broadcast.duration.Value / 60 : null,

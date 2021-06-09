@@ -141,21 +141,46 @@ namespace FxMovieAlert.Pages
                     
                     if (overwrite)
                     {
-                        var movieEvent = db.MovieEvents.Find(movieeventid.Value);
+                        var movieEvent = db.MovieEvents.SingleOrDefault(me => me.Id == movieeventid.Value);
                         if (movieEvent != null)
                         {
-                            if (setimdbid != null)
-                                using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+                            if (movieEvent.Movie.ImdbId == setimdbid)
+                            {
+                                // Already ok, Do nothing
+                            }
+                            else
+                            {
+                                movieEvent.Movie = null;
+                                if (setimdbid != null)
                                 {
-                                    var imdbMovie = dbImdb.Movies.Find(setimdbid);
-                                    if (imdbMovie != null)
+                                    FxMovies.FxMoviesDB.Movie movie = null;
+
+                                    if (movie == null)
+                                        movie = db.Movies.SingleOrDefault(m => m.ImdbId == setimdbid);
+
+                                    if (movie == null)
                                     {
-                                        movieEvent.ImdbRating = imdbMovie.Rating;
-                                        movieEvent.ImdbVotes = imdbMovie.Votes;
+                                        movie = new FxMovies.FxMoviesDB.Movie();
+                                        db.Movies.Add(movie);
+                                    }
+
+                                    movieEvent.Movie = movie;
+                                    movie.ImdbId = setimdbid; 
+
+                                    using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+                                    {
+                                        var imdbMovie = dbImdb.Movies.SingleOrDefault(m => m.ImdbId == setimdbid);
+                                        if (imdbMovie != null)
+                                        {
+                                            movieEvent.Movie.ImdbRating = imdbMovie.Rating;
+                                            movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
+                                            if (!movieEvent.Year.HasValue)
+                                                movieEvent.Year = imdbMovie.Year;
+                                        }
                                     }
                                 }
+                            }
 
-                            movieEvent.ImdbId = setimdbid;
                             db.SaveChanges();
                         } 
                     }
@@ -198,36 +223,93 @@ namespace FxMovieAlert.Pages
                 CountTypeFilm = db.MovieEvents.Where(me => me.Type == 1).Count();
                 CountTypeShort = db.MovieEvents.Where(me => me.Type == 2).Count();
                 CountTypeSerie = db.MovieEvents.Where(me => me.Type == 3).Count();
-                CountMinRating5 = db.MovieEvents.Where(me => me.ImdbRating >= 50).Count();
-                CountMinRating6 = db.MovieEvents.Where(me => me.ImdbRating >= 60).Count();
-                CountMinRating7 = db.MovieEvents.Where(me => me.ImdbRating >= 70).Count();
-                CountMinRating8 = db.MovieEvents.Where(me => me.ImdbRating >= 80).Count();
-                CountMinRating9 = db.MovieEvents.Where(me => me.ImdbRating >= 90).Count();
-                CountNotOnImdb = db.MovieEvents.Where(me => string.IsNullOrEmpty(me.ImdbId)).Count();
-                CountNotRatedOnImdb = db.MovieEvents.Where(me => me.ImdbRating == null).Count();
-                CountCertNone =  db.MovieEvents.Where(me => string.IsNullOrEmpty(me.Certification)).Count();
-                CountCertG =  db.MovieEvents.Where(me => me.Certification == "US:G").Count();
-                CountCertPG =  db.MovieEvents.Where(me => me.Certification == "US:PG").Count();
-                CountCertPG13 =  db.MovieEvents.Where(me => me.Certification == "US:PG-13").Count();
-                CountCertR =  db.MovieEvents.Where(me => me.Certification == "US:R").Count();
-                CountCertNC17 =  db.MovieEvents.Where(me => me.Certification == "US:NC-17").Count();
+                CountMinRating5 = db.MovieEvents.Where(me => me.Movie.ImdbRating >= 50).Count();
+                CountMinRating6 = db.MovieEvents.Where(me => me.Movie.ImdbRating >= 60).Count();
+                CountMinRating7 = db.MovieEvents.Where(me => me.Movie.ImdbRating >= 70).Count();
+                CountMinRating8 = db.MovieEvents.Where(me => me.Movie.ImdbRating >= 80).Count();
+                CountMinRating9 = db.MovieEvents.Where(me => me.Movie.ImdbRating >= 90).Count();
+                CountNotOnImdb = db.MovieEvents.Where(me => string.IsNullOrEmpty(me.Movie.ImdbId)).Count();
+                CountNotRatedOnImdb = db.MovieEvents.Where(me => me.Movie.ImdbRating == null).Count();
+                CountCertNone =  db.MovieEvents.Where(me => string.IsNullOrEmpty(me.Movie.Certification)).Count();
+                CountCertG =  db.MovieEvents.Where(me => me.Movie.Certification == "US:G").Count();
+                CountCertPG =  db.MovieEvents.Where(me => me.Movie.Certification == "US:PG").Count();
+                CountCertPG13 =  db.MovieEvents.Where(me => me.Movie.Certification == "US:PG-13").Count();
+                CountCertR =  db.MovieEvents.Where(me => me.Movie.Certification == "US:R").Count();
+                CountCertNC17 =  db.MovieEvents.Where(me => me.Movie.Certification == "US:NC-17").Count();
                 CountCertOther =  Count - CountCertNone - CountCertG - CountCertPG - CountCertPG13 - CountCertR - CountCertNC17;
                 CountRated = db.MovieEvents.Where(
-                    me => db.UserRatings.Where(ur => ur.UserId == userId).Any(ur => ur.ImdbMovieId == me.ImdbId)).Count();
+                    me => db.UserRatings.Where(ur => ur.UserId == userId).Any(ur => ur.ImdbMovieId == me.Movie.ImdbId)).Count();
                 CountNotYetRated = Count - CountRated;
                 Count3days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(3)).Count();
                 Count5days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(5)).Count();
                 Count8days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(8)).Count();
 
                 Records = db.MovieEvents
+                    .Where(me => 
+                        !me.Vod
+                        && 
+                        (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
+                        &&
+                        (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30))
+                        &&
+                        (
+                            ((FilterTypeMask & 1) == 1 && me.Type == 1)
+                            || ((FilterTypeMask & 2) == 2 && me.Type == 2)
+                            || ((FilterTypeMask & 4) == 4 && me.Type == 3)
+                        )
+                        &&
+                        (!FilterMinRating.HasValue 
+                            || (FilterMinRating.Value == NO_IMDB_ID && string.IsNullOrEmpty(me.Movie.ImdbId))
+                            || (FilterMinRating.Value == NO_IMDB_RATING && me.Movie.ImdbRating == null)
+                            || (FilterMinRating.Value >= 0.0m && (me.Movie.ImdbRating >= FilterMinRating.Value * 10)))
+                        // && 
+                        // (FilterCert == Cert.all || (ParseCertification(me.Movie.Certification) & FilterCert) != 0)
+                    )
                     .Include(me => me.Channel)
+                    .Include(me => me.Movie)
                     .Select(me => new Record()
                         {
                             MovieEvent = me,
                             UserRating = null,
                             UserWatchListItem = null //uwCollection.FirstOrDefault()
                         }
-                    ).ToList();
+                    )
+                    .ToList();
+                    // .Where(me =>
+                    //     !me.MovieEvent.Vod
+                    //     && (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
+                    //     // &&
+                    //     // (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30))
+                    //     // &&
+                    //     // (
+                    //     //     ((FilterTypeMask & 1) == 1 && me.Type == 1)
+                    //     //     || ((FilterTypeMask & 2) == 2 && me.Type == 2)
+                    //     //     || ((FilterTypeMask & 4) == 4 && me.Type == 3)
+                    //     // )
+                    //     // &&
+                    //     // (!FilterMinRating.HasValue 
+                    //     //     || (FilterMinRating.Value == NO_IMDB_ID && string.IsNullOrEmpty(me.ImdbId))
+                    //     //     || (FilterMinRating.Value == NO_IMDB_RATING && me.ImdbRating == null)
+                    //     //     || (FilterMinRating.Value >= 0.0m && (me.ImdbRating >= FilterMinRating.Value * 10)))
+                    //     // && 
+                    //     // (FilterCert == Cert.all || (ParseCertification(me.Certification) & FilterCert) != 0)
+                    // )
+                    // // TODO: This is obviously not OK... Workaround after dotnet 3.0 migration
+                    // .GroupJoin(
+                    //     db.UserRatings.Where(ur => ur.UserId == userId), 
+                    //     me => me.ImdbId, ur => ur.ImdbMovieId,
+                    //     (me, urCollection) => new { me, urCollection.FirstOrDefault() })
+                    // .ToList()
+                    // .Select(r => new Record()
+                    // {
+                    //     MovieEvent = r,
+                    //     UserRating = db.UserRatings.Where(ur => ur.UserId == userId && ur.ImdbMovieId == r.ImdbId).FirstOrDefault(),
+                    //     UserWatchListItem = db.UserWatchLists.Where(uw => uw.UserId == userId && uw.ImdbMovieId == r.ImdbId).FirstOrDefault()
+                    // })
+                    // // .Where(r => (!FilterNotYetRated.HasValue || FilterNotYetRated.Value == (r.UserRating == null)))
+                    // .
+                    
+                    // ToList();
                 // Records =
                 // (
                 //     from me in db.MovieEvents.Include(me => me.Channel)

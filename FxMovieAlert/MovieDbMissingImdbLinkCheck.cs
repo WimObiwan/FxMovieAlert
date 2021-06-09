@@ -25,7 +25,7 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
         string connectionString = configuration.GetConnectionString("FxMoviesDb");
         using (var db = FxMoviesDbContextFactory.Create(connectionString))
         {
-            count = db.MovieEvents.Count(me => string.IsNullOrEmpty(me.ImdbId) && me.Type == 1);
+            count = db.MovieEvents.Count(me => string.IsNullOrEmpty(me.Movie.ImdbId) && me.Type == 1);
         }
 
         HealthStatus status;

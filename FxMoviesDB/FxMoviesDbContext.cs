@@ -14,20 +14,26 @@ namespace FxMovies.FxMoviesDB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Movie>()
+                .HasKey(m => m.Id);
+            modelBuilder.Entity<Movie>()
+                .HasIndex(m => m.ImdbId)
+                .IsUnique();
+            modelBuilder.Entity<Movie>()
+                .HasMany(m => m.MovieEvents)
+                .WithOne(me => me.Movie);
             modelBuilder.Entity<UserRating>()
                 .HasKey(u => new { u.UserId, u.ImdbMovieId });
             modelBuilder.Entity<UserWatchListItem>()
                 .HasKey(u => new { u.UserId, u.ImdbMovieId });
-            modelBuilder.Entity<VodMovie>()
-                .HasKey(m => new { m.Provider, m.ProviderCategory, m.ProviderId });
         }
 
         public DbSet<Channel> Channels { get; set; }
+        public DbSet<Movie> Movies { get; set; }
         public DbSet<MovieEvent> MovieEvents { get; set; }
         public DbSet<UserRating> UserRatings { get; set; }
         public DbSet<UserWatchListItem> UserWatchLists { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<VodMovie> VodMovies { get; set; }
     }
 
     /// <summary>
