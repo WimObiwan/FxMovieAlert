@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -40,6 +40,8 @@ namespace FxMovieAlert
                         }
                     );
                     config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
+                    config.AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false);
+                    config.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
                     config.AddEnvironmentVariables();
                 })
                 .UseStartup<Startup>()

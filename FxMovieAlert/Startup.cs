@@ -18,6 +18,8 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using FxMovies.Core;
 
 namespace FxMovieAlert
 {
@@ -139,9 +141,9 @@ namespace FxMovieAlert
                 .AddSqlite(
                     sqliteConnectionString: Configuration.GetConnectionString("FxMoviesDB"), 
                     name: "sqlite-FxMoviesDB")
-                .AddSqlite(
-                    sqliteConnectionString: Configuration.GetConnectionString("FxMoviesHistoryDb"), 
-                    name: "sqlite-FxMoviesHistoryDb")
+                // .AddSqlite(
+                //     sqliteConnectionString: Configuration.GetConnectionString("FxMoviesHistoryDb"), 
+                //     name: "sqlite-FxMoviesHistoryDb")
                 .AddSqlite(
                     sqliteConnectionString: Configuration.GetConnectionString("ImdbDb"),
                     name: "sqlite-ImdbDb")
@@ -155,6 +157,16 @@ namespace FxMovieAlert
             
             // Add framework services.
             services.AddRazorPages();
+
+            services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
+                options.UseSqlite(Configuration.GetConnectionString("FxMoviesDB")));
+
+            services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
+                options.UseSqlite(Configuration.GetConnectionString("ImdbDb")));
+
+            services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
+            services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
+            services.AddScoped<ITheMovieDbService, TheMovieDbService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -168,8 +168,8 @@ namespace FxMovies.Grabber
                     .ParseArguments<
                         HelpOptions,
                         GenerateImdbDatabaseOptions,
-                        UpdateImdbUserRatingsOptions,
-                        AutoUpdateImdbUserRatingsOptions,
+                        // UpdateImdbUserRatingsOptions,
+                        // AutoUpdateImdbUserRatingsOptions,
                         UpdateEpgOptions,
                         // UpdateVodOptions,
                         // TwitterBotOptions,
@@ -179,8 +179,8 @@ namespace FxMovies.Grabber
                     .MapResult(
                         (HelpOptions o) => Run(o),
                         (GenerateImdbDatabaseOptions o) => Run(o),
-                        (UpdateImdbUserRatingsOptions o) => Run(o),
-                        (AutoUpdateImdbUserRatingsOptions o) => Run(o),
+                        // (UpdateImdbUserRatingsOptions o) => Run(o),
+                        // (AutoUpdateImdbUserRatingsOptions o) => Run(o),
                         (UpdateEpgOptions o) => Run(o),
                         // (UpdateVodOptions o) => Run(o),
                         // (TwitterBotOptions o) => Run(o),
@@ -205,17 +205,17 @@ namespace FxMovies.Grabber
             return 0;
         }
 
-        private static int Run(UpdateImdbUserRatingsOptions options)
-        {
-            UpdateImdbUserRatings(options.UserId, options.ImdbUserId);
-            return 0;
-        }
+        // private static int Run(UpdateImdbUserRatingsOptions options)
+        // {
+        //     UpdateImdbUserRatings(options.UserId, options.ImdbUserId);
+        //     return 0;
+        // }
 
-        private static int Run(AutoUpdateImdbUserRatingsOptions options)
-        {
-            AutoUpdateImdbUserRatings();
-            return 0;
-        }
+        // private static int Run(AutoUpdateImdbUserRatingsOptions options)
+        // {
+        //     AutoUpdateImdbUserRatings();
+        //     return 0;
+        // }
 
         private static int Run(UpdateEpgOptions options)
         {
@@ -253,210 +253,210 @@ namespace FxMovies.Grabber
 
         // sqlite3 /tmp/imdb.db "VACUUM;" -- 121MB => 103 MB
 
-        static void UpdateImdbUserRatings(string userId, string imdbUserId)
-        {
-            UpdateImdbUserRatings(userId, imdbUserId, false);
-            UpdateImdbUserRatings(userId, imdbUserId, true);
+        // static void UpdateImdbUserRatings(string userId, string imdbUserId)
+        // {
+        //     UpdateImdbUserRatings(userId, imdbUserId, false);
+        //     UpdateImdbUserRatings(userId, imdbUserId, true);
 
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .Build();
+        //     var configuration = new ConfigurationBuilder()
+        //         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+        //         .AddEnvironmentVariables()
+        //         .Build();
 
-            // Get the connection string
-            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+        //     // Get the connection string
+        //     string connectionString = configuration.GetConnectionString("FxMoviesDb");
 
-            using (var db = FxMoviesDbContextFactory.Create(connectionString))
-            {
-                User user = db.Users.Find(imdbUserId);
-                if (user == null)
-                {
-                    user = new User();
-                    user.ImdbUserId = imdbUserId;
-                    db.Users.Add(user);
-                }
-                user.RefreshRequestTime = null;
-                user.RefreshCount++;
+        //     using (var db = FxMoviesDbContextFactory.Create(connectionString))
+        //     {
+        //         User user = db.Users.Find(imdbUserId);
+        //         if (user == null)
+        //         {
+        //             user = new User();
+        //             user.ImdbUserId = imdbUserId;
+        //             db.Users.Add(user);
+        //         }
+        //         user.RefreshRequestTime = null;
+        //         user.RefreshCount++;
 
-                db.SaveChanges();
-            }
-        }
+        //         db.SaveChanges();
+        //     }
+        // }
 
-        static void UpdateImdbUserRatings(string userId, string imdbUserId, bool watchlist)
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .Build();
+        // static void UpdateImdbUserRatings(string userId, string imdbUserId, bool watchlist)
+        // {
+        //     var configuration = new ConfigurationBuilder()
+        //         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+        //         .AddEnvironmentVariables()
+        //         .Build();
 
-            // Get the connection string
-            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+        //     // Get the connection string
+        //     string connectionString = configuration.GetConnectionString("FxMoviesDb");
 
-            Console.WriteLine("Using database: {0}", connectionString);
+        //     Console.WriteLine("Using database: {0}", connectionString);
 
-            var regexImdbId = new Regex(@"/(tt\d+)/", RegexOptions.Compiled);
-            var regexRating = new Regex(@"rated this (\d+)\.", RegexOptions.Compiled);
-                DateTime now = DateTime.Now;
-                string result;
-                bool succeeded;
+        //     var regexImdbId = new Regex(@"/(tt\d+)/", RegexOptions.Compiled);
+        //     var regexRating = new Regex(@"rated this (\d+)\.", RegexOptions.Compiled);
+        //         DateTime now = DateTime.Now;
+        //         string result;
+        //         bool succeeded;
 
-            try
-            {
-                string suffix = watchlist ? "watchlist" : "ratings";
-                string url = $"http://rss.imdb.com/user/{imdbUserId}/{suffix}";
-                var request = (HttpWebRequest)WebRequest.Create(url);
-                using (var response = request.GetResponse())
-                {
-                    var xmlDocument = new XmlDocument();
-                    xmlDocument.Load(response.GetResponseStream());
+        //     try
+        //     {
+        //         string suffix = watchlist ? "watchlist" : "ratings";
+        //         string url = $"http://rss.imdb.com/user/{imdbUserId}/{suffix}";
+        //         var request = (HttpWebRequest)WebRequest.Create(url);
+        //         using (var response = request.GetResponse())
+        //         {
+        //             var xmlDocument = new XmlDocument();
+        //             xmlDocument.Load(response.GetResponseStream());
 
-                    int count = xmlDocument.DocumentElement["channel"].ChildNodes.Count;
-                    string lastDescription = null;
-                    DateTime? lastDate = null;
+        //             int count = xmlDocument.DocumentElement["channel"].ChildNodes.Count;
+        //             string lastDescription = null;
+        //             DateTime? lastDate = null;
 
-                    foreach (XmlNode item in xmlDocument.DocumentElement["channel"].ChildNodes)
-                    {
-                        if (item.Name != "item")
-                            continue;
+        //             foreach (XmlNode item in xmlDocument.DocumentElement["channel"].ChildNodes)
+        //             {
+        //                 if (item.Name != "item")
+        //                     continue;
                         
-                        Console.WriteLine("UpdateImdbUserRatings: {0} - {1} - {2}", item["pubDate"].InnerText, item["title"].InnerText, item["description"].InnerText);
+        //                 Console.WriteLine("UpdateImdbUserRatings: {0} - {1} - {2}", item["pubDate"].InnerText, item["title"].InnerText, item["description"].InnerText);
 
-                        string imdbId = regexImdbId.Match(item["link"].InnerText)?.Groups?[1]?.Value;
-                        if (imdbId == null)
-                            continue;
+        //                 string imdbId = regexImdbId.Match(item["link"].InnerText)?.Groups?[1]?.Value;
+        //                 if (imdbId == null)
+        //                     continue;
                         
-                        string description = item["description"].InnerText.Trim();
+        //                 string description = item["description"].InnerText.Trim();
 
-                        DateTime date = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
+        //                 DateTime date = DateTime.Parse(item["pubDate"].InnerText, CultureInfo.InvariantCulture.DateTimeFormat);
 
-                        using (var db = FxMoviesDbContextFactory.Create(connectionString))
-                        {
-                            if (watchlist)
-                            {
-                                var userWatchListItem = db.UserWatchLists.Find(userId, imdbId);
-                                if (userWatchListItem == null)
-                                {
-                                    userWatchListItem = new UserWatchListItem();
-                                    userWatchListItem.UserId = userId;
-                                    userWatchListItem.ImdbMovieId = imdbId;
-                                    db.UserWatchLists.Add(userWatchListItem);
-                                }
-                                userWatchListItem.AddedDate = date;
+        //                 using (var db = FxMoviesDbContextFactory.Create(connectionString))
+        //                 {
+        //                     if (watchlist)
+        //                     {
+        //                         var userWatchListItem = db.UserWatchLists.Find(userId, imdbId);
+        //                         if (userWatchListItem == null)
+        //                         {
+        //                             userWatchListItem = new UserWatchListItem();
+        //                             userWatchListItem.UserId = userId;
+        //                             userWatchListItem.ImdbMovieId = imdbId;
+        //                             db.UserWatchLists.Add(userWatchListItem);
+        //                         }
+        //                         userWatchListItem.AddedDate = date;
 
-                                Console.WriteLine("UserId={0} IMDbId={1} Added={2}", 
-                                    userWatchListItem.UserId, userWatchListItem.ImdbMovieId, userWatchListItem.AddedDate);
-                            }
-                            else
-                            {
-                                string ratingText = regexRating.Match(description)?.Groups?[1]?.Value;
-                                if (ratingText == null)
-                                    continue;
-                                int rating = int.Parse(ratingText);
+        //                         Console.WriteLine("UserId={0} IMDbId={1} Added={2}", 
+        //                             userWatchListItem.UserId, userWatchListItem.ImdbMovieId, userWatchListItem.AddedDate);
+        //                     }
+        //                     else
+        //                     {
+        //                         string ratingText = regexRating.Match(description)?.Groups?[1]?.Value;
+        //                         if (ratingText == null)
+        //                             continue;
+        //                         int rating = int.Parse(ratingText);
 
-                                var userRating = db.UserRatings.Find(userId, imdbId);
-                                if (userRating == null)
-                                {
-                                    userRating = new UserRating();
-                                    userRating.UserId = userId;
-                                    userRating.ImdbMovieId = imdbId;
-                                    db.UserRatings.Add(userRating);
-                                }
-                                userRating.RatingDate = date;
-                                userRating.Rating = rating;
+        //                         var userRating = db.UserRatings.Find(userId, imdbId);
+        //                         if (userRating == null)
+        //                         {
+        //                             userRating = new UserRating();
+        //                             userRating.UserId = userId;
+        //                             userRating.ImdbMovieId = imdbId;
+        //                             db.UserRatings.Add(userRating);
+        //                         }
+        //                         userRating.RatingDate = date;
+        //                         userRating.Rating = rating;
 
-                                Console.WriteLine("UserId={0} IMDbId={1} Added={2} Rating={3}", 
-                                    userRating.UserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
-                            }
+        //                         Console.WriteLine("UserId={0} IMDbId={1} Added={2} Rating={3}", 
+        //                             userRating.UserId, userRating.ImdbMovieId, userRating.RatingDate, userRating.Rating);
+        //                     }
 
-                            db.SaveChanges();
-                        }
+        //                     db.SaveChanges();
+        //                 }
 
-                        if (date > lastDate.GetValueOrDefault(DateTime.MinValue))
-                        {
-                            lastDate = date;
-                            lastDescription = description;
-                        }
-                    }
+        //                 if (date > lastDate.GetValueOrDefault(DateTime.MinValue))
+        //                 {
+        //                     lastDate = date;
+        //                     lastDescription = description;
+        //                 }
+        //             }
 
-                    Console.WriteLine("UpdateImdbUserRatings: Loaded {0} ratings", count);
-                    result = string.Format("{0} ratings geladen.", count);
-                    if (lastDate.HasValue)
-                    {
-                        result += string.Format("  Laatste rating gebeurde op {0} (\"{1}\")", lastDate.Value.ToString("yyyy-MM-dd"), lastDescription);
-                    }
-                    succeeded = true;
-                }
-            }
-            catch (WebException x)
-            {
-                result = "Foutmelding: " + x.Message;
-                succeeded = false;
-            }
+        //             Console.WriteLine("UpdateImdbUserRatings: Loaded {0} ratings", count);
+        //             result = string.Format("{0} ratings geladen.", count);
+        //             if (lastDate.HasValue)
+        //             {
+        //                 result += string.Format("  Laatste rating gebeurde op {0} (\"{1}\")", lastDate.Value.ToString("yyyy-MM-dd"), lastDescription);
+        //             }
+        //             succeeded = true;
+        //         }
+        //     }
+        //     catch (WebException x)
+        //     {
+        //         result = "Foutmelding: " + x.Message;
+        //         succeeded = false;
+        //     }
 
-            using (var db = FxMoviesDbContextFactory.Create(connectionString))
-            {
-                User user = db.Users.Find(imdbUserId);
-                if (user == null)
-                {
-                    user = new User();
-                    user.ImdbUserId = imdbUserId;
-                    db.Users.Add(user);
-                }
-                if (watchlist)
-                {
-                    user.WatchListLastRefreshTime = DateTime.UtcNow;
-                    user.WatchListLastRefreshResult = result;
-                    user.WatchListLastRefreshSuccess = succeeded;
-                }
-                else
-                {
-                    user.LastRefreshRatingsTime = DateTime.UtcNow;
-                    user.LastRefreshRatingsResult = result;
-                    user.LastRefreshSuccess = succeeded;
-                }
+        //     using (var db = FxMoviesDbContextFactory.Create(connectionString))
+        //     {
+        //         User user = db.Users.Find(imdbUserId);
+        //         if (user == null)
+        //         {
+        //             user = new User();
+        //             user.ImdbUserId = imdbUserId;
+        //             db.Users.Add(user);
+        //         }
+        //         if (watchlist)
+        //         {
+        //             user.WatchListLastRefreshTime = DateTime.UtcNow;
+        //             user.WatchListLastRefreshResult = result;
+        //             user.WatchListLastRefreshSuccess = succeeded;
+        //         }
+        //         else
+        //         {
+        //             user.LastRefreshRatingsTime = DateTime.UtcNow;
+        //             user.LastRefreshRatingsResult = result;
+        //             user.LastRefreshSuccess = succeeded;
+        //         }
 
-                db.SaveChanges();
-            }            
-        }
+        //         db.SaveChanges();
+        //     }            
+        // }
 
-        static void AutoUpdateImdbUserRatings()
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .Build();
+        // static void AutoUpdateImdbUserRatings()
+        // {
+        //     var configuration = new ConfigurationBuilder()
+        //         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+        //         .AddEnvironmentVariables()
+        //         .Build();
 
-            // Get the connection string
-            string connectionString = configuration.GetConnectionString("FxMoviesDb");
+        //     // Get the connection string
+        //     string connectionString = configuration.GetConnectionString("FxMoviesDb");
 
-            Console.WriteLine("Using database: {0}", connectionString);
+        //     Console.WriteLine("Using database: {0}", connectionString);
 
-            IList<User> users;
+        //     IList<User> users;
 
-            var refreshTime = DateTime.UtcNow.AddDays(-1);
-            using (var db = FxMoviesDbContextFactory.Create(connectionString))
-            {
-                users = db.Users.Where (u => 
-                    u.RefreshRequestTime.HasValue || // requested to be refreshed, OR
-                    !u.LastRefreshRatingsTime.HasValue || // never refreshed before, OR
-                    u.LastRefreshRatingsTime.Value < refreshTime).ToList(); // last refresh is 24 hours ago
-            }
+        //     var refreshTime = DateTime.UtcNow.AddDays(-1);
+        //     using (var db = FxMoviesDbContextFactory.Create(connectionString))
+        //     {
+        //         users = db.Users.Where (u => 
+        //             u.RefreshRequestTime.HasValue || // requested to be refreshed, OR
+        //             !u.LastRefreshRatingsTime.HasValue || // never refreshed before, OR
+        //             u.LastRefreshRatingsTime.Value < refreshTime).ToList(); // last refresh is 24 hours ago
+        //     }
 
-            foreach (var user in users)
-            {
-                Console.WriteLine("User {0} needs a refresh of the IMDb User ratings", user.ImdbUserId);
-                if (user.RefreshRequestTime.HasValue)
-                    Console.WriteLine("   * RefreshRequestTime = {0} ({1} seconds ago)", 
-                        user.RefreshRequestTime.Value, (refreshTime - user.RefreshRequestTime.Value).TotalSeconds);
-                if (!user.LastRefreshRatingsTime.HasValue)
-                    Console.WriteLine("   * LastRefreshRatingsTime = null");
-                else 
-                    Console.WriteLine("   * LastRefreshRatingsTime = {0}", 
-                        user.LastRefreshRatingsTime.Value);
+        //     foreach (var user in users)
+        //     {
+        //         Console.WriteLine("User {0} needs a refresh of the IMDb User ratings", user.ImdbUserId);
+        //         if (user.RefreshRequestTime.HasValue)
+        //             Console.WriteLine("   * RefreshRequestTime = {0} ({1} seconds ago)", 
+        //                 user.RefreshRequestTime.Value, (refreshTime - user.RefreshRequestTime.Value).TotalSeconds);
+        //         if (!user.LastRefreshRatingsTime.HasValue)
+        //             Console.WriteLine("   * LastRefreshRatingsTime = null");
+        //         else 
+        //             Console.WriteLine("   * LastRefreshRatingsTime = {0}", 
+        //                 user.LastRefreshRatingsTime.Value);
                     
-                UpdateImdbUserRatings(user.UserId, user.ImdbUserId);
-            }
-        }
+        //         UpdateImdbUserRatings(user.UserId, user.ImdbUserId);
+        //     }
+        // }
 
         static void UpdateDatabaseEpg()
         {

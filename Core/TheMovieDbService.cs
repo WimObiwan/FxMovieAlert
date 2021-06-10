@@ -1,0 +1,180 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using FxMovies.FxMoviesDB;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+
+namespace FxMovies.Core
+{
+    public class GetImagesResult
+    {
+        public string Medium { get; set; }
+        public string Small { get; set; }
+    }
+
+    public interface ITheMovieDbService
+    {
+        string GetCertification(string imdbId);
+        GetImagesResult GetImages(string imdbId);
+
+    }
+
+    public class TheMovieDbServiceOptions
+    {
+        public static string Position => "TheMovieDbService";
+
+        public string ApiKey { get; set; }
+        public string CertificationCountryPreference { get; set; }
+    }
+
+    public class TheMovieDbService : ITheMovieDbService
+    {
+        #region JSonModel
+
+        [DebuggerDisplay("iso_3166_1 = {iso_3166_1}")]
+        private class Country
+        {
+            public string certification { get; set; }
+            public string iso_3166_1 { get; set; }
+        }
+
+        private class Releases
+        {
+            public List<Country> countries { get; set; }
+        }
+
+        private class Movie
+        {
+            public string backdrop_path { get; set; }
+            public string poster_path { get; set; }
+            public string original_title { get; set; }
+        }
+
+        #endregion
+
+        readonly string apiKey;
+        readonly string[] certificationCountryPreferenceList;
+
+        public TheMovieDbService(IOptionsSnapshot<TheMovieDbServiceOptions> options)
+        {            
+            var o = options.Value;
+            this.apiKey = o.ApiKey;
+            this.certificationCountryPreferenceList = o.CertificationCountryPreference?.Split(new char[] {' ', ','}, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        public string GetCertification(string imdbId)
+        {
+            if (string.IsNullOrEmpty(apiKey) || certificationCountryPreferenceList == null)
+                return "";
+
+            // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US&append_to_response=releases
+
+            // string url = string.Format("https://api.themoviedb.org/3/movie/{1}?api_key={0}&language=en-US&append_to_response=releases",
+            //     theMovieDbKey, imdbId);
+            string url = string.Format("https://api.themoviedb.org/3/movie/{1}/releases?api_key={0}&language=en-US",
+                apiKey, imdbId);
+
+            var request = WebRequest.CreateHttp(url);
+            try
+            {
+                using (var response = request.GetResponse())
+                {
+                    using (var textStream = new StreamReader(response.GetResponseStream()))
+                    {
+                        string json = textStream.ReadToEnd();
+
+                        var releases = JsonSerializer.Deserialize<Releases>(json);
+                        
+                        var certifications = releases?.countries;
+                        if (certifications == null)
+                        {
+                            Console.WriteLine("Certification {0} ==> NONE", imdbId);
+                            return null;
+                        }
+                        foreach (var countryId in certificationCountryPreferenceList)
+                        foreach (var certification in certifications)
+                        {
+                            if (certification.iso_3166_1 == countryId && certification.certification != "")
+                            {
+                                string text = string.Format("{0}:{1}", certification.iso_3166_1, certification.certification);
+                                Console.WriteLine("Certification {0} ==> {1}", imdbId, text);
+                                return text;
+                            }
+                        }
+
+                        Console.WriteLine("Certification {0} ==> NOT FOUND IN {1} items", imdbId, certifications.Count);
+                    }
+                }
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("Certification {0} ==> EXCEPTION {1}", imdbId, e.Message);
+            }
+
+            return null;
+        }
+
+        public GetImagesResult GetImages(string imdbId)
+        {
+            // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US
+
+            string url = string.Format("https://api.themoviedb.org/3/movie/{1}?api_key={0}&language=en-US",
+                apiKey, imdbId);
+
+            var request = WebRequest.CreateHttp(url);
+            try
+            {
+                using (var response = request.GetResponse())
+                {
+                    using (var textStream = new StreamReader(response.GetResponseStream()))
+                    {
+                        string json = textStream.ReadToEnd();
+
+                        var movie = JsonSerializer.Deserialize<Movie>(json);
+                        
+                        Console.WriteLine("Image {0} ==> {1}", imdbId, movie.original_title);
+                        
+                        string baseUrl = "http://image.tmdb.org/t/p";
+                        string posterM, posterS;
+
+                        // Image sizes:
+                        // https://api.themoviedb.org/3/configuration?api_key=<key>&language=en-US
+
+                        if (movie.backdrop_path != null)
+                        {
+                            posterM = baseUrl + "/w780" + movie.backdrop_path;
+                            posterS = baseUrl + "/w300" + movie.backdrop_path;
+                        }
+                        else if (movie.poster_path != null)
+                        {
+                            posterM = baseUrl + "/w780" + movie.poster_path;
+                            posterS = baseUrl + "/w154" + movie.poster_path;
+                        }
+                        else
+                        {
+                            posterM = null;
+                            posterS = null;
+                        }
+
+                        return new GetImagesResult
+                        {
+                            Medium = posterM,
+                            Small = posterS
+                        };
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to retrieve images for {imdbId}", e);
+            }
+        }
+    }
+}

@@ -188,7 +188,7 @@ namespace FxMovieAlert.Pages
 
                 if (userId != null)
                 {
-                    var user = db.Users.Find(userId);
+                    var user = db.Users.Where(u => u.UserId == userId).SingleOrDefault();
                     if (user != null)
                     {
                         RefreshRequestTime = user.RefreshRequestTime;
@@ -237,8 +237,7 @@ namespace FxMovieAlert.Pages
                 CountCertR =  db.MovieEvents.Where(me => me.Movie.Certification == "US:R").Count();
                 CountCertNC17 =  db.MovieEvents.Where(me => me.Movie.Certification == "US:NC-17").Count();
                 CountCertOther =  Count - CountCertNone - CountCertG - CountCertPG - CountCertPG13 - CountCertR - CountCertNC17;
-                CountRated = db.MovieEvents.Where(
-                    me => db.UserRatings.Where(ur => ur.UserId == userId).Any(ur => ur.ImdbMovieId == me.Movie.ImdbId)).Count();
+                CountRated = db.MovieEvents.Count(me => me.Movie.UserRatings.Any(ur => ur.User.UserId == userId));
                 CountNotYetRated = Count - CountRated;
                 Count3days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(3)).Count();
                 Count5days =  db.MovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(5)).Count();

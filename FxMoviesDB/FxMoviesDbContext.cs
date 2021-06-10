@@ -22,8 +22,23 @@ namespace FxMovies.FxMoviesDB
             modelBuilder.Entity<Movie>()
                 .HasMany(m => m.MovieEvents)
                 .WithOne(me => me.Movie);
+            modelBuilder.Entity<Movie>()
+                .HasMany(m => m.UserRatings)
+                .WithOne(ur => ur.Movie)
+                .HasForeignKey(ur => ur.MovieId);
+            modelBuilder.Entity<User>()
+                .HasKey(u => u.Id);
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.ImdbUserId)
+                .IsUnique();
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.UserRatings)
+                .WithOne(ur => ur.User)
+                .HasForeignKey(ur => ur.UserId);
             modelBuilder.Entity<UserRating>()
-                .HasKey(u => new { u.UserId, u.ImdbMovieId });
+                .HasKey(ur => ur.Id);
+            modelBuilder.Entity<UserRating>()
+                .HasIndex(ur => new { ur.UserId, ur.MovieId });
             modelBuilder.Entity<UserWatchListItem>()
                 .HasKey(u => new { u.UserId, u.ImdbMovieId });
         }

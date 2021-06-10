@@ -18,5 +18,6 @@ namespace FxMovies.FxMoviesDB
         public string Certification { get; set; }
 
         public List<MovieEvent> MovieEvents { get; set; }
+        public List<UserRating> UserRatings { get; set; }
     }   
 }

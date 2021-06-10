@@ -6,17 +6,21 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileHelpers;
+using FxMovies.Core;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace FxMovieAlert.Pages
 {
     public class ImdbUserModel : PageModel
     {
+        private readonly IMovieCreationHelper movieCreationHelper;
+        
         public string WarningMessage = null;        
         public string ErrorMessage = null;        
         public string ImdbUserId = null;
@@ -39,9 +43,10 @@ namespace FxMovieAlert.Pages
 
         private IConfiguration configuration;
 
-        public ImdbUserModel(IConfiguration configuration)
+        public ImdbUserModel(IConfiguration configuration, IMovieCreationHelper movieCreationHelper)
         {
             this.configuration = configuration;
+            this.movieCreationHelper = movieCreationHelper;
         }
 
         public void OnGet(bool forcerefresh = false, string setimdbuserid = null)
@@ -60,7 +65,7 @@ namespace FxMovieAlert.Pages
             {
                 using (var db = FxMoviesDbContextFactory.Create(connectionStringMovies))
                 {
-                    var user = db.Users.Find(userId);
+                    var user = db.Users.Where(u => u.UserId == userId).SingleOrDefault();
                     if (user != null)
                     {
                         ImdbUserId = user.ImdbUserId;
@@ -71,8 +76,9 @@ namespace FxMovieAlert.Pages
             {
                 using (var db = FxMoviesDbContextFactory.Create(connectionStringMovies))
                 {
-                    db.Users.Remove(db.Users.Find(userId));
-                    db.UserRatings.RemoveRange(db.UserRatings.Where(ur => ur.UserId == userId));
+                    User user = db.Users.SingleOrDefault(u => u.UserId == userId);
+                    db.UserRatings.RemoveRange(user.UserRatings);
+                    db.Users.Remove(user);
                     db.SaveChanges();
                 }
 
@@ -102,7 +108,7 @@ namespace FxMovieAlert.Pages
             using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
             if (ImdbUserId != null)
             {
-                var user = dbMovies.Users.Find(userId);
+                var user = dbMovies.Users.Where(u => u.UserId == userId).SingleOrDefault();
                 if (user == null)
                 {
                     user = new User();
@@ -124,18 +130,19 @@ namespace FxMovieAlert.Pages
                 user.LastUsageTime = DateTime.UtcNow;
                 dbMovies.SaveChanges();
 
-                UserRatingCount = dbMovies.UserRatings.Where(ur => ur.UserId == userId).Count();
+                UserRatingCount = dbMovies.UserRatings.Count(ur => ur.User.UserId == userId);
                 UserWatchListCount = dbMovies.UserWatchLists.Where(ur => ur.UserId == userId).Count();
                 var ratingLast = dbMovies.UserRatings
-                    .Where(ur => ur.UserId == userId)
+                    .Include(ur => ur.Movie)
+                    .Where(ur => ur.User.UserId == userId)
                     .OrderByDescending(ur => ur.RatingDate)
                     .FirstOrDefault();
                 if (ratingLast != null)
                 {
                     RatingLastDate = ratingLast.RatingDate;
                     RatingLastRating = ratingLast.Rating;
-                    RatingLastMovie = ratingLast.ImdbMovieId;
-                    var movie = dbImdb.Movies.Find(RatingLastMovie);
+                    RatingLastMovie = ratingLast.Movie.ImdbId;
+                    var movie = dbImdb.Movies.SingleOrDefault(m => m.ImdbId == RatingLastMovie);
                     if (movie != null)
                     {
                         RatingLastMovie = movie.PrimaryTitle;
@@ -198,84 +205,97 @@ namespace FxMovieAlert.Pages
 
             string connectionString = configuration.GetConnectionString("FxMoviesDb");
             using (var db = FxMoviesDbContextFactory.Create(connectionString))
-            foreach (var file in Request.Form.Files)
             {
-                try
+                User user = db.Users.Single(u => u.UserId == userId);
+                foreach (var file in Request.Form.Files)
                 {
-                    var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
-                    
-                    var movieIdsInFile = new SortedSet<string>(); 
-                    
-                    using (var reader = new StreamReader(file.OpenReadStream()))
-                    using (engine.BeginReadStream(reader))
-                    foreach (var record in engine)
+                    try
                     {
-                        try
+                        var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
+                        
+                        var movieIdsInFile = new SortedSet<string>(); 
+                        
+                        using (var reader = new StreamReader(file.OpenReadStream()))
+                        using (engine.BeginReadStream(reader))
+                        foreach (var record in engine)
                         {
-                            string _const = record.Const;
-                            movieIdsInFile.Add(_const);
-
-                            DateTime date = DateTime.ParseExact(record.DateAdded, 
-                                new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
-                                CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
-
-                            // Ratings
-                            // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                            int rating = int.Parse(record.YourRating);
-
-                            var userRating = db.UserRatings.Find(userId, _const);
-                            if (userRating == null)
+                            try
                             {
-                                userRating = new UserRating();
-                                userRating.UserId = userId;
-                                userRating.ImdbMovieId = _const;
-                                db.UserRatings.Add(userRating);
-                                newCount++;
+                                string _const = record.Const;
+                                movieIdsInFile.Add(_const);
+
+                                DateTime date = DateTime.ParseExact(record.DateAdded, 
+                                    new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
+                                    CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
+
+                                // Ratings
+                                // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
+                                int rating = int.Parse(record.YourRating);
+
+                                var movie = movieCreationHelper.GetOrCreateMovieByImdbId(_const);
+                                db.Movies.SingleOrDefault(m => m.ImdbId == _const);
+                                if (movie == null)
+                                {
+                                    movie = new FxMovies.FxMoviesDB.Movie()
+                                    {
+                                        ImdbId = _const
+                                    };
+                                }
+
+                                var userRating = db.UserRatings.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
+                                if (userRating == null)
+                                {
+                                    userRating = new UserRating();
+                                    userRating.User = user;
+                                    userRating.Movie = movie;
+                                    db.UserRatings.Add(userRating);
+                                    newCount++;
+                                }
+                                else
+                                {
+                                    existingCount++;
+                                }
+                                userRating.Rating = rating;
+                                userRating.RatingDate = date;
                             }
-                            else
+                            catch (Exception x)
                             {
-                                existingCount++;
+                                LastImportErrors.Add(
+                                    Tuple.Create(
+                                        $"Lijn {engine.LineNumber - 1} uit het ratings bestand '{file.FileName}' kon niet verwerkt worden.\n"
+                                        + "De meest voorkomende reden is een aanpassing aan het bestandsformaat door IMDb.",
+                                        x.ToString(),
+                                        "danger"));
                             }
-                            userRating.Rating = rating;
-                            userRating.RatingDate = date;
                         }
-                        catch (Exception x)
-                        {
-                            LastImportErrors.Add(
-                                Tuple.Create(
-                                    $"Lijn {engine.LineNumber - 1} uit het ratings bestand '{file.FileName}' kon niet verwerkt worden.\n"
-                                    + "De meest voorkomende reden is een aanpassing aan het bestandsformaat door IMDb.",
-                                    x.ToString(),
-                                    "danger"));
-                        }
+
+                        List<UserRating> itemsToRemove = 
+                            db.UserRatings
+                                .Where(ur => !movieIdsInFile.Contains(ur.Movie.ImdbId))
+                                .ToList();
+
+                        db.UserRatings.RemoveRange(itemsToRemove);
+
+                        LastImportErrors.Add(
+                            Tuple.Create(
+                                $"Het ratings bestand '{file.FileName}' werd ingelezen. "
+                                + $"{newCount} nieuwe en {existingCount} bestaande films.  {itemsToRemove.Count} films verwijderd.",
+                                (string)null,
+                                "success"));
+                    }
+                    catch (Exception x)
+                    {
+                        LastImportErrors.Add(
+                            Tuple.Create(
+                                $"Het ratings bestand '{file.FileName}' kon niet ingelezen worden.\n"
+                                + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
+                                + "het bestandsformaat door IMDb.",
+                                x.ToString(),
+                                "danger"));
                     }
 
-                    List<UserRating> itemsToRemove = 
-                        db.UserRatings
-                            .Where(ur => !movieIdsInFile.Contains(ur.ImdbMovieId))
-                            .ToList();
-
-                    db.UserRatings.RemoveRange(itemsToRemove);
-
-                    LastImportErrors.Add(
-                        Tuple.Create(
-                            $"Het ratings bestand '{file.FileName}' werd ingelezen. "
-                            + $"{newCount} nieuwe en {existingCount} bestaande films.  {itemsToRemove.Count} films verwijderd.",
-                            (string)null,
-                            "success"));
+                    db.SaveChanges();
                 }
-                catch (Exception x)
-                {
-                    LastImportErrors.Add(
-                        Tuple.Create(
-                            $"Het ratings bestand '{file.FileName}' kon niet ingelezen worden.\n"
-                            + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
-                            + "het bestandsformaat door IMDb.",
-                            x.ToString(),
-                            "danger"));
-                }
-
-                db.SaveChanges();
             }
         }
 
