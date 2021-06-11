@@ -4,7 +4,7 @@ namespace FxMovies.Core
 {
     public interface IMovieCreationHelper
     {
-        FxMovies.FxMoviesDB.Movie GetOrCreateMovieByImdbId(string imdbId, bool refresh = true);
+        FxMovies.FxMoviesDB.Movie GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
     }
 
     public class MovieCreationHelper : IMovieCreationHelper
@@ -22,7 +22,7 @@ namespace FxMovies.Core
             this.theMovieDbService = theMovieDbService;
         }
 
-        public FxMovies.FxMoviesDB.Movie GetOrCreateMovieByImdbId(string imdbId, bool refresh = true)
+        public FxMovies.FxMoviesDB.Movie GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
         {
             var movie = fxMoviesDbContext.Movies.SingleOrDefault(m => m.ImdbId == imdbId);
 
@@ -34,9 +34,10 @@ namespace FxMovies.Core
                 {
                     ImdbId = imdbId
                 };
+                fxMoviesDbContext.Movies.Add(movie);
             }
 
-            if (newMovie || refresh)
+            if (refresh)
             {
                 var imdbMovie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == imdbId);
                 if (imdbMovie != null)

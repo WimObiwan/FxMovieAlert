@@ -4,11 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using FxMovies.FxMoviesDB;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core
@@ -59,11 +56,13 @@ namespace FxMovies.Core
 
         #endregion
 
-        readonly string apiKey;
-        readonly string[] certificationCountryPreferenceList;
+        private readonly ILogger<TheMovieDbServiceOptions> logger;
+        private readonly string apiKey;
+        private readonly string[] certificationCountryPreferenceList;
 
-        public TheMovieDbService(IOptionsSnapshot<TheMovieDbServiceOptions> options)
-        {            
+        public TheMovieDbService(ILogger<TheMovieDbServiceOptions> logger, IOptionsSnapshot<TheMovieDbServiceOptions> options)
+        {
+            this.logger = logger;
             var o = options.Value;
             this.apiKey = o.ApiKey;
             this.certificationCountryPreferenceList = o.CertificationCountryPreference?.Split(new char[] {' ', ','}, StringSplitOptions.RemoveEmptyEntries);
@@ -85,37 +84,35 @@ namespace FxMovies.Core
             try
             {
                 using (var response = request.GetResponse())
+                using (var textStream = new StreamReader(response.GetResponseStream()))
                 {
-                    using (var textStream = new StreamReader(response.GetResponseStream()))
+                    string json = textStream.ReadToEnd();
+
+                    var releases = JsonSerializer.Deserialize<Releases>(json);
+                    
+                    var certifications = releases?.countries;
+                    if (certifications == null)
                     {
-                        string json = textStream.ReadToEnd();
-
-                        var releases = JsonSerializer.Deserialize<Releases>(json);
-                        
-                        var certifications = releases?.countries;
-                        if (certifications == null)
-                        {
-                            Console.WriteLine("Certification {0} ==> NONE", imdbId);
-                            return null;
-                        }
-                        foreach (var countryId in certificationCountryPreferenceList)
-                        foreach (var certification in certifications)
-                        {
-                            if (certification.iso_3166_1 == countryId && certification.certification != "")
-                            {
-                                string text = string.Format("{0}:{1}", certification.iso_3166_1, certification.certification);
-                                Console.WriteLine("Certification {0} ==> {1}", imdbId, text);
-                                return text;
-                            }
-                        }
-
-                        Console.WriteLine("Certification {0} ==> NOT FOUND IN {1} items", imdbId, certifications.Count);
+                        logger.LogInformation($"Certification {imdbId} ==> NONE");
+                        return null;
                     }
+                    foreach (var countryId in certificationCountryPreferenceList)
+                    {
+                        var certification = certifications.FirstOrDefault(c => c.iso_3166_1 == countryId && !string.IsNullOrEmpty(c.certification));
+                        if (certification != null)
+                        {
+                            string text = $"{certification.iso_3166_1}:{certification.certification}";
+                            logger.LogInformation($"Certification {imdbId} ==> {text}");
+                            return text;
+                        }
+                    }
+
+                    logger.LogInformation($"Certification {imdbId} ==> NOT FOUND IN {certifications.Count} items");
                 }
             }
-            catch (WebException e)
+            catch (WebException x)
             {
-                Console.WriteLine("Certification {0} ==> EXCEPTION {1}", imdbId, e.Message);
+                logger.LogError(x, $"Certification {imdbId} ==> EXCEPTION");
             }
 
             return null;
@@ -132,43 +129,41 @@ namespace FxMovies.Core
             try
             {
                 using (var response = request.GetResponse())
+                using (var textStream = new StreamReader(response.GetResponseStream()))
                 {
-                    using (var textStream = new StreamReader(response.GetResponseStream()))
+                    string json = textStream.ReadToEnd();
+
+                    var movie = JsonSerializer.Deserialize<Movie>(json);
+                    
+                    logger.LogInformation($"Image {imdbId} ==> {movie.original_title}");
+                    
+                    string baseUrl = "http://image.tmdb.org/t/p";
+                    string posterM, posterS;
+
+                    // Image sizes:
+                    // https://api.themoviedb.org/3/configuration?api_key=<key>&language=en-US
+
+                    if (movie.backdrop_path != null)
                     {
-                        string json = textStream.ReadToEnd();
-
-                        var movie = JsonSerializer.Deserialize<Movie>(json);
-                        
-                        Console.WriteLine("Image {0} ==> {1}", imdbId, movie.original_title);
-                        
-                        string baseUrl = "http://image.tmdb.org/t/p";
-                        string posterM, posterS;
-
-                        // Image sizes:
-                        // https://api.themoviedb.org/3/configuration?api_key=<key>&language=en-US
-
-                        if (movie.backdrop_path != null)
-                        {
-                            posterM = baseUrl + "/w780" + movie.backdrop_path;
-                            posterS = baseUrl + "/w300" + movie.backdrop_path;
-                        }
-                        else if (movie.poster_path != null)
-                        {
-                            posterM = baseUrl + "/w780" + movie.poster_path;
-                            posterS = baseUrl + "/w154" + movie.poster_path;
-                        }
-                        else
-                        {
-                            posterM = null;
-                            posterS = null;
-                        }
-
-                        return new GetImagesResult
-                        {
-                            Medium = posterM,
-                            Small = posterS
-                        };
+                        posterM = baseUrl + "/w780" + movie.backdrop_path;
+                        posterS = baseUrl + "/w300" + movie.backdrop_path;
                     }
+                    else if (movie.poster_path != null)
+                    {
+                        posterM = baseUrl + "/w780" + movie.poster_path;
+                        posterS = baseUrl + "/w154" + movie.poster_path;
+                    }
+                    else
+                    {
+                        posterM = null;
+                        posterS = null;
+                    }
+
+                    return new GetImagesResult
+                    {
+                        Medium = posterM,
+                        Small = posterS
+                    };
                 }
             }
             catch (Exception e)

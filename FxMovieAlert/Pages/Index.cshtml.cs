@@ -269,7 +269,7 @@ namespace FxMovieAlert.Pages
                     .Select(me => new Record()
                         {
                             MovieEvent = me,
-                            UserRating = null,
+                            UserRating = me.Movie.UserRatings.FirstOrDefault(ur => ur.User.UserId == userId),
                             UserWatchListItem = null //uwCollection.FirstOrDefault()
                         }
                     )
