@@ -10,10 +10,12 @@ using System.Threading.Tasks;
 public class MovieDbDataCheck : IHealthCheck
 {
     private IConfiguration configuration;
+    private readonly FxMoviesDbContext fxMoviesDbContext;
 
-    public MovieDbDataCheck(IConfiguration configuration)
+    public MovieDbDataCheck(IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext)
     {
         this.configuration = configuration;
+        this.fxMoviesDbContext = fxMoviesDbContext;
     }
 
     public Task<HealthCheckResult> CheckHealthAsync(
@@ -21,12 +23,7 @@ public class MovieDbDataCheck : IHealthCheck
         CancellationToken cancellationToken = default(CancellationToken))
     {
         DateTime last;
-
-        string connectionString = configuration.GetConnectionString("FxMoviesDb");
-        using (var db = FxMoviesDbContextFactory.Create(connectionString))
-        {
-            last = db.MovieEvents.Max(me => me.StartTime);
-        }
+        last = fxMoviesDbContext.MovieEvents.Max(me => me.StartTime);
 
         var lastMovieAge = (last - DateTime.Now).TotalDays;
 

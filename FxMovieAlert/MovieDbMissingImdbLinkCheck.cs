@@ -9,24 +9,20 @@ using System.Threading.Tasks;
 
 public class MovieDbMissingImdbLinkCheck : IHealthCheck
 {
-    private IConfiguration configuration;
+    private readonly IConfiguration configuration;
+    private readonly FxMoviesDbContext fxMoviesDbContext;
 
-    public MovieDbMissingImdbLinkCheck(IConfiguration configuration)
+    public MovieDbMissingImdbLinkCheck(IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext)
     {
         this.configuration = configuration;
+        this.fxMoviesDbContext = fxMoviesDbContext;
     }
 
     public Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        int count;
-
-        string connectionString = configuration.GetConnectionString("FxMoviesDb");
-        using (var db = FxMoviesDbContextFactory.Create(connectionString))
-        {
-            count = db.MovieEvents.Count(me => string.IsNullOrEmpty(me.Movie.ImdbId) && me.Type == 1);
-        }
+        int count = fxMoviesDbContext.MovieEvents.Count(me => string.IsNullOrEmpty(me.Movie.ImdbId) && me.Type == 1);
 
         HealthStatus status;
         if (count <= this.configuration.GetValue("HealthCheck:CheckMissingImdbLinkCount", 15))

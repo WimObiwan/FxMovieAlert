@@ -85,13 +85,15 @@ namespace FxMovieAlert.Pages
 
         private readonly IConfiguration configuration;
         private readonly FxMoviesDbContext fxMoviesDbContext;
+        private readonly ImdbDbContext imdbDbContext;
         private readonly IMovieCreationHelper movieCreationHelper;
 
-        public ZendersModel(IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext,
+        public ZendersModel(IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
             IMovieCreationHelper movieCreationHelper)
         {
             this.configuration = configuration;
             this.fxMoviesDbContext = fxMoviesDbContext;
+            this.imdbDbContext = imdbDbContext;
             this.movieCreationHelper = movieCreationHelper;
         }
 
@@ -102,10 +104,6 @@ namespace FxMovieAlert.Pages
             string userId = ClaimChecker.UserId(User.Identity);
 
             var now = DateTime.Now;
-
-            // Get the connection string
-            string connectionString = configuration.GetConnectionString("FxMoviesDb");
-            string connectionStringImdb = configuration.GetConnectionString("ImdbDb");
 
             AdsInterval = configuration.GetValue("AdsInterval", AdsInterval);
             FilterMaxDaysDefault = configuration.GetValue("DefaultMaxDays", FilterMaxDaysDefault);
@@ -162,16 +160,13 @@ namespace FxMovieAlert.Pages
                                 movieEvent.Movie = movie;
                                 movie.ImdbId = setimdbid; 
 
-                                using (var dbImdb = ImdbDbContextFactory.Create(connectionStringImdb))
+                                var imdbMovie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == setimdbid);
+                                if (imdbMovie != null)
                                 {
-                                    var imdbMovie = dbImdb.Movies.SingleOrDefault(m => m.ImdbId == setimdbid);
-                                    if (imdbMovie != null)
-                                    {
-                                        movieEvent.Movie.ImdbRating = imdbMovie.Rating;
-                                        movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
-                                        if (!movieEvent.Year.HasValue)
-                                            movieEvent.Year = imdbMovie.Year;
-                                    }
+                                    movieEvent.Movie.ImdbRating = imdbMovie.Rating;
+                                    movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
+                                    if (!movieEvent.Year.HasValue)
+                                        movieEvent.Year = imdbMovie.Year;
                                 }
                             }
                         }
