@@ -14,11 +14,6 @@ namespace FxMovieAlert
             CreateHostBuilder(args).Build().Run();
         }
 
-        public static string GetNetCoreVersion()
-        {
-            return System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
-        }
-
         public static IWebHostBuilder CreateHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
@@ -35,8 +30,7 @@ namespace FxMovieAlert
                                 //doesn't work (ThisAssembly.Git.IsDirty ? "*" : "")
                                 ),
                             new KeyValuePair<string, string>("DotNetCoreVersion", 
-                                GetNetCoreVersion())
-
+                                System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)
                         }
                     );
                     config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);

@@ -13,7 +13,8 @@ namespace FxMovies.Core
         private readonly FxMovies.ImdbDB.ImdbDbContext imdbDbContext;
         private readonly ITheMovieDbService theMovieDbService;
 
-        public MovieCreationHelper(FxMovies.FxMoviesDB.FxMoviesDbContext fxMoviesDbContext, 
+        public MovieCreationHelper(
+            FxMovies.FxMoviesDB.FxMoviesDbContext fxMoviesDbContext, 
             FxMovies.ImdbDB.ImdbDbContext imdbDbContext,
             ITheMovieDbService theMovieDbService)
         {
@@ -38,18 +39,37 @@ namespace FxMovies.Core
             }
 
             if (refresh)
-            {
-                var imdbMovie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == imdbId);
-                if (imdbMovie != null)
-                {
-                    movie.ImdbRating = imdbMovie.Rating;
-                    movie.ImdbVotes = imdbMovie.Votes;
-                    if (movie.Certification == null)
-                        movie.Certification = theMovieDbService.GetCertification(movie.ImdbId) ?? "";
-                }
-            }
+                Refresh(movie);
 
             return movie;
+        }
+
+        public bool RefreshIfNeeded(FxMovies.FxMoviesDB.Movie movie)
+        {
+            if (string.IsNullOrEmpty(movie.OriginalTitle))
+            {
+                return Refresh(movie);
+            }
+            return false;
+        }
+
+        public bool Refresh(FxMovies.FxMoviesDB.Movie movie)
+        {
+            if (movie == null)
+                return false;
+
+            var imdbMovie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == movie.ImdbId);
+            if (imdbMovie != null)
+            {
+                movie.ImdbRating = imdbMovie.Rating;
+                movie.ImdbVotes = imdbMovie.Votes;
+                if (movie.Certification == null)
+                    movie.Certification = theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+
+                return true;
+            }
+
+            return false;
         }
     }
 }
