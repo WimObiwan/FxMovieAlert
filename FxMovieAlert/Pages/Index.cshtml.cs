@@ -270,7 +270,7 @@ namespace FxMovieAlert.Pages
                         {
                             MovieEvent = me,
                             UserRating = me.Movie.UserRatings.FirstOrDefault(ur => ur.User.UserId == userId),
-                            UserWatchListItem = null //uwCollection.FirstOrDefault()
+                            UserWatchListItem = me.Movie.UserWatchListItems.FirstOrDefault(ur => ur.User.UserId == userId)
                         }
                     )
                     .ToList();

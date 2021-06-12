@@ -28,5 +28,6 @@ namespace FxMovies.FxMoviesDB
         public string WatchListLastRefreshResult { get; set; }
 
         public List<UserRating> UserRatings { get; set; }
+        public List<UserWatchListItem> UserWatchListItems { get; set; }
     }   
 }

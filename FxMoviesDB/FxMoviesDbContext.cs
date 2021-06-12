@@ -26,6 +26,10 @@ namespace FxMovies.FxMoviesDB
                 .HasMany(m => m.UserRatings)
                 .WithOne(ur => ur.Movie)
                 .HasForeignKey(ur => ur.MovieId);
+            modelBuilder.Entity<Movie>()
+                .HasMany(m => m.UserWatchListItems)
+                .WithOne(uw => uw.Movie)
+                .HasForeignKey(uw => uw.MovieId);
             modelBuilder.Entity<User>()
                 .HasKey(u => u.Id);
             modelBuilder.Entity<User>()
@@ -39,8 +43,14 @@ namespace FxMovies.FxMoviesDB
                 .HasKey(ur => ur.Id);
             modelBuilder.Entity<UserRating>()
                 .HasIndex(ur => new { ur.UserId, ur.MovieId });
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.UserWatchListItems)
+                .WithOne(uw => uw.User)
+                .HasForeignKey(uw => uw.UserId);
             modelBuilder.Entity<UserWatchListItem>()
-                .HasKey(u => new { u.UserId, u.ImdbMovieId });
+                .HasKey(uw => uw.Id);
+            modelBuilder.Entity<UserWatchListItem>()
+                .HasIndex(uw => new { uw.UserId, uw.MovieId });
         }
 
         public DbSet<Channel> Channels { get; set; }

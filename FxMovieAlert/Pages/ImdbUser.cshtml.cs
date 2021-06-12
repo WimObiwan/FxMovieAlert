@@ -127,7 +127,7 @@ namespace FxMovieAlert.Pages
                 fxMoviesDbContext.SaveChanges();
 
                 UserRatingCount = fxMoviesDbContext.UserRatings.Count(ur => ur.User.UserId == userId);
-                UserWatchListCount = fxMoviesDbContext.UserWatchLists.Where(ur => ur.UserId == userId).Count();
+                UserWatchListCount = fxMoviesDbContext.UserWatchLists.Where(ur => ur.User.UserId == userId).Count();
                 var ratingLast = fxMoviesDbContext.UserRatings
                     .Include(ur => ur.Movie)
                     .Where(ur => ur.User.UserId == userId)
@@ -145,14 +145,15 @@ namespace FxMovieAlert.Pages
                     }
                 }
                 var watchListLast = fxMoviesDbContext.UserWatchLists
-                    .Where(uw => uw.UserId == userId)
+                    .Include(uw => uw.Movie)
+                    .Where(uw => uw.User.UserId == userId)
                     .OrderByDescending(uw => uw.AddedDate)
                     .FirstOrDefault();
                 if (watchListLast != null)
                 {
                     WatchListLastDate = watchListLast.AddedDate;
-                    WatchListLastMovie = watchListLast.ImdbMovieId;
-                    var movie = imdbDbContext.Movies.Find(WatchListLastMovie);
+                    WatchListLastMovie = watchListLast.Movie.ImdbId;
+                    var movie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == WatchListLastMovie);
                     if (movie != null)
                     {
                         WatchListLastMovie = movie.PrimaryTitle;
@@ -254,7 +255,7 @@ namespace FxMovieAlert.Pages
                     }
 
                     List<UserRating> itemsToRemove = 
-                        fxMoviesDbContext.UserRatings
+                        user.UserRatings
                             .Where(ur => !movieIdsInFile.Contains(ur.Movie.ImdbId))
                             .ToList();
 
@@ -291,6 +292,7 @@ namespace FxMovieAlert.Pages
 
             LastImportErrors.Clear();
 
+            User user = fxMoviesDbContext.Users.Single(u => u.UserId == userId);
             foreach (var file in Request.Form.Files)
             {
                 try
@@ -314,12 +316,13 @@ namespace FxMovieAlert.Pages
 
                             // Watchlist
                             // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                            var userWatchList = fxMoviesDbContext.UserWatchLists.Find(userId, _const);
+                            var movie = movieCreationHelper.GetOrCreateMovieByImdbId(_const);
+                            var userWatchList = fxMoviesDbContext.UserWatchLists.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
                             if (userWatchList == null)
                             {
                                 userWatchList = new UserWatchListItem();
-                                userWatchList.UserId = userId;
-                                userWatchList.ImdbMovieId = _const;
+                                userWatchList.User = user;
+                                userWatchList.Movie = movie;
                                 fxMoviesDbContext.UserWatchLists.Add(userWatchList);
                                 newCount++;
                             }
@@ -341,8 +344,8 @@ namespace FxMovieAlert.Pages
                     }
 
                     List<UserWatchListItem> itemsToRemove = 
-                        fxMoviesDbContext.UserWatchLists
-                            .Where(ur => ur.UserId == userId && !movieIdsInFile.Contains(ur.ImdbMovieId))
+                        user.UserWatchListItems
+                            .Where(ur => !movieIdsInFile.Contains(ur.Movie.ImdbId))
                             .ToList();
 
                     fxMoviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);
