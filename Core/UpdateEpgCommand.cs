@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ namespace FxMovies.Core
 {
     public interface IUpdateEpgCommand
     {
-        int Run();
+        Task<int> Run();
     }
 
     public class UpdateEpgCommandOptions
@@ -55,17 +56,17 @@ namespace FxMovies.Core
             this.humoService = humoService;
         }
 
-        public int Run()
+        public async Task<int> Run()
         {
-            UpdateDatabaseEpg();
-            UpdateMissingImageLinks();
-            DownloadImageData();
-            UpdateEpgDataWithImdb();
+            await UpdateDatabaseEpg();
+            await UpdateMissingImageLinks();
+            await DownloadImageData();
+            await UpdateEpgDataWithImdb();
             //UpdateDatabaseEpgHistory();
             return 0;
         }
 
-        private void UpdateDatabaseEpg()
+        private async Task UpdateDatabaseEpg()
         {
             DateTime now = DateTime.Now;
 
@@ -76,7 +77,7 @@ namespace FxMovies.Core
                     var set = db.MovieEvents;
                     set.RemoveRange(set.Where(x => x.StartTime < now.Date));
                 }
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             int maxDays = updateEpgCommandOptions.MaxDays ?? 7;
@@ -198,7 +199,7 @@ namespace FxMovies.Core
                     //     db.SaveChanges();
                     // }
 
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             }
 
@@ -209,11 +210,11 @@ namespace FxMovies.Core
                     var set = db.Channels.Where(ch => db.MovieEvents.All(me => me.Channel != ch));
                     db.RemoveRange(set);
                 }
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
         }
 
-        private void UpdateMissingImageLinks()
+        private async Task UpdateMissingImageLinks()
         {
             using (var db = fxMoviesDbContextFactory.CreateDbContext())
             {
@@ -223,16 +224,16 @@ namespace FxMovies.Core
                     bool emptyPosterS = string.IsNullOrEmpty(movieEvent.PosterS);
                     if ((emptyPosterM || emptyPosterS) && !string.IsNullOrEmpty(movieEvent.Movie?.ImdbId))
                     {
-                        var result = theMovieDbService.GetImages(movieEvent.Movie.ImdbId);
+                        var result = await theMovieDbService.GetImages(movieEvent.Movie.ImdbId);
                         movieEvent.PosterM = result.Medium;
                         movieEvent.PosterS = result.Small;
                     }
                 }
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
         }
 
-        private void DownloadImageData()
+        private async Task DownloadImageData()
         {
             string basePath = updateEpgCommandOptions.ImageBasePath;
             if (!Directory.Exists(basePath))
@@ -284,7 +285,7 @@ namespace FxMovies.Core
                         //
                         
                         // Resize to 50 gives black background on Vier, Vijf, ...
-                        channel.LogoS_Local = DownloadFile(url, basePath, name, 0);
+                        channel.LogoS_Local = await DownloadFile(url, basePath, name, 0);
 
                         // channel.LogoS_ETag = eTag;
                         // channel.LogoS_LastModified = lastModified;
@@ -310,7 +311,7 @@ namespace FxMovies.Core
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-S" + ext;
 
-                        movieEvent.PosterS_Local = DownloadFile(url, basePath, name, 150);
+                        movieEvent.PosterS_Local = await DownloadFile(url, basePath, name, 150);
                     }
                     {
                         string url = movieEvent.PosterM;
@@ -329,11 +330,11 @@ namespace FxMovies.Core
 
                         string name = "movie-" + movieEvent.Id.ToString() + "-M" + ext;
 
-                        movieEvent.PosterM_Local = DownloadFile(url, basePath, name, 0);
+                        movieEvent.PosterM_Local = await DownloadFile(url, basePath, name, 0);
                     }
                 }
 
-                dbMovies.SaveChanges();    
+                await dbMovies.SaveChangesAsync();    
             }
         }
 
@@ -359,7 +360,7 @@ namespace FxMovies.Core
             }
         }
 
-        private string DownloadFile(string url, string basePath, string name, int resize)
+        private async Task<string> DownloadFile(string url, string basePath, string name, int resize)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -377,7 +378,7 @@ namespace FxMovies.Core
                     using (var stm = rsp.GetResponseStream())
                     using (var fileStream = File.Create(target))
                     {
-                        stm.CopyTo(fileStream);
+                        await stm.CopyToAsync(fileStream);
                     }
                 }
             }
@@ -395,12 +396,12 @@ namespace FxMovies.Core
             return name;
         }
 
-        private void UpdateEpgDataWithImdb()
+        private async Task UpdateEpgDataWithImdb()
         {
-            UpdateGenericDataWithImdb<MovieEvent>((dbMovies) => dbMovies.MovieEvents);
+            await UpdateGenericDataWithImdb<MovieEvent>((dbMovies) => dbMovies.MovieEvents);
         }
 
-        private void UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies) 
+        private async Task UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies) 
         where T : IHasImdbLink
         {
             // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
@@ -505,9 +506,9 @@ namespace FxMovies.Core
                     int huntNo = 0;
                     foreach (var hunt in huntingProcedure)
                     {                        
-                        imdbMovie = hunt(first)
+                        imdbMovie = await hunt(first)
                             .OrderByDescending(m => m.Votes)
-                            .FirstOrDefault();
+                            .FirstOrDefaultAsync();
 
                         // if (hunt is Func<IHasImdbLink, Movie, bool> huntTyped1)
                         // {
@@ -541,14 +542,14 @@ namespace FxMovies.Core
                         // {
                         //     movieWithImdbLink.Movie.ImdbId = "";
                         // }
-                        dbMovies.SaveChanges();
+                        await dbMovies.SaveChangesAsync();
                         logger.LogInformation($"UpdateEpgDataWithImdb: Could not find movie '{first.Title} ({first.Year})' in IMDb");
                         continue;
                     }
 
                     logger.LogInformation($"{(100 * current) / totalCount}% {first.Title} ({first.Year}) ==> {imdbMovie.ImdbId}, duplicity={group.Count()}, HUNT#{huntNo}");
 
-                    var movie = dbMovies.Movies.SingleOrDefault(m => m.ImdbId == imdbMovie.ImdbId);
+                    var movie = await dbMovies.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
 
                     if (movie == null)
                     {
@@ -559,17 +560,17 @@ namespace FxMovies.Core
                     movie.ImdbRating = imdbMovie.Rating;
                     movie.ImdbVotes = imdbMovie.Votes;
                     if (movie.Certification == null)
-                        movie.Certification = theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+                        movie.Certification = (await theMovieDbService.GetCertification(movie.ImdbId)) ?? "";
 
                     foreach (var movieWithImdbLink in group)
                     {
                         movieWithImdbLink.Movie = movie;
                     }
 
-                    dbMovies.SaveChanges();
+                    await dbMovies.SaveChangesAsync();
                 }
 
-                dbMovies.SaveChanges();
+                await dbMovies.SaveChangesAsync();
             }
         }
 

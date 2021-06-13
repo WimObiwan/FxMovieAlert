@@ -16,11 +16,11 @@ using Microsoft.Extensions.Configuration;
 namespace FxMovieAlert.Pages
 {
     [AllowAnonymous]
-    public class BroadcastModel : BroadcastModelBase
+    public class StreamingModel : BroadcastModelBase
     {
-        public BroadcastModel(IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
+        public StreamingModel(IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
             IMovieCreationHelper movieCreationHelper)
-            : base(false, configuration, fxMoviesDbContext, imdbDbContext, movieCreationHelper)
+            : base(true, configuration, fxMoviesDbContext, imdbDbContext, movieCreationHelper)
         {}
     }
 }

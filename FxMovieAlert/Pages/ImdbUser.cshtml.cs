@@ -56,7 +56,7 @@ namespace FxMovieAlert.Pages
             this.imdbDbContext = imdbDbContext;
         }
 
-        public void OnGet(bool forcerefresh = false, string setimdbuserid = null)
+        public async Task OnGet(bool forcerefresh = false, string setimdbuserid = null)
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
@@ -67,7 +67,7 @@ namespace FxMovieAlert.Pages
 
             if (setimdbuserid == null)
             {
-                var user = fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefault();
+                var user = await fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
                 if (user != null)
                 {
                     ImdbUserId = user.ImdbUserId;
@@ -75,10 +75,10 @@ namespace FxMovieAlert.Pages
             }
             else if (setimdbuserid == "remove")
             {
-                User user = fxMoviesDbContext.Users.SingleOrDefault(u => u.UserId == userId);
+                User user = await fxMoviesDbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId);
                 fxMoviesDbContext.UserRatings.RemoveRange(user.UserRatings);
                 fxMoviesDbContext.Users.Remove(user);
-                fxMoviesDbContext.SaveChanges();
+                await fxMoviesDbContext.SaveChangesAsync();
 
                 ImdbUserId = null;
             }
@@ -104,7 +104,7 @@ namespace FxMovieAlert.Pages
 
             if (ImdbUserId != null)
             {
-                var user = fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefault();
+                var user = await fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
                 if (user == null)
                 {
                     user = new User();
@@ -124,36 +124,36 @@ namespace FxMovieAlert.Pages
                 WatchListLastRefreshRatingsResult = user.WatchListLastRefreshResult;
                 WatchListLastRefreshSuccess = user.WatchListLastRefreshSuccess;
                 user.LastUsageTime = DateTime.UtcNow;
-                fxMoviesDbContext.SaveChanges();
+                await fxMoviesDbContext.SaveChangesAsync();
 
-                UserRatingCount = fxMoviesDbContext.UserRatings.Count(ur => ur.User.UserId == userId);
-                UserWatchListCount = fxMoviesDbContext.UserWatchLists.Where(ur => ur.User.UserId == userId).Count();
-                var ratingLast = fxMoviesDbContext.UserRatings
+                UserRatingCount = await fxMoviesDbContext.UserRatings.CountAsync(ur => ur.User.UserId == userId);
+                UserWatchListCount = await fxMoviesDbContext.UserWatchLists.Where(ur => ur.User.UserId == userId).CountAsync();
+                var ratingLast = await fxMoviesDbContext.UserRatings
                     .Include(ur => ur.Movie)
                     .Where(ur => ur.User.UserId == userId)
                     .OrderByDescending(ur => ur.RatingDate)
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
                 if (ratingLast != null)
                 {
                     RatingLastDate = ratingLast.RatingDate;
                     RatingLastRating = ratingLast.Rating;
                     RatingLastMovie = ratingLast.Movie.ImdbId;
-                    var movie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == RatingLastMovie);
+                    var movie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == RatingLastMovie);
                     if (movie != null)
                     {
                         RatingLastMovie = movie.PrimaryTitle;
                     }
                 }
-                var watchListLast = fxMoviesDbContext.UserWatchLists
+                var watchListLast = await fxMoviesDbContext.UserWatchLists
                     .Include(uw => uw.Movie)
                     .Where(uw => uw.User.UserId == userId)
                     .OrderByDescending(uw => uw.AddedDate)
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
                 if (watchListLast != null)
                 {
                     WatchListLastDate = watchListLast.AddedDate;
                     WatchListLastMovie = watchListLast.Movie.ImdbId;
-                    var movie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == WatchListLastMovie);
+                    var movie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == WatchListLastMovie);
                     if (movie != null)
                     {
                         WatchListLastMovie = movie.PrimaryTitle;
@@ -162,7 +162,7 @@ namespace FxMovieAlert.Pages
             }
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPost()
         {
             if (Request.Form.Files.Count == 0)
             {
@@ -181,26 +181,26 @@ namespace FxMovieAlert.Pages
 
             if (ratings)
             {
-                OnPostRatings();
+                await OnPostRatings();
             }
             else if (watchlist)
             {
-                OnPostWatchlist();
+                await OnPostWatchlist();
             }
 
-            OnGet();
+            await OnGet();
 
             return Page();
         }
 
-        private void OnPostRatings()
+        private async Task OnPostRatings()
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
             int existingCount = 0;
             int newCount = 0;
 
-            User user = fxMoviesDbContext.Users.Single(u => u.UserId == userId);
+            User user = await fxMoviesDbContext.Users.SingleAsync(u => u.UserId == userId);
             foreach (var file in Request.Form.Files)
             {
                 try
@@ -226,7 +226,7 @@ namespace FxMovieAlert.Pages
                             // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
                             int rating = int.Parse(record.YourRating);
 
-                            var movie = movieCreationHelper.GetOrCreateMovieByImdbId(_const);
+                            var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(_const);
                             var userRating = fxMoviesDbContext.UserRatings.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
                             if (userRating == null)
                             {
@@ -279,11 +279,11 @@ namespace FxMovieAlert.Pages
                             "danger"));
                 }
 
-                fxMoviesDbContext.SaveChanges();
+                await fxMoviesDbContext.SaveChangesAsync();
             }
         }
 
-        private void OnPostWatchlist()
+        private async Task OnPostWatchlist()
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
@@ -292,7 +292,7 @@ namespace FxMovieAlert.Pages
 
             LastImportErrors.Clear();
 
-            User user = fxMoviesDbContext.Users.Single(u => u.UserId == userId);
+            User user = await fxMoviesDbContext.Users.SingleAsync(u => u.UserId == userId);
             foreach (var file in Request.Form.Files)
             {
                 try
@@ -316,8 +316,8 @@ namespace FxMovieAlert.Pages
 
                             // Watchlist
                             // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                            var movie = movieCreationHelper.GetOrCreateMovieByImdbId(_const);
-                            var userWatchList = fxMoviesDbContext.UserWatchLists.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
+                            var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(_const);
+                            var userWatchList = await fxMoviesDbContext.UserWatchLists.FirstOrDefaultAsync(ur => ur.User == user && ur.Movie == movie);
                             if (userWatchList == null)
                             {
                                 userWatchList = new UserWatchListItem();
@@ -368,7 +368,7 @@ namespace FxMovieAlert.Pages
                             "danger"));
                 }
 
-                fxMoviesDbContext.SaveChanges();
+                await fxMoviesDbContext.SaveChangesAsync();
             }
         }
 

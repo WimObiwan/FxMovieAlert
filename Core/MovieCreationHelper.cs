@@ -1,10 +1,12 @@
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.Core
 {
     public interface IMovieCreationHelper
     {
-        FxMovies.FxMoviesDB.Movie GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
+        Task<FxMovies.FxMoviesDB.Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
     }
 
     public class MovieCreationHelper : IMovieCreationHelper
@@ -23,9 +25,9 @@ namespace FxMovies.Core
             this.theMovieDbService = theMovieDbService;
         }
 
-        public FxMovies.FxMoviesDB.Movie GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
+        public async Task<FxMovies.FxMoviesDB.Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
         {
-            var movie = fxMoviesDbContext.Movies.SingleOrDefault(m => m.ImdbId == imdbId);
+            var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
             bool newMovie = (movie == null);
 
@@ -39,32 +41,32 @@ namespace FxMovies.Core
             }
 
             if (refresh)
-                Refresh(movie);
+                await Refresh(movie);
 
             return movie;
         }
 
-        public bool RefreshIfNeeded(FxMovies.FxMoviesDB.Movie movie)
+        public async Task<bool> RefreshIfNeeded(FxMovies.FxMoviesDB.Movie movie)
         {
             if (string.IsNullOrEmpty(movie.OriginalTitle))
             {
-                return Refresh(movie);
+                return await Refresh(movie);
             }
             return false;
         }
 
-        public bool Refresh(FxMovies.FxMoviesDB.Movie movie)
+        public async Task<bool> Refresh(FxMovies.FxMoviesDB.Movie movie)
         {
             if (movie == null)
                 return false;
 
-            var imdbMovie = imdbDbContext.Movies.SingleOrDefault(m => m.ImdbId == movie.ImdbId);
+            var imdbMovie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
             if (imdbMovie != null)
             {
                 movie.ImdbRating = imdbMovie.Rating;
                 movie.ImdbVotes = imdbMovie.Votes;
                 if (movie.Certification == null)
-                    movie.Certification = theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+                    movie.Certification = await theMovieDbService.GetCertification(movie.ImdbId) ?? "";
 
                 return true;
             }

@@ -21,6 +21,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using FxMovies.Core;
+using System.Threading.Tasks;
 
 // Compile: 
 
@@ -119,7 +120,7 @@ namespace FxMovies.Grabber
         {
         }
 
-        static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             using (var host = CreateHostBuilder(args).Build())
             {
@@ -147,7 +148,7 @@ namespace FxMovies.Grabber
 
                 using (Sentry.SentrySdk.Init("https://3181503fa0264cdb827506614c8973f2@sentry.io/1335361"))
                 {
-                    return Parser.Default
+                    return await Parser.Default
                         .ParseArguments<
                             HelpOptions,
                             GenerateImdbDatabaseOptions,
@@ -169,7 +170,7 @@ namespace FxMovies.Grabber
                             // (TwitterBotOptions o) => Run(o),
                             // (ManualOptions o) => Run(o),
                             (TestSentryOptions o) => Run(o),
-                            errs => 1);
+                            errs => Task.FromResult(1));
                 }
             }
         }
@@ -203,9 +204,9 @@ namespace FxMovies.Grabber
                 .UseStartup<Startup>();
         }
 
-        private static int Run(HelpOptions options)
+        private static Task<int> Run(HelpOptions options)
         {
-            return 0;
+            return Task.FromResult(0);
         }
 
         // private static int Run(UpdateImdbUserRatingsOptions options)
@@ -239,7 +240,7 @@ namespace FxMovies.Grabber
         //     return 0;
         // }
 
-        private static int Run(TestSentryOptions options)
+        private static Task<int> Run(TestSentryOptions options)
         {
             throw new Exception("Test Sentry");
         }

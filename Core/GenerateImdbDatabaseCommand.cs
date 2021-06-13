@@ -10,6 +10,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,7 @@ namespace FxMovies.Core
 {
     public interface IGenerateImdbDatabaseCommand
     {
-        int Run();
+        Task<int> Run();
     }
 
     public class GenerateImdbDatabaseCommandOptions
@@ -51,18 +52,18 @@ namespace FxMovies.Core
             this.theMovieDbService = theMovieDbService;
         }
 
-        public int Run()
+        public async Task<int> Run()
         {
-            ImportImdbData_Remove();
-            ImportImdbData_Movies();
-            ImportImdbData_AlsoKnownAs();
-            ImportImdbData_Ratings();
-            ImportImdbData_CleanupMoviesWithoutRatings();
-            ImportImdbData_Vacuum();
+            await ImportImdbData_Remove();
+            await ImportImdbData_Movies();
+            await ImportImdbData_AlsoKnownAs();
+            await ImportImdbData_Ratings();
+            await ImportImdbData_CleanupMoviesWithoutRatings();
+            await ImportImdbData_Vacuum();
             return 0;
         }
 
-        private void ImportImdbData_Remove()
+        private async Task ImportImdbData_Remove()
         {
             logger.LogInformation("Removing MovieAlternatives");
             do {
@@ -72,7 +73,7 @@ namespace FxMovies.Core
                     if (!batch.Any())
                         break;
                     db.MovieAlternatives.RemoveRange(batch);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             } while (true);
 
@@ -84,12 +85,12 @@ namespace FxMovies.Core
                     if (!batch.Any())
                         break;
                     db.Movies.RemoveRange(batch);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             } while (true);
         }
 
-        private void ImportImdbData_Movies()
+        private async Task ImportImdbData_Movies()
         {
             int debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
 
@@ -196,7 +197,7 @@ namespace FxMovies.Core
                             db.Movies.Add(movie);
                         }
 
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                     }
                 } while (text != null);
                 
@@ -204,7 +205,7 @@ namespace FxMovies.Core
             }
         }        
 
-        private void ImportImdbData_AlsoKnownAs()
+        private async Task ImportImdbData_AlsoKnownAs()
         {
             int debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
 
@@ -256,7 +257,7 @@ namespace FxMovies.Core
 
                             if (count % 10000 == 0)
                             {
-                                db.SaveChanges();
+                                await db.SaveChangesAsync();
                                 logger.LogInformation(
                                     $"UpdateImdbDataWithAkas: {count} records done ({originalFileStream.Position * 100 / originalFileStream.Length}%), "
                                     + $"{countAlternatives} alternatives, {skipped} records skipped ({skipped * 100 / count}%), {stopwatch.ElapsedMilliseconds}");
@@ -283,7 +284,7 @@ namespace FxMovies.Core
                             }
 
                             string movieId = match.Groups[1].Value;
-                            ImdbDB.Movie movie = db.Movies.Include(m => m.MovieAlternatives).SingleOrDefault(m => m.ImdbId == movieId);
+                            ImdbDB.Movie movie = await db.Movies.Include(m => m.MovieAlternatives).SingleOrDefaultAsync(m => m.ImdbId == movieId);
                             if (movie == null)
                             {
                                 skipped++;
@@ -308,7 +309,7 @@ namespace FxMovies.Core
                             countAlternatives++;
                         }
 
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                     }
 
                 } while (text != null);
@@ -317,7 +318,7 @@ namespace FxMovies.Core
             }
         }
 
-        private void ImportImdbData_Ratings()
+        private async Task ImportImdbData_Ratings()
         {
             int debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
 
@@ -353,7 +354,7 @@ namespace FxMovies.Core
 
                             if (count % 10000 == 0)
                             {
-                                db.SaveChanges();
+                                await db.SaveChangesAsync();
                                 logger.LogInformation(
                                     $"UpdateImdbDataWithRatings: {count} records done ({originalFileStream.Position * 100 / originalFileStream.Length}%), "
                                     + $"{skipped} records skipped, {stopwatch.ElapsedMilliseconds}");
@@ -374,7 +375,7 @@ namespace FxMovies.Core
 
                             string tconst = match.Groups[1].Value;
 
-                            var movie = db.Movies.SingleOrDefault(m => m.ImdbId == tconst);
+                            var movie = await db.Movies.SingleOrDefaultAsync(m => m.ImdbId == tconst);
                             if (movie == null)
                             {
                                 // Probably a serie or ...
@@ -392,7 +393,7 @@ namespace FxMovies.Core
                                 movie.Rating = (int)(rating * 10);
                         }
 
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                     }
 
                 } while (text != null);
@@ -401,7 +402,7 @@ namespace FxMovies.Core
             }
         }
 
-        private void ImportImdbData_CleanupMoviesWithoutRatings()
+        private async Task ImportImdbData_CleanupMoviesWithoutRatings()
         {
             int year = DateTime.Now.Year - 2;
 
@@ -414,17 +415,17 @@ namespace FxMovies.Core
                         break;
                     db.MovieAlternatives.RemoveRange(db.Movies.SelectMany(m => m.MovieAlternatives));
                     db.Movies.RemoveRange(batch);
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                 }
             } while (true);
         }
 
-        private void ImportImdbData_Vacuum()
+        private async Task ImportImdbData_Vacuum()
         {
             using (var db = imdbDbContextFactory.CreateDbContext())
             {
                 logger.LogInformation("Doing 'VACUUM'...");
-                db.Database.ExecuteSqlRaw("VACUUM;");
+                await db.Database.ExecuteSqlRawAsync("VACUUM;");
             }            
         }
     }

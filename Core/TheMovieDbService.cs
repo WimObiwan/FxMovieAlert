@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -18,8 +19,8 @@ namespace FxMovies.Core
 
     public interface ITheMovieDbService
     {
-        string GetCertification(string imdbId);
-        GetImagesResult GetImages(string imdbId);
+        Task<string> GetCertification(string imdbId);
+        Task<GetImagesResult> GetImages(string imdbId);
 
     }
 
@@ -68,7 +69,7 @@ namespace FxMovies.Core
             this.certificationCountryPreferenceList = o.CertificationCountryPreference?.Split(new char[] {' ', ','}, StringSplitOptions.RemoveEmptyEntries);
         }
 
-        public string GetCertification(string imdbId)
+        public async Task<string> GetCertification(string imdbId)
         {
             if (string.IsNullOrEmpty(apiKey) || certificationCountryPreferenceList == null)
                 return "";
@@ -83,12 +84,10 @@ namespace FxMovies.Core
             var request = WebRequest.CreateHttp(url);
             try
             {
-                using (var response = request.GetResponse())
-                using (var textStream = new StreamReader(response.GetResponseStream()))
+                using (var response = await request.GetResponseAsync())
+                using (var stream = response.GetResponseStream())
                 {
-                    string json = textStream.ReadToEnd();
-
-                    var releases = JsonSerializer.Deserialize<Releases>(json);
+                    var releases = await JsonSerializer.DeserializeAsync<Releases>(stream);
                     
                     var certifications = releases?.countries;
                     if (certifications == null)
@@ -118,7 +117,7 @@ namespace FxMovies.Core
             return null;
         }
 
-        public GetImagesResult GetImages(string imdbId)
+        public async Task<GetImagesResult> GetImages(string imdbId)
         {
             // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US
 
@@ -128,12 +127,10 @@ namespace FxMovies.Core
             var request = WebRequest.CreateHttp(url);
             try
             {
-                using (var response = request.GetResponse())
-                using (var textStream = new StreamReader(response.GetResponseStream()))
+                using (var response = await request.GetResponseAsync())
+                using (var stream = response.GetResponseStream())
                 {
-                    string json = textStream.ReadToEnd();
-
-                    var movie = JsonSerializer.Deserialize<Movie>(json);
+                    var movie = await JsonSerializer.DeserializeAsync<Movie>(stream);
                     
                     logger.LogInformation($"Image {imdbId} ==> {movie.original_title}");
                     
