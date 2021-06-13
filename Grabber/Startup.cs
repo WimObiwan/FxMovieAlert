@@ -22,14 +22,16 @@ namespace FxMovies.Grabber
             services.AddDbContextFactory<FxMovies.ImdbDB.ImdbDbContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("ImdbDb")));
 
+            services.AddSingleton<IUpdateEpgCommand, UpdateEpgCommand>();
+            services.AddSingleton<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
+
             services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.Configure<UpdateEpgCommandOptions>(Configuration.GetSection(UpdateEpgCommandOptions.Position));
+            services.Configure<GenerateImdbDatabaseCommandOptions>(Configuration.GetSection(GenerateImdbDatabaseCommandOptions.Position));
 
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
             services.AddScoped<IHumoService, HumoService>();
-
-            services.AddSingleton<IUpdateEpgCommand, UpdateEpgCommand>();
         }
     }
 }
