@@ -7,8 +7,6 @@ using FxMovies.Core;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -101,7 +99,6 @@ namespace FxMovieAlert.Pages
         public async Task OnGet(int? m = null, int? typeMask = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
             int? movieeventid = null, string setimdbid = null, int? maxdays = null)
         {
-            var dbMovieEvents = fxMoviesDbContext.MovieEvents.Where(me => !me.Vod);
             string userId = ClaimChecker.UserId(User.Identity);
 
             var now = DateTime.Now;
@@ -127,6 +124,16 @@ namespace FxMovieAlert.Pages
             FilterCert = cert & Cert.all2;
             if (FilterCert == Cert.all2)
                 FilterCert = Cert.all;
+
+            var dbMovieEvents = fxMoviesDbContext.MovieEvents.Where(me => me.Vod == streaming);
+
+            if (!streaming)
+            {
+                dbMovieEvents = dbMovieEvents.Where(me => 
+                    (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
+                    &&
+                    (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30)));
+            }
 
             if (EditImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
             {
@@ -236,12 +243,6 @@ namespace FxMovieAlert.Pages
 
             Records = await dbMovieEvents
                 .Where(me => 
-                    me.Vod == streaming
-                    && 
-                    (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
-                    &&
-                    (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30))
-                    &&
                     (
                         ((FilterTypeMask & 1) == 1 && me.Type == 1)
                         || ((FilterTypeMask & 2) == 2 && me.Type == 2)

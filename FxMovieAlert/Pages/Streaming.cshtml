@@ -425,61 +425,17 @@
 
     <table class="table">
     <tbody>
-        @{
-            DateTime? lastDate = null;
-            int moviesSinceLastAd = 0;
-        }
-
-        @foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.StartTime))
+        @foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.EndTime))
         {
             var movieEvent = record.MovieEvent;
-            @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
-            {
-                @* if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval && !User.Identity.IsAuthenticated)
-                {
-                    <tr class="ad">
-                        <td colspan="3" style="border: none;">
-                            <div style="overflow: hidden;">
-                                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-                                <!-- FilmOpTV -->
-                                <ins class="adsbygoogle"
-                                    style="display: inline-block;"
-                                    data-ad-client="ca-pub-6612546844038667"
-                                    data-ad-slot="4129964976"
-                                    data-ad-format="auto"></ins>
-                                <script>
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                                </script>
-                            </div>
-                        </td>
-                    </tr>
-                    moviesSinceLastAd = 0;
-                } *@
-
-                <tr class="date-header">
-                    <td colspan="3">
-                        @for (DateTime enumDate = (lastDate ?? movieEvent.StartTime).AddDays(1); enumDate <= movieEvent.StartTime; enumDate = enumDate.AddDays(1))
-                        {
-                            <a class="anchor" name="day@(enumDate.ToString("yyyyMMdd"))" ></a>
-                        }
-                        <h1>@(@movieEvent.StartTime.ToLongDateString())</h1>
-                    </td>
-                </tr>
-
-                lastDate = movieEvent.StartTime.Date;
-            }
-
-            moviesSinceLastAd++;
 
             <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
                 <td class="collapsible">
                     <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
-                    @(@movieEvent.StartTime.ToString("dddd"))
+                    @(@movieEvent.EndTime?.AddHours(-1).ToString("dddd"))
                     <br/>
-                    @(@movieEvent.StartTime.ToShortDateString())
-                    <br/>
-                        <b>@(@movieEvent.StartTime.ToShortTimeString())</b>
+                    @(@movieEvent.EndTime?.AddHours(-1).ToShortDateString())
                     <br/>
                     @if (movieEvent.Duration.HasValue)
                     {
@@ -497,10 +453,8 @@
                     <div class="reverse-collapsible">
                         <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                         &nbsp;
-                        @(@movieEvent.StartTime.ToString("dddd"))
-                        @(@movieEvent.StartTime.ToShortDateString())
-                        &nbsp;
-                        <b>@(@movieEvent.StartTime.ToShortTimeString())</b>
+                        @(@movieEvent.EndTime?.AddHours(-1).ToString("dddd"))
+                        @(@movieEvent.EndTime?.AddHours(-1).ToShortDateString())
                         @if (movieEvent.Duration.HasValue)
                         {
                             @: &nbsp; (@(new TimeSpan((long)@movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
@@ -650,25 +604,12 @@
                                 Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
                             </div></p>
                         }
-                        @if (movieEvent.StartTime <= now.AddHours(2))
-                        {
-                            <p class="slim"><div class="timing alert alert-warning small-alert" style="display: none;" data-timing="@movieEvent.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")">
-                            </div></p>
-                        }
                     </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
-
-@if (lastDate.HasValue)
-{
-    @for (int i = 1; i <= 10; i++)
-    {
-        <a class="anchor" name="day@(lastDate.Value.AddDays(i).ToString("yyyyMMdd"))" ></a>
-    }
-}
 
 @if (Model.FilterMaxDays > 0 && Model.FilterMaxDays < 10)
 {

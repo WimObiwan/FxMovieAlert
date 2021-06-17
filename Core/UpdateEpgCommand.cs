@@ -40,28 +40,30 @@ namespace FxMovies.Core
         private readonly IDbContextFactory<ImdbDbContext> imdbDbContextFactory;
         private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
         private readonly ITheMovieDbService theMovieDbService;
+        private readonly IVtmGoService vtmGoService;
         private readonly IHumoService humoService;
 
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
             IDbContextFactory<FxMoviesDbContext> fxMoviesDbContextFactory, IDbContextFactory<ImdbDbContext> imdbDbContextFactory,
             IOptionsSnapshot<UpdateEpgCommandOptions> updateEpgCommandOptions,
             ITheMovieDbService theMovieDbService,
-            IHumoService humoService)
+            IVtmGoService vtmGoService, IHumoService humoService)
         {
             this.logger = logger;
             this.fxMoviesDbContextFactory = fxMoviesDbContextFactory;
             this.imdbDbContextFactory = imdbDbContextFactory;
             this.updateEpgCommandOptions = updateEpgCommandOptions.Value;
             this.theMovieDbService = theMovieDbService;
+            this.vtmGoService = vtmGoService;
             this.humoService = humoService;
         }
 
         public async Task<int> Run()
         {
             await UpdateDatabaseEpg();
+            await UpdateEpgDataWithImdb();
             await UpdateMissingImageLinks();
             await DownloadImageData();
-            await UpdateEpgDataWithImdb();
             //UpdateDatabaseEpgHistory();
             return 0;
         }
@@ -80,11 +82,151 @@ namespace FxMovies.Core
                 await db.SaveChangesAsync();
             }
 
+            await UpdateDatabaseEpg_VtmGo();
+            await UpdateDatabaseEpg_Humo();
+        }
+
+        private async Task UpdateDatabaseEpg_VtmGo()
+        {
+            var movieEvents = await vtmGoService.GetMovieEvents();
+            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Channel?.Code == "vtmgo");
+        }
+
+        private async Task UpdateMovieEvents(IList<MovieEvent> movieEvents, Func<MovieEvent, bool> movieEventsSubset)
+        {
+            // Remove movies that should be ignored
+            Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
+            {
+                foreach (var item in updateEpgCommandOptions.MovieTitlesToIgnore)
+                {
+                    if (Regex.IsMatch(movieEvent.Title, item))
+                        return true;
+                }
+                return false;
+            };
+            foreach (var movie in movieEvents.Where(isMovieIgnored))
+            {
+                logger.LogInformation($"Ignoring movie: {movie.Id} {movie.Title}");
+            }
+            movieEvents = movieEvents.Where(m => !isMovieIgnored(m)).ToList();
+
+            // Transform movie titles
+            foreach (var movie in movieEvents)
+            {
+                foreach (var item in updateEpgCommandOptions.MovieTitlesToTransform)
+                {
+                    var newTitle = Regex.Replace(movie.Title, item, "$1");
+                    var match = Regex.Match(movie.Title, item);
+                    if (movie.Title != newTitle)
+                    {
+                        logger.LogInformation($"Transforming movie {movie.Title} to {newTitle}");
+                        movie.Title = newTitle;
+                    }
+                }
+            }
+
+            foreach (var movie in movieEvents)
+            {
+                logger.LogInformation($"{movie.Channel.Name} {movie.Title} {movie.Year} {movie.StartTime}");
+            }
+
+            using (var db = fxMoviesDbContextFactory.CreateDbContext())
+            {
+                var existingMovies = db.MovieEvents.Where(movieEventsSubset);
+                logger.LogInformation("Existing movies: {0}", existingMovies.Count());
+                logger.LogInformation("New movies: {0}", movieEvents.Count());
+
+                // Update channels
+                foreach (var channel in movieEvents.Select(m => m.Channel).Distinct())
+                {
+                    Channel existingChannel = await db.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
+                    if (existingChannel != null)
+                    {
+                        existingChannel.Name = channel.Name;
+                        existingChannel.LogoS = channel.LogoS;
+                        db.Channels.Update(existingChannel);
+                        foreach (var movie in movieEvents.Where(m => m.Channel == channel))
+                            movie.Channel = existingChannel;
+                    }
+                    else
+                    {
+                        db.Channels.Add(channel);
+                    }
+                }
+
+                // Remove exising movies that don't appear in new movies
+                {
+                    var remove = existingMovies.ToList().Where(m1 => !movieEvents.Any(m2 => m2.Id == m1.Id));
+                    logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
+                    db.RemoveRange(remove);
+                }
+
+                // Update movies
+                foreach (var movie in movieEvents)
+                {
+                    var existingMovie = await db.MovieEvents.SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
+                    if (existingMovie != null)
+                    {
+                        if (existingMovie.Title != movie.Title)
+                        {
+                            existingMovie.Title = movie.Title;
+                            existingMovie.Movie = null;
+                        }
+                        existingMovie.Year = movie.Year;
+                        existingMovie.StartTime = movie.StartTime;
+                        existingMovie.EndTime = movie.EndTime;
+                        existingMovie.Channel = movie.Channel;
+                        if (existingMovie.PosterS != movie.PosterS)
+                        {
+                            existingMovie.PosterS = movie.PosterS;
+                            existingMovie.PosterS_Local = null;
+                        }
+                        if (existingMovie.PosterM != movie.PosterM)
+                        {
+                            existingMovie.PosterM = movie.PosterM;
+                            existingMovie.PosterM_Local = null;
+                        }
+                        existingMovie.Duration = movie.Duration;
+                        existingMovie.Genre = movie.Genre;
+                        existingMovie.Content = movie.Content;
+                        existingMovie.Opinion = movie.Opinion;
+                        existingMovie.Type = movie.Type;
+                        existingMovie.YeloUrl = movie.YeloUrl;
+                    }
+                    else
+                    {
+                        db.MovieEvents.Add(movie);
+                    }
+                }
+
+                // {
+                //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
+                //     db.SaveChanges();
+                // }
+
+                await db.SaveChangesAsync();
+            }
+
+            // using (var db = fxMoviesDbContextFactory.CreateDbContext())
+            // {
+            //     // Remove all old MovieEvents
+            //     {
+            //         var set = db.Channels.Where(ch => db.MovieEvents.All(me => me.Channel != ch));
+            //         db.RemoveRange(set);
+            //     }
+            //     await db.SaveChangesAsync();
+            // }
+        }
+
+        private async Task UpdateDatabaseEpg_Humo()
+        {
+            DateTime now = DateTime.Now;
+
             int maxDays = updateEpgCommandOptions.MaxDays ?? 7;
             for (int days = 0; days <= maxDays; days++)
             {
                 DateTime date = now.Date.AddDays(days);
-                var movies = humoService.GetGuide(date).Result;
+                var movies = await humoService.GetGuide(date);
 
                 //YeloGrabber.GetGuide(date, movies);
 
@@ -128,13 +270,13 @@ namespace FxMovies.Core
                 using (var db = fxMoviesDbContextFactory.CreateDbContext())
                 {
                     var existingMovies = db.MovieEvents.Where(x => x.StartTime.Date == date);
-                    logger.LogInformation("Existing movies: {0}", existingMovies.Count());
+                    logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
                     logger.LogInformation("New movies: {0}", movies.Count());
 
                     // Update channels
                     foreach (var channel in movies.Select(m => m.Channel).Distinct())
                     {
-                        Channel existingChannel = db.Channels.Find(channel.Code);
+                        Channel existingChannel = await db.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
                         if (existingChannel != null)
                         {
                             existingChannel.Name = channel.Name;
@@ -203,15 +345,15 @@ namespace FxMovies.Core
                 }
             }
 
-            using (var db = fxMoviesDbContextFactory.CreateDbContext())
-            {
-                // Remove all old MovieEvents
-                {
-                    var set = db.Channels.Where(ch => db.MovieEvents.All(me => me.Channel != ch));
-                    db.RemoveRange(set);
-                }
-                await db.SaveChangesAsync();
-            }
+            // using (var db = fxMoviesDbContextFactory.CreateDbContext())
+            // {
+            //     // Remove all old MovieEvents
+            //     {
+            //         var set = db.Channels.Where(ch => db.MovieEvents.All(me => me.Channel != ch));
+            //         db.RemoveRange(set);
+            //     }
+            //     await db.SaveChangesAsync();
+            // }
         }
 
         private async Task UpdateMissingImageLinks()
@@ -248,20 +390,9 @@ namespace FxMovies.Core
                     if (url == null)
                         continue;
 
-                    string ext = ".jpg";
+                    string name = "channel-" + channel.Code;
 
-                    if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
-                    {
-                        string path = uri.PathAndQuery;
-                        int extStart = path.LastIndexOf('.');
-                        if (extStart != -1)
-                            ext = url.Substring(extStart);
-                    }
-
-                    string nameWithoutExt = "channel-" + channel.Code;
-                    string name = nameWithoutExt + ext;
-
-                    if (updateEpgCommandOptions.ImageOverrideMap.TryGetValue(nameWithoutExt, out string imageOverride))
+                    if (updateEpgCommandOptions.ImageOverrideMap.TryGetValue(name, out string imageOverride))
                     {
                         string target = Path.Combine(basePath, name);
                         File.Copy(imageOverride, target, true);
@@ -300,16 +431,7 @@ namespace FxMovies.Core
                         if (url == null)
                             continue;
 
-                        string ext = ".jpg";
-                        if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
-                        {
-                            string path = uri.PathAndQuery;
-                            int extStart = path.LastIndexOf('.');
-                            if (extStart != -1)
-                                ext = url.Substring(extStart);
-                        }
-
-                        string name = "movie-" + movieEvent.Id.ToString() + "-S" + ext;
+                        string name = "movie-" + movieEvent.Id.ToString() + "-S";
 
                         movieEvent.PosterS_Local = await DownloadFile(url, basePath, name, 150);
                     }
@@ -319,16 +441,7 @@ namespace FxMovies.Core
                         if (url == null)
                             continue;
 
-                        string ext = ".jpg";
-                        if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
-                        {
-                            string path = uri.PathAndQuery;
-                            int extStart = path.LastIndexOf('.');
-                            if (extStart != -1)
-                                ext = url.Substring(extStart);
-                        }
-
-                        string name = "movie-" + movieEvent.Id.ToString() + "-M" + ext;
+                        string name = "movie-" + movieEvent.Id.ToString() + "-M";
 
                         movieEvent.PosterM_Local = await DownloadFile(url, basePath, name, 0);
                     }
@@ -367,14 +480,22 @@ namespace FxMovies.Core
                 return null;
             }
 
-            string target = Path.Combine(basePath, name);
+            string target;
 
             try
             {
-                logger.LogInformation($"Downloading {url} to {target}");
                 var req = (HttpWebRequest)WebRequest.Create(url);
                 using (var rsp = (HttpWebResponse)req.GetResponse())
                 {
+                    string ext;
+                    if (rsp.ContentType.Equals("image/png", StringComparison.InvariantCultureIgnoreCase)) {
+                        ext = ".png";
+                    } else {
+                        ext = ".jpg";
+                    }
+                    name = name + ext;
+                    target = Path.Combine(basePath, name);
+                    logger.LogInformation($"Downloading {url} to {target}");
                     using (var stm = rsp.GetResponseStream())
                     using (var fileStream = File.Create(target))
                     {
@@ -384,7 +505,7 @@ namespace FxMovies.Core
             }
             catch (Exception x)
             {
-                logger.LogInformation($"FAILED download of {url}, Exception={x.Message}");
+                logger.LogWarning($"FAILED download of {url}, Exception={x.Message}");
                 return null;
             }
 

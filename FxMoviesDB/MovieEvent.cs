@@ -12,6 +12,7 @@ namespace FxMovies.FxMoviesDB
         }
 
         public int Id { get; set; }
+        public string ExternalId { get; set; }
         public int? Type { get; set; } // 1 = movie, 2 = short movie, 3 = serie
         public string Title { get; set; }
         public int? Year { get; set; }

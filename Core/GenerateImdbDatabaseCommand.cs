@@ -99,7 +99,7 @@ namespace FxMovies.Core
             using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
             using (var textReader = new StreamReader(decompressionStream))
             {
-                int count = 0, countAlternatives = 0, skipped = 0;
+                long count = 0, countAlternatives = 0, skipped = 0;
                 string text = null;
 
                 // tconst	titleType	primaryTitle	originalTitle	isAdult	startYear	endYear	runtimeMinutes	genres
@@ -214,7 +214,7 @@ namespace FxMovies.Core
             using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
             using (var textReader = new StreamReader(decompressionStream))
             {
-                int count = 0, countAlternatives = 0, skipped = 0;
+                long count = 0, countAlternatives = 0, skipped = 0;
                 string text = null;
 
                 // 1        2           3       4       5           6       7           8
@@ -327,7 +327,7 @@ namespace FxMovies.Core
             using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
             using (var textReader = new StreamReader(decompressionStream))
             {
-                int count = 0, skipped = 0;
+                long count = 0, skipped = 0;
                 string text = null;
 
                 // New  Distribution  Votes  Rank  Title
@@ -406,16 +406,32 @@ namespace FxMovies.Core
         {
             int year = DateTime.Now.Year - 2;
 
-            logger.LogInformation("Removing Movies without Rating");
+            logger.LogInformation($"Removing Movies without Rating");
+
+            int total;
+            using (var db = imdbDbContextFactory.CreateDbContext())
+            {
+                total = db.Movies.Where((m) => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Count();
+            }
+            
+            logger.LogInformation($"Removing {total} Movies without Rating");
+            long count = 0;
             do {
                 using (var db = imdbDbContextFactory.CreateDbContext())
                 {
-                    var batch = db.Movies.Where(m => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Take(10000).Include(m => m.MovieAlternatives);
+                    var batch = db.Movies
+                        .AsNoTracking()
+                        .Where((m) => !m.Rating.HasValue && m.Year <= year)
+                        .OrderBy(m => m.Id)
+                        .Take(10000)
+                        .Include(m => m.MovieAlternatives);
+                    count += batch.Count();
                     if (!batch.Any())
                         break;
-                    db.MovieAlternatives.RemoveRange(db.Movies.SelectMany(m => m.MovieAlternatives));
+                    // This also removes Alternatives
                     db.Movies.RemoveRange(batch);
                     await db.SaveChangesAsync();
+                    logger.LogInformation($"Removing {total} Movies without Rating, {count * 100 / total}%");
                 }
             } while (true);
         }
