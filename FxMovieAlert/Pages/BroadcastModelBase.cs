@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -133,6 +133,10 @@ namespace FxMovieAlert.Pages
                     (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
                     &&
                     (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30)));
+            }
+            else
+            {
+                dbMovieEvents = dbMovieEvents.Where(me => me.EndTime >= now);
             }
 
             if (EditImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
