@@ -260,6 +260,7 @@ namespace FxMovieAlert.Pages
                     // && 
                     // (FilterCert == Cert.all || (ParseCertification(me.Movie.Certification) & FilterCert) != 0)
                 )
+                .AsNoTracking()
                 .Include(me => me.Channel)
                 .Include(me => me.Movie)
                 .Select(me => new Record()
