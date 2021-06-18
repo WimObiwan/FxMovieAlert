@@ -14,20 +14,51 @@ namespace FxMovies.FxMoviesDB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Movie>()
+                .HasKey(m => m.Id);
+            modelBuilder.Entity<Movie>()
+                .HasIndex(m => m.ImdbId)
+                .IsUnique();
+            modelBuilder.Entity<Movie>()
+                .HasMany(m => m.MovieEvents)
+                .WithOne(me => me.Movie);
+            modelBuilder.Entity<Movie>()
+                .HasMany(m => m.UserRatings)
+                .WithOne(ur => ur.Movie)
+                .HasForeignKey(ur => ur.MovieId);
+            modelBuilder.Entity<Movie>()
+                .HasMany(m => m.UserWatchListItems)
+                .WithOne(uw => uw.Movie)
+                .HasForeignKey(uw => uw.MovieId);
+            modelBuilder.Entity<User>()
+                .HasKey(u => u.Id);
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.ImdbUserId)
+                .IsUnique();
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.UserRatings)
+                .WithOne(ur => ur.User)
+                .HasForeignKey(ur => ur.UserId);
             modelBuilder.Entity<UserRating>()
-                .HasKey(u => new { u.UserId, u.ImdbMovieId });
+                .HasKey(ur => ur.Id);
+            modelBuilder.Entity<UserRating>()
+                .HasIndex(ur => new { ur.UserId, ur.MovieId });
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.UserWatchListItems)
+                .WithOne(uw => uw.User)
+                .HasForeignKey(uw => uw.UserId);
             modelBuilder.Entity<UserWatchListItem>()
-                .HasKey(u => new { u.UserId, u.ImdbMovieId });
-            modelBuilder.Entity<VodMovie>()
-                .HasKey(m => new { m.Provider, m.ProviderCategory, m.ProviderId });
+                .HasKey(uw => uw.Id);
+            modelBuilder.Entity<UserWatchListItem>()
+                .HasIndex(uw => new { uw.UserId, uw.MovieId });
         }
 
         public DbSet<Channel> Channels { get; set; }
+        public DbSet<Movie> Movies { get; set; }
         public DbSet<MovieEvent> MovieEvents { get; set; }
         public DbSet<UserRating> UserRatings { get; set; }
         public DbSet<UserWatchListItem> UserWatchLists { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<VodMovie> VodMovies { get; set; }
     }
 
     /// <summary>

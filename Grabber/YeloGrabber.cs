@@ -5,9 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
-using Newtonsoft.Json;
 using Sentry;
 
 namespace FxMovies.Grabber
@@ -92,7 +92,8 @@ namespace FxMovies.Grabber
 
                     try 
                     {
-                        var yelo = JsonConvert.DeserializeObject<Yelo>(json);
+                        var yelo = JsonSerializer.Deserialize<Yelo>(json);
+                        //var yelo = JsonConvert.DeserializeObject<Yelo>(json);
 
                         Merge(movieEvents, yelo);
                     }

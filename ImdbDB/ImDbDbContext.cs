@@ -15,11 +15,21 @@ namespace FxMovies.ImdbDB
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Movie>()
+                .HasKey(m => m.Id);
+            modelBuilder.Entity<Movie>()
                 .HasIndex(m => new { m.PrimaryTitle, m.Year });
+            modelBuilder.Entity<Movie>()
+                .HasIndex(m => m.ImdbId)
+                .IsUnique();
             modelBuilder.Entity<MovieAlternative>()
-                .HasKey(ma => new {ma.Id, ma.No});
+                .HasKey(ma => ma.Id);
             modelBuilder.Entity<MovieAlternative>()
-                .HasIndex(ma => new { ma.AlternativeTitle });
+                .HasIndex(ma => new { ma.Normalized, ma.MovieId })
+                .IsUnique();
+            modelBuilder.Entity<MovieAlternative>()
+                .HasOne(ma => ma.Movie)
+                .WithMany(m => m.MovieAlternatives)
+                .HasForeignKey(ma => ma.MovieId);
         }
 
         public DbSet<Movie> Movies { get; set; }

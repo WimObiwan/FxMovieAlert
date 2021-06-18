@@ -1,9 +1,9 @@
 ﻿@page
-@model BroadcastModel
+@model StreamingModel
 @using System.Text;
 @using System.Globalization;
 @{
-    ViewData["Title"] = "Uitzendingen";
+    ViewData["Title"] = "Streaming";
     ViewData["Canonical"] = "/";
     if (Model.MovieEvent != null)
     {
@@ -216,14 +216,6 @@
         }
     }
 
-    <p class=""><div class="alert alert-success small-alert">
-        NIEUW!  Je vindt nu ook een overzicht van VTMGO films!  Klik hiervoor op 
-        <a asp-page="/Streaming"><i class="far fa-eye"></i>
-            &nbsp;<span class="hidden-sm">Streaming</span>
-        </a>
-        bovenaan.
-    </div></p>
-
     <a id="filter-link" href="#filter-buttons" data-toggle="collapse">Filters</a>
     <div id="filter-buttons" class="collapse">
         <div class="btn-group">
@@ -433,61 +425,25 @@
 
     <table class="table">
     <tbody>
-        @{
-            DateTime? lastDate = null;
-            int moviesSinceLastAd = 0;
-        }
-
-        @foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.StartTime))
+        @foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.EndTime))
         {
             var movieEvent = record.MovieEvent;
-            @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
-            {
-                @* if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval && !User.Identity.IsAuthenticated)
-                {
-                    <tr class="ad">
-                        <td colspan="3" style="border: none;">
-                            <div style="overflow: hidden;">
-                                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-                                <!-- FilmOpTV -->
-                                <ins class="adsbygoogle"
-                                    style="display: inline-block;"
-                                    data-ad-client="ca-pub-6612546844038667"
-                                    data-ad-slot="4129964976"
-                                    data-ad-format="auto"></ins>
-                                <script>
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                                </script>
-                            </div>
-                        </td>
-                    </tr>
-                    moviesSinceLastAd = 0;
-                } *@
-
-                <tr class="date-header">
-                    <td colspan="3">
-                        @for (DateTime enumDate = (lastDate ?? movieEvent.StartTime).AddDays(1); enumDate <= movieEvent.StartTime; enumDate = enumDate.AddDays(1))
-                        {
-                            <a class="anchor" name="day@(enumDate.ToString("yyyyMMdd"))" ></a>
-                        }
-                        <h1>@(@movieEvent.StartTime.ToLongDateString())</h1>
-                    </td>
-                </tr>
-
-                lastDate = movieEvent.StartTime.Date;
-            }
-
-            moviesSinceLastAd++;
+            
+            DateTime? endDate;
+            if (!movieEvent.EndTime.HasValue || movieEvent.EndTime.Value >= now.AddMonths(6))
+                endDate = null;
+            else if (movieEvent.EndTime.Value.Hour >= 22)
+                endDate = movieEvent.EndTime.Value.Date;
+            else
+                endDate = movieEvent.EndTime.Value.AddHours(-1).Date;
 
             <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
                 <td class="collapsible">
                     <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
-                    @(@movieEvent.StartTime.ToString("dddd"))
+                    @(@endDate?.ToString("dddd"))
                     <br/>
-                    @(@movieEvent.StartTime.ToShortDateString())
-                    <br/>
-                        <b>@(@movieEvent.StartTime.ToShortTimeString())</b>
+                    @(@endDate?.ToShortDateString())
                     <br/>
                     @if (movieEvent.Duration.HasValue)
                     {
@@ -505,10 +461,8 @@
                     <div class="reverse-collapsible">
                         <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                         &nbsp;
-                        @(@movieEvent.StartTime.ToString("dddd"))
-                        @(@movieEvent.StartTime.ToShortDateString())
-                        &nbsp;
-                        <b>@(@movieEvent.StartTime.ToShortTimeString())</b>
+                        @(@endDate?.ToString("dddd"))
+                        @(@endDate?.ToShortDateString())
                         @if (movieEvent.Duration.HasValue)
                         {
                             @: &nbsp; (@(new TimeSpan((long)@movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
@@ -554,6 +508,13 @@
                                 <a href="https://www.facebook.com/sharer/sharer.php?u=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(@shareUrl))" target="_new" title="Share op facebook..." style="text-decoration: none">
                                     <img src="/images/facebook-36x36.png" alt="Facebook" height="36px" />
                                 </a>
+                                @if (!string.IsNullOrEmpty(movieEvent.VodLink))
+                                {
+                                    @: &nbsp;
+                                    <a href="@movieEvent.VodLink" target="_new" title="Speel @movieEvent.Title af op VTMGO..." style="text-decoration: none">
+                                        <img src="/images/play.png" alt="Yelo" height="32px" />
+                                    </a>
+                                }
                                 &nbsp;
                                 @{
                                     string yeloUrl = movieEvent.YeloUrl;
@@ -658,25 +619,12 @@
                                 Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
                             </div></p>
                         }
-                        @if (movieEvent.StartTime <= now.AddHours(2))
-                        {
-                            <p class="slim"><div class="timing alert alert-warning small-alert" style="display: none;" data-timing="@movieEvent.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")">
-                            </div></p>
-                        }
                     </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
-
-@if (lastDate.HasValue)
-{
-    @for (int i = 1; i <= 10; i++)
-    {
-        <a class="anchor" name="day@(lastDate.Value.AddDays(i).ToString("yyyyMMdd"))" ></a>
-    }
-}
 
 @if (Model.FilterMaxDays > 0 && Model.FilterMaxDays < 10)
 {

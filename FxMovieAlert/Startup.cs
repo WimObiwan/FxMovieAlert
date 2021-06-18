@@ -10,15 +10,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using HealthChecks.UI.Client;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using FxMovies.Core;
 
 namespace FxMovieAlert
 {
@@ -45,7 +46,15 @@ namespace FxMovieAlert
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
-            .AddCookie()
+            .AddCookie(options =>
+            {
+                // add an instance of the patched manager to the options:
+                options.CookieManager = new ChunkingCookieManager();
+
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            })
             .AddOpenIdConnect("Auth0", options => {
                 // Set the authority to your Auth0 domain
                 //options.Authority = $"https://{Configuration["Auth0:Domain"]}";
@@ -140,9 +149,9 @@ namespace FxMovieAlert
                 .AddSqlite(
                     sqliteConnectionString: Configuration.GetConnectionString("FxMoviesDB"), 
                     name: "sqlite-FxMoviesDB")
-                .AddSqlite(
-                    sqliteConnectionString: Configuration.GetConnectionString("FxMoviesHistoryDb"), 
-                    name: "sqlite-FxMoviesHistoryDb")
+                // .AddSqlite(
+                //     sqliteConnectionString: Configuration.GetConnectionString("FxMoviesHistoryDb"), 
+                //     name: "sqlite-FxMoviesHistoryDb")
                 .AddSqlite(
                     sqliteConnectionString: Configuration.GetConnectionString("ImdbDb"),
                     name: "sqlite-ImdbDb")
@@ -155,12 +164,21 @@ namespace FxMovieAlert
             //services.AddHealthChecksUI();
             
             // Add framework services.
-            services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddRazorPages();
+
+            services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
+                options.UseSqlite(Configuration.GetConnectionString("FxMoviesDB")));
+
+            services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
+                options.UseSqlite(Configuration.GetConnectionString("ImdbDb")));
+
+            services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
+            services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
+            services.AddScoped<ITheMovieDbService, TheMovieDbService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-2.1
             app.UseForwardedHeaders();
@@ -218,11 +236,14 @@ namespace FxMovieAlert
             //     o.ApiPath = "/hc";
             // });
 
-            app.UseMvc(routes =>
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller}/{action=Index}/{id?}");
+                endpoints.MapRazorPages();
+                endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
         }
 

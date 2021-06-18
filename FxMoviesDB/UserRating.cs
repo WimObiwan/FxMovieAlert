@@ -12,9 +12,13 @@ namespace FxMovies.FxMoviesDB
         {
         }
 
-        public string UserId { get; set; }
-        public string ImdbMovieId { get; set; }
+        public int Id { get; set; }
+        public User User { get; set; }
+        public Movie Movie { get; set; }
         public DateTime RatingDate { get; set; }
         public int Rating { get; set; }
-    }   
+
+        public int? UserId { get; set; }
+        public int? MovieId { get; set; }
+    }
 }

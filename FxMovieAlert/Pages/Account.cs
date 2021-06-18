@@ -23,7 +23,6 @@ namespace FxMovieAlert.Pages
             await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties() { RedirectUri = returnUrl });
         }
 
-        [Authorize]
         public async Task OnGetLogout()
         {
             await HttpContext.SignOutAsync("Auth0", new AuthenticationProperties

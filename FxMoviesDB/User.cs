@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace FxMovies.FxMoviesDB
@@ -12,7 +13,7 @@ namespace FxMovies.FxMoviesDB
         {
         }
 
-        [Key]
+        public int Id { get; set; }
         public string UserId { get; set; }
         public string ImdbUserId { get; set; }
         public DateTime? RefreshRequestTime { get; set; }
@@ -25,5 +26,8 @@ namespace FxMovies.FxMoviesDB
         public DateTime? WatchListLastRefreshTime { get; set; }
         public bool? WatchListLastRefreshSuccess { get; set; }
         public string WatchListLastRefreshResult { get; set; }
+
+        public List<UserRating> UserRatings { get; set; }
+        public List<UserWatchListItem> UserWatchListItems { get; set; }
     }   
 }

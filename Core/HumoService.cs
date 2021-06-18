@@ -5,13 +5,19 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Grabber
+namespace FxMovies.Core
 {
-    public static class HumoGrabber
+    public interface IHumoService
+    {
+        Task<IList<MovieEvent>> GetGuide(DateTime date);
+    }
+
+    public class HumoService : IHumoService
     {
         #region JSonModel
 
@@ -21,7 +27,7 @@ namespace FxMovies.Grabber
             public Guid uuid { get; set; }
             public long from { get; set; }
             public long to { get; set; }
-            public int duration { get; set; }
+            public int? duration { get; set; }
             public string playableType { get; set; }
             public string title { get; set; }
             public string genre { get; set; }
@@ -53,9 +59,16 @@ namespace FxMovies.Grabber
         }
         #endregion
 
-        private static async Task<Humo> GetHumoData(string url)
+        private readonly ILogger<HumoService> logger;
+
+        public HumoService(ILogger<HumoService> logger)
         {
-            Console.WriteLine($"Retrieving from Humo: {url}");
+            this.logger = logger;
+        }
+
+        private async Task<Humo> GetHumoData(string url)
+        {
+            logger.LogInformation($"Retrieving from Humo: {url}");
             var request = WebRequest.CreateHttp(url);
             using (var response = await request.GetResponseAsync())
             {
@@ -78,20 +91,21 @@ namespace FxMovies.Grabber
                     //     outputFile.WriteLine(json);
                     // }
 
-                    var settings = new JsonSerializerSettings();
-                    settings.Error += (sender, args) =>
-                    {
-                        args.ErrorContext.Handled = true;
-                    };
+                    // var settings = new JsonSerializerSettings();
+                    // settings.Error += (sender, args) =>
+                    // {
+                    //     args.ErrorContext.Handled = true;
+                    // };
 
-                    var humo = JsonConvert.DeserializeObject<Humo>(json, settings);
+                    // var humo = JsonConvert.DeserializeObject<Humo>(json, settings);
+                    var humo = JsonSerializer.Deserialize<Humo>(json);
 
                     return humo;
                 }
             }
         }
 
-        private static async Task<Humo> GetHumoDataWithRetry(string url)
+        private async Task<Humo> GetHumoDataWithRetry(string url)
         {
             try 
             {
@@ -99,7 +113,7 @@ namespace FxMovies.Grabber
             }
             catch (Exception e)
             {
-                Console.WriteLine($"First try failed\n{e.Message}");
+                logger.LogError($"First try failed\n{e.Message}");
             }
 
             await Task.Delay(5000);
@@ -110,20 +124,20 @@ namespace FxMovies.Grabber
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Second try failed\n{e.Message}");
+                logger.LogError($"Second try failed\n{e.Message}");
 
                 throw;
             }
         }
 
-        public static async Task<IList<MovieEvent>> GetGuide(DateTime date)
+        public async Task<IList<MovieEvent>> GetGuide(DateTime date)
         {
             string dateYMD = date.ToString("yyyy-MM-dd");
             string url = $"https://www.humo.be/tv-gids/api/v2/broadcasts/{dateYMD}";
 
             Humo humo = await GetHumoDataWithRetry(url);
 
-            FilterBroadcasters(humo);
+            FilterBroadcasters(date, humo);
 
             FilterMovies(humo);
 
@@ -157,7 +171,7 @@ namespace FxMovies.Grabber
             "cartoon24",
         };
 
-        private static void FilterBroadcasters(Humo humo)
+        private void FilterBroadcasters(DateTime date, Humo humo)
         {
             if (humo == null || humo.channels == null)
             {
@@ -167,14 +181,14 @@ namespace FxMovies.Grabber
             {
                 if (!humo.channels.Any(b => b != null && b.seoKey == channel))
                 {
-                    Console.WriteLine($"WARNING: No broadcasts found for channel {channel}");
+                    logger.LogWarning($"No broadcasts found for channel {channel} on {date.ToShortDateString()}");
                 }
             }
 
             humo.channels.RemoveAll(b => b == null || !channels.Contains(b.seoKey));
         }
 
-        private static void FilterMovies(Humo humo)
+        private void FilterMovies(Humo humo)
         {
             if (humo == null || humo.channels == null)
             {
@@ -190,7 +204,7 @@ namespace FxMovies.Grabber
             humo.channels.RemoveAll(c => (c.broadcasts == null) || (c.broadcasts.Count == 0));
         }
 
-        private static IList<MovieEvent> MovieAdapter(Humo humo)
+        private IList<MovieEvent> MovieAdapter(Humo humo)
         {
             if (humo == null || humo.channels == null)
             {
@@ -270,9 +284,10 @@ namespace FxMovies.Grabber
                         Channel = channel,
                         Title = broadcast.title,
                         Year = year,
+                        Vod = false,
                         StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000).ToLocalTime(),
                         EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000).ToLocalTime(),
-                        Duration = broadcast.duration / 60,
+                        Duration = broadcast.duration.HasValue ? broadcast.duration.Value / 60 : null,
                         PosterS = broadcast.imageUrl,
                         PosterM = broadcast.imageUrl,
                         Content = broadcast.synopsis,

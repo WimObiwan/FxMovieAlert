@@ -5,10 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 
 namespace FxMovies.Grabber
 {
@@ -65,7 +65,7 @@ namespace FxMovies.Grabber
                     {
                         string json = textStream.ReadToEnd();
 
-                        var releases = JsonConvert.DeserializeObject<Releases>(json);
+                        var releases = JsonSerializer.Deserialize<Releases>(json);
                         
                         var certifications = releases?.countries;
                         if (certifications == null)
@@ -120,7 +120,7 @@ namespace FxMovies.Grabber
                     {
                         string json = textStream.ReadToEnd();
 
-                        var movie = JsonConvert.DeserializeObject<Movie>(json);
+                        var movie = JsonSerializer.Deserialize<Movie>(json);
                         
                         Console.WriteLine("Image {0} ==> {1}", imdbId, movie.original_title);
                         

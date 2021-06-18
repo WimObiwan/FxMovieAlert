@@ -154,10 +154,10 @@
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     <li><a asp-page="/Index"><i class="fas fa-tv"></i>
-                        &nbsp;<span class="hidden-sm">Vlaamse zenders</span>
+                        &nbsp;<span class="hidden-sm">Uitzendingen</span>
                     </a></li>
-                    <li><a asp-page="/YeloPlay"><i class="far fa-eye"></i>
-                        &nbsp;<span class="hidden-sm">Yelo Play</span>
+                    <li><a asp-page="/Streaming"><i class="far fa-eye"></i>
+                        &nbsp;<span class="hidden-sm">Streaming</span>
                     </a></li>
                     <li><a asp-page="/ImdbUser"><span class="glyphicon glyphicon-film"></span>
                         &nbsp;<span class="hidden-sm">IMDb Gebruiker</span>
@@ -204,7 +204,7 @@
         <hr />
         <footer>
             <p class="text-muted">
-                Versie @(Configuration["Version"]).  Running on .NET Core version @(Configuration["DotNetCoreVersion"]).<br/>                
+                Versie @(Configuration["Version"]).  Running on @(Configuration["DotNetCoreVersion"]).<br/>                
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
                 &copy;
                 @if (DateTime.Now.Year > 2017)

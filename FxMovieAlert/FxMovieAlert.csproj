@@ -1,30 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <!-- https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks -->
-    <PackageReference Include="AspNetCore.HealthChecks" Version="1.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="2.2.32" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="5.0.1" />
     <!--PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="2.2.4" /-->
-    <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="2.2.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="2.2.2" />
-    <PackageReference Include="FileHelpers" Version="3.4.0" />
-    <PackageReference Include="GitInfo" Version="2.0.20">
+    <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="5.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="5.0.1" />
+    <PackageReference Include="FileHelpers" Version="3.5.0" />
+    <PackageReference Include="GitInfo" Version="2.1.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="2.2.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="1.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="5.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.7" />
+    <PackageReference Include="Sentry.AspNetCore" Version="3.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <DotNetCliToolReference Include="BundlerMinifier.Core" Version="2.9.406" />
+    <DotNetCliToolReference Include="BundlerMinifier.Core" Version="3.2.435" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FxMoviesDB\FxMoviesDB.csproj" />
     <ProjectReference Include="..\ImdbDB\ImdbDB.csproj" />
+    <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json">

@@ -34,3 +34,5 @@ _ReSharper*/
 packages/
 
 *.swp
+
+appsettings.Local.json

@@ -12,14 +12,10 @@ namespace FxMovies.FxMoviesDB
         {
         }
 
-        [Key]
+        public int Id { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }
         public string LogoS { get; set; }
-        [Obsolete]
-        public string LogoM { get; set; } // Not used, to be removed when SQLite supports 'DropColumn' in migrations
-        [Obsolete]
-        public string LogoL { get; set; } // Not used, to be removed when SQLite supports 'DropColumn' in migrations
         public string LogoS_Local { get; set; }
     }   
 }
