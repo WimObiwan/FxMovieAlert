@@ -63,6 +63,8 @@ namespace FxMovies.Core
             foreach (var movieId in movieIds)
             {
                 var movieInfo = await GetMovieInfo(lfvpToken, profileId, movieId);
+                if (movieInfo.movie.durationSeconds < 75 * 60)
+                    continue;
                 movieEvents.Add(
                     new MovieEvent
                     {
