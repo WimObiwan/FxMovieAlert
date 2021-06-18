@@ -73,7 +73,7 @@ namespace FxMovies.Core
                         PosterS = movieInfo.movie.smallPhotoUrl,
                         PosterM = movieInfo.movie.smallPhotoUrl,
                         Channel = channel,
-                        Duration = (movieInfo.movie.durationSeconds + 59) / 60,
+                        Duration = (movieInfo.movie.durationSeconds + 30) / 60,
                         Vod = true,
                         Type = 1,
                         StartTime = DateTime.MinValue,
