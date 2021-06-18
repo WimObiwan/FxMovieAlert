@@ -46,7 +46,15 @@ namespace FxMovieAlert
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
-            .AddCookie()
+            .AddCookie(options =>
+            {
+                // add an instance of the patched manager to the options:
+                options.CookieManager = new ChunkingCookieManager();
+
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            })
             .AddOpenIdConnect("Auth0", options => {
                 // Set the authority to your Auth0 domain
                 //options.Authority = $"https://{Configuration["Auth0:Domain"]}";
