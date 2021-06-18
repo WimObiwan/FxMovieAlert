@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
@@ -500,6 +500,13 @@
                                 <a href="https://www.facebook.com/sharer/sharer.php?u=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(@shareUrl))" target="_new" title="Share op facebook..." style="text-decoration: none">
                                     <img src="/images/facebook-36x36.png" alt="Facebook" height="36px" />
                                 </a>
+                                @if (!string.IsNullOrEmpty(movieEvent.VodLink))
+                                {
+                                    @: &nbsp;
+                                    <a href="@movieEvent.VodLink" target="_new" title="Speel @movieEvent.Title af op VTMGO..." style="text-decoration: none">
+                                        <img src="/images/play.png" alt="Yelo" height="32px" />
+                                    </a>
+                                }
                                 &nbsp;
                                 @{
                                     string yeloUrl = movieEvent.YeloUrl;

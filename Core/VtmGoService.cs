@@ -77,6 +77,7 @@ namespace FxMovies.Core
                         Channel = channel,
                         Duration = (movieInfo.movie.durationSeconds + 30) / 60,
                         Vod = true,
+                        VodLink = $"https://vtm.be/vtmgo/~m{movieInfo.movie.id}",
                         Type = 1,
                         StartTime = DateTime.MinValue,
                         EndTime = DateTime.Now.Date.AddDays(movieInfo.movie.remainingDaysAvailable + 1)

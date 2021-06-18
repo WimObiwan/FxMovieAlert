@@ -30,5 +30,6 @@ namespace FxMovies.FxMoviesDB
         public string YeloUrl { get; set; }
         public string PosterS_Local { get; set; }
         public string PosterM_Local { get; set; }
+        public string VodLink { get; set; }
     }   
 }
