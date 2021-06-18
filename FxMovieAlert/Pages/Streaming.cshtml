@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
@@ -428,14 +428,22 @@
         @foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.EndTime))
         {
             var movieEvent = record.MovieEvent;
+            
+            DateTime? endDate;
+            if (!movieEvent.EndTime.HasValue || movieEvent.EndTime.Value >= now.AddMonths(6))
+                endDate = null;
+            else if (movieEvent.EndTime.Value.Hour >= 22)
+                endDate = movieEvent.EndTime.Value.Date;
+            else
+                endDate = movieEvent.EndTime.Value.AddHours(-1).Date;
 
             <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
                 <td class="collapsible">
                     <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
-                    @(@movieEvent.EndTime?.AddHours(-1).ToString("dddd"))
+                    @(@endDate?.ToString("dddd"))
                     <br/>
-                    @(@movieEvent.EndTime?.AddHours(-1).ToShortDateString())
+                    @(@endDate?.ToShortDateString())
                     <br/>
                     @if (movieEvent.Duration.HasValue)
                     {
@@ -453,8 +461,8 @@
                     <div class="reverse-collapsible">
                         <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                         &nbsp;
-                        @(@movieEvent.EndTime?.AddHours(-1).ToString("dddd"))
-                        @(@movieEvent.EndTime?.AddHours(-1).ToShortDateString())
+                        @(@endDate?.ToString("dddd"))
+                        @(@endDate?.ToShortDateString())
                         @if (movieEvent.Duration.HasValue)
                         {
                             @: &nbsp; (@(new TimeSpan((long)@movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
