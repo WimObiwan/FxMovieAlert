@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
@@ -423,12 +423,20 @@
             var movieEvent = record.MovieEvent;
             
             DateTime? endDate;
+            int? daysAvailable;
             if (!movieEvent.EndTime.HasValue || movieEvent.EndTime.Value >= now.AddMonths(6))
+            {
                 endDate = null;
-            else if (movieEvent.EndTime.Value.Hour >= 22)
-                endDate = movieEvent.EndTime.Value.Date;
+                daysAvailable = null;
+            }
             else
-                endDate = movieEvent.EndTime.Value.AddHours(-1).Date;
+            { 
+                if (movieEvent.EndTime.Value.Hour >= 22)
+                    endDate = movieEvent.EndTime.Value.Date;
+                else
+                    endDate = movieEvent.EndTime.Value.AddHours(-1).Date;
+                daysAvailable = (int)(endDate.Value - now.Date).TotalDays;
+            }
 
             <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
                 <td class="collapsible">
@@ -610,6 +618,18 @@
                         {
                             <p class="slim"><div class="alert alert-success small-alert">
                                 Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
+                            </div></p>
+                        }
+                        @if (daysAvailable < 1)
+                        {
+                            <p class="slim"><div class="timing alert alert-warning small-alert">
+                                Laatste dag om deze film te bekijken!
+                            </div></p>
+                        }
+                        else if (daysAvailable < 4)
+                        {
+                            <p class="slim"><div class="timing alert alert-warning small-alert">
+                                Deze film is nog @daysAvailable dagen te bekijken.
                             </div></p>
                         }
                     </div>
