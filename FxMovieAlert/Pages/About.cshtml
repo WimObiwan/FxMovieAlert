@@ -67,9 +67,11 @@
     Als je ook gebruik wilt maken van de (handige, maar optionele) IMDb intagratie, zijn dit de stappen die je moet doorlopen:
     <ol>
         <li>
-            <a asp-page="/Account" asp-page-handler="login"><span class="glyphicon glyphicon-user"></span>
-                &nbsp;Inloggen
-            </a>.  Dit kan door een nieuwe account aan te maken, maar eenvoudiger is om in te loggen via je Google account.
+            <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path"><span class="glyphicon glyphicon-user"></span>
+                Inloggen
+            </a>
+            .<br/>
+            Dit kan door een nieuwe account aan te maken, maar eenvoudiger is om in te loggen via je Google account.
         </li>
         <li>
             De link leggen naar je IMDb account op de pagina 

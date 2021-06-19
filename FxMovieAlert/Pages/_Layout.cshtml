@@ -129,7 +129,10 @@
 <br/>
 <p class="text-muted">
     <small>
-        <a asp-page="/Account" asp-page-handler="login">Inloggen</a> om advertenties te verbergen.
+        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path"><span class="glyphicon glyphicon-user"></span>
+            Inloggen
+        </a>
+        om advertenties te verbergen.
     </small>
 </p>
 
@@ -188,7 +191,7 @@
                     }                    
                     else
                     {
-                        <li><a asp-page="/Account" asp-page-handler="login"><span class="glyphicon glyphicon-user"></span>
+                        <li><a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path"><span class="glyphicon glyphicon-user"></span>
                             &nbsp;<span class="hidden-sm">Inloggen</span>
                         </a></li>
                     }

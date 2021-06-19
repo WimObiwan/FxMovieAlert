@@ -57,7 +57,11 @@ td, th {
 else
 {
 <p>
-    Je dient eerst <a asp-page="/Account" asp-page-handler="login">in te loggen</a>.
+    Je dient eerst 
+        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path"><span class="glyphicon glyphicon-user"></span>
+            Inloggen
+        </a>
+    .
 </p>
 }
 
