@@ -39,7 +39,6 @@ namespace FxMovieAlert
                     config.AddEnvironmentVariables();
                 })
                 .UseStartup<Startup>()
-                //.UseSentry("https://44d07a7cb1df484ca9a745af1ca94a2f@sentry.io/1335368")
                 ;
     }
 }
