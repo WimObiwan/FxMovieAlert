@@ -20,6 +20,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using FxMovies.Core;
+using Microsoft.Net.Http.Headers;
 
 namespace FxMovieAlert
 {
@@ -39,8 +40,9 @@ namespace FxMovieAlert
             services.Configure<CookiePolicyOptions>(options => {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
+                options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.None;
             });
+
             services.AddAuthentication(options => {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -52,7 +54,7 @@ namespace FxMovieAlert
                 options.CookieManager = new ChunkingCookieManager();
 
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             })
             .AddOpenIdConnect("Auth0", options => {
@@ -166,6 +168,8 @@ namespace FxMovieAlert
             // Add framework services.
             services.AddRazorPages();
 
+            services.AddWebOptimizer();
+
             services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("FxMoviesDB")));
 
@@ -219,7 +223,16 @@ namespace FxMovieAlert
             // app.UseForwardedHeaders(forwardOpts);
 
             //app.UseHttpsRedirection(); // handles by nginx
-            app.UseStaticFiles();
+            app.UseWebOptimizer();
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = ctx =>
+                {
+                    const int durationInSeconds = 60 * 60 * 24;
+                    ctx.Context.Response.Headers[HeaderNames.CacheControl] = "public,max-age=" + durationInSeconds;
+                }
+            });
             app.UseCookiePolicy();
 
             app.UseAuthentication();
