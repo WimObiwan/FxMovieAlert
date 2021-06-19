@@ -18,9 +18,6 @@
     <PackageReference Include="Sentry.AspNetCore" Version="3.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <DotNetCliToolReference Include="BundlerMinifier.Core" Version="3.2.435" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\FxMoviesDB\FxMoviesDB.csproj" />
     <ProjectReference Include="..\ImdbDB\ImdbDB.csproj" />
     <ProjectReference Include="..\Core\Core.csproj" />
