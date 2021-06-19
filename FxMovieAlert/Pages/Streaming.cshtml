@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
@@ -32,16 +32,9 @@
     </script>
     -->
 
-	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+	@* <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script> *@
 
-    <environment include="Development">
-        <script src="~/js/index.js" asp-append-version="true"></script>
-        <link rel="stylesheet" href="~/css/index.css" />
-    </environment>
-    <environment exclude="Development">
-        <script src="~/js/index.min.js" asp-append-version="true"></script>
-        <link rel="stylesheet" href="~/css/index.min.css" asp-append-version="true" />
-    </environment>
+    <link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
 
     <script>
 
