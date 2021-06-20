@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core
@@ -27,10 +28,14 @@ namespace FxMovies.Core
 
     public class VrtNuService : IVrtNuService
     {
+        private readonly ILogger<VrtNuService> logger;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public VrtNuService(IHttpClientFactory httpClientFactory)
+        public VrtNuService(
+            ILogger<VrtNuService> logger,
+            IHttpClientFactory httpClientFactory)
         {
+            this.logger = logger;
             this.httpClientFactory = httpClientFactory;
         }
 
@@ -51,6 +56,11 @@ namespace FxMovies.Core
             foreach (var movie in movies)
             {
                 var movieDetails = await GetSearchMovieInfo(movie.programUrl);
+                if (movieDetails.duration < 75)
+                {
+                    logger.LogWarning($"Skipped {movieDetails.program}, duration {movieDetails.duration} too small");
+                    continue;
+                }
                 string seasonName = movieDetails.seasonName;
 
                 // Skip trailers

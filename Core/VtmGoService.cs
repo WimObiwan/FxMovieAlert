@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core
@@ -27,13 +28,17 @@ namespace FxMovies.Core
 
     public class VtmGoService : IVtmGoService
     {
+        private readonly ILogger<VtmGoService> logger;
         private readonly string username;
         private readonly string password;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public VtmGoService(IOptions<VtmGoServiceOptions> vtmGoServiceOptions,
+        public VtmGoService(
+            ILogger<VtmGoService> logger,
+            IOptions<VtmGoServiceOptions> vtmGoServiceOptions,
             IHttpClientFactory httpClientFactory)
         {
+            this.logger = logger;
             this.username = vtmGoServiceOptions.Value.Username;
             this.password = vtmGoServiceOptions.Value.Password;
             this.httpClientFactory = httpClientFactory;
@@ -64,7 +69,10 @@ namespace FxMovies.Core
             {
                 var movieInfo = await GetMovieInfo(lfvpToken, profileId, movieId);
                 if (movieInfo.movie.durationSeconds < 75 * 60)
+                {
+                    logger.LogWarning($"Skipped {movieInfo.movie.name}, duration {movieInfo.movie.durationSeconds} too small");
                     continue;
+                }
                 movieEvents.Add(
                     new MovieEvent
                     {
