@@ -506,8 +506,8 @@ namespace FxMovies.Core
 
             try
             {
-                var req = (HttpWebRequest)WebRequest.Create(url);
-                using (var rsp = (HttpWebResponse)req.GetResponse())
+                var req = WebRequest.Create(url);
+                using (var rsp = req.GetResponse())
                 {
                     string ext;
                     if (rsp.ContentType.Equals("image/png", StringComparison.InvariantCultureIgnoreCase)) {
