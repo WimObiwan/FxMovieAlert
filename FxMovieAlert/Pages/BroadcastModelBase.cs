@@ -136,7 +136,7 @@ namespace FxMovieAlert.Pages
             }
             else
             {
-                dbMovieEvents = dbMovieEvents.Where(me => me.EndTime >= now);
+                dbMovieEvents = dbMovieEvents.Where(me => me.EndTime == null || me.EndTime >= now);
             }
 
             if (EditImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))

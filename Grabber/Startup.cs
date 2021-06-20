@@ -43,6 +43,10 @@ namespace FxMovies.Grabber
                 c.DefaultRequestHeaders.Add("x-persgroep-os", "android");
                 c.DefaultRequestHeaders.Add("x-persgroep-os-version", "25");
             });
+            services.AddHttpClient("vrtnu", c =>
+            {
+                c.BaseAddress = new Uri("https://vrtnu-api.vrt.be");
+            });
 
             services.AddSingleton<IUpdateEpgCommand, UpdateEpgCommand>();
             services.AddSingleton<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
@@ -55,6 +59,7 @@ namespace FxMovies.Grabber
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
             services.AddScoped<IVtmGoService, VtmGoService>();
+            services.AddScoped<IVrtNuService, VrtNuService>();
             services.AddScoped<IHumoService, HumoService>();
         }
     }

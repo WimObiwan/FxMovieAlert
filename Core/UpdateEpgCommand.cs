@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -41,13 +42,16 @@ namespace FxMovies.Core
         private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
         private readonly ITheMovieDbService theMovieDbService;
         private readonly IVtmGoService vtmGoService;
+        private readonly IVrtNuService vrtNuService;
         private readonly IHumoService humoService;
 
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
             IDbContextFactory<FxMoviesDbContext> fxMoviesDbContextFactory, IDbContextFactory<ImdbDbContext> imdbDbContextFactory,
             IOptionsSnapshot<UpdateEpgCommandOptions> updateEpgCommandOptions,
             ITheMovieDbService theMovieDbService,
-            IVtmGoService vtmGoService, IHumoService humoService)
+            IVtmGoService vtmGoService, 
+            IVrtNuService vrtNuService, 
+            IHumoService humoService)
         {
             this.logger = logger;
             this.fxMoviesDbContextFactory = fxMoviesDbContextFactory;
@@ -55,6 +59,7 @@ namespace FxMovies.Core
             this.updateEpgCommandOptions = updateEpgCommandOptions.Value;
             this.theMovieDbService = theMovieDbService;
             this.vtmGoService = vtmGoService;
+            this.vrtNuService = vrtNuService;
             this.humoService = humoService;
         }
 
@@ -77,22 +82,29 @@ namespace FxMovies.Core
                 // Remove all old MovieEvents
                 {
                     var set = db.MovieEvents;
-                    set.RemoveRange(set.Where(x => x.StartTime < now.Date));
+                    set.RemoveRange(set.Where(x => x.EndTime < now.Date));
                 }
                 await db.SaveChangesAsync();
             }
 
             await UpdateDatabaseEpg_VtmGo();
+            await UpdateDatabaseEpg_VrtNu();
             await UpdateDatabaseEpg_Humo();
         }
 
         private async Task UpdateDatabaseEpg_VtmGo()
         {
             var movieEvents = await vtmGoService.GetMovieEvents();
-            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Channel?.Code == "vtmgo");
+            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Channel.Code == "vtmgo");
         }
 
-        private async Task UpdateMovieEvents(IList<MovieEvent> movieEvents, Func<MovieEvent, bool> movieEventsSubset)
+        private async Task UpdateDatabaseEpg_VrtNu()
+        {
+            var movieEvents = await vrtNuService.GetMovieEvents();
+            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Channel.Code == "vrtnu");
+        }
+
+        private async Task UpdateMovieEvents(IList<MovieEvent> movieEvents, Expression<Func<MovieEvent, bool>> movieEventsSubset)
         {
             // Remove movies that should be ignored
             Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
@@ -133,7 +145,7 @@ namespace FxMovies.Core
             using (var db = fxMoviesDbContextFactory.CreateDbContext())
             {
                 var existingMovies = db.MovieEvents.Where(movieEventsSubset);
-                logger.LogInformation("Existing movies: {0}", existingMovies.Count());
+                logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
                 logger.LogInformation("New movies: {0}", movieEvents.Count());
 
                 // Update channels
@@ -156,15 +168,23 @@ namespace FxMovies.Core
 
                 // Remove exising movies that don't appear in new movies
                 {
-                    var remove = existingMovies.ToList().Where(m1 => !movieEvents.Any(m2 => m2.Id == m1.Id));
+                    var remove = existingMovies.ToList().Where(m1 => !movieEvents.Any(m2 => m2.ExternalId == m1.ExternalId));
                     logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
                     db.RemoveRange(remove);
+                    await db.SaveChangesAsync();
+                }
+
+                foreach (var movie in movieEvents)
+                {
+                    var existingDuplicates = await existingMovies.Where(me => me.ExternalId == movie.ExternalId).Skip(1).ToListAsync();
+                    db.MovieEvents.RemoveRange(existingDuplicates);
+                    await db.SaveChangesAsync();
                 }
 
                 // Update movies
                 foreach (var movie in movieEvents)
                 {
-                    var existingMovie = await db.MovieEvents.SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
+                    var existingMovie = await existingMovies.SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
                     if (existingMovie != null)
                     {
                         if (existingMovie.Title != movie.Title)
@@ -192,6 +212,8 @@ namespace FxMovies.Core
                         existingMovie.Opinion = movie.Opinion;
                         existingMovie.Type = movie.Type;
                         existingMovie.YeloUrl = movie.YeloUrl;
+                        existingMovie.Vod = movie.Vod;
+                        existingMovie.VodLink = movie.VodLink;
                     }
                     else
                     {
