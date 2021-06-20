@@ -530,16 +530,16 @@
                                 &nbsp;
                                 @if (!string.IsNullOrEmpty(@movieEvent.Movie?.ImdbId))
                                 {
-                                        <a href="http://www.imdb.com/title/@movieEvent.Movie.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
-                                            <img src="/images/imdb-50x24.png" alt="IMDb" height="24px" />
-                                            @if (@movieEvent.Movie.ImdbRating.HasValue)
-                                            {
-                                                @((@movieEvent.Movie.ImdbRating.Value / 10.0).ToString("0.0"))
-                                                <span class="stars">
-                                                    <span style="width: @(Math.Round(16.0 * @movieEvent.Movie.ImdbRating.Value / 10, 0))px;">
-                                                    </span>
+                                    <a href="http://www.imdb.com/title/@movieEvent.Movie.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
+                                        <img src="/images/imdb-50x24.png" alt="IMDb" height="24px" />
+                                        @if (@movieEvent.Movie.ImdbRating.HasValue)
+                                        {
+                                            @((@movieEvent.Movie.ImdbRating.Value / 10.0).ToString("0.0"))
+                                            <span class="stars">
+                                                <span style="width: @(Math.Round(16.0 * @movieEvent.Movie.ImdbRating.Value / 10, 0))px;">
                                                 </span>
-                                            }
+                                            </span>
+                                        }
                                     </a>
                                 }
 
