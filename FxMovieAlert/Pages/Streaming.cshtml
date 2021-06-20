@@ -643,7 +643,7 @@
 {
     if (User.Identity.IsAuthenticated)
     {
-        string ref_load_more = "?";
+        @* string ref_load_more = "?";
         if (Model.FilterMaxDays <= 3)
         {
             ref_load_more += FormatQueryStringWithMaxDays(5);
@@ -660,7 +660,7 @@
 
         <div style="text-align: right;">
             <a href="@ref_load_more" class="btn btn-info">Volgende dagen laden...</a>
-        </div>
+        </div> *@
     }
     else
     {
