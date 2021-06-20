@@ -22,6 +22,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using FxMovies.Core;
 using System.Threading.Tasks;
+using System.Reflection;
 
 // Compile: 
 
@@ -195,11 +196,12 @@ namespace FxMovies.Grabber
                                 System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)
 
                         }
-                    );
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
-                    config.AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false);
-                    config.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
-                    config.AddEnvironmentVariables();
+                    )
+                    .SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+                    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
+                    .AddEnvironmentVariables();
                 })
                 .UseStartup<Startup>();
         }

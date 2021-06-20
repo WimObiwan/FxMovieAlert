@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -32,11 +34,12 @@ namespace FxMovieAlert
                             new KeyValuePair<string, string>("DotNetCoreVersion", 
                                 System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)
                         }
-                    );
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
-                    config.AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false);
-                    config.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
-                    config.AddEnvironmentVariables();
+                    )
+                    .SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+                    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
+                    .AddEnvironmentVariables();
                 })
                 .UseStartup<Startup>()
                 ;
