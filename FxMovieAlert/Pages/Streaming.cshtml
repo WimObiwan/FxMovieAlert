@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
@@ -516,7 +516,7 @@
                                         <img src="/images/play.png" alt="Yelo" height="32px" />
                                     </a>
                                 }
-                                &nbsp;
+                                @* &nbsp;
                                 @{
                                     string yeloUrl = movieEvent.YeloUrl;
                                     if (yeloUrl == null)
@@ -526,7 +526,7 @@
                                 }
                                 <a href="@yeloUrl" target="_new" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
                                     <img src="/images/yeloplay-55x32.png" alt="Yelo" height="32px" />
-                                </a>
+                                </a> *@
                                 &nbsp;
                                 @if (!string.IsNullOrEmpty(@movieEvent.Movie?.ImdbId))
                                 {
