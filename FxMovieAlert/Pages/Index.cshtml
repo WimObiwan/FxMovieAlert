@@ -630,7 +630,7 @@
                             @movieEvent.Genre
                         </p>
                         <p>
-                            @movieEvent.Content
+                            @Html.Raw(@movieEvent.Content)
                         </p>
                         @if (!string.IsNullOrEmpty(movieEvent.Opinion))
                         {
