@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -198,7 +198,7 @@ namespace FxMovies.Grabber
 
                         }
                     )
-                    .SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+                    //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                     .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
                     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)

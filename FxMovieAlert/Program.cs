@@ -35,13 +35,12 @@ namespace FxMovieAlert
                                 System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)
                         }
                     )
-                    .SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+                    //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                     .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
                     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
                     .AddEnvironmentVariables();
                 })
-                .UseStartup<Startup>()
-                ;
+                .UseStartup<Startup>();
     }
 }
