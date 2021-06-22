@@ -42,7 +42,7 @@ namespace FxMovies.Core
         private readonly GenerateImdbDatabaseCommandOptions generateImdbDatabaseCommandOptions;
         private readonly ITheMovieDbService theMovieDbService;
 
-        const int batchSize = 1000;
+        const int batchSize = 10000;
 
         public GenerateImdbDatabaseCommand(ILogger<UpdateEpgCommand> logger, 
             IServiceScopeFactory serviceScopeFactory,
