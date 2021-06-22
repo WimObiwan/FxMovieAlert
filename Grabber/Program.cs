@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -134,17 +134,18 @@ namespace FxMovies.Grabber
                     //doesn't work (ThisAssembly.Git.IsDirty ? "*" : "")
                     );
 
-
-                using (var db = host.Services.GetRequiredService<IDbContextFactory<FxMoviesDbContext>>().CreateDbContext())
+                var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
+                using (var scope = serviceProvider.CreateScope())
                 {
-                    // Ensure that the SQLite database and sechema is created!
-                    db.Database.EnsureCreated();
+                    var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
+                    //await fxMoviesDbContext.Database.EnsureCreatedAsync();
+                    await fxMoviesDbContext.Database.MigrateAsync();
                 }
-
-                using (var db = host.Services.GetRequiredService<IDbContextFactory<ImdbDbContext>>().CreateDbContext())
+                using (var scope = serviceProvider.CreateScope())
                 {
-                    // Ensure that the SQLite database and sechema is created!
-                    db.Database.EnsureCreated();
+                    var imdbDbContext = scope.ServiceProvider.GetRequiredService<ImdbDbContext>();
+                    await imdbDbContext.Database.EnsureCreatedAsync();
+                    //await imdbDbContext.Database.MigrateAsync();
                 }
 
                 using (Sentry.SentrySdk.Init("https://3181503fa0264cdb827506614c8973f2@sentry.io/1335361"))

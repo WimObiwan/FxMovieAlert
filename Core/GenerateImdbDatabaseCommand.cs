@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -37,17 +38,19 @@ namespace FxMovies.Core
     public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     {
         private readonly ILogger<UpdateEpgCommand> logger;
-        private readonly IDbContextFactory<ImdbDbContext> imdbDbContextFactory;
+        private readonly IServiceScopeFactory serviceScopeFactory;
         private readonly GenerateImdbDatabaseCommandOptions generateImdbDatabaseCommandOptions;
         private readonly ITheMovieDbService theMovieDbService;
 
+        const int batchSize = 1000;
+
         public GenerateImdbDatabaseCommand(ILogger<UpdateEpgCommand> logger, 
-            IDbContextFactory<ImdbDbContext> imdbDbContextFactory,
+            IServiceScopeFactory serviceScopeFactory,
             IOptionsSnapshot<GenerateImdbDatabaseCommandOptions> generateImdbDatabaseCommandOptions,
             ITheMovieDbService theMovieDbService)
         {
             this.logger = logger;
-            this.imdbDbContextFactory = imdbDbContextFactory;
+            this.serviceScopeFactory = serviceScopeFactory;
             this.generateImdbDatabaseCommandOptions = generateImdbDatabaseCommandOptions.Value;
             this.theMovieDbService = theMovieDbService;
         }
@@ -67,9 +70,10 @@ namespace FxMovies.Core
         {
             logger.LogInformation("Removing MovieAlternatives");
             do {
-                using (var db = imdbDbContextFactory.CreateDbContext())
+                using (var scope = serviceScopeFactory.CreateScope())
+                using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
-                    var batch = db.MovieAlternatives.AsNoTracking().OrderBy(ma => ma.Id).Take(10000);
+                    var batch = db.MovieAlternatives.AsNoTracking().OrderBy(ma => ma.Id).Take(batchSize);
                     if (!batch.Any())
                         break;
                     db.MovieAlternatives.RemoveRange(batch);
@@ -79,9 +83,10 @@ namespace FxMovies.Core
 
             logger.LogInformation("Removing Movies");
             do {
-                using (var db = imdbDbContextFactory.CreateDbContext())
+                using (var scope = serviceScopeFactory.CreateScope())
+                using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
-                    var batch = db.Movies.AsNoTracking().OrderBy(m => m.Id).Take(10000);
+                    var batch = db.Movies.AsNoTracking().OrderBy(m => m.Id).Take(batchSize);
                     if (!batch.Any())
                         break;
                     db.Movies.RemoveRange(batch);
@@ -124,15 +129,16 @@ namespace FxMovies.Core
                 };
 
                 do {
-                    using (var db = imdbDbContextFactory.CreateDbContext())
+                    using (var scope = serviceScopeFactory.CreateScope())
+                    using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                     {
                         int batchCount = 0;
-                        while (batchCount < 10000 && (text = textReader.ReadLine()) != null)
+                        while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
                         {
                             batchCount++;
                             count++;
 
-                            if (count % 10000 == 0)
+                            if (count % batchSize == 0)
                             {
                                 logger.LogInformation(
                                     $"UpdateImdbDataWithMovies: {count} records done ({originalFileStream.Position * 100 / originalFileStream.Length}%), "
@@ -247,15 +253,16 @@ namespace FxMovies.Core
 
                 do {
 
-                    using (var db = imdbDbContextFactory.CreateDbContext())
+                    using (var scope = serviceScopeFactory.CreateScope())
+                    using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                     {
                         int batchCount = 0;
-                        while (batchCount < 10000 && (text = textReader.ReadLine()) != null)
+                        while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
                         {
                             batchCount++;
                             count++;
 
-                            if (count % 10000 == 0)
+                            if (count % batchSize == 0)
                             {
                                 await db.SaveChangesAsync();
                                 logger.LogInformation(
@@ -343,16 +350,17 @@ namespace FxMovies.Core
 
                 do {
 
-                    using (var db = imdbDbContextFactory.CreateDbContext())
+                    using (var scope = serviceScopeFactory.CreateScope())
+                    using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                     {
 
                         int batchCount = 0;
-                        while (batchCount < 10000 && (text = textReader.ReadLine()) != null)
+                        while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
                         {
                             batchCount++;
                             count++;
 
-                            if (count % 10000 == 0)
+                            if (count % batchSize == 0)
                             {
                                 await db.SaveChangesAsync();
                                 logger.LogInformation(
@@ -409,7 +417,8 @@ namespace FxMovies.Core
             logger.LogInformation($"Removing Movies without Rating");
 
             int total;
-            using (var db = imdbDbContextFactory.CreateDbContext())
+            using (var scope = serviceScopeFactory.CreateScope())
+            using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
                 total = db.Movies.Where((m) => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Count();
             }
@@ -417,13 +426,14 @@ namespace FxMovies.Core
             logger.LogInformation($"Removing {total} Movies without Rating");
             long count = 0;
             do {
-                using (var db = imdbDbContextFactory.CreateDbContext())
+                using (var scope = serviceScopeFactory.CreateScope())
+                using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
                     var batch = db.Movies
                         .AsNoTracking()
                         .Where((m) => !m.Rating.HasValue && m.Year <= year)
                         .OrderBy(m => m.Id)
-                        .Take(10000)
+                        .Take(batchSize)
                         .Include(m => m.MovieAlternatives);
                     count += batch.Count();
                     if (!batch.Any())
@@ -438,7 +448,8 @@ namespace FxMovies.Core
 
         private async Task ImportImdbData_Vacuum()
         {
-            using (var db = imdbDbContextFactory.CreateDbContext())
+            using (var scope = serviceScopeFactory.CreateScope())
+            using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
                 logger.LogInformation("Doing 'VACUUM'...");
                 await db.Database.ExecuteSqlRawAsync("VACUUM;");

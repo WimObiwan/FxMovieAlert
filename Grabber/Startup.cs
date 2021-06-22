@@ -19,10 +19,10 @@ namespace FxMovies.Grabber
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContextFactory<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
+            services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("FxMoviesDB")));
 
-            services.AddDbContextFactory<FxMovies.ImdbDB.ImdbDbContext>(options =>
+            services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("ImdbDb")));
 
             services.AddHttpClient("vtmgo_login", c =>
@@ -48,8 +48,8 @@ namespace FxMovies.Grabber
                 c.BaseAddress = new Uri("https://vrtnu-api.vrt.be");
             });
 
-            services.AddSingleton<IUpdateEpgCommand, UpdateEpgCommand>();
-            services.AddSingleton<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
+            services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
+            services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
 
             services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.Configure<VtmGoServiceOptions>(Configuration.GetSection(VtmGoServiceOptions.Position));

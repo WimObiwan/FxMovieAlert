@@ -37,8 +37,8 @@ namespace FxMovies.Core
     public class UpdateEpgCommand : IUpdateEpgCommand
     {
         private readonly ILogger<UpdateEpgCommand> logger;
-        private readonly IDbContextFactory<FxMoviesDbContext> fxMoviesDbContextFactory;
-        private readonly IDbContextFactory<ImdbDbContext> imdbDbContextFactory;
+        private readonly FxMoviesDbContext fxMoviesDbContext;
+        private readonly ImdbDbContext imdbDbContext;
         private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
         private readonly ITheMovieDbService theMovieDbService;
         private readonly IVtmGoService vtmGoService;
@@ -46,7 +46,7 @@ namespace FxMovies.Core
         private readonly IHumoService humoService;
 
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
-            IDbContextFactory<FxMoviesDbContext> fxMoviesDbContextFactory, IDbContextFactory<ImdbDbContext> imdbDbContextFactory,
+            FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
             IOptionsSnapshot<UpdateEpgCommandOptions> updateEpgCommandOptions,
             ITheMovieDbService theMovieDbService,
             IVtmGoService vtmGoService, 
@@ -54,8 +54,8 @@ namespace FxMovies.Core
             IHumoService humoService)
         {
             this.logger = logger;
-            this.fxMoviesDbContextFactory = fxMoviesDbContextFactory;
-            this.imdbDbContextFactory = imdbDbContextFactory;
+            this.fxMoviesDbContext = fxMoviesDbContext;
+            this.imdbDbContext = imdbDbContext;
             this.updateEpgCommandOptions = updateEpgCommandOptions.Value;
             this.theMovieDbService = theMovieDbService;
             this.vtmGoService = vtmGoService;
@@ -77,15 +77,12 @@ namespace FxMovies.Core
         {
             DateTime now = DateTime.Now;
 
-            using (var db = fxMoviesDbContextFactory.CreateDbContext())
-            {
-                // Remove all old MovieEvents
-                {
-                    var set = db.MovieEvents;
-                    set.RemoveRange(set.Where(x => x.EndTime < now.Date));
-                }
-                await db.SaveChangesAsync();
-            }
+            // Remove all old MovieEvents
+            var set = fxMoviesDbContext.MovieEvents.Where(x => 
+                x.Vod == false && x.StartTime < now.Date 
+                || x.Vod == true && x.EndTime.HasValue && x.EndTime.Value < now.Date);
+            fxMoviesDbContext.MovieEvents.RemoveRange(set);
+            await fxMoviesDbContext.SaveChangesAsync();
 
             await UpdateDatabaseEpg_VtmGo();
             await UpdateDatabaseEpg_VrtNu();
@@ -142,92 +139,89 @@ namespace FxMovies.Core
                 logger.LogInformation($"{movie.Channel.Name} {movie.Title} {movie.Year} {movie.StartTime}");
             }
 
-            using (var db = fxMoviesDbContextFactory.CreateDbContext())
+            var existingMovies = fxMoviesDbContext.MovieEvents.Where(movieEventsSubset);
+            logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
+            logger.LogInformation("New movies: {0}", movieEvents.Count());
+
+            // Update channels
+            foreach (var channel in movieEvents.Select(m => m.Channel).Distinct())
             {
-                var existingMovies = db.MovieEvents.Where(movieEventsSubset);
-                logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
-                logger.LogInformation("New movies: {0}", movieEvents.Count());
-
-                // Update channels
-                foreach (var channel in movieEvents.Select(m => m.Channel).Distinct())
+                Channel existingChannel = await fxMoviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
+                if (existingChannel != null)
                 {
-                    Channel existingChannel = await db.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
-                    if (existingChannel != null)
-                    {
-                        existingChannel.Name = channel.Name;
-                        existingChannel.LogoS = channel.LogoS;
-                        db.Channels.Update(existingChannel);
-                        foreach (var movie in movieEvents.Where(m => m.Channel == channel))
-                            movie.Channel = existingChannel;
-                    }
-                    else
-                    {
-                        db.Channels.Add(channel);
-                    }
+                    existingChannel.Name = channel.Name;
+                    existingChannel.LogoS = channel.LogoS;
+                    fxMoviesDbContext.Channels.Update(existingChannel);
+                    foreach (var movie in movieEvents.Where(m => m.Channel == channel))
+                        movie.Channel = existingChannel;
                 }
-
-                // Remove exising movies that don't appear in new movies
+                else
                 {
-                    var remove = existingMovies.ToList().Where(m1 => !movieEvents.Any(m2 => m2.ExternalId == m1.ExternalId));
-                    logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
-                    db.RemoveRange(remove);
-                    await db.SaveChangesAsync();
+                    fxMoviesDbContext.Channels.Add(channel);
                 }
-
-                foreach (var movie in movieEvents)
-                {
-                    var existingDuplicates = await existingMovies.Where(me => me.ExternalId == movie.ExternalId).Skip(1).ToListAsync();
-                    db.MovieEvents.RemoveRange(existingDuplicates);
-                    await db.SaveChangesAsync();
-                }
-
-                // Update movies
-                foreach (var movie in movieEvents)
-                {
-                    var existingMovie = await existingMovies.SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
-                    if (existingMovie != null)
-                    {
-                        if (existingMovie.Title != movie.Title)
-                        {
-                            existingMovie.Title = movie.Title;
-                            existingMovie.Movie = null;
-                        }
-                        existingMovie.Year = movie.Year;
-                        existingMovie.StartTime = movie.StartTime;
-                        existingMovie.EndTime = movie.EndTime;
-                        existingMovie.Channel = movie.Channel;
-                        if (existingMovie.PosterS != movie.PosterS)
-                        {
-                            existingMovie.PosterS = movie.PosterS;
-                            existingMovie.PosterS_Local = null;
-                        }
-                        if (existingMovie.PosterM != movie.PosterM)
-                        {
-                            existingMovie.PosterM = movie.PosterM;
-                            existingMovie.PosterM_Local = null;
-                        }
-                        existingMovie.Duration = movie.Duration;
-                        existingMovie.Genre = movie.Genre;
-                        existingMovie.Content = movie.Content;
-                        existingMovie.Opinion = movie.Opinion;
-                        existingMovie.Type = movie.Type;
-                        existingMovie.YeloUrl = movie.YeloUrl;
-                        existingMovie.Vod = movie.Vod;
-                        existingMovie.VodLink = movie.VodLink;
-                    }
-                    else
-                    {
-                        db.MovieEvents.Add(movie);
-                    }
-                }
-
-                // {
-                //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
-                //     db.SaveChanges();
-                // }
-
-                await db.SaveChangesAsync();
             }
+
+            // Remove exising movies that don't appear in new movies
+            {
+                var remove = existingMovies.ToList().Where(m1 => !movieEvents.Any(m2 => m2.ExternalId == m1.ExternalId));
+                logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
+                fxMoviesDbContext.RemoveRange(remove);
+                await fxMoviesDbContext.SaveChangesAsync();
+            }
+
+            foreach (var movie in movieEvents)
+            {
+                var existingDuplicates = await existingMovies.Where(me => me.ExternalId == movie.ExternalId).Skip(1).ToListAsync();
+                fxMoviesDbContext.MovieEvents.RemoveRange(existingDuplicates);
+                await fxMoviesDbContext.SaveChangesAsync();
+            }
+
+            // Update movies
+            foreach (var movie in movieEvents)
+            {
+                var existingMovie = await existingMovies.SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
+                if (existingMovie != null)
+                {
+                    if (existingMovie.Title != movie.Title)
+                    {
+                        existingMovie.Title = movie.Title;
+                        existingMovie.Movie = null;
+                    }
+                    existingMovie.Year = movie.Year;
+                    existingMovie.StartTime = movie.StartTime;
+                    existingMovie.EndTime = movie.EndTime;
+                    existingMovie.Channel = movie.Channel;
+                    if (existingMovie.PosterS != movie.PosterS)
+                    {
+                        existingMovie.PosterS = movie.PosterS;
+                        existingMovie.PosterS_Local = null;
+                    }
+                    if (existingMovie.PosterM != movie.PosterM)
+                    {
+                        existingMovie.PosterM = movie.PosterM;
+                        existingMovie.PosterM_Local = null;
+                    }
+                    existingMovie.Duration = movie.Duration;
+                    existingMovie.Genre = movie.Genre;
+                    existingMovie.Content = movie.Content;
+                    existingMovie.Opinion = movie.Opinion;
+                    existingMovie.Type = movie.Type;
+                    existingMovie.YeloUrl = movie.YeloUrl;
+                    existingMovie.Vod = movie.Vod;
+                    existingMovie.VodLink = movie.VodLink;
+                }
+                else
+                {
+                    fxMoviesDbContext.MovieEvents.Add(movie);
+                }
+            }
+
+            // {
+            //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
+            //     db.SaveChanges();
+            // }
+
+            await fxMoviesDbContext.SaveChangesAsync();
 
             // using (var db = fxMoviesDbContextFactory.CreateDbContext())
             // {
@@ -289,82 +283,79 @@ namespace FxMovies.Core
                     logger.LogInformation($"{movie.Channel.Name} {movie.Title} {movie.Year} {movie.StartTime}");
                 }
 
-                using (var db = fxMoviesDbContextFactory.CreateDbContext())
+                var existingMovies = fxMoviesDbContext.MovieEvents.Where(x => x.StartTime.Date == date);
+                logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
+                logger.LogInformation("New movies: {0}", movies.Count());
+
+                // Update channels
+                foreach (var channel in movies.Select(m => m.Channel).Distinct())
                 {
-                    var existingMovies = db.MovieEvents.Where(x => x.StartTime.Date == date);
-                    logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
-                    logger.LogInformation("New movies: {0}", movies.Count());
-
-                    // Update channels
-                    foreach (var channel in movies.Select(m => m.Channel).Distinct())
+                    Channel existingChannel = await fxMoviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
+                    if (existingChannel != null)
                     {
-                        Channel existingChannel = await db.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
-                        if (existingChannel != null)
-                        {
-                            existingChannel.Name = channel.Name;
-                            existingChannel.LogoS = channel.LogoS;
-                            db.Channels.Update(existingChannel);
-                            foreach (var movie in movies.Where(m => m.Channel == channel))
-                                movie.Channel = existingChannel;
-                        }
-                        else
-                        {
-                            db.Channels.Add(channel);
-                        }
+                        existingChannel.Name = channel.Name;
+                        existingChannel.LogoS = channel.LogoS;
+                        fxMoviesDbContext.Channels.Update(existingChannel);
+                        foreach (var movie in movies.Where(m => m.Channel == channel))
+                            movie.Channel = existingChannel;
                     }
-
-                    // Remove exising movies that don't appear in new movies
+                    else
                     {
-                        var remove = existingMovies.ToList().Where(m1 => !movies.Any(m2 => m2.Id == m1.Id));
-                        logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
-                        db.RemoveRange(remove);
+                        fxMoviesDbContext.Channels.Add(channel);
                     }
-
-                    // Update movies
-                    foreach (var movie in movies)
-                    {
-                        var existingMovie = db.MovieEvents.Find(movie.Id);
-                        if (existingMovie != null)
-                        {
-                            if (existingMovie.Title != movie.Title)
-                            {
-                                existingMovie.Title = movie.Title;
-                                existingMovie.Movie = null;
-                            }
-                            existingMovie.Year = movie.Year;
-                            existingMovie.StartTime = movie.StartTime;
-                            existingMovie.EndTime = movie.EndTime;
-                            existingMovie.Channel = movie.Channel;
-                            if (existingMovie.PosterS != movie.PosterS)
-                            {
-                                existingMovie.PosterS = movie.PosterS;
-                                existingMovie.PosterS_Local = null;
-                            }
-                            if (existingMovie.PosterM != movie.PosterM)
-                            {
-                                existingMovie.PosterM = movie.PosterM;
-                                existingMovie.PosterM_Local = null;
-                            }
-                            existingMovie.Duration = movie.Duration;
-                            existingMovie.Genre = movie.Genre;
-                            existingMovie.Content = movie.Content;
-                            existingMovie.Opinion = movie.Opinion;
-                            existingMovie.Type = movie.Type;
-                            existingMovie.YeloUrl = movie.YeloUrl;
-                        }
-                        else
-                        {
-                            db.MovieEvents.Add(movie);
-                        }
-                    }
-
-                    // {
-                    //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
-                    //     db.SaveChanges();
-                    // }
-
-                    await db.SaveChangesAsync();
                 }
+
+                // Remove exising movies that don't appear in new movies
+                {
+                    var remove = existingMovies.ToList().Where(m1 => !movies.Any(m2 => m2.Id == m1.Id));
+                    logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
+                    fxMoviesDbContext.RemoveRange(remove);
+                }
+
+                // Update movies
+                foreach (var movie in movies)
+                {
+                    var existingMovie = fxMoviesDbContext.MovieEvents.Find(movie.Id);
+                    if (existingMovie != null)
+                    {
+                        if (existingMovie.Title != movie.Title)
+                        {
+                            existingMovie.Title = movie.Title;
+                            existingMovie.Movie = null;
+                        }
+                        existingMovie.Year = movie.Year;
+                        existingMovie.StartTime = movie.StartTime;
+                        existingMovie.EndTime = movie.EndTime;
+                        existingMovie.Channel = movie.Channel;
+                        if (existingMovie.PosterS != movie.PosterS)
+                        {
+                            existingMovie.PosterS = movie.PosterS;
+                            existingMovie.PosterS_Local = null;
+                        }
+                        if (existingMovie.PosterM != movie.PosterM)
+                        {
+                            existingMovie.PosterM = movie.PosterM;
+                            existingMovie.PosterM_Local = null;
+                        }
+                        existingMovie.Duration = movie.Duration;
+                        existingMovie.Genre = movie.Genre;
+                        existingMovie.Content = movie.Content;
+                        existingMovie.Opinion = movie.Opinion;
+                        existingMovie.Type = movie.Type;
+                        existingMovie.YeloUrl = movie.YeloUrl;
+                    }
+                    else
+                    {
+                        fxMoviesDbContext.MovieEvents.Add(movie);
+                    }
+                }
+
+                // {
+                //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
+                //     db.SaveChanges();
+                // }
+
+                await fxMoviesDbContext.SaveChangesAsync();
             }
 
             // using (var db = fxMoviesDbContextFactory.CreateDbContext())
@@ -380,21 +371,25 @@ namespace FxMovies.Core
 
         private async Task UpdateMissingImageLinks()
         {
-            using (var db = fxMoviesDbContextFactory.CreateDbContext())
+            foreach (var movieEvent in fxMoviesDbContext.MovieEvents)
             {
-                foreach (var movieEvent in db.MovieEvents)
+                bool emptyPosterM = string.IsNullOrEmpty(movieEvent.PosterM);
+                bool emptyPosterS = string.IsNullOrEmpty(movieEvent.PosterS);
+                if ((emptyPosterM || emptyPosterS) && !string.IsNullOrEmpty(movieEvent.Movie?.ImdbId))
                 {
-                    bool emptyPosterM = string.IsNullOrEmpty(movieEvent.PosterM);
-                    bool emptyPosterS = string.IsNullOrEmpty(movieEvent.PosterS);
-                    if ((emptyPosterM || emptyPosterS) && !string.IsNullOrEmpty(movieEvent.Movie?.ImdbId))
+                    try
                     {
                         var result = await theMovieDbService.GetImages(movieEvent.Movie.ImdbId);
                         movieEvent.PosterM = result.Medium;
                         movieEvent.PosterS = result.Small;
                     }
+                    catch(Exception x)
+                    {
+                        logger.LogError(x, $"UpdateMissingImageLinks failed for movie {movieEvent.Movie.ImdbId}");
+                    }
                 }
-                await db.SaveChangesAsync();
             }
+            await fxMoviesDbContext.SaveChangesAsync();
         }
 
         private async Task DownloadImageData()
@@ -403,74 +398,71 @@ namespace FxMovies.Core
             if (!Directory.Exists(basePath))
                 Directory.CreateDirectory(basePath);
 
-            using (var dbMovies = fxMoviesDbContextFactory.CreateDbContext())
+            foreach (var channel in fxMoviesDbContext.Channels)
             {
-                foreach (var channel in dbMovies.Channels)
+                string url = channel.LogoS;
+
+                if (url == null)
+                    continue;
+
+                string name = "channel-" + channel.Code;
+
+                if (updateEpgCommandOptions.ImageOverrideMap.TryGetValue(name, out string imageOverride))
                 {
-                    string url = channel.LogoS;
+                    string target = Path.Combine(basePath, name);
+                    File.Copy(imageOverride, target, true);
+                }
+                else
+                {
+                    // bool reset = false;
+                    
+                    // if (name != channel.LogoS_Local)
+                    // {
+                    //    channel.LogoS_Local = name;
+                    //     reset = true;
+                    // }
+                    // else if (!File.Exists(target))
+                    // {
+                    //     reset = true;
+                    // }
+
+                    // string eTag = reset ? null : channel.LogoS_ETag;
+                    // DateTime? lastModified = reset ? null : channel.LogoS_LastModified;
+                    //
+                    
+                    // Resize to 50 gives black background on Vier, Vijf, ...
+                    channel.LogoS_Local = await DownloadFile(url, basePath, name, 0);
+
+                    // channel.LogoS_ETag = eTag;
+                    // channel.LogoS_LastModified = lastModified;
+                }
+            }
+
+            foreach (var movieEvent in fxMoviesDbContext.MovieEvents)
+            {
+                {
+                    string url = movieEvent.PosterS;
 
                     if (url == null)
                         continue;
 
-                    string name = "channel-" + channel.Code;
+                    string name = "movie-" + movieEvent.Id.ToString() + "-S";
 
-                    if (updateEpgCommandOptions.ImageOverrideMap.TryGetValue(name, out string imageOverride))
-                    {
-                        string target = Path.Combine(basePath, name);
-                        File.Copy(imageOverride, target, true);
-                    }
-                    else
-                    {
-                        // bool reset = false;
-                        
-                        // if (name != channel.LogoS_Local)
-                        // {
-                        //    channel.LogoS_Local = name;
-                        //     reset = true;
-                        // }
-                        // else if (!File.Exists(target))
-                        // {
-                        //     reset = true;
-                        // }
-
-                        // string eTag = reset ? null : channel.LogoS_ETag;
-                        // DateTime? lastModified = reset ? null : channel.LogoS_LastModified;
-                        //
-                        
-                        // Resize to 50 gives black background on Vier, Vijf, ...
-                        channel.LogoS_Local = await DownloadFile(url, basePath, name, 0);
-
-                        // channel.LogoS_ETag = eTag;
-                        // channel.LogoS_LastModified = lastModified;
-                    }
+                    movieEvent.PosterS_Local = await DownloadFile(url, basePath, name, 150);
                 }
-
-                foreach (var movieEvent in dbMovies.MovieEvents)
                 {
-                    {
-                        string url = movieEvent.PosterS;
+                    string url = movieEvent.PosterM;
 
-                        if (url == null)
-                            continue;
+                    if (url == null)
+                        continue;
 
-                        string name = "movie-" + movieEvent.Id.ToString() + "-S";
+                    string name = "movie-" + movieEvent.Id.ToString() + "-M";
 
-                        movieEvent.PosterS_Local = await DownloadFile(url, basePath, name, 150);
-                    }
-                    {
-                        string url = movieEvent.PosterM;
-
-                        if (url == null)
-                            continue;
-
-                        string name = "movie-" + movieEvent.Id.ToString() + "-M";
-
-                        movieEvent.PosterM_Local = await DownloadFile(url, basePath, name, 0);
-                    }
+                    movieEvent.PosterM_Local = await DownloadFile(url, basePath, name, 0);
                 }
-
-                await dbMovies.SaveChangesAsync();    
             }
+
+            await fxMoviesDbContext.SaveChangesAsync();    
         }
 
         private void ResizeFile(string imageFile, int width)
@@ -552,169 +544,165 @@ namespace FxMovies.Core
 
             int imdbHuntingYearDiff = updateEpgCommandOptions.ImdbHuntingYearDiff ?? 2;
 
-            using (var dbMovies = fxMoviesDbContextFactory.CreateDbContext())
-            using (var dbImdb = imdbDbContextFactory.CreateDbContext())
+            var huntingProcedure = new List<Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>>();
+
+            // Search for PrimaryTitle (Year)
+            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
+            (
+                (movieWithImdbLink) => {
+                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma =>
+                            ma.AlternativeTitle == null 
+                            && ma.Normalized == normalizedTitle
+                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue || ma.Movie.Year == movieWithImdbLink.Year)
+                        ).Select(ma => ma.Movie);
+                    }
+            ));
+
+            // Search for AlternativeTitle (Year)
+            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
+            (
+                (movieWithImdbLink) => {
+                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma => 
+                            ma.AlternativeTitle != null 
+                            && ma.Normalized == normalizedTitle
+                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue || ma.Movie.Year == movieWithImdbLink.Year)
+                        ).Select(ma => ma.Movie);
+                    }
+            ));
+
+            // Search for PrimaryTitle (+/-Year)
+            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
+            (
+                (movieWithImdbLink) => {
+                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma =>
+                            ma.AlternativeTitle == null 
+                            && ma.Normalized == normalizedTitle
+                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
+                                || ((ma.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (ma.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
+                        ).Select(ma => ma.Movie);
+                    }
+            ));
+
+            // Search for AlternativeTitle (+/-Year)
+            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
+            (
+                (movieWithImdbLink) => {
+                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma => 
+                            ma.AlternativeTitle != null 
+                            && ma.Normalized == normalizedTitle
+                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
+                                || ((ma.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (ma.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
+                        ).Select(ma => ma.Movie);
+                    }
+            ));
+
+            // Search for AlternativeTitle (+/-Year)
+            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
+            (
+                (movieWithImdbLink) => 
+                    imdbDbContext.MovieAlternatives
+                        .Where(m => 
+                            m.AlternativeTitle.ToLower() == movieWithImdbLink.Title.ToLower()
+                            && (!m.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
+                                || ((m.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (m.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
+                        ).Select(m => m.Movie)
+            ));
+
+            var groups = fnGetMovies(fxMoviesDbContext).AsEnumerable().GroupBy(m => new { m.Title, m.Year });
+            int totalCount = groups.Count();
+            int current = 0;
+            foreach (var group in groups) //.ToList())
             {
-                var huntingProcedure = new List<Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>>();
+                current++;
+                                    
+                // if (group.Any(m => m.Movie != null) && false)
+                // {
+                //     var firstMovieWithImdbLink = group.First(m => m.Movie != null);
+                //     foreach (var other in group.Where(m => m.Movie == null))
+                //     {
+                //         other.Movie = firstMovieWithImdbLink.Movie;
+                //     }
+                //     continue;
+                // }
 
-                // Search for PrimaryTitle (Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-                (
-                    (movieWithImdbLink) => {
-                        string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                        return dbImdb.MovieAlternatives
-                            .Where(ma =>
-                                ma.AlternativeTitle == null 
-                                && ma.Normalized == normalizedTitle
-                                && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue || ma.Movie.Year == movieWithImdbLink.Year)
-                            ).Select(ma => ma.Movie);
-                        }
-                ));
+                ImdbDB.Movie imdbMovie = null;
+                var first = group.First();
+                int huntNo = 0;
+                foreach (var hunt in huntingProcedure)
+                {                        
+                    imdbMovie = await hunt(first)
+                        .OrderByDescending(m => m.Votes)
+                        .FirstOrDefaultAsync();
 
-                // Search for AlternativeTitle (Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-                (
-                    (movieWithImdbLink) => {
-                        string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                        return dbImdb.MovieAlternatives
-                            .Where(ma => 
-                                ma.AlternativeTitle != null 
-                                && ma.Normalized == normalizedTitle
-                                && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue || ma.Movie.Year == movieWithImdbLink.Year)
-                            ).Select(ma => ma.Movie);
-                        }
-                ));
-
-                // Search for PrimaryTitle (+/-Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-                (
-                    (movieWithImdbLink) => {
-                        string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                        return dbImdb.MovieAlternatives
-                            .Where(ma =>
-                                ma.AlternativeTitle == null 
-                                && ma.Normalized == normalizedTitle
-                                && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
-                                    || ((ma.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (ma.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
-                            ).Select(ma => ma.Movie);
-                        }
-                ));
-
-                // Search for AlternativeTitle (+/-Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-                (
-                    (movieWithImdbLink) => {
-                        string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                        return dbImdb.MovieAlternatives
-                            .Where(ma => 
-                                ma.AlternativeTitle != null 
-                                && ma.Normalized == normalizedTitle
-                                && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
-                                    || ((ma.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (ma.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
-                            ).Select(ma => ma.Movie);
-                        }
-                ));
-
-                // Search for AlternativeTitle (+/-Year)
-                huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-                (
-                    (movieWithImdbLink) => 
-                        dbImdb.MovieAlternatives
-                            .Where(m => 
-                                m.AlternativeTitle.ToLower() == movieWithImdbLink.Title.ToLower()
-                                && (!m.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
-                                    || ((m.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (m.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
-                            ).Select(m => m.Movie)
-                ));
-
-                var groups = fnGetMovies(dbMovies).AsEnumerable().GroupBy(m => new { m.Title, m.Year });
-                int totalCount = groups.Count();
-                int current = 0;
-                foreach (var group in groups) //.ToList())
-                {
-                    current++;
-                                        
-                    // if (group.Any(m => m.Movie != null) && false)
+                    // if (hunt is Func<IHasImdbLink, Movie, bool> huntTyped1)
                     // {
-                    //     var firstMovieWithImdbLink = group.First(m => m.Movie != null);
-                    //     foreach (var other in group.Where(m => m.Movie == null))
-                    //     {
-                    //         other.Movie = firstMovieWithImdbLink.Movie;
-                    //     }
-                    //     continue;
+                    //     movie = dbImdb.Movies
+                    //         .Where(m => huntTyped1(firstMovieWithImdbLink, m))
+                    //         .OrderByDescending(m => m.Votes)
+                    //         .FirstOrDefault();
+                    // }
+                    // else if (hunt is Tuple<Func<IHasImdbLink, MovieAlternative, bool>, Func<IHasImdbLink, Movie, bool>> huntTyped2)
+                    // {
+                    //     var movieAlternatives = dbImdb.MovieAlternatives.Where(m => huntTyped2.Item1(firstMovieWithImdbLink, m));
+                    //     movie = dbImdb.Movies.Join(movieAlternatives, m => m.Id, ma => ma.Id, (m, ma) => m)
+                    //         .Where(m => huntTyped2.Item2(firstMovieWithImdbLink, m))
+                    //         .OrderByDescending(m => m.Votes)
+                    //         .FirstOrDefault();
+                    // }
+                    // else
+                    // {
+                    //     throw new InvalidOperationException($"Unknown hunt type {hunt}");
                     // }
 
-                    ImdbDB.Movie imdbMovie = null;
-                    var first = group.First();
-                    int huntNo = 0;
-                    foreach (var hunt in huntingProcedure)
-                    {                        
-                        imdbMovie = await hunt(first)
-                            .OrderByDescending(m => m.Votes)
-                            .FirstOrDefaultAsync();
-
-                        // if (hunt is Func<IHasImdbLink, Movie, bool> huntTyped1)
-                        // {
-                        //     movie = dbImdb.Movies
-                        //         .Where(m => huntTyped1(firstMovieWithImdbLink, m))
-                        //         .OrderByDescending(m => m.Votes)
-                        //         .FirstOrDefault();
-                        // }
-                        // else if (hunt is Tuple<Func<IHasImdbLink, MovieAlternative, bool>, Func<IHasImdbLink, Movie, bool>> huntTyped2)
-                        // {
-                        //     var movieAlternatives = dbImdb.MovieAlternatives.Where(m => huntTyped2.Item1(firstMovieWithImdbLink, m));
-                        //     movie = dbImdb.Movies.Join(movieAlternatives, m => m.Id, ma => ma.Id, (m, ma) => m)
-                        //         .Where(m => huntTyped2.Item2(firstMovieWithImdbLink, m))
-                        //         .OrderByDescending(m => m.Votes)
-                        //         .FirstOrDefault();
-                        // }
-                        // else
-                        // {
-                        //     throw new InvalidOperationException($"Unknown hunt type {hunt}");
-                        // }
-
-                        if (imdbMovie != null)
-                            break;
-                    
-                        huntNo++;
-                    }
-                    
-                    if (imdbMovie == null)
-                    {
-                        // foreach (var movieWithImdbLink in group)
-                        // {
-                        //     movieWithImdbLink.Movie.ImdbId = "";
-                        // }
-                        await dbMovies.SaveChangesAsync();
-                        logger.LogInformation($"UpdateEpgDataWithImdb: Could not find movie '{first.Title} ({first.Year})' in IMDb");
-                        continue;
-                    }
-
-                    logger.LogInformation($"{(100 * current) / totalCount}% {first.Title} ({first.Year}) ==> {imdbMovie.ImdbId}, duplicity={group.Count()}, HUNT#{huntNo}");
-
-                    var movie = await dbMovies.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
-
-                    if (movie == null)
-                    {
-                        movie = new FxMoviesDB.Movie();
-                        movie.ImdbId = imdbMovie.ImdbId;
-                    }
-
-                    movie.ImdbRating = imdbMovie.Rating;
-                    movie.ImdbVotes = imdbMovie.Votes;
-                    if (movie.Certification == null)
-                        movie.Certification = (await theMovieDbService.GetCertification(movie.ImdbId)) ?? "";
-
-                    foreach (var movieWithImdbLink in group)
-                    {
-                        movieWithImdbLink.Movie = movie;
-                    }
-
-                    await dbMovies.SaveChangesAsync();
+                    if (imdbMovie != null)
+                        break;
+                
+                    huntNo++;
+                }
+                
+                if (imdbMovie == null)
+                {
+                    // foreach (var movieWithImdbLink in group)
+                    // {
+                    //     movieWithImdbLink.Movie.ImdbId = "";
+                    // }
+                    await fxMoviesDbContext.SaveChangesAsync();
+                    logger.LogInformation($"UpdateEpgDataWithImdb: Could not find movie '{first.Title} ({first.Year})' in IMDb");
+                    continue;
                 }
 
-                await dbMovies.SaveChangesAsync();
+                logger.LogInformation($"{(100 * current) / totalCount}% {first.Title} ({first.Year}) ==> {imdbMovie.ImdbId}, duplicity={group.Count()}, HUNT#{huntNo}");
+
+                var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
+
+                if (movie == null)
+                {
+                    movie = new FxMoviesDB.Movie();
+                    movie.ImdbId = imdbMovie.ImdbId;
+                }
+
+                movie.ImdbRating = imdbMovie.Rating;
+                movie.ImdbVotes = imdbMovie.Votes;
+                if (movie.Certification == null)
+                    movie.Certification = (await theMovieDbService.GetCertification(movie.ImdbId)) ?? "";
+
+                foreach (var movieWithImdbLink in group)
+                {
+                    movieWithImdbLink.Movie = movie;
+                }
+
+                await fxMoviesDbContext.SaveChangesAsync();
             }
+
+            await fxMoviesDbContext.SaveChangesAsync();
         }
 
     }
