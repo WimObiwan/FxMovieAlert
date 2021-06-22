@@ -160,8 +160,10 @@ namespace FxMovieAlert
                 .AddIdentityServer(
                     idSvrUri: new Uri($"https://{Configuration["Auth0:Domain"]}"),
                     name: "idsvr-Auth0")
-                .AddCheck<MovieDbDataCheck>("FxMoviesDB-data")
-                .AddCheck<MovieDbMissingImdbLinkCheck>("FxMoviesDB-missingImdbLink");
+                .AddCheck<MovieDbBroadcastsDataCheck>("FxMoviesDB-Broadcasts-data")
+                .AddCheck<MovieDbStreamingDataCheck>("FxMoviesDB-Streaming-data")
+                .AddCheck<MovieDbBroadcastsMissingImdbLinkCheck>("FxMoviesDB-Broadcasts-missingImdbLink")
+                .AddCheck<MovieDbStreamingMissingImdbLinkCheck>("FxMoviesDB-Streaming-missingImdbLink");
 
             //services.AddHealthChecksUI();
             
