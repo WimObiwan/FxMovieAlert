@@ -51,6 +51,8 @@ namespace FxMovies.FxMoviesDB
                 .HasKey(uw => uw.Id);
             modelBuilder.Entity<UserWatchListItem>()
                 .HasIndex(uw => new { uw.UserId, uw.MovieId });
+            modelBuilder.Entity<MovieEvent>()
+                .HasKey(me => me.Id);
         }
 
         public DbSet<Channel> Channels { get; set; }
@@ -61,21 +63,21 @@ namespace FxMovies.FxMoviesDB
         public DbSet<User> Users { get; set; }
     }
 
-    /// <summary>
-    /// A factory to create an instance of the StudentsContext 
-    /// </summary>
-    public static class FxMoviesDbContextFactory
-    {
-        public static FxMoviesDbContext Create(string connectionString)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<FxMoviesDbContext>();
-            optionsBuilder.UseSqlite(connectionString);
+    // /// <summary>
+    // /// A factory to create an instance of the StudentsContext 
+    // /// </summary>
+    // public static class FxMoviesDbContextFactory
+    // {
+    //     public static FxMoviesDbContext Create(string connectionString)
+    //     {
+    //         var optionsBuilder = new DbContextOptionsBuilder<FxMoviesDbContext>();
+    //         optionsBuilder.UseSqlite(connectionString);
 
-            // Ensure that the SQLite database and sechema is created!
-            var db = new FxMoviesDbContext(optionsBuilder.Options);
-            db.Database.EnsureCreated();
+    //         // Ensure that the SQLite database and sechema is created!
+    //         var db = new FxMoviesDbContext(optionsBuilder.Options);
+    //         db.Database.EnsureCreated();
 
-            return db;
-        }
-    }
+    //         return db;
+    //     }
+    // }
 }

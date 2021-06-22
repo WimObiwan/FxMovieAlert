@@ -37,21 +37,21 @@ namespace FxMovies.ImdbDB
         public DbSet<MovieAlternative> MovieAlternatives { get; set; }
     }
 
-    /// <summary>
-    /// A factory to create an instance of the StudentsContext 
-    /// </summary>
-    public static class ImdbDbContextFactory
-    {
-        public static ImdbDbContext Create(string connectionString)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<ImdbDbContext>();
-            optionsBuilder.UseSqlite(connectionString);
+    // /// <summary>
+    // /// A factory to create an instance of the StudentsContext 
+    // /// </summary>
+    // public static class ImdbDbContextFactory
+    // {
+    //     public static ImdbDbContext Create(string connectionString)
+    //     {
+    //         var optionsBuilder = new DbContextOptionsBuilder<ImdbDbContext>();
+    //         optionsBuilder.UseSqlite(connectionString);
 
-            // Ensure that the SQLite database and sechema is created!
-            var db = new ImdbDbContext(optionsBuilder.Options);
-            db.Database.EnsureCreated();
+    //         // Ensure that the SQLite database and sechema is created!
+    //         var db = new ImdbDbContext(optionsBuilder.Options);
+    //         db.Database.EnsureCreated();
 
-            return db;
-        }
-    }
+    //         return db;
+    //     }
+    // }
 }
