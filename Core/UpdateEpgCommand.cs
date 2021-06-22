@@ -324,7 +324,10 @@ namespace FxMovies.Core
                             existingMovie.Movie = null;
                         }
                         existingMovie.Year = movie.Year;
-                        existingMovie.StartTime = movie.StartTime;
+                        if (movie.StartTime != DateTime.MinValue)
+                            existingMovie.StartTime = movie.StartTime;
+                        else if (existingMovie.StartTime == DateTime.MinValue)
+                            existingMovie.StartTime = DateTime.Today;
                         existingMovie.EndTime = movie.EndTime;
                         existingMovie.Channel = movie.Channel;
                         if (existingMovie.PosterS != movie.PosterS)
@@ -346,6 +349,8 @@ namespace FxMovies.Core
                     }
                     else
                     {
+                        if (movie.StartTime == DateTime.MinValue)
+                            movie.StartTime = DateTime.Today;
                         fxMoviesDbContext.MovieEvents.Add(movie);
                     }
                 }
