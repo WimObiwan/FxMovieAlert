@@ -36,3 +36,5 @@ packages/
 *.swp
 
 appsettings.Local.json
+dp_keys/
+upgrade.sh
