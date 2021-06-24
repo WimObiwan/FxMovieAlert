@@ -1,5 +1,6 @@
 {
-    "name": "",
+    "short_name": "FilmOpTv.be",
+    "name": "FilmOpTv.be",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
@@ -10,9 +11,31 @@
             "src": "/android-chrome-256x256.png",
             "sizes": "256x256",
             "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "FilmOpTv.be uitzendingen",
+            "short_name": "Uitzendingen",
+            "description": "Welke films kun je bekijken op de Vlaamse zenders?",
+            "url": "/?source=pwa",
+            "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "FilmOpTv.be Streaming",
+            "short_name": "Streaming",
+            "description": "Welke films kun je bekijken via internet van de Vlaamse zenders?",
+            "url": "/Streaming?source=pwa",
+            "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
         }
     ],
     "theme_color": "#ffffff",
     "background_color": "#ffffff",
-    "display": "standalone"
+    "display": "standalone",
+    "start_url": "/"
 }
