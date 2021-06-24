@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -21,17 +22,20 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using FxMovies.Core;
 using Microsoft.Net.Http.Headers;
+using System.IO;
 
 namespace FxMovieAlert
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
 
-        public IConfiguration Configuration { get; }
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
+        {
+            _configuration = configuration;
+            _environment = environment;
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -59,12 +63,12 @@ namespace FxMovieAlert
             })
             .AddOpenIdConnect("Auth0", options => {
                 // Set the authority to your Auth0 domain
-                //options.Authority = $"https://{Configuration["Auth0:Domain"]}";
-                options.Authority = $"https://{Configuration["Auth0:Domain"]}";
+                //options.Authority = $"https://{_configuration["Auth0:Domain"]}";
+                options.Authority = $"https://{_configuration["Auth0:Domain"]}";
 
                 // Configure the Auth0 Client ID and Client Secret
-                options.ClientId = Configuration["Auth0:ClientId"];
-                options.ClientSecret = Configuration["Auth0:ClientSecret"];
+                options.ClientId = _configuration["Auth0:ClientId"];
+                options.ClientSecret = _configuration["Auth0:ClientSecret"];
 
                 // Set response type to code
                 options.ResponseType = "code";
@@ -118,7 +122,7 @@ namespace FxMovieAlert
                     // handle the logout redirection 
                     OnRedirectToIdentityProviderForSignOut = (context) =>
                     {
-                        var logoutUri = $"https://{Configuration["Auth0:Domain"]}/v2/logout?client_id={Configuration["Auth0:ClientId"]}";
+                        var logoutUri = $"https://{_configuration["Auth0:Domain"]}/v2/logout?client_id={_configuration["Auth0:ClientId"]}";
 
                         var postLogoutUri = context.Properties.RedirectUri;
                         if (!string.IsNullOrEmpty(postLogoutUri))
@@ -149,16 +153,16 @@ namespace FxMovieAlert
 
             services.AddHealthChecks()
                 .AddSqlite(
-                    sqliteConnectionString: Configuration.GetConnectionString("FxMoviesDB"), 
+                    sqliteConnectionString: _configuration.GetConnectionString("FxMoviesDB"), 
                     name: "sqlite-FxMoviesDB")
                 // .AddSqlite(
-                //     sqliteConnectionString: Configuration.GetConnectionString("FxMoviesHistoryDb"), 
+                //     sqliteConnectionString: _configuration.GetConnectionString("FxMoviesHistoryDb"), 
                 //     name: "sqlite-FxMoviesHistoryDb")
                 .AddSqlite(
-                    sqliteConnectionString: Configuration.GetConnectionString("ImdbDb"),
+                    sqliteConnectionString: _configuration.GetConnectionString("ImdbDb"),
                     name: "sqlite-ImdbDb")
                 .AddIdentityServer(
-                    idSvrUri: new Uri($"https://{Configuration["Auth0:Domain"]}"),
+                    idSvrUri: new Uri($"https://{_configuration["Auth0:Domain"]}"),
                     name: "idsvr-Auth0")
                 .AddCheck<MovieDbBroadcastsDataCheck>("FxMoviesDB-Broadcasts-data")
                 .AddCheck<MovieDbStreamingDataCheck>("FxMoviesDB-Streaming-data")
@@ -173,18 +177,18 @@ namespace FxMovieAlert
             services.AddWebOptimizer();
 
             services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
-                options.UseSqlite(Configuration.GetConnectionString("FxMoviesDB")));
+                options.UseSqlite(_configuration.GetConnectionString("FxMoviesDB")));
 
             services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
-                options.UseSqlite(Configuration.GetConnectionString("ImdbDb")));
+                options.UseSqlite(_configuration.GetConnectionString("ImdbDb")));
 
-            services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
+            services.Configure<TheMovieDbServiceOptions>(_configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
             // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-2.1
             app.UseForwardedHeaders();
@@ -204,7 +208,7 @@ namespace FxMovieAlert
                 SupportedUICultures = supportedCultures
             });
 
-            if (env.IsDevelopment())
+            if (_environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -239,7 +243,7 @@ namespace FxMovieAlert
 
             app.UseAuthentication();
 
-            app.UseHealthChecks(Configuration.GetValue("HealthCheck:Uri", "/hc"), new HealthCheckOptions()
+            app.UseHealthChecks(_configuration.GetValue("HealthCheck:Uri", "/hc"), new HealthCheckOptions()
             {
                 Predicate = _ => true,
                 //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
