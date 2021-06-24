@@ -40,6 +40,11 @@ namespace FxMovieAlert
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            string pathToCryptoKeys = Path.Join(_environment.ContentRootPath, "dp_keys");
+            Directory.CreateDirectory(pathToCryptoKeys);
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(pathToCryptoKeys));
+
             // Add authentication services
             services.Configure<CookiePolicyOptions>(options => {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
