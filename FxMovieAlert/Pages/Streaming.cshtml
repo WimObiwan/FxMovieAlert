@@ -627,6 +627,10 @@
                             {
                                 @: Laatste dag om deze film te bekijken!
                             }
+                            else if (daysAvailable < 2 && movieEvent.EndTime.HasValue)
+                            {
+                                @: Voorlaatste dag om deze film te bekijken.
+                            }
                             else
                             {
                                 @: Deze film is nog @daysAvailable dagen te bekijken.
