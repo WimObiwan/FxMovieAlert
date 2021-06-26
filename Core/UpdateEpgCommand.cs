@@ -628,15 +628,17 @@ namespace FxMovies.Core
             {
                 current++;
                                     
-                // if (group.Any(m => m.Movie != null) && false)
-                // {
-                //     var firstMovieWithImdbLink = group.First(m => m.Movie != null);
-                //     foreach (var other in group.Where(m => m.Movie == null))
-                //     {
-                //         other.Movie = firstMovieWithImdbLink.Movie;
-                //     }
-                //     continue;
-                // }
+                if (group.Any(m => m.Movie != null))
+                {
+                    var firstMovieWithImdbLink = group.First(m => m.Movie != null);
+                    foreach (var other in group.Where(m => m.Movie == null))
+                    {
+                        other.Movie = firstMovieWithImdbLink.Movie;
+                    }
+
+                    await fxMoviesDbContext.SaveChangesAsync();
+                    continue;
+                }
 
                 ImdbDB.Movie imdbMovie = null;
                 var first = group.First();
