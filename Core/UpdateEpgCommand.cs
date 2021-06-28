@@ -544,9 +544,6 @@ namespace FxMovies.Core
         private async Task UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies) 
         where T : IHasImdbLink
         {
-            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.basics.tsv.gz title.basics.tsv.gz
-            // aws s3api get-object --request-payer requester --bucket imdb-datasets --key documents/v1/current/title.ratings.tsv.gz title.ratings.tsv.gz
-
             int imdbHuntingYearDiff = updateEpgCommandOptions.ImdbHuntingYearDiff ?? 2;
 
             var huntingProcedure = new List<Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>>();
@@ -609,18 +606,6 @@ namespace FxMovies.Core
                     }
             ));
 
-            // Search for AlternativeTitle (+/-Year)
-            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-            (
-                (movieWithImdbLink) => 
-                    imdbDbContext.MovieAlternatives
-                        .Where(m => 
-                            m.AlternativeTitle.ToLower() == movieWithImdbLink.Title.ToLower()
-                            && (!m.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
-                                || ((m.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (m.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
-                        ).Select(m => m.Movie)
-            ));
-
             var groups = fnGetMovies(fxMoviesDbContext).AsEnumerable().GroupBy(m => new { m.Title, m.Year });
             int totalCount = groups.Count();
             int current = 0;
@@ -649,26 +634,6 @@ namespace FxMovies.Core
                         .OrderByDescending(m => m.Votes)
                         .FirstOrDefaultAsync();
 
-                    // if (hunt is Func<IHasImdbLink, Movie, bool> huntTyped1)
-                    // {
-                    //     movie = dbImdb.Movies
-                    //         .Where(m => huntTyped1(firstMovieWithImdbLink, m))
-                    //         .OrderByDescending(m => m.Votes)
-                    //         .FirstOrDefault();
-                    // }
-                    // else if (hunt is Tuple<Func<IHasImdbLink, MovieAlternative, bool>, Func<IHasImdbLink, Movie, bool>> huntTyped2)
-                    // {
-                    //     var movieAlternatives = dbImdb.MovieAlternatives.Where(m => huntTyped2.Item1(firstMovieWithImdbLink, m));
-                    //     movie = dbImdb.Movies.Join(movieAlternatives, m => m.Id, ma => ma.Id, (m, ma) => m)
-                    //         .Where(m => huntTyped2.Item2(firstMovieWithImdbLink, m))
-                    //         .OrderByDescending(m => m.Votes)
-                    //         .FirstOrDefault();
-                    // }
-                    // else
-                    // {
-                    //     throw new InvalidOperationException($"Unknown hunt type {hunt}");
-                    // }
-
                     if (imdbMovie != null)
                         break;
                 
@@ -677,10 +642,6 @@ namespace FxMovies.Core
                 
                 if (imdbMovie == null)
                 {
-                    // foreach (var movieWithImdbLink in group)
-                    // {
-                    //     movieWithImdbLink.Movie.ImdbId = "";
-                    // }
                     await fxMoviesDbContext.SaveChangesAsync();
                     logger.LogInformation($"UpdateEpgDataWithImdb: Could not find movie '{first.Title} ({first.Year})' in IMDb");
                     continue;
