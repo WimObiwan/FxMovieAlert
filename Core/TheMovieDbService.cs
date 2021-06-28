@@ -4,8 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -29,7 +32,7 @@ namespace FxMovies.Core
         public static string Position => "TheMovieDbService";
 
         public string ApiKey { get; set; }
-        public string CertificationCountryPreference { get; set; }
+        public string[] CertificationCountryPreference { get; set; }
     }
 
     public class TheMovieDbService : ITheMovieDbService
@@ -58,58 +61,55 @@ namespace FxMovies.Core
         #endregion
 
         private readonly ILogger<TheMovieDbServiceOptions> logger;
+        private readonly IHttpClientFactory httpClientFactory;
         private readonly string apiKey;
-        private readonly string[] certificationCountryPreferenceList;
+        private readonly string[] certificationCountryPreference;
 
-        public TheMovieDbService(ILogger<TheMovieDbServiceOptions> logger, IOptionsSnapshot<TheMovieDbServiceOptions> options)
+        public TheMovieDbService(ILogger<TheMovieDbServiceOptions> logger, IOptionsSnapshot<TheMovieDbServiceOptions> options,
+            IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;
+            this.httpClientFactory = httpClientFactory;
             var o = options.Value;
             this.apiKey = o.ApiKey;
-            this.certificationCountryPreferenceList = o.CertificationCountryPreference?.Split(new char[] {' ', ','}, StringSplitOptions.RemoveEmptyEntries);
+            this.certificationCountryPreference = o.CertificationCountryPreference;
         }
 
         public async Task<string> GetCertification(string imdbId)
         {
-            if (string.IsNullOrEmpty(apiKey) || certificationCountryPreferenceList == null)
+            if (string.IsNullOrEmpty(apiKey) || certificationCountryPreference == null)
                 return "";
 
-            // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US&append_to_response=releases
+            var queryParams = new Dictionary<string, string>();
+            queryParams.Add("api_key", apiKey);
+            queryParams.Add("language", "en-US");
+            queryParams.Add("append_to_response", "releases");
+            var url = QueryHelpers.AddQueryString($"/3/movie/{imdbId}", queryParams);
+            var client = httpClientFactory.CreateClient("tmdb");
 
-            // string url = string.Format("https://api.themoviedb.org/3/movie/{1}?api_key={0}&language=en-US&append_to_response=releases",
-            //     theMovieDbKey, imdbId);
-            string url = string.Format("https://api.themoviedb.org/3/movie/{1}/releases?api_key={0}&language=en-US",
-                apiKey, imdbId);
-
-            var request = WebRequest.CreateHttp(url);
             try
             {
-                using (var response = await request.GetResponseAsync())
-                using (var stream = response.GetResponseStream())
+                var releases = await client.GetFromJsonAsync<Releases>(url);
+                var certifications = releases?.countries;
+                if (certifications == null)
                 {
-                    var releases = await JsonSerializer.DeserializeAsync<Releases>(stream);
-                    
-                    var certifications = releases?.countries;
-                    if (certifications == null)
-                    {
-                        logger.LogInformation($"Certification {imdbId} ==> NONE");
-                        return null;
-                    }
-                    foreach (var countryId in certificationCountryPreferenceList)
-                    {
-                        var certification = certifications.FirstOrDefault(c => c.iso_3166_1 == countryId && !string.IsNullOrEmpty(c.certification));
-                        if (certification != null)
-                        {
-                            string text = $"{certification.iso_3166_1}:{certification.certification}";
-                            logger.LogInformation($"Certification {imdbId} ==> {text}");
-                            return text;
-                        }
-                    }
-
-                    logger.LogInformation($"Certification {imdbId} ==> NOT FOUND IN {certifications.Count} items");
+                    logger.LogInformation($"Certification {imdbId} ==> NONE");
+                    return null;
                 }
+                foreach (var countryId in certificationCountryPreference)
+                {
+                    var certification = certifications.FirstOrDefault(c => c.iso_3166_1 == countryId && !string.IsNullOrEmpty(c.certification));
+                    if (certification != null)
+                    {
+                        string text = $"{certification.iso_3166_1}:{certification.certification}";
+                        logger.LogInformation($"Certification {imdbId} ==> {text}");
+                        return text;
+                    }
+                }
+
+                logger.LogInformation($"Certification {imdbId} ==> NOT FOUND IN {certifications.Count} items");
             }
-            catch (WebException x)
+            catch (Exception x)
             {
                 logger.LogError(x, $"Certification {imdbId} ==> EXCEPTION");
             }
@@ -121,47 +121,45 @@ namespace FxMovies.Core
         {
             // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US
 
-            string url = string.Format("https://api.themoviedb.org/3/movie/{1}?api_key={0}&language=en-US",
-                apiKey, imdbId);
+            var queryParams = new Dictionary<string, string>();
+            queryParams.Add("api_key", apiKey);
+            queryParams.Add("language", "en-US");
+            var url = QueryHelpers.AddQueryString($"/3/movie/{imdbId}", queryParams);
+            var client = httpClientFactory.CreateClient("tmdb");
 
-            var request = WebRequest.CreateHttp(url);
             try
             {
-                using (var response = await request.GetResponseAsync())
-                using (var stream = response.GetResponseStream())
+                var movie = await client.GetFromJsonAsync<Movie>(url);
+
+                logger.LogInformation($"Image {imdbId} ==> {movie.original_title}");
+                
+                string baseUrl = "http://image.tmdb.org/t/p";
+                string posterM, posterS;
+
+                // Image sizes:
+                // https://api.themoviedb.org/3/configuration?api_key=<key>&language=en-US
+
+                if (movie.backdrop_path != null)
                 {
-                    var movie = await JsonSerializer.DeserializeAsync<Movie>(stream);
-                    
-                    logger.LogInformation($"Image {imdbId} ==> {movie.original_title}");
-                    
-                    string baseUrl = "http://image.tmdb.org/t/p";
-                    string posterM, posterS;
-
-                    // Image sizes:
-                    // https://api.themoviedb.org/3/configuration?api_key=<key>&language=en-US
-
-                    if (movie.backdrop_path != null)
-                    {
-                        posterM = baseUrl + "/w780" + movie.backdrop_path;
-                        posterS = baseUrl + "/w300" + movie.backdrop_path;
-                    }
-                    else if (movie.poster_path != null)
-                    {
-                        posterM = baseUrl + "/w780" + movie.poster_path;
-                        posterS = baseUrl + "/w154" + movie.poster_path;
-                    }
-                    else
-                    {
-                        posterM = null;
-                        posterS = null;
-                    }
-
-                    return new GetImagesResult
-                    {
-                        Medium = posterM,
-                        Small = posterS
-                    };
+                    posterM = baseUrl + "/w780" + movie.backdrop_path;
+                    posterS = baseUrl + "/w300" + movie.backdrop_path;
                 }
+                else if (movie.poster_path != null)
+                {
+                    posterM = baseUrl + "/w780" + movie.poster_path;
+                    posterS = baseUrl + "/w154" + movie.poster_path;
+                }
+                else
+                {
+                    posterM = null;
+                    posterS = null;
+                }
+
+                return new GetImagesResult
+                {
+                    Medium = posterM,
+                    Small = posterS
+                };
             }
             catch (Exception e)
             {

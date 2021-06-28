@@ -47,6 +47,10 @@ namespace FxMovies.Grabber
             {
                 c.BaseAddress = new Uri("https://vrtnu-api.vrt.be");
             });
+            services.AddHttpClient("tmdb", c => 
+            {
+                c.BaseAddress = new Uri("https://api.themoviedb.org");
+            });
 
             services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
             services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
