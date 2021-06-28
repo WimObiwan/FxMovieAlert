@@ -179,7 +179,7 @@ namespace FxMovies.Core
             // Update movies
             foreach (var movie in movieEvents)
             {
-                var existingMovie = await existingMovies.SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
+                var existingMovie = await existingMovies.Include(me => me.Movie).SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
                 if (existingMovie != null)
                 {
                     if (existingMovie.Title != movie.Title)
@@ -538,7 +538,7 @@ namespace FxMovies.Core
 
         private async Task UpdateEpgDataWithImdb()
         {
-            await UpdateGenericDataWithImdb<MovieEvent>((dbMovies) => dbMovies.MovieEvents);
+            await UpdateGenericDataWithImdb<MovieEvent>((dbMovies) => dbMovies.MovieEvents.Include(me => me.Movie));
         }
 
         private async Task UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies) 
