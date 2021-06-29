@@ -1,10 +1,10 @@
-﻿@page
+@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
 @{
     ViewData["Title"] = "Streaming";
-    ViewData["Canonical"] = "/";
+    ViewData["Canonical"] = "/Streaming/";
     if (Model.MovieEvent != null)
     {
         ViewData["og:title"] = Model.MovieEvent.Title;
@@ -13,7 +13,7 @@
             Model.MovieEvent.Title, Model.MovieEvent.Channel.Name, Model.MovieEvent.StartTime, Model.MovieEvent.Movie.ImdbRating/10.0);
         description = char.ToUpper(description[0]) + description.Substring(1);
         ViewData["og:description"] = description;
-        ViewData["og:url"] = $"/?m={@Model.MovieEvent.Id}";
+        ViewData["og:url"] = $"/Streaming/?m={@Model.MovieEvent.Id}";
         ViewData["og:image"] = GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
         ViewData["og:image:secure_url"] = GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
     }
@@ -489,7 +489,7 @@
                             }
                             
                             @{
-                                var shareUrl = $"https://filmoptv.be/?m={movieEvent.Id}";
+                                var shareUrl = $"https://filmoptv.be/Streaming/?m={movieEvent.Id}";
                             }
 
                             @if (Model.EditImdbLinks)
