@@ -51,6 +51,7 @@ namespace FxMovies.Grabber
             {
                 c.BaseAddress = new Uri("https://api.themoviedb.org");
             });
+            services.AddHttpClient("images");
 
             services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
             services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();

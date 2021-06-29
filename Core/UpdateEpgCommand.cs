@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
@@ -44,6 +45,7 @@ namespace FxMovies.Core
         private readonly IVtmGoService vtmGoService;
         private readonly IVrtNuService vrtNuService;
         private readonly IHumoService humoService;
+        private readonly IHttpClientFactory httpClientFactory;
 
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
             FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
@@ -51,7 +53,8 @@ namespace FxMovies.Core
             ITheMovieDbService theMovieDbService,
             IVtmGoService vtmGoService, 
             IVrtNuService vrtNuService, 
-            IHumoService humoService)
+            IHumoService humoService,
+            IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;
             this.fxMoviesDbContext = fxMoviesDbContext;
@@ -61,6 +64,7 @@ namespace FxMovies.Core
             this.vtmGoService = vtmGoService;
             this.vrtNuService = vrtNuService;
             this.humoService = humoService;
+            this.httpClientFactory = httpClientFactory;
         }
 
         public async Task<int> Run()
@@ -503,23 +507,21 @@ namespace FxMovies.Core
 
             try
             {
-                var req = WebRequest.Create(url);
-                using (var rsp = req.GetResponse())
+                var client = httpClientFactory.CreateClient("images");
+                var rsp = await client.GetAsync(url);
+                string ext;
+                if (rsp.Content.Headers.ContentType.MediaType.Equals("image/png", StringComparison.InvariantCultureIgnoreCase)) {
+                    ext = ".png";
+                } else {
+                    ext = ".jpg";
+                }
+                name = name + ext;
+                target = Path.Combine(basePath, name);
+                logger.LogInformation($"Downloading {url} to {target}");
+                using (var stm = await rsp.Content.ReadAsStreamAsync())
+                using (var fileStream = File.Create(target))
                 {
-                    string ext;
-                    if (rsp.ContentType.Equals("image/png", StringComparison.InvariantCultureIgnoreCase)) {
-                        ext = ".png";
-                    } else {
-                        ext = ".jpg";
-                    }
-                    name = name + ext;
-                    target = Path.Combine(basePath, name);
-                    logger.LogInformation($"Downloading {url} to {target}");
-                    using (var stm = rsp.GetResponseStream())
-                    using (var fileStream = File.Create(target))
-                    {
-                        await stm.CopyToAsync(fileStream);
-                    }
+                    await stm.CopyToAsync(fileStream);
                 }
             }
             catch (Exception x)
