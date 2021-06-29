@@ -1,17 +1,19 @@
-@page
+﻿@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
 @{
     ViewData["Title"] = "Streaming";
     ViewData["Canonical"] = "/Streaming/";
-    if (Model.MovieEvent != null)
+    if (Model.MovieEvent != null && Model.MovieEvent.Title != null)
     {
         ViewData["og:title"] = Model.MovieEvent.Title;
         //ViewData["og:description"] = Model.MovieEvent.Content;
-        var description = string.Format("{2:dddd} FilmOpTV.be '{0}' op {1} om {2:HH:mm} - {3}/10 op IMDb",
-            Model.MovieEvent.Title, Model.MovieEvent.Channel.Name, Model.MovieEvent.StartTime, Model.MovieEvent.Movie.ImdbRating/10.0);
-        description = char.ToUpper(description[0]) + description.Substring(1);
+        var description = $"FilmOpTV.be '{Model.MovieEvent.Title}'";
+        if (Model.MovieEvent.Channel != null)
+            description += $" op {Model.MovieEvent.Channel.Name}";
+        if (Model.MovieEvent.Movie != null && Model.MovieEvent.Movie.ImdbRating.HasValue)
+            description += $" - {Model.MovieEvent.Movie.ImdbRating.Value / 10.0}/10 op IMDb";
         ViewData["og:description"] = description;
         ViewData["og:url"] = $"/Streaming/?m={@Model.MovieEvent.Id}";
         ViewData["og:image"] = GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);

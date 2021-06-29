@@ -156,7 +156,10 @@ namespace FxMovieAlert.Pages
                 
                 if (overwrite)
                 {
-                    var movieEvent = await dbMovieEvents.SingleOrDefaultAsync(me => me.Id == movieeventid.Value);
+                    var movieEvent = await dbMovieEvents
+                        .Include(me => me.Movie)
+                        .Include(me => me.Channel)
+                        .SingleOrDefaultAsync(me => me.Id == movieeventid.Value);
                     if (movieEvent != null)
                     {
                         if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == setimdbid)
@@ -211,7 +214,10 @@ namespace FxMovieAlert.Pages
                 }
                 else
                 {
-                    MovieEvent = dbMovieEvents.SingleOrDefault(me => me.Id == m.Value);
+                    MovieEvent = dbMovieEvents
+                        .Include(me => me.Movie)
+                        .Include(me => me.Channel)
+                        .SingleOrDefault(me => me.Id == m.Value);
                     if (MovieEvent != null)
                     {
                         int days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
