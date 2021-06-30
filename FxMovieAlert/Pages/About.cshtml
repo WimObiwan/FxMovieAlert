@@ -67,7 +67,7 @@
     Als je ook gebruik wilt maken van de (handige, maar optionele) IMDb intagratie, zijn dit de stappen die je moet doorlopen:
     <ol>
         <li>
-            <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path"><span class="glyphicon glyphicon-user"></span>
+            <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path@Request.QueryString"><span class="glyphicon glyphicon-user"></span>
                 Inloggen
             </a>
             .<br/>

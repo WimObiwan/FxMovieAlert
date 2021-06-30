@@ -121,7 +121,7 @@
 <br/>
 <p class="text-muted">
     <small>
-        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path"><span class="glyphicon glyphicon-user"></span>
+        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"><span class="glyphicon glyphicon-user"></span>
             Inloggen
         </a>
         om advertenties te verbergen.
@@ -170,7 +170,7 @@
                         }
                         var picture = User.FindFirst("picture")?.Value;
                         <li>
-                            <a asp-page="/Account" asp-page-handler="logout">
+                            <a asp-page="/Account" asp-page-handler="logout" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">
                                 <!--p title="Afloggen (@User.Identity.Name)"-->
                                 @if (!string.IsNullOrEmpty(picture))
                                 {
@@ -183,7 +183,7 @@
                     }                    
                     else
                     {
-                        <li><a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path"><span class="glyphicon glyphicon-user"></span>
+                        <li><a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"><span class="glyphicon glyphicon-user"></span>
                             &nbsp;<span class="hidden-sm">Inloggen</span>
                         </a></li>
                     }

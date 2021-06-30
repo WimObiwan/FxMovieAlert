@@ -58,7 +58,7 @@ else
 {
 <p>
     Je dient eerst 
-        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path"><span class="glyphicon glyphicon-user"></span>
+        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path@Request.QueryString"><span class="glyphicon glyphicon-user"></span>
             Inloggen
         </a>
     .
