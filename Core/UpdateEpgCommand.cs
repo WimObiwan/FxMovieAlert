@@ -438,7 +438,7 @@ namespace FxMovies.Core
                     //
                     
                     // Resize to 50 gives black background on Vier, Vijf, ...
-                    channel.LogoS_Local = await DownloadFile(url, basePath, name, 0);
+                    channel.LogoS_Local = await DownloadFile(url, basePath, name, 50);
 
                     // channel.LogoS_ETag = eTag;
                     // channel.LogoS_LastModified = lastModified;
