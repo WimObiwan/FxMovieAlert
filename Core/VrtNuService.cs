@@ -47,7 +47,7 @@ namespace FxMovies.Core
             {
                 Code = "vrtnu",
                 Name = "VRT NU",
-                LogoS = "https://www.filmoptv.be/images/VRT_NU.png"
+                LogoS = "https://www.filmoptv.be/images/vrtnu.png"
             };
 
             var movies = await GetSuggestMovieInfo();

@@ -61,7 +61,7 @@ namespace FxMovies.Core
             {
                 Code = "vtmgo",
                 Name = "VTM GO",
-                LogoS = "https://upload.wikimedia.org/wikipedia/commons/a/a6/VTMGOLOGO.png"
+                LogoS = "https://www.filmoptv.be/images/vtmgo.png"
             };
 
             List<MovieEvent> movieEvents = new List<MovieEvent>();
