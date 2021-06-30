@@ -495,14 +495,15 @@ namespace FxMovies.Core
                 var client = httpClientFactory.CreateClient("images");
                 var rsp = await client.GetAsync(url);
                 string ext;
-                if (rsp.Content.Headers.ContentType.MediaType.Equals("image/png", StringComparison.InvariantCultureIgnoreCase)) {
+                string contentType = rsp.Content.Headers.ContentType.MediaType;
+                if (contentType.Equals("image/png", StringComparison.InvariantCultureIgnoreCase)) {
                     ext = ".png";
                 } else {
                     ext = ".jpg";
                 }
                 name = name + ext;
                 target = Path.Combine(basePath, name);
-                logger.LogInformation($"Downloading {url} to {target}");
+                logger.LogInformation($"Downloading {url} to {target}, {contentType}");
                 using (var stm = await rsp.Content.ReadAsStreamAsync())
                 using (var fileStream = File.Create(target))
                 {
