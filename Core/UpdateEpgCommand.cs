@@ -1,12 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -15,6 +11,8 @@ using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace FxMovies.Core
 {
@@ -474,25 +472,12 @@ namespace FxMovies.Core
             await fxMoviesDbContext.SaveChangesAsync();    
         }
 
-        private void ResizeFile(string imageFile, int width)
+        private async Task ResizeFile(string imageFile, int width)
         {
-            using(FileStream imageStream = new FileStream(imageFile,FileMode.Open, FileAccess.Read))
-            using(var image = new Bitmap(imageStream))
+            using (Image image = await Image.LoadAsync(imageFile))
             {
-                if (image.Width > width * 11 / 10)
-                {
-                    int height = (int)Math.Round((decimal)(image.Height * width) / image.Width);
-                    logger.LogInformation($"Resizing image {imageFile} from {image.Width}x{image.Height} to {width}x{height}");
-                    var resized = new Bitmap(width, height);
-                    using (var graphics = Graphics.FromImage(resized))
-                    {
-                        graphics.CompositingQuality = CompositingQuality.HighSpeed;
-                        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        graphics.CompositingMode = CompositingMode.SourceCopy;
-                        graphics.DrawImage(image, 0, 0, width, height);
-                        resized.Save(imageFile, ImageFormat.Jpeg);
-                    }
-                }
+                image.Mutate(i => i.Resize(width, 0));
+                image.Save(imageFile);
             }
         }
 
@@ -532,7 +517,7 @@ namespace FxMovies.Core
 
             if (resize > 0)
             {
-                ResizeFile(target, resize);
+                await ResizeFile(target, resize);
             }
 
             return name;
