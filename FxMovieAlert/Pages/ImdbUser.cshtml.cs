@@ -200,7 +200,8 @@ namespace FxMovieAlert.Pages
             int existingCount = 0;
             int newCount = 0;
 
-            User user = await fxMoviesDbContext.Users.SingleAsync(u => u.UserId == userId);
+            User user = await fxMoviesDbContext.Users
+                .SingleAsync(u => u.UserId == userId);
             foreach (var file in Request.Form.Files)
             {
                 try
@@ -255,9 +256,9 @@ namespace FxMovieAlert.Pages
                     }
 
                     List<UserRating> itemsToRemove = 
-                        user.UserRatings
-                            .Where(ur => !movieIdsInFile.Contains(ur.Movie.ImdbId))
-                            .ToList();
+                        await fxMoviesDbContext.UserRatings
+                            .Where(ur => ur.UserId == user.Id && !movieIdsInFile.Contains(ur.Movie.ImdbId))
+                            .ToListAsync();
 
                     fxMoviesDbContext.UserRatings.RemoveRange(itemsToRemove);
 
@@ -292,7 +293,8 @@ namespace FxMovieAlert.Pages
 
             LastImportErrors.Clear();
 
-            User user = await fxMoviesDbContext.Users.SingleAsync(u => u.UserId == userId);
+            User user = await fxMoviesDbContext.Users
+                .SingleAsync(u => u.UserId == userId);
             foreach (var file in Request.Form.Files)
             {
                 try
@@ -344,9 +346,9 @@ namespace FxMovieAlert.Pages
                     }
 
                     List<UserWatchListItem> itemsToRemove = 
-                        user.UserWatchListItems
-                            .Where(ur => !movieIdsInFile.Contains(ur.Movie.ImdbId))
-                            .ToList();
+                        await fxMoviesDbContext.UserWatchLists
+                            .Where(uw => uw.UserId == user.Id && !movieIdsInFile.Contains(uw.Movie.ImdbId))
+                            .ToListAsync();
 
                     fxMoviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);
                     
