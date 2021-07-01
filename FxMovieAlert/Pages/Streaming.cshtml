@@ -442,7 +442,7 @@
 
             <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
                 <td class="collapsible">
-                    <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
+                    <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
                     @(@endDate?.ToString("dddd"))
                     <br/>
@@ -456,13 +456,13 @@
                 <td class="collapsible">
                     @if (@movieEvent.PosterS != null)
                     {
-                        <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" alt="@movieEvent.Title" width=150 />
+                        <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
                     }
                 </td>
                 <td>
                     <a class="anchor" name="@movieEvent.Id" ></a>
                     <div class="reverse-collapsible">
-                        <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
+                        <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                         &nbsp;
                         @(@endDate?.ToString("dddd"))
                         @(@endDate?.ToShortDateString())
@@ -504,18 +504,18 @@
                         <span style="white-space: nowrap; float: right;">
                             <small>
                                 <a href="@shareUrl" target="_new" title="Share link..." style="text-decoration: none">
-                                    <img src="/images/link-24x24.png" alt="Link" height="24px" />
+                                    <img src="/images/link-24x24.png" loading="lazy" alt="Link" height="24px" />
                                 </a>
                                 &nbsp;
                                 <!--div class="fb-share-button" data-href="@shareUrl" data-layout="button" data-size="small" data-mobile-iframe="true"></div-->
                                 <a href="https://www.facebook.com/sharer/sharer.php?u=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(@shareUrl))" target="_new" title="Share op facebook..." style="text-decoration: none">
-                                    <img src="/images/facebook-36x36.png" alt="Facebook" height="36px" />
+                                    <img src="/images/facebook-36x36.png" loading="lazy" alt="Facebook" height="36px" />
                                 </a>
                                 @if (!string.IsNullOrEmpty(movieEvent.VodLink))
                                 {
                                     @: &nbsp;
                                     <a href="@movieEvent.VodLink" target="_new" title="Speel @movieEvent.Title af op VTMGO..." style="text-decoration: none">
-                                        <img src="/images/play.png" alt="Yelo" height="32px" />
+                                        <img src="/images/play.png" loading="lazy" alt="Yelo" height="32px" />
                                     </a>
                                 }
                                 @* &nbsp;
@@ -527,13 +527,13 @@
                                     }
                                 }
                                 <a href="@yeloUrl" target="_new" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
-                                    <img src="/images/yeloplay-55x32.png" alt="Yelo" height="32px" />
+                                    <img src="/images/yeloplay-55x32.png" loading="lazy" alt="Yelo" height="32px" />
                                 </a> *@
                                 &nbsp;
                                 @if (!string.IsNullOrEmpty(@movieEvent.Movie?.ImdbId))
                                 {
                                     <a href="http://www.imdb.com/title/@movieEvent.Movie.ImdbId" target="_new" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
-                                        <img src="/images/imdb-50x24.png" alt="IMDb" height="24px" />
+                                        <img src="/images/imdb-50x24.png" loading="lazy" alt="IMDb" height="24px" />
                                         @if (@movieEvent.Movie.ImdbRating.HasValue)
                                         {
                                             @((@movieEvent.Movie.ImdbRating.Value / 10.0).ToString("0.0"))
@@ -592,7 +592,7 @@
                     <div class="reverse-collapsible">
                         @if (@movieEvent.PosterS != null)
                         {
-                            <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" alt="@movieEvent.Title" width=150 />
+                            <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
                         }
                     </div>
                     <div style="clear: both;">
