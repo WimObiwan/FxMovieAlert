@@ -27,11 +27,11 @@ namespace FxMovies.Core
 
     public class UpdateImdbUserRatingsCommand : IUpdateImdbUserRatingsCommand
     {
-        private readonly ILogger<UpdateEpgCommand> logger;
+        private readonly ILogger<UpdateImdbUserRatingsCommand> logger;
         private readonly IImdbRatingsService imdbRatingsService;
         private readonly IUserRatingsRepository userRatingsRepository;
 
-        public UpdateImdbUserRatingsCommand(ILogger<UpdateEpgCommand> logger, 
+        public UpdateImdbUserRatingsCommand(ILogger<UpdateImdbUserRatingsCommand> logger, 
             IImdbRatingsService imdbRatingsService,
             IUserRatingsRepository userRatingsRepository)
         {
