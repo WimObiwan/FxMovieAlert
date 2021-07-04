@@ -60,6 +60,7 @@ namespace FxMovies.Grabber
             services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
             services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
             services.AddScoped<IUpdateImdbUserRatingsCommand, UpdateImdbUserRatingsCommand>();
+            services.AddScoped<IAutoUpdateAllImdbUsersDataCommand, AutoUpdateAllImdbUsersDataCommand>();
 
             services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.Configure<VtmGoServiceOptions>(Configuration.GetSection(VtmGoServiceOptions.Position));
@@ -74,6 +75,7 @@ namespace FxMovies.Grabber
             services.AddScoped<IHumoService, HumoService>();
 
             services.AddScoped<IUserRatingsRepository, UserRatingsRepository>();
+            services.AddScoped<IUsersRepository, UsersRepository>();
         }
     }
 }

@@ -70,8 +70,8 @@ namespace FxMovies.Grabber
             public string ImdbUserId { get; set; }
         }
 
-        [Verb("AutoUpdateImdbUserRatings", HelpText = "Auto update IMDb user ratings.")]
-        class AutoUpdateImdbUserRatingsOptions
+        [Verb("AutoUpdateAllImdbUsersData", HelpText = "Auto update all IMDb users ratings & watchlist.")]
+        class AutoUpdateAllImdbUsersDataOptions
         {
         }
 
@@ -133,7 +133,7 @@ namespace FxMovies.Grabber
                             HelpOptions,
                             GenerateImdbDatabaseOptions,
                             UpdateImdbUserRatingsOptions,
-                            // AutoUpdateImdbUserRatingsOptions,
+                            AutoUpdateAllImdbUsersDataOptions,
                             UpdateEpgOptions,
                             // TwitterBotOptions,
                             // ManualOptions,
@@ -143,7 +143,7 @@ namespace FxMovies.Grabber
                             (HelpOptions o) => Run(o),
                             (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
                             (UpdateImdbUserRatingsOptions o) => host.Services.GetRequiredService<IUpdateImdbUserRatingsCommand>().Run(o.ImdbUserId),
-                            // (AutoUpdateImdbUserRatingsOptions o) => Run(o),
+                            (AutoUpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IAutoUpdateAllImdbUsersDataCommand>().Run(),
                             (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
                             // (TwitterBotOptions o) => Run(o),
                             // (ManualOptions o) => Run(o),
