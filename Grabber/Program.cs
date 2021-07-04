@@ -1,28 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Globalization;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Net;
-using System.Text.RegularExpressions;
-using System.Xml;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using CommandLine;
-using CommandLine.Text;
-using System.Diagnostics;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using FxMovies.Core;
 using System.Threading.Tasks;
-using System.Reflection;
 
 namespace FxMovies.Grabber
 {
@@ -79,8 +66,6 @@ namespace FxMovies.Grabber
         [Verb("UpdateImdbUserRatings", HelpText = "Update IMDb user ratings.")]
         class UpdateImdbUserRatingsOptions
         {
-            [Option("userid", Required = true, HelpText = "User ID")]
-            public string UserId { get; set; }
             [Option("imdbuserid", Required = true, HelpText = "IMDb user ID")]
             public string ImdbUserId { get; set; }
         }
@@ -94,11 +79,6 @@ namespace FxMovies.Grabber
         class UpdateEpgOptions
         {
         }
-
-        // [Verb("UpdateVod", HelpText = "Update VOD.")]
-        // class UpdateVodOptions
-        // {
-        // }
 
         // [Verb("TwitterBot", HelpText = "Twitter Bot.")]
         // class TwitterBotOptions
@@ -152,10 +132,9 @@ namespace FxMovies.Grabber
                         .ParseArguments<
                             HelpOptions,
                             GenerateImdbDatabaseOptions,
-                            // UpdateImdbUserRatingsOptions,
+                            UpdateImdbUserRatingsOptions,
                             // AutoUpdateImdbUserRatingsOptions,
                             UpdateEpgOptions,
-                            // UpdateVodOptions,
                             // TwitterBotOptions,
                             // ManualOptions,
                             TestSentryOptions
@@ -163,10 +142,9 @@ namespace FxMovies.Grabber
                         .MapResult(
                             (HelpOptions o) => Run(o),
                             (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
-                            // (UpdateImdbUserRatingsOptions o) => Run(o),
+                            (UpdateImdbUserRatingsOptions o) => host.Services.GetRequiredService<IUpdateImdbUserRatingsCommand>().Run(o.ImdbUserId),
                             // (AutoUpdateImdbUserRatingsOptions o) => Run(o),
                             (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
-                            // (UpdateVodOptions o) => Run(o),
                             // (TwitterBotOptions o) => Run(o),
                             // (ManualOptions o) => Run(o),
                             (TestSentryOptions o) => Run(o),
@@ -209,25 +187,6 @@ namespace FxMovies.Grabber
         {
             return Task.FromResult(0);
         }
-
-        // private static int Run(UpdateImdbUserRatingsOptions options)
-        // {
-        //     UpdateImdbUserRatings(options.UserId, options.ImdbUserId);
-        //     return 0;
-        // }
-
-        // private static int Run(AutoUpdateImdbUserRatingsOptions options)
-        // {
-        //     AutoUpdateImdbUserRatings();
-        //     return 0;
-        // }
-
-        // private static int Run(UpdateVodOptions options)
-        // {
-        //     UpdateDatabaseVod_YeloPlay();
-        //     UpdateVodDataWithImdb();
-        //     return 0;
-        // }
 
         // private static int Run(TwitterBotOptions options)
         // {

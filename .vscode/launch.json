@@ -62,6 +62,20 @@
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart"
         },
+        {
+            "name": "Grabber UpdateImdbUserRatings",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net5.0/Grabber.dll",
+            "args": [ "UpdateImdbUserRatings", "--imdbuserid", "ur27490911" ],
+            "cwd": "${workspaceRoot}/Grabber",
+            // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
         // {
         //     "name": ".NET Core Launch (GRABBER)",
         //     "type": "coreclr",

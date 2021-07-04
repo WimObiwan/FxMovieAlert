@@ -52,9 +52,14 @@ namespace FxMovies.Grabber
                 c.BaseAddress = new Uri("https://api.themoviedb.org");
             });
             services.AddHttpClient("images");
+            services.AddHttpClient("imdb", c => 
+            {
+                c.BaseAddress = new Uri("https://www.imdb.com");
+            });
 
             services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
             services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
+            services.AddScoped<IUpdateImdbUserRatingsCommand, UpdateImdbUserRatingsCommand>();
 
             services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.Configure<VtmGoServiceOptions>(Configuration.GetSection(VtmGoServiceOptions.Position));
@@ -62,10 +67,13 @@ namespace FxMovies.Grabber
             services.Configure<GenerateImdbDatabaseCommandOptions>(Configuration.GetSection(GenerateImdbDatabaseCommandOptions.Position));
 
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
+            services.AddScoped<IImdbRatingsService, ImdbRatingsService>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
             services.AddScoped<IVtmGoService, VtmGoService>();
             services.AddScoped<IVrtNuService, VrtNuService>();
             services.AddScoped<IHumoService, HumoService>();
+
+            services.AddScoped<IUserRatingsRepository, UserRatingsRepository>();
         }
     }
 }
