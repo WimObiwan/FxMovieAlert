@@ -135,6 +135,142 @@ else
 </tr>
 <tr>
     <td colspan="3">
+        <strong>Automatische import</strong>
+        <br/>
+        <small>
+            Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel wanneer deze lijsten publiek zijn in je IMDb profiel. 
+        </small>
+        @* <small class="disabled">
+            Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel voor ongeveer de laatste 250 ratings. 
+            Als je ratings of watchlist langer zijn, kan het daarom nuttig zijn om hieronder (éénmalig) de lijst te importeren 
+            met een CSV bestand. 
+        </small> *@
+    </td>
+</tr>
+<tr>
+    <td>
+        IMDb links
+    </td>
+    <td>
+        <a href="https://www.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">https://www.imdb.com/user/@Model.ImdbUserId/ratings</a>
+    </td>
+    <td>
+        <a href="http://www.imdb.com/user/@Model.ImdbUserId/watchlist" target="_new">http://www.imdb.com/user/@Model.ImdbUserId/watchlist</a>
+    </td>
+</tr>
+<tr>
+    <td>
+        Laatste download tijdstip
+    </td>
+    <td>
+    @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
+    {
+        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString()<br/>
+        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Nog niet opgehaald.
+        </div>
+    }
+    </td>
+    <td>
+    @if (Model.WatchListLastRefreshSuccess.HasValue && Model.WatchListLastRefreshTime.HasValue)
+    {
+        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToLongDateString()<br/>
+        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToShortTimeString()
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Nog niet opgehaald.
+        </div>
+    }
+    </td>
+</tr>
+<tr>
+    <td>
+        Resultaat
+    </td>
+    <td>
+    @if (Model.LastRefreshSuccess.HasValue)
+    {
+        @if (Model.LastRefreshSuccess.Value)
+        {
+            <div class="alert alert-success">
+                Gelukt
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                Mislukt
+            </div>
+        }
+    }
+    else
+    {
+        <div>
+            N/A
+        </div>
+    }
+    </td>
+    <td>
+    @if (Model.WatchListLastRefreshSuccess.HasValue)
+    {
+        @if (Model.WatchListLastRefreshSuccess.Value)
+        {
+            <div class="alert alert-success">
+                Gelukt
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                Mislukt
+            </div>
+        }
+    }
+    else
+    {
+        <div>
+            N/A
+        </div>
+    }
+    </td>
+</tr>
+<tr>
+    <td>
+        Extra info
+    </td>
+    <td>
+        @Model.LastRefreshRatingsResult
+    </td>
+    <td>
+        @Model.WatchListLastRefreshRatingsResult
+    </td>
+</tr>
+<tr>
+    <td>
+        Volgende automatische download
+    </td>
+    <td colspan="2">
+        @if (Model.RefreshRequestTime.HasValue)
+        {
+            <div class="alert alert-warning">
+                Gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).<br/>
+                <a href="?">Herlaad</a> deze pagina binnen enkele minuten om de laatste resultaten te zien.
+            </div>
+        }
+        else
+        {
+            <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
+        }
+    </td>
+</tr>
+<tr>
+    <td colspan="3">
         <strong>Manuele import</strong>
     </td>
 </tr>
@@ -217,145 +353,6 @@ else
     </td>
 </tr>
 }
-<tr class="disabled">
-    <td colspan="3">
-        <strong>Automatische import</strong>
-        <div class="alert alert-warning">
-            <strong>Opgelet!</strong>
-            Het automatisch downloaden van je laatste IMDb ratings &amp; watchlist via RSS is niet langer mogelijk,
-            na wijzigingen aan de IMDb website.
-            We bekijken wat mogelijk is om dit te verhelpen.
-            Voorlopig kunt u enkel ratings &amp; watchlist manueel opladen, zie hierboven.
-        </div>
-        <small class="disabled">
-            Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel voor ongeveer de laatste 250 ratings. 
-            Als je ratings of watchlist langer zijn, kan het daarom nuttig zijn om hieronder (éénmalig) de lijst te importeren 
-            met een CSV bestand. 
-        </small>
-    </td>
-</tr>
-<tr class="disabled">
-    <td>
-        IMDb RSS feed
-    </td>
-    <td>
-        <a href="http://rss.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">http://rss.imdb.com/user/@Model.ImdbUserId/ratings</a>
-    </td>
-    <td>
-        <a href="http://rss.imdb.com/user/@Model.ImdbUserId/watchlist" target="_new">http://rss.imdb.com/user/@Model.ImdbUserId/watchlist</a>
-    </td>
-</tr>
-<tr class="disabled">
-    <td>
-        Laatste download tijdstip
-    </td>
-    <td>
-    @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
-    {
-        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString()<br/>
-        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            Nog niet opgehaald.
-        </div>
-    }
-    </td>
-    <td>
-    @if (Model.WatchListLastRefreshSuccess.HasValue && Model.WatchListLastRefreshTime.HasValue)
-    {
-        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToLongDateString()<br/>
-        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToShortTimeString()
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            Nog niet opgehaald.
-        </div>
-    }
-    </td>
-</tr>
-<tr class="disabled">
-    <td>
-        Resultaat
-    </td>
-    <td>
-    @if (Model.LastRefreshSuccess.HasValue)
-    {
-        @if (Model.LastRefreshSuccess.Value)
-        {
-            <div class="alert alert-success">
-                Gelukt
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-danger">
-                Mislukt
-            </div>
-        }
-    }
-    else
-    {
-        <div>
-            N/A
-        </div>
-    }
-    </td>
-    <td>
-    @if (Model.WatchListLastRefreshSuccess.HasValue)
-    {
-        @if (Model.WatchListLastRefreshSuccess.Value)
-        {
-            <div class="alert alert-success">
-                Gelukt
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-danger">
-                Mislukt
-            </div>
-        }
-    }
-    else
-    {
-        <div>
-            N/A
-        </div>
-    }
-    </td>
-</tr>
-<tr class="disabled">
-    <td>
-        Extra info
-    </td>
-    <td>
-        @Model.LastRefreshRatingsResult
-    </td>
-    <td>
-        @Model.WatchListLastRefreshRatingsResult
-    </td>
-</tr>
-<tr class="disabled">
-    <td>
-        Volgende automatische download
-    </td>
-    <td colspan="2">
-        @if (Model.RefreshRequestTime.HasValue)
-        {
-            <div class="alert alert-warning">
-                Gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).<br/>
-                <a href="?">Herlaad</a> deze pagina binnen enkele minuten om de laatste resultaten te zien.
-            </div>
-        }
-        else
-        {
-            <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
-        }
-    </td>
-</tr>
 </table>
 </div>
 }
