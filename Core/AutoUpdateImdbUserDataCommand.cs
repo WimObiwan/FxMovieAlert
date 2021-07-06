@@ -36,18 +36,18 @@ namespace FxMovies.Core
     public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
     {
         private readonly ILogger<AutoUpdateImdbUserDataCommand> logger;
-        private readonly IUpdateImdbUserRatingsCommand updateImdbUserRatingsCommand;
+        private readonly IUpdateImdbUserDataCommand updateImdbUserDataCommand;
         private readonly IUsersRepository usersRepository;
         private readonly TimeSpan autoUpdateInterval;
         private readonly bool updateAllRatings;
 
         public AutoUpdateImdbUserDataCommand(ILogger<AutoUpdateImdbUserDataCommand> logger,
             IOptionsSnapshot<AutoUpdateImdbUserDataCommandOptions> autoUpdateImdbUserDataCommandOptions,
-            IUpdateImdbUserRatingsCommand updateImdbUserRatingsCommand,
+            IUpdateImdbUserDataCommand updateImdbUserDataCommand,
             IUsersRepository usersRepository)
         {
             this.logger = logger;
-            this.updateImdbUserRatingsCommand = updateImdbUserRatingsCommand;
+            this.updateImdbUserDataCommand = updateImdbUserDataCommand;
             this.usersRepository = usersRepository;
             this.autoUpdateInterval = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateInterval ?? TimeSpan.FromDays(1);
             this.updateAllRatings = autoUpdateImdbUserDataCommandOptions.Value.UpdateAllRatings ?? false;
@@ -69,7 +69,7 @@ namespace FxMovies.Core
                     
                 try
                 {
-                    await updateImdbUserRatingsCommand.Run(user.ImdbUserId, updateAllRatings);
+                    await updateImdbUserDataCommand.Run(user.ImdbUserId, updateAllRatings);
                 }
                 catch (Exception x)
                 {

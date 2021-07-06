@@ -28,15 +28,15 @@ namespace FxMovies.Core
     public class UpdateAllImdbUsersDataCommand : IUpdateAllImdbUsersDataCommand
     {
         private readonly ILogger<UpdateAllImdbUsersDataCommand> logger;
-        private readonly IUpdateImdbUserRatingsCommand updateImdbUserRatingsCommand;
+        private readonly IUpdateImdbUserDataCommand updateImdbUserDataCommand;
         private readonly IUsersRepository usersRepository;
 
         public UpdateAllImdbUsersDataCommand(ILogger<UpdateAllImdbUsersDataCommand> logger,
-            IUpdateImdbUserRatingsCommand updateImdbUserRatingsCommand,
+            IUpdateImdbUserDataCommand UpdateImdbUserDataCommand,
             IUsersRepository usersRepository)
         {
             this.logger = logger;
-            this.updateImdbUserRatingsCommand = updateImdbUserRatingsCommand;
+            this.updateImdbUserDataCommand = UpdateImdbUserDataCommand;
             this.usersRepository = usersRepository;
         }
 
@@ -46,7 +46,7 @@ namespace FxMovies.Core
             {
                 try
                 {
-                    await updateImdbUserRatingsCommand.Run(imdbUserId, false);
+                    await updateImdbUserDataCommand.Run(imdbUserId, false);
                 }
                 catch (Exception x)
                 {

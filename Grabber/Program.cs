@@ -63,8 +63,8 @@ namespace FxMovies.Grabber
         {
         }
 
-        [Verb("UpdateImdbUserRatings", HelpText = "Update IMDb user ratings.")]
-        class UpdateImdbUserRatingsOptions
+        [Verb("UpdateImdbUserData", HelpText = "Update IMDb user ratings & watchlist.")]
+        class UpdateImdbUserDataOptions
         {
             [Option("imdbuserid", Required = true, HelpText = "IMDb user ID")]
             public string ImdbUserId { get; set; }
@@ -140,7 +140,7 @@ namespace FxMovies.Grabber
                         .ParseArguments<
                             HelpOptions,
                             GenerateImdbDatabaseOptions,
-                            UpdateImdbUserRatingsOptions,
+                            UpdateImdbUserDataOptions,
                             UpdateAllImdbUsersDataOptions,
                             AutoUpdateImdbUserDataOptions,
                             UpdateEpgOptions,
@@ -151,7 +151,7 @@ namespace FxMovies.Grabber
                         .MapResult(
                             (HelpOptions o) => Run(o),
                             (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
-                            (UpdateImdbUserRatingsOptions o) => host.Services.GetRequiredService<IUpdateImdbUserRatingsCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
+                            (UpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IUpdateImdbUserDataCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
                             (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
                             (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
                             (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),

@@ -45,10 +45,10 @@ namespace FxMovies.Core
             this.httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, bool getAll)
+        public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, bool getAll)
         {
             IList<ImdbRating> ratings = new List<ImdbRating>();
-            string url = $"/user/{ImdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
+            string url = $"/user/{imdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
             do
             {
                 url = await GetRatingsSinglePageAsync(url, ratings);
