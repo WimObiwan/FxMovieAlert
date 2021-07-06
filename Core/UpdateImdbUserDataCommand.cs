@@ -67,7 +67,7 @@ namespace FxMovies.Core
             try
             {
                 var watchlistEntries = await imdbWatchlistService.GetWatchlistAsync(imdbUserId);
-                var result = await userWatchlistRepository.Store(imdbUserId, watchlistEntries, updateAllRatings);
+                var result = await userWatchlistRepository.Store(imdbUserId, watchlistEntries, true);
                 string message = $"{result.NewCount} nieuwe films.  Laatste film is {result.LastTitle}.";
                 await usersRepository.SetWatchlistRefreshResult(imdbUserId, true, message);
             }
