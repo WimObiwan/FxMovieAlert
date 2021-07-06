@@ -61,6 +61,7 @@ namespace FxMovieAlert.Pages
         public int CountTypeSerie = 0;
         public int CountMinRating5 = 0;
         public int CountMinRating6 = 0;
+        public int CountMinRating65 = 0;
         public int CountMinRating7 = 0;
         public int CountMinRating8 = 0;
         public int CountMinRating9 = 0;
@@ -233,6 +234,7 @@ namespace FxMovieAlert.Pages
             CountTypeSerie = await dbMovieEvents.Where(me => me.Type == 3).CountAsync();
             CountMinRating5 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 50).CountAsync();
             CountMinRating6 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 60).CountAsync();
+            CountMinRating65 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 65).CountAsync();
             CountMinRating7 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 70).CountAsync();
             CountMinRating8 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 80).CountAsync();
             CountMinRating9 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 90).CountAsync();
