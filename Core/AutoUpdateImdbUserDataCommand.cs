@@ -55,13 +55,16 @@ namespace FxMovies.Core
 
         public async Task<int> Run()
         {
-            var lastUpdateThreshold = DateTime.UtcNow.Add(autoUpdateInterval);
+            var now = DateTime.UtcNow;
+            var lastUpdateThreshold = now.Add(-autoUpdateInterval);
+
+            logger.LogInformation($"Loading users that need to be refreshed (threshold {lastUpdateThreshold})");
 
             await foreach (var user in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold))
             {
                 logger.LogInformation($"User {user.ImdbUserId} needs a refresh of the IMDb User ratings");
                 if (user.RefreshRequestTime.HasValue)
-                    logger.LogInformation($"   * RefreshRequestTime = {user.RefreshRequestTime.Value} ({(lastUpdateThreshold - user.RefreshRequestTime.Value).TotalSeconds} seconds ago)");
+                    logger.LogInformation($"   * RefreshRequestTime = {user.RefreshRequestTime.Value} ({(now - user.RefreshRequestTime.Value).TotalSeconds} seconds ago)");
                 if (!user.LastRefreshRatingsTime.HasValue)
                     logger.LogInformation("   * LastRefreshRatingsTime = null");
                 else 

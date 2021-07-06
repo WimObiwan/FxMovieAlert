@@ -55,7 +55,9 @@ namespace FxMovies.Core
             {
                 var ratings = await imdbRatingsService.GetRatingsAsync(imdbUserId, updateAllRatings);
                 var result = await userRatingsRepository.Store(imdbUserId, ratings, updateAllRatings);
-                string message = $"{result.NewCount} nieuwe films.  Laatste film is {result.LastTitle}.";
+                string message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films.";
+                if (updateAllRatings)
+                    message = $"  {result.RemovedCount} films verwijderd.";
                 await usersRepository.SetRatingRefreshResult(imdbUserId, true, message);
             }
             catch (Exception x)
@@ -68,7 +70,8 @@ namespace FxMovies.Core
             {
                 var watchlistEntries = await imdbWatchlistService.GetWatchlistAsync(imdbUserId);
                 var result = await userWatchlistRepository.Store(imdbUserId, watchlistEntries, true);
-                string message = $"{result.NewCount} nieuwe films.  Laatste film is {result.LastTitle}.";
+                string message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films."
+                    + $"  {result.RemovedCount} films verwijderd.";
                 await usersRepository.SetWatchlistRefreshResult(imdbUserId, true, message);
             }
             catch (Exception x)
