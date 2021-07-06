@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model StreamingModel
 @using System.Text;
 @using System.Globalization;
@@ -445,9 +445,9 @@
                 <td class="collapsible">
                     <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
-                    @(@endDate?.ToString("dddd"))
+                        <del>@(@endDate?.ToString("dddd"))</del>
                     <br/>
-                    @(@endDate?.ToShortDateString())
+                        <del>@(@endDate?.ToShortDateString())</del>
                     <br/>
                     @if (movieEvent.Duration.HasValue)
                     {
@@ -465,8 +465,7 @@
                     <div class="reverse-collapsible">
                         <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                         &nbsp;
-                        @(@endDate?.ToString("dddd"))
-                        @(@endDate?.ToShortDateString())
+                        <del>@(@endDate?.ToString("dddd")) @(@endDate?.ToShortDateString())</del>
                         @if (movieEvent.Duration.HasValue)
                         {
                             @: &nbsp; (@(new TimeSpan((long)@movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
