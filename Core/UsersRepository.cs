@@ -20,6 +20,7 @@ namespace FxMovies.Core
         IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold);
         Task SetRatingRefreshResult(string imdbUserId, bool succeeded, string result);
         Task SetWatchlistRefreshResult(string imdbUserId, bool succeeded, string result);
+        Task UnsetRefreshRequestTime(string imdbUserId);
     }
 
     public class UsersRepository : IUsersRepository
@@ -71,6 +72,16 @@ namespace FxMovies.Core
                 user.WatchListLastRefreshSuccess = succeeded;
                 user.WatchListLastRefreshTime = DateTime.UtcNow;
                 user.WatchListLastRefreshResult = result;
+                await fxMoviesDbContext.SaveChangesAsync();
+            }
+        }
+
+        public async Task UnsetRefreshRequestTime(string imdbUserId)
+        {
+            var user = await fxMoviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+            if (user != null)
+            {
+                user.RefreshRequestTime = null;
                 await fxMoviesDbContext.SaveChangesAsync();
             }
         }

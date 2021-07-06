@@ -76,6 +76,9 @@ namespace FxMovies.Core
                 await usersRepository.SetWatchlistRefreshResult(imdbUserId, false, x.Message);
                 throw;
             }
+
+            await usersRepository.UnsetRefreshRequestTime(imdbUserId);
+
             return 0;
         }
    }
