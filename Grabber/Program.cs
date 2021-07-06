@@ -68,10 +68,18 @@ namespace FxMovies.Grabber
         {
             [Option("imdbuserid", Required = true, HelpText = "IMDb user ID")]
             public string ImdbUserId { get; set; }
+            [Option("updateAllRatings", HelpText = "Update all ratings instead of the last 100")]
+            public bool UpdateAllRatings { get; set; }
+            
         }
 
-        [Verb("AutoUpdateAllImdbUsersData", HelpText = "Auto update all IMDb users ratings & watchlist.")]
-        class AutoUpdateAllImdbUsersDataOptions
+        [Verb("UpdateAllImdbUsersData", HelpText = "Update all IMDb users ratings & watchlist.")]
+        class UpdateAllImdbUsersDataOptions
+        {
+        }
+
+        [Verb("AutoUpdateImdbUserData", HelpText = "Auto update IMDb users ratings & watchlist.")]
+        class AutoUpdateImdbUserDataOptions
         {
         }
 
@@ -133,7 +141,8 @@ namespace FxMovies.Grabber
                             HelpOptions,
                             GenerateImdbDatabaseOptions,
                             UpdateImdbUserRatingsOptions,
-                            AutoUpdateAllImdbUsersDataOptions,
+                            UpdateAllImdbUsersDataOptions,
+                            AutoUpdateImdbUserDataOptions,
                             UpdateEpgOptions,
                             // TwitterBotOptions,
                             // ManualOptions,
@@ -142,8 +151,9 @@ namespace FxMovies.Grabber
                         .MapResult(
                             (HelpOptions o) => Run(o),
                             (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
-                            (UpdateImdbUserRatingsOptions o) => host.Services.GetRequiredService<IUpdateImdbUserRatingsCommand>().Run(o.ImdbUserId),
-                            (AutoUpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IAutoUpdateAllImdbUsersDataCommand>().Run(),
+                            (UpdateImdbUserRatingsOptions o) => host.Services.GetRequiredService<IUpdateImdbUserRatingsCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
+                            (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
+                            (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
                             (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
                             // (TwitterBotOptions o) => Run(o),
                             // (ManualOptions o) => Run(o),

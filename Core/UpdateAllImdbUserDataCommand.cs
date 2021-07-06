@@ -20,18 +20,18 @@ using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core
 {
-    public interface IAutoUpdateAllImdbUsersDataCommand
+    public interface IUpdateAllImdbUsersDataCommand
     {
         Task<int> Run();
     }
 
-    public class AutoUpdateAllImdbUsersDataCommand : IAutoUpdateAllImdbUsersDataCommand
+    public class UpdateAllImdbUsersDataCommand : IUpdateAllImdbUsersDataCommand
     {
-        private readonly ILogger<AutoUpdateAllImdbUsersDataCommand> logger;
+        private readonly ILogger<UpdateAllImdbUsersDataCommand> logger;
         private readonly IUpdateImdbUserRatingsCommand updateImdbUserRatingsCommand;
         private readonly IUsersRepository usersRepository;
 
-        public AutoUpdateAllImdbUsersDataCommand(ILogger<AutoUpdateAllImdbUsersDataCommand> logger,
+        public UpdateAllImdbUsersDataCommand(ILogger<UpdateAllImdbUsersDataCommand> logger,
             IUpdateImdbUserRatingsCommand updateImdbUserRatingsCommand,
             IUsersRepository usersRepository)
         {
@@ -46,7 +46,7 @@ namespace FxMovies.Core
             {
                 try
                 {
-                    await updateImdbUserRatingsCommand.Run(imdbUserId);
+                    await updateImdbUserRatingsCommand.Run(imdbUserId, false);
                 }
                 catch (Exception x)
                 {

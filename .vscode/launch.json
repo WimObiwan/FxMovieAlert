@@ -77,37 +77,33 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": "Grabber AutoUpdateAllImdbUsersData",
+            "name": "Grabber UpdateAllImdbUsersData",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceRoot}/Grabber/bin/Debug/net5.0/Grabber.dll",
-            "args": [ "AutoUpdateAllImdbUsersData" ],
+            "args": [ "UpdateAllImdbUsersData" ],
             "cwd": "${workspaceRoot}/Grabber",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
             "console": "internalConsole",
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart"
         },
-        // {
-        //     "name": ".NET Core Launch (GRABBER)",
-        //     "type": "coreclr",
-        //     "request": "launch",
-        //     "preLaunchTask": "build",
-        //     // If you have changed target frameworks, make sure to update the program path.
-        //     "program": "${workspaceRoot}/Grabber/bin/Debug/net5.0/Grabber.dll",
-        //     // One of the 'args' below needs to be uncommented
-        //     //"args": [ "--environment=Development", "UpdateImdbUserRatings", "ur27490911" ],
-        //     //"args": [ "--environment=Development", "UpdateVod" ],
-        //     //"args": [ "--environment=Development", "AutoUpdateImdbUserRatings" ],
-        //     //"args": [ "--environment=Development", "TwitterBot" ],
-        //     "cwd": "${workspaceRoot}/Grabber",
-        //     // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
-        //     "console": "internalConsole",
-        //     "stopAtEntry": false,
-        //     "internalConsoleOptions": "openOnSessionStart"
-        // },
+        {
+            "name": "Grabber AutoUpdateImdbUserData",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net5.0/Grabber.dll",
+            "args": [ "AutoUpdateImdbUserData" ],
+            "cwd": "${workspaceRoot}/Grabber",
+            // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
         {
             "name": ".NET Core Attach",
             "type": "coreclr",

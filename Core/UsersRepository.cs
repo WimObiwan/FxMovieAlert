@@ -17,6 +17,8 @@ namespace FxMovies.Core
     public interface IUsersRepository
     {
         IAsyncEnumerable<string> GetAllImdbUserIds();
+        IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold);
+        Task SetRatingRefreshResult(string imdbUserId, bool succeeded, string result);
     }
 
     public class UsersRepository : IUsersRepository
@@ -34,8 +36,30 @@ namespace FxMovies.Core
 
         public IAsyncEnumerable<string> GetAllImdbUserIds()
         {
-            return fxMoviesDbContext.Users.Select(u => u.ImdbUserId).AsAsyncEnumerable();
+            return fxMoviesDbContext.Users
+                .Select(u => u.ImdbUserId).AsAsyncEnumerable();
         }
 
+        public IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold)
+        {
+            return fxMoviesDbContext.Users
+                .Where (u => 
+                    u.RefreshRequestTime.HasValue || // requested to be refreshed, OR
+                    !u.LastRefreshRatingsTime.HasValue || // never refreshed before, OR
+                    u.LastRefreshRatingsTime.Value < lastUpdateThreshold) // last refresh is 24 hours ago
+                .AsAsyncEnumerable();
+        }
+
+        public async Task SetRatingRefreshResult(string imdbUserId, bool succeeded, string result)
+        {
+            var user = await fxMoviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+            if (user != null)
+            {
+                user.LastRefreshSuccess = succeeded;
+                user.LastRefreshRatingsTime = DateTime.UtcNow;
+                user.LastRefreshRatingsResult = result;
+                await fxMoviesDbContext.SaveChangesAsync();
+            }
+        }
     }
 }

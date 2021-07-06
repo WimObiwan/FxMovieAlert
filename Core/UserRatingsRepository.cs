@@ -19,6 +19,7 @@ namespace FxMovies.Core
         public int ExistingCount { get; internal set; }
         public int NewCount { get; internal set; }
         public int RemovedCount { get; internal set; }
+        public string LastTitle { get; internal set; }
     }
 
     public interface IUserRatingsRepository
@@ -47,8 +48,11 @@ namespace FxMovies.Core
             User user = await fxMoviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
             int newCount = 0, existingCount = 0;
             List<string> movieIdsInData = new List<string>();
+            string lastTitle = null;
             foreach (var imdbRating in imdbRatings)
             {
+                if (lastTitle == null)
+                    lastTitle = imdbRating.Title;
                 var imdbId = imdbRating.ImdbId;
                 movieIdsInData.Add(imdbId);
                 var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
@@ -91,7 +95,8 @@ namespace FxMovies.Core
             {
                 ExistingCount = existingCount,
                 NewCount = newCount,
-                RemovedCount = removedCount 
+                RemovedCount = removedCount,
+                LastTitle = lastTitle
             };
         }
 
