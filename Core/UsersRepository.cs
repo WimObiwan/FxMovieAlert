@@ -17,7 +17,7 @@ namespace FxMovies.Core
     public interface IUsersRepository
     {
         IAsyncEnumerable<string> GetAllImdbUserIds();
-        IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold);
+        IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold, DateTime lastUpdateThresholdActiveUser);
         Task SetRatingRefreshResult(string imdbUserId, bool succeeded, string result);
         Task SetWatchlistRefreshResult(string imdbUserId, bool succeeded, string result);
         Task UnsetRefreshRequestTime(string imdbUserId);
@@ -42,13 +42,15 @@ namespace FxMovies.Core
                 .Select(u => u.ImdbUserId).AsAsyncEnumerable();
         }
 
-        public IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold)
+        public IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold, DateTime lastUpdateThresholdActiveUser)
         {
             return fxMoviesDbContext.Users
                 .Where (u => 
-                    u.RefreshRequestTime.HasValue || // requested to be refreshed, OR
-                    !u.LastRefreshRatingsTime.HasValue || // never refreshed before, OR
-                    u.LastRefreshRatingsTime.Value < lastUpdateThreshold) // last refresh is 24 hours ago
+                    u.RefreshRequestTime.HasValue  // requested to be refreshed, OR
+                    || !u.LastRefreshRatingsTime.HasValue  // never refreshed before, OR
+                    || u.LastRefreshRatingsTime.Value < lastUpdateThreshold  // last refresh is before inactive user threshold
+                    || (u.LastUsageTime.HasValue && u.LastUsageTime.Value > u.LastRefreshRatingsTime.Value  // used since last refreshtime
+                        && u.LastRefreshRatingsTime.Value < lastUpdateThresholdActiveUser)) // last refresh is before active user threshold
                 .AsAsyncEnumerable();
         }
 

@@ -30,6 +30,7 @@ namespace FxMovies.Core
         public static string Position => "AutoUpdateImdbUserData";
 
         public TimeSpan? AutoUpdateInterval { get; set; }
+        public TimeSpan? AutoUpdateIntervalActiveUser { get; set; }
         public bool? UpdateAllRatings { get; set; }
     }
 
@@ -39,6 +40,7 @@ namespace FxMovies.Core
         private readonly IUpdateImdbUserDataCommand updateImdbUserDataCommand;
         private readonly IUsersRepository usersRepository;
         private readonly TimeSpan autoUpdateInterval;
+        private readonly TimeSpan autoUpdateIntervalActiveUser;
         private readonly bool updateAllRatings;
 
         public AutoUpdateImdbUserDataCommand(ILogger<AutoUpdateImdbUserDataCommand> logger,
@@ -50,6 +52,7 @@ namespace FxMovies.Core
             this.updateImdbUserDataCommand = updateImdbUserDataCommand;
             this.usersRepository = usersRepository;
             this.autoUpdateInterval = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateInterval ?? TimeSpan.FromDays(1);
+            this.autoUpdateIntervalActiveUser = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateIntervalActiveUser ?? TimeSpan.FromHours(1);
             this.updateAllRatings = autoUpdateImdbUserDataCommandOptions.Value.UpdateAllRatings ?? false;
         }
 
@@ -57,18 +60,22 @@ namespace FxMovies.Core
         {
             var now = DateTime.UtcNow;
             var lastUpdateThreshold = now.Add(-autoUpdateInterval);
+            var lastUpdateThresholdActiveUser = now.Add(-autoUpdateIntervalActiveUser);
 
-            logger.LogInformation($"Loading users that need to be refreshed (threshold {lastUpdateThreshold})");
+            logger.LogInformation($"Loading users that need to be refreshed (inactive user threshold {lastUpdateThreshold}, active user threshold {lastUpdateThresholdActiveUser})");
 
-            await foreach (var user in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold))
+            await foreach (var user in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold, lastUpdateThresholdActiveUser))
             {
-                logger.LogInformation($"User {user.ImdbUserId} needs a refresh of the IMDb User ratings");
+                logger.LogInformation($"User {user.ImdbUserId} needs a refresh of the IMDb User ratings, LastUsageTime = {user.LastUsageTime}");
                 if (user.RefreshRequestTime.HasValue)
-                    logger.LogInformation($"   * RefreshRequestTime = {user.RefreshRequestTime.Value} ({(now - user.RefreshRequestTime.Value).TotalSeconds} seconds ago)");
+                    logger.LogInformation($"   * Refresh requested (RefreshRequestTime {user.RefreshRequestTime.Value}, {(now - user.RefreshRequestTime.Value).TotalSeconds} seconds ago)");
                 if (!user.LastRefreshRatingsTime.HasValue)
-                    logger.LogInformation("   * LastRefreshRatingsTime = null");
-                else 
-                    logger.LogInformation($"   * LastRefreshRatingsTime = {user.LastRefreshRatingsTime.Value}");
+                    logger.LogInformation("   * Never refreshed");
+                else if (user.LastRefreshRatingsTime.Value < lastUpdateThreshold)
+                    logger.LogInformation($"   * Last refresh too old for inactive user, LastRefreshRatingsTime = {user.LastRefreshRatingsTime.Value}");
+                else if (user.LastUsageTime.HasValue && user.LastUsageTime.Value > user.LastRefreshRatingsTime.Value  // used since last refreshtime
+                        && user.LastRefreshRatingsTime.Value < lastUpdateThresholdActiveUser) // last refresh is before active user threshold
+                    logger.LogInformation($"   * Last refresh too old for active user, LastRefreshRatingsTime = {user.LastRefreshRatingsTime.Value}");
                     
                 try
                 {
