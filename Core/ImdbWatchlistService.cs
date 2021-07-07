@@ -75,17 +75,29 @@ namespace FxMovies.Core
 
         public async Task<IList<ImdbWatchlist>> GetWatchlistAsync(string imdbUserId)
         {
+            var jsonData = await GetDocumentString(imdbUserId);
+            return GetWatchlist(jsonData);
+        }
+
+        private async Task<JsonData> GetDocumentString(string imdbUserId)
+        {
             var client = httpClientFactory.CreateClient("imdb");
             var response = await client.GetAsync($"/user/{imdbUserId}/watchlist?sort=date_added%2Cdesc&view=detail");
             response.EnsureSuccessStatusCode();
             // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
 
-            Stream stream = await response.Content.ReadAsStreamAsync();
-            TextReader textReader = new StreamReader(stream);
-            string text = await textReader.ReadToEndAsync();
-            text = Regex.Match(text, @"IMDbReactInitialState\.push\(({.*})\);").Groups[1].Value;
-            var jsonData = System.Text.Json.JsonSerializer.Deserialize<JsonData>(text);
+            string text;
+            using (Stream stream = await response.Content.ReadAsStreamAsync())
+            using (TextReader textReader = new StreamReader(stream))
+            {
+                text = await textReader.ReadToEndAsync();
+            }
+            var jsonString = Regex.Match(text, @"IMDbReactInitialState\.push\(({.*})\);").Groups[1].Value;
+            return System.Text.Json.JsonSerializer.Deserialize<JsonData>(jsonString);
+        }
 
+        private IList<ImdbWatchlist> GetWatchlist(JsonData jsonData)
+        {
             return jsonData.list.items.Select(i =>
             {
                 jsonData.titles.TryGetValue(i.imdbMovieId, out Title title);

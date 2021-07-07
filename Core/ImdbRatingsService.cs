@@ -51,22 +51,28 @@ namespace FxMovies.Core
             string url = $"/user/{imdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
             do
             {
-                url = await GetRatingsSinglePageAsync(url, ratings);
+                using (var htmlDocument = await FetchHtmlDocument(url))
+                {
+                    url = GetRatingsSinglePageAsync(htmlDocument, ratings);
+                }
             } while (getAll && url != null);
             return ratings;
         }
 
-        private async Task<string> GetRatingsSinglePageAsync(string url, IList<ImdbRating> ratings)
+        private async Task<IHtmlDocument> FetchHtmlDocument(string url)
         {
             var client = httpClientFactory.CreateClient("imdb");
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
             // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
 
-            Stream stream = await response.Content.ReadAsStreamAsync();
+            using Stream stream = await response.Content.ReadAsStreamAsync();
             HtmlParser parser = new HtmlParser();
-            IHtmlDocument document = await parser.ParseDocumentAsync(stream);
+            return await parser.ParseDocumentAsync(stream);
+        }
 
+        private string GetRatingsSinglePageAsync(IHtmlDocument document, IList<ImdbRating> ratings)
+        {
             var ratingsContainer = document.QuerySelector("#ratings-container");
             if (ratingsContainer == null)
                 return null;
