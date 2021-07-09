@@ -189,7 +189,9 @@ namespace FxMovieAlert
 
             services.Configure<TheMovieDbServiceOptions>(_configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.AddScoped<IUserRatingsRepository, UserRatingsRepository>();
+            services.AddScoped<IUserWatchlistRepository, UserWatchlistRepository>();
             services.AddScoped<IImdbRatingsFromFileService, ImdbRatingsFromFileService>();
+            services.AddScoped<IImdbWatchlistFromFileService, ImdbWatchlistFromFileService>();
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
         }

@@ -18,18 +18,18 @@ namespace FxMovies.Core
         public string Title { get; set; }
     }
 
-    public interface IImdbWatchlistService
+    public interface IImdbWatchlistFromWebService
     {
         Task<IList<ImdbWatchlist>> GetWatchlistAsync(string ImdbUserId);
     }
 
-    public class ImdbWatchlistService : IImdbWatchlistService
+    public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
     {
-        private readonly ILogger<ImdbWatchlistService> logger;
+        private readonly ILogger<ImdbWatchlistFromWebService> logger;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public ImdbWatchlistService(
-            ILogger<ImdbWatchlistService> logger,
+        public ImdbWatchlistFromWebService(
+            ILogger<ImdbWatchlistFromWebService> logger,
             IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;

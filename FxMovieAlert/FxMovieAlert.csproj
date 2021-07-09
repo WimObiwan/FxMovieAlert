@@ -9,7 +9,6 @@
     <!--PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="2.2.4" /-->
     <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="5.0.1" />
     <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="5.0.1" />
-    <PackageReference Include="FileHelpers" Version="3.5.0" />
     <PackageReference Include="GitInfo" Version="2.1.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

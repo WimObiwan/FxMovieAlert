@@ -1,30 +1,16 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core
 {
-    public class UserWatchlistRepositoryStoreResult
-    {
-        public int ExistingCount { get; internal set; }
-        public int NewCount { get; internal set; }
-        public int RemovedCount { get; internal set; }
-        public string LastTitle { get; internal set; }
-    }
-
     public interface IUserWatchlistRepository
     {
-        Task<UserWatchlistRepositoryStoreResult> Store(string imdbUserId, IEnumerable<ImdbWatchlist> watchlistEntries, bool replace = false);
+        Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId, IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false);
+        Task<UserListRepositoryStoreResult> StoreByUserId(string userId, IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false);
     }
 
     public class UserWatchlistRepository : IUserWatchlistRepository
@@ -43,13 +29,24 @@ namespace FxMovies.Core
             this.movieCreationHelper = movieCreationHelper;
         }
 
-        public async Task<UserWatchlistRepositoryStoreResult> Store(string imdbUserId, IEnumerable<ImdbWatchlist> imdbWatchlistEntries, bool replace = false)
+        public async Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId, IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false)
         {
             User user = await fxMoviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+            return await Store(user, imdbWatchlist, replace);
+        }
+
+        public async Task<UserListRepositoryStoreResult> StoreByUserId(string userId, IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false)
+        {
+            User user = await fxMoviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            return await Store(user, imdbWatchlist, replace);
+        }
+
+        private async Task<UserListRepositoryStoreResult> Store(User user, IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace)
+        {
             int newCount = 0, existingCount = 0;
             List<string> movieIdsInData = new List<string>();
             string lastTitle = null;
-            foreach (var imdbWatchlistEntry in imdbWatchlistEntries)
+            foreach (var imdbWatchlistEntry in imdbWatchlist)
             {
                 if (lastTitle == null)
                     lastTitle = imdbWatchlistEntry.Title;
@@ -90,7 +87,7 @@ namespace FxMovies.Core
 
             await fxMoviesDbContext.SaveChangesAsync();
 
-            return new UserWatchlistRepositoryStoreResult()
+            return new UserListRepositoryStoreResult()
             {
                 ExistingCount = existingCount,
                 NewCount = newCount,

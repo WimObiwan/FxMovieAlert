@@ -9,25 +9,25 @@ using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core
 {
-    public interface IImdbRatingsFromFileService
+    public interface IImdbWatchlistFromFileService
     {
-        IList<ImdbRating> GetRatings(Stream stream, out List<Tuple<string, string, string>> lastImportErrors);
+        IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>> lastImportErrors);
     }
 
-    public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
+    public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
     {
-        private readonly ILogger<ImdbRatingsFromFileService> logger;
+        private readonly ILogger<ImdbWatchlistFromFileService> logger;
 
-        public ImdbRatingsFromFileService(
-            ILogger<ImdbRatingsFromFileService> logger)
+        public ImdbWatchlistFromFileService(
+            ILogger<ImdbWatchlistFromFileService> logger)
         {
             this.logger = logger;
         }
 
-        public IList<ImdbRating> GetRatings(Stream stream, out List<Tuple<string, string, string>> lastImportErrors)
+        public IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>> lastImportErrors)
         {
             List<Tuple<string, string, string>> lastImportErrors2 = null;
-            var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
+            var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
             
             int moreErrors = 0;
             using (var reader = new StreamReader(stream))
@@ -40,20 +40,15 @@ namespace FxMovies.Core
                         {
                             string _const = record.Const;
 
-                            DateTime date = DateTime.ParseExact(record.DateAdded, 
+                            DateTime date = DateTime.ParseExact(record.Created, 
                                 new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
                                 CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
 
-                            // Ratings
-                            // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                            int rating = int.Parse(record.YourRating);
-
-                            return new ImdbRating()
+                            return new ImdbWatchlist()
                             {
                                 ImdbId = _const,
                                 Title = record.Title,
-                                Date = date,
-                                Rating = rating
+                                Date = date
                             };
                         }
                         catch (Exception x)
@@ -73,7 +68,7 @@ namespace FxMovies.Core
                             return null;
                         }
                     }).Where(i => i != null).ToList();
-                    
+
                 if (moreErrors > 0)
                     lastImportErrors2.Add(
                         Tuple.Create(
@@ -89,17 +84,24 @@ namespace FxMovies.Core
 #pragma warning disable CS0649
         [IgnoreFirst]
         [DelimitedRecord(",")]
-        class ImdbUserRatingRecord
+        class ImdbUserWatchlistRecord
         {
-            // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
+            // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
+
+            [FieldQuoted]
+            public string Position;
             [FieldQuoted]
             public string Const;
             [FieldQuoted]
-            public string YourRating;
-            [FieldQuoted]
             //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
             // 'Wed Sep 20 00:00:00 2017'
-            public string DateAdded;
+            public string Created;
+            //[FieldQuoted]
+            //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
+            // 'Wed Sep 20 00:00:00 2017'?
+            public string Modified;
+            [FieldQuoted]
+            public string description;
             [FieldQuoted]
             public string Title;
             [FieldQuoted]
@@ -121,7 +123,10 @@ namespace FxMovies.Core
             public string ReleaseDate;
             [FieldQuoted]
             public string Directors;
-
+            [FieldQuoted]
+            public string YourRating;
+            [FieldQuoted]
+            public string Rated;
         }
     }
 }

@@ -13,14 +13,14 @@ namespace FxMovies.Core
     {
         private readonly ILogger<UpdateImdbUserDataCommand> logger;
         private readonly IImdbRatingsFromWebService imdbRatingsService;
-        private readonly IImdbWatchlistService imdbWatchlistService;
+        private readonly IImdbWatchlistFromWebService imdbWatchlistService;
         private readonly IUserRatingsRepository userRatingsRepository;
         private readonly IUserWatchlistRepository userWatchlistRepository;
         private readonly IUsersRepository usersRepository;
 
         public UpdateImdbUserDataCommand(ILogger<UpdateImdbUserDataCommand> logger, 
             IImdbRatingsFromWebService imdbRatingsService,
-            IImdbWatchlistService imdbWatchlistService,
+            IImdbWatchlistFromWebService imdbWatchlistService,
             IUserRatingsRepository userRatingsRepository,
             IUserWatchlistRepository userWatchlistRepository,
             IUsersRepository usersRepository)
@@ -53,7 +53,7 @@ namespace FxMovies.Core
             try
             {
                 var watchlistEntries = await imdbWatchlistService.GetWatchlistAsync(imdbUserId);
-                var result = await userWatchlistRepository.Store(imdbUserId, watchlistEntries, true);
+                var result = await userWatchlistRepository.StoreByImdbUserId(imdbUserId, watchlistEntries, true);
                 string message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films."
                     + $"  {result.RemovedCount} films verwijderd.";
                 await usersRepository.SetWatchlistRefreshResult(imdbUserId, true, message);
