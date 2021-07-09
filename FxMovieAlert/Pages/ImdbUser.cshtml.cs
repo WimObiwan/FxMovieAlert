@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -20,6 +20,8 @@ namespace FxMovieAlert.Pages
     public class ImdbUserModel : PageModel
     {
         private readonly IMovieCreationHelper movieCreationHelper;
+        private readonly IUserRatingsRepository userRatingsRepository;
+        private readonly IImdbRatingsFromFileService imdbRatingsFromFileService;
         private readonly FxMoviesDbContext fxMoviesDbContext;
         private readonly ImdbDbContext imdbDbContext;
         public string WarningMessage = null;        
@@ -46,12 +48,16 @@ namespace FxMovieAlert.Pages
 
         public ImdbUserModel(
             IConfiguration configuration, 
-            IMovieCreationHelper movieCreationHelper, 
+            IMovieCreationHelper movieCreationHelper,
+            IUserRatingsRepository userRatingsRepository,
+            IImdbRatingsFromFileService imdbRatingsFromFileService,
             FxMoviesDbContext fxMoviesDbContext,
             ImdbDbContext imdbDbContext)
         {
             this.configuration = configuration;
             this.movieCreationHelper = movieCreationHelper;
+            this.userRatingsRepository = userRatingsRepository;
+            this.imdbRatingsFromFileService = imdbRatingsFromFileService;
             this.fxMoviesDbContext = fxMoviesDbContext;
             this.imdbDbContext = imdbDbContext;
         }
@@ -179,13 +185,21 @@ namespace FxMovieAlert.Pages
                 return new BadRequestResult();
             }
 
+            if (Request.Form.Files.Count != 1)
+            {
+                // Exactly 1 file should be provided
+                return new BadRequestResult();
+            }
+
+            var file = Request.Form.Files.Single();
+
             if (ratings)
             {
-                await OnPostRatings();
+                await OnPostRatings(file);
             }
             else if (watchlist)
             {
-                await OnPostWatchlist();
+                await OnPostWatchlist(file);
             }
 
             await OnGet();
@@ -193,98 +207,46 @@ namespace FxMovieAlert.Pages
             return Page();
         }
 
-        private async Task OnPostRatings()
+        private async Task OnPostRatings(IFormFile file)
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
-            int existingCount = 0;
-            int newCount = 0;
-
-            User user = await fxMoviesDbContext.Users
-                .SingleAsync(u => u.UserId == userId);
-            foreach (var file in Request.Form.Files)
+            IEnumerable<ImdbRating> imdbRatings;
+            try
             {
-                try
+                using (var stream = file.OpenReadStream())
                 {
-                    var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
-                    
-                    var movieIdsInFile = new SortedSet<string>(); 
-                    
-                    using (var reader = new StreamReader(file.OpenReadStream()))
-                    using (engine.BeginReadStream(reader))
-                    foreach (var record in engine)
-                    {
-                        try
-                        {
-                            string _const = record.Const;
-                            movieIdsInFile.Add(_const);
-
-                            DateTime date = DateTime.ParseExact(record.DateAdded, 
-                                new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
-                                CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
-
-                            // Ratings
-                            // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                            int rating = int.Parse(record.YourRating);
-
-                            var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(_const);
-                            var userRating = fxMoviesDbContext.UserRatings.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
-                            if (userRating == null)
-                            {
-                                userRating = new UserRating();
-                                userRating.User = user;
-                                userRating.Movie = movie;
-                                fxMoviesDbContext.UserRatings.Add(userRating);
-                                newCount++;
-                            }
-                            else
-                            {
-                                existingCount++;
-                            }
-                            userRating.Rating = rating;
-                            userRating.RatingDate = date;
-                        }
-                        catch (Exception x)
-                        {
-                            LastImportErrors.Add(
-                                Tuple.Create(
-                                    $"Lijn {engine.LineNumber - 1} uit het ratings bestand '{file.FileName}' kon niet verwerkt worden.\n"
-                                    + "De meest voorkomende reden is een aanpassing aan het bestandsformaat door IMDb.",
-                                    x.ToString(),
-                                    "danger"));
-                        }
-                    }
-
-                    List<UserRating> itemsToRemove = 
-                        await fxMoviesDbContext.UserRatings
-                            .Where(ur => ur.UserId == user.Id && !movieIdsInFile.Contains(ur.Movie.ImdbId))
-                            .ToListAsync();
-
-                    fxMoviesDbContext.UserRatings.RemoveRange(itemsToRemove);
-
-                    LastImportErrors.Add(
-                        Tuple.Create(
-                            $"Het ratings bestand '{file.FileName}' werd ingelezen. "
-                            + $"{newCount} nieuwe en {existingCount} bestaande films.  {itemsToRemove.Count} films verwijderd.",
-                            (string)null,
-                            "success"));
+                    imdbRatings = imdbRatingsFromFileService.GetRatings(stream, out List<Tuple<string, string, string>> lastImportErrors);
+                    LastImportErrors.Clear();
+                    if (lastImportErrors != null)
+                        LastImportErrors.AddRange(lastImportErrors);
                 }
-                catch (Exception x)
-                {
-                    LastImportErrors.Add(
-                        Tuple.Create(
-                            $"Het ratings bestand '{file.FileName}' kon niet ingelezen worden.\n"
-                            + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
-                            + "het bestandsformaat door IMDb.",
-                            x.ToString(),
-                            "danger"));
-                }
-
-                await fxMoviesDbContext.SaveChangesAsync();
             }
+            catch (Exception x)
+            {
+                LastImportErrors.Add(
+                    Tuple.Create(
+                        $"Het ratings bestand '{file.FileName}' kon niet ingelezen worden.\n"
+                        + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
+                        + "het bestandsformaat door IMDb.",
+                        x.ToString(),
+                        "danger"));
+                
+                return;
+            }
+
+
+            var result = await userRatingsRepository.StoreByUserId(userId, imdbRatings, true);
+
+            LastImportErrors.Add(
+                Tuple.Create(
+                    $"Het ratings bestand '{file.FileName}' werd ingelezen. "
+                    + $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films.  {result.RemovedCount} films verwijderd.",
+                    (string)null,
+                    "success"));
         }
 
-        private async Task OnPostWatchlist()
+        private async Task OnPostWatchlist(IFormFile file)
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
@@ -295,11 +257,10 @@ namespace FxMovieAlert.Pages
 
             User user = await fxMoviesDbContext.Users
                 .SingleAsync(u => u.UserId == userId);
-            foreach (var file in Request.Form.Files)
+
+            try
             {
-                try
-                {
-                    var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
+                var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
 
                     var movieIdsInFile = new SortedSet<string>(); 
                     
@@ -370,47 +331,8 @@ namespace FxMovieAlert.Pages
                             "danger"));
                 }
 
-                await fxMoviesDbContext.SaveChangesAsync();
-            }
+            await fxMoviesDbContext.SaveChangesAsync();
         }
-
-    }
-
-    #pragma warning disable CS0649
-    [IgnoreFirst]
-    [DelimitedRecord(",")]
-    class ImdbUserRatingRecord
-    {
-        // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-        [FieldQuoted]
-        public string Const;
-        [FieldQuoted]
-        public string YourRating;
-        [FieldQuoted]
-        //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
-        // 'Wed Sep 20 00:00:00 2017'
-        public string DateAdded;
-        [FieldQuoted]
-        public string Title;
-        [FieldQuoted]
-        public string Url;
-        [FieldQuoted]
-        public string TitleType;
-        [FieldQuoted]
-        public string IMDbRating;
-        [FieldQuoted]
-        public string Runtime;
-        [FieldQuoted]
-        public string Year;
-        [FieldQuoted]
-        public string Genres;
-        [FieldQuoted]
-        public string NumVotes;
-        [FieldQuoted]
-        //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
-        public string ReleaseDate;
-        [FieldQuoted]
-        public string Directors;
 
     }
 

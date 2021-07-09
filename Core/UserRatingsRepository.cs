@@ -24,7 +24,8 @@ namespace FxMovies.Core
 
     public interface IUserRatingsRepository
     {
-        Task<UserRatingsRepositoryStoreResult> Store(string imdbUserId, IEnumerable<ImdbRating> imdbRatings, bool replace = false);
+        Task<UserRatingsRepositoryStoreResult> StoreByImdbUserId(string imdbUserId, IEnumerable<ImdbRating> imdbRatings, bool replace = false);
+        Task<UserRatingsRepositoryStoreResult> StoreByUserId(string userId, IEnumerable<ImdbRating> imdbRatings, bool replace = false);
     }
 
     public class UserRatingsRepository : IUserRatingsRepository
@@ -43,9 +44,20 @@ namespace FxMovies.Core
             this.movieCreationHelper = movieCreationHelper;
         }
 
-        public async Task<UserRatingsRepositoryStoreResult> Store(string imdbUserId, IEnumerable<ImdbRating> imdbRatings, bool replace = false)
+        public async Task<UserRatingsRepositoryStoreResult> StoreByImdbUserId(string imdbUserId, IEnumerable<ImdbRating> imdbRatings, bool replace = false)
         {
             User user = await fxMoviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+            return await Store(user, imdbRatings, replace);
+        }
+
+        public async Task<UserRatingsRepositoryStoreResult> StoreByUserId(string userId, IEnumerable<ImdbRating> imdbRatings, bool replace = false)
+        {
+            User user = await fxMoviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            return await Store(user, imdbRatings, replace);
+        }
+
+        private async Task<UserRatingsRepositoryStoreResult> Store(User user, IEnumerable<ImdbRating> imdbRatings, bool replace)
+        {
             int newCount = 0, existingCount = 0;
             List<string> movieIdsInData = new List<string>();
             string lastTitle = null;

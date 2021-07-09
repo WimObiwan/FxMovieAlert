@@ -70,7 +70,7 @@ namespace FxMovies.Grabber
             services.Configure<AutoUpdateImdbUserDataCommandOptions>(Configuration.GetSection(AutoUpdateImdbUserDataCommandOptions.Position));
 
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
-            services.AddScoped<IImdbRatingsService, ImdbRatingsService>();
+            services.AddScoped<IImdbRatingsFromWebService, ImdbRatingsFromWebService>();
             services.AddScoped<IImdbWatchlistService, ImdbWatchlistService>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
             services.AddScoped<IVtmGoService, VtmGoService>();

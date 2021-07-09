@@ -2,43 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using AngleSharp;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
-using FxMovies.FxMoviesDB;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core
 {
-    public class ImdbRating
-    {
-        public string ImdbId { get; set; }
-        public int Rating { get; set; }
-        public DateTime Date { get; set; }
-        public string Title { get; set; }
-    }
-
-    public interface IImdbRatingsService
+    public interface IImdbRatingsFromWebService
     {
         Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, bool getAll);
     }
 
-    public class ImdbRatingsService : IImdbRatingsService
+    public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
     {
-        private readonly ILogger<ImdbRatingsService> logger;
+        private readonly ILogger<ImdbRatingsFromWebService> logger;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public ImdbRatingsService(
-            ILogger<ImdbRatingsService> logger,
+        public ImdbRatingsFromWebService(
+            ILogger<ImdbRatingsFromWebService> logger,
             IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;
