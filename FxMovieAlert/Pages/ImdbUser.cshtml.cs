@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -262,74 +262,74 @@ namespace FxMovieAlert.Pages
             {
                 var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
 
-                    var movieIdsInFile = new SortedSet<string>(); 
-                    
-                    using (var reader = new StreamReader(file.OpenReadStream()))
-                    using (engine.BeginReadStream(reader))
-                    foreach (var record in engine)
-                    {
-                        try
-                        {
-                            string _const = record.Const;
-                            movieIdsInFile.Add(_const);
-
-                            DateTime date = DateTime.ParseExact(record.Created, 
-                                new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
-                                CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
-
-                            // Watchlist
-                            // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                            var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(_const);
-                            var userWatchList = await fxMoviesDbContext.UserWatchLists.FirstOrDefaultAsync(ur => ur.User == user && ur.Movie == movie);
-                            if (userWatchList == null)
-                            {
-                                userWatchList = new UserWatchListItem();
-                                userWatchList.User = user;
-                                userWatchList.Movie = movie;
-                                fxMoviesDbContext.UserWatchLists.Add(userWatchList);
-                                newCount++;
-                            }
-                            else
-                            {
-                                existingCount++;
-                            }
-                            userWatchList.AddedDate = date;
-                        }
-                        catch (Exception x)
-                        {
-                            LastImportErrors.Add(
-                                Tuple.Create(
-                                    $"Lijn {engine.LineNumber - 1} uit het watchlist bestand '{file.FileName}' kon niet verwerkt worden. "
-                                    + "De meest voorkomende reden is een aanpassing aan het bestandsformaat door IMDb.",
-                                    x.ToString(),
-                                    "danger"));
-                        }
-                    }
-
-                    List<UserWatchListItem> itemsToRemove = 
-                        await fxMoviesDbContext.UserWatchLists
-                            .Where(uw => uw.UserId == user.Id && !movieIdsInFile.Contains(uw.Movie.ImdbId))
-                            .ToListAsync();
-
-                    fxMoviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);
-                    
-                    LastImportErrors.Add(
-                        Tuple.Create(
-                            $"Het watchlist bestand '{file.FileName}' werd ingelezen. "
-                            + $"{newCount} nieuwe en {existingCount} bestaande films.  {itemsToRemove.Count} films verwijderd.",
-                            (string)null,
-                            "success"));
-                }
-                catch (Exception x)
+                var movieIdsInFile = new SortedSet<string>(); 
+                
+                using (var reader = new StreamReader(file.OpenReadStream()))
+                using (engine.BeginReadStream(reader))
+                foreach (var record in engine)
                 {
-                    LastImportErrors.Add(
-                        Tuple.Create(
-                            $"Het watchlist bestand '{file.FileName}' kon niet ingelezen worden.\n"
-                            + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
-                            + "het bestandsformaat door IMDb.",
-                            x.ToString(),
-                            "danger"));
+                    try
+                    {
+                        string _const = record.Const;
+                        movieIdsInFile.Add(_const);
+
+                        DateTime date = DateTime.ParseExact(record.Created, 
+                            new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
+                            CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
+
+                        // Watchlist
+                        // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
+                        var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(_const);
+                        var userWatchList = await fxMoviesDbContext.UserWatchLists.FirstOrDefaultAsync(ur => ur.User == user && ur.Movie == movie);
+                        if (userWatchList == null)
+                        {
+                            userWatchList = new UserWatchListItem();
+                            userWatchList.User = user;
+                            userWatchList.Movie = movie;
+                            fxMoviesDbContext.UserWatchLists.Add(userWatchList);
+                            newCount++;
+                        }
+                        else
+                        {
+                            existingCount++;
+                        }
+                        userWatchList.AddedDate = date;
+                    }
+                    catch (Exception x)
+                    {
+                        LastImportErrors.Add(
+                            Tuple.Create(
+                                $"Lijn {engine.LineNumber - 1} uit het watchlist bestand '{file.FileName}' kon niet verwerkt worden. "
+                                + "De meest voorkomende reden is een aanpassing aan het bestandsformaat door IMDb.",
+                                x.ToString(),
+                                "danger"));
+                    }
                 }
+
+                List<UserWatchListItem> itemsToRemove = 
+                    await fxMoviesDbContext.UserWatchLists
+                        .Where(uw => uw.UserId == user.Id && !movieIdsInFile.Contains(uw.Movie.ImdbId))
+                        .ToListAsync();
+
+                fxMoviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);
+                
+                LastImportErrors.Add(
+                    Tuple.Create(
+                        $"Het watchlist bestand '{file.FileName}' werd ingelezen. "
+                        + $"{newCount} nieuwe en {existingCount} bestaande films.  {itemsToRemove.Count} films verwijderd.",
+                        (string)null,
+                        "success"));
+            }
+            catch (Exception x)
+            {
+                LastImportErrors.Add(
+                    Tuple.Create(
+                        $"Het watchlist bestand '{file.FileName}' kon niet ingelezen worden.\n"
+                        + "De meest voorkomende reden is het omwisselen van Ratings en Watchlist bestanden, of een aanpassing aan "
+                        + "het bestandsformaat door IMDb.",
+                        x.ToString(),
+                        "danger"));
+            }
 
             await fxMoviesDbContext.SaveChangesAsync();
         }

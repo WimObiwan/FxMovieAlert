@@ -1,5 +1,3 @@
-using System;
-
 namespace FxMovies.FxMoviesDB
 {
     public interface IHasImdbLink

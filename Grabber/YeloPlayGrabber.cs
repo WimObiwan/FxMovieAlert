@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using FxMovies.FxMoviesDB;
-
-namespace FxMovies.Grabber
+﻿namespace FxMovies.Grabber
 {
     // public static class YeloPlayGrabber
     // {
@@ -156,7 +146,7 @@ namespace FxMovies.Grabber
     //         foreach (var vod in yeloPlay.vods)
     //         {
     //             var segments = vod.segments.Split(',').Select(s => s.Trim());
-                
+
     //             int providerMask = 0;
     //             if (segments.Any(s => s.Equals("base", StringComparison.InvariantCultureIgnoreCase) && vod.ppvprice > 0))
     //             {

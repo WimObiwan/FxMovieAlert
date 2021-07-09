@@ -1,6 +1,4 @@
 using System;
-using System.Net;
-using System.Net.Http;
 using FxMovies.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
