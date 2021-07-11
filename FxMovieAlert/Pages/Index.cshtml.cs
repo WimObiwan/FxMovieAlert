@@ -9,9 +9,18 @@ namespace FxMovieAlert.Pages
     [AllowAnonymous]
     public class BroadcastModel : BroadcastModelBase
     {
-        public BroadcastModel(IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
-            IMovieCreationHelper movieCreationHelper)
-            : base(false, configuration, fxMoviesDbContext, imdbDbContext, movieCreationHelper)
+        public BroadcastModel(
+            IConfiguration configuration,
+            FxMoviesDbContext fxMoviesDbContext,
+            ImdbDbContext imdbDbContext,
+            IMovieCreationHelper movieCreationHelper,
+            IUsersRepository usersRepository)
+            : base(false,
+                configuration,
+                fxMoviesDbContext,
+                imdbDbContext,
+                movieCreationHelper,
+                usersRepository)
         { }
     }
 }

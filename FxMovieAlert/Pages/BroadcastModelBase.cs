@@ -86,15 +86,22 @@ namespace FxMovieAlert.Pages
         private readonly FxMoviesDbContext fxMoviesDbContext;
         private readonly ImdbDbContext imdbDbContext;
         private readonly IMovieCreationHelper movieCreationHelper;
+        private readonly IUsersRepository usersRepository;
 
-        public BroadcastModelBase(bool streaming, IConfiguration configuration, FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
-            IMovieCreationHelper movieCreationHelper)
+        public BroadcastModelBase(
+            bool streaming,
+            IConfiguration configuration,
+            FxMoviesDbContext fxMoviesDbContext,
+            ImdbDbContext imdbDbContext,
+            IMovieCreationHelper movieCreationHelper,
+            IUsersRepository usersRepository)
         {
             this.streaming = streaming;
             this.configuration = configuration;
             this.fxMoviesDbContext = fxMoviesDbContext;
             this.imdbDbContext = imdbDbContext;
             this.movieCreationHelper = movieCreationHelper;
+            this.usersRepository = usersRepository;
         }
 
         public async Task OnGet(int? m = null, int? typeMask = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
@@ -194,16 +201,13 @@ namespace FxMovieAlert.Pages
 
             if (userId != null)
             {
-                var user = await fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-                if (user != null)
+                var result = await usersRepository.UpdateUserLastUsedAndGetData(userId);
+                if (result != null)
                 {
-                    RefreshRequestTime = user.RefreshRequestTime;
-                    LastRefreshRatingsTime = user.LastRefreshRatingsTime;
-                    LastRefreshSuccess = user.LastRefreshSuccess;
-                    user.Usages++;
-                    user.LastUsageTime = DateTime.UtcNow;
-                    ImdbUserId = user.ImdbUserId;
-                    await fxMoviesDbContext.SaveChangesAsync();
+                    RefreshRequestTime = result.RefreshRequestTime;
+                    LastRefreshRatingsTime = result.LastRefreshRatingsTime;
+                    LastRefreshSuccess = result.LastRefreshSuccess;
+                    ImdbUserId = result.ImdbUserId;
                 }
             }
 

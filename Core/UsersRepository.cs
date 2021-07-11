@@ -8,6 +8,14 @@ using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core
 {
+    public class UserDataResult
+    {
+        public DateTime? RefreshRequestTime { get; set; }
+        public DateTime? LastRefreshRatingsTime { get; set; }
+        public bool? LastRefreshSuccess { get; set; }
+        public string ImdbUserId { get; set; }
+    }
+
     public interface IUsersRepository
     {
         IAsyncEnumerable<string> GetAllImdbUserIds();
@@ -15,6 +23,7 @@ namespace FxMovies.Core
         Task SetRatingRefreshResult(string imdbUserId, bool succeeded, string result);
         Task SetWatchlistRefreshResult(string imdbUserId, bool succeeded, string result);
         Task UnsetRefreshRequestTime(string imdbUserId);
+        Task<UserDataResult> UpdateUserLastUsedAndGetData(string userId);
     }
 
     public class UsersRepository : IUsersRepository
@@ -80,6 +89,25 @@ namespace FxMovies.Core
                 user.RefreshRequestTime = null;
                 await fxMoviesDbContext.SaveChangesAsync();
             }
+        }
+
+        public async Task<UserDataResult> UpdateUserLastUsedAndGetData(string userId)
+        {
+            var user = await fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+            if (user == null)
+                return null;
+                
+            user.Usages++;
+            user.LastUsageTime = DateTime.UtcNow;
+            await fxMoviesDbContext.SaveChangesAsync();
+
+            return new UserDataResult()
+            {
+                RefreshRequestTime = user.RefreshRequestTime,
+                LastRefreshRatingsTime = user.LastRefreshRatingsTime,
+                LastRefreshSuccess = user.LastRefreshSuccess,
+                ImdbUserId = user.ImdbUserId
+            };
         }
     }
 }
