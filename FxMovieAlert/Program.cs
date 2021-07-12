@@ -25,8 +25,8 @@ namespace FxMovieAlert
                                 ThisAssembly.Git.SemVer.Minor + "." +
                                 ThisAssembly.Git.Commits + "-" +
                                 ThisAssembly.Git.Branch + "+" +
-                                ThisAssembly.Git.Commit
-                                //doesn't work (ThisAssembly.Git.IsDirty ? "*" : "")
+                                ThisAssembly.Git.Commit +
+                                (ThisAssembly.Git.IsDirty ? "*" : "")
                                 ),
                             new KeyValuePair<string, string>("DotNetCoreVersion", 
                                 System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using FxMovies.Core;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Grabber
 {
@@ -111,14 +112,10 @@ namespace FxMovies.Grabber
         {
             using (var host = CreateHostBuilder(args).Build())
             {
-                Console.WriteLine("Version " +
-                    ThisAssembly.Git.SemVer.Major + "." +
-                    ThisAssembly.Git.SemVer.Minor + "." +
-                    ThisAssembly.Git.Commits + "-" +
-                    ThisAssembly.Git.Branch + "+" +
-                    ThisAssembly.Git.Commit
-                    //doesn't work (ThisAssembly.Git.IsDirty ? "*" : "")
-                    );
+                var config = host.Services.GetRequiredService<IConfiguration>();
+                var version = config.GetValue<string>("Version");
+                var logger = host.Services.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation($"Version {version}");
 
                 var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
                 using (var scope = serviceProvider.CreateScope())
@@ -176,8 +173,8 @@ namespace FxMovies.Grabber
                                 ThisAssembly.Git.SemVer.Minor + "." +
                                 ThisAssembly.Git.Commits + "-" +
                                 ThisAssembly.Git.Branch + "+" +
-                                ThisAssembly.Git.Commit
-                                //doesn't work (ThisAssembly.Git.IsDirty ? "*" : "")
+                                ThisAssembly.Git.Commit +
+                                (ThisAssembly.Git.IsDirty ? "*" : "")
                                 ),
                             new KeyValuePair<string, string>("DotNetCoreVersion", 
                                 System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)
