@@ -21,12 +21,12 @@ namespace FxMovieAlert
                         new List<KeyValuePair<string, string>>()
                         {
                             new KeyValuePair<string, string>("Version", 
-                                ThisAssembly.Git.SemVer.Major + "." +
-                                ThisAssembly.Git.SemVer.Minor + "." +
-                                ThisAssembly.Git.Commits + "-" +
-                                ThisAssembly.Git.Branch + "+" +
-                                ThisAssembly.Git.Commit +
-                                (ThisAssembly.Git.IsDirty ? "*" : "")
+                                ThisAssembly.Git.SemVer.Major + "."
+                                + ThisAssembly.Git.SemVer.Minor + "."
+                                + ThisAssembly.Git.Commits + "-"
+                                + ThisAssembly.Git.Branch + "+"
+                                + ThisAssembly.Git.Commit
+                                //+ (ThisAssembly.Git.IsDirty ? "*" : "")
                                 ),
                             new KeyValuePair<string, string>("DotNetCoreVersion", 
                                 System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)
