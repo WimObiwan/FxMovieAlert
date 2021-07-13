@@ -474,10 +474,17 @@ namespace FxMovies.Core
 
         private async Task ResizeFile(string imageFile, int width)
         {
-            using (Image image = await Image.LoadAsync(imageFile))
+            try
             {
-                image.Mutate(i => i.Resize(width, 0));
-                image.Save(imageFile);
+                using (Image image = await Image.LoadAsync(imageFile))
+                {
+                    image.Mutate(i => i.Resize(width, 0));
+                    image.Save(imageFile);
+                }
+            }
+            catch (Exception x)
+            {
+                logger.LogWarning(x, $"Failed to resize {imageFile}");
             }
         }
 
