@@ -61,6 +61,7 @@ namespace FxMovieAlert
             {
                 // add an instance of the patched manager to the options:
                 options.CookieManager = new ChunkingCookieManager();
+                options.ExpireTimeSpan = TimeSpan.FromDays(31);
 
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
