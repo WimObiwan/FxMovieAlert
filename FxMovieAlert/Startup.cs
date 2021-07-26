@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using FxMovies.Core;
+using FxMovieAlert.HealthChecks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
@@ -11,18 +16,14 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using System.Linq;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using FxMovies.Core;
-using Microsoft.Net.Http.Headers;
-using System.IO;
 
 namespace FxMovieAlert
 {
