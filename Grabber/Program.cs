@@ -103,6 +103,15 @@ namespace FxMovies.Grabber
         //     public string ImdbId { get; set; }
         // }
 
+        [Verb("TestImdbMatching", HelpText = "Test IMDb matching.")]
+        class TestImdbMatchingOptions
+        {
+            [Option("title", Required = true, HelpText = "Movie title")]
+            public string Title { get; set; }
+            [Option("year", Required = false, HelpText = "Movie release year")]
+            public int Year { get; set; }
+        }
+
         [Verb("TestSentry", HelpText = "Test Sentry.")]
         class TestSentryOptions
         {
@@ -143,6 +152,7 @@ namespace FxMovies.Grabber
                             UpdateEpgOptions,
                             // TwitterBotOptions,
                             // ManualOptions,
+                            TestImdbMatchingOptions,
                             TestSentryOptions
                             >(args)
                         .MapResult(
@@ -154,6 +164,7 @@ namespace FxMovies.Grabber
                             (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
                             // (TwitterBotOptions o) => Run(o),
                             // (ManualOptions o) => Run(o),
+                            (TestImdbMatchingOptions o) => host.Services.GetRequiredService<IImdbMatchingQuery>().RunTest(o.Title, o.Year),
                             (TestSentryOptions o) => Run(o),
                             errs => Task.FromResult(1));
                 }

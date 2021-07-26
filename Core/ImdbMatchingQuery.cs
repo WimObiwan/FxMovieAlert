@@ -127,5 +127,22 @@ namespace FxMovies.Core
                 HuntNo = huntNo
             };
         }
+
+        public async Task<int> RunTest(string movieTitle, int? movieReleaseYear)
+        {
+            var result = await Run(movieTitle, movieReleaseYear);
+            var imdbMovie = result.ImdbMovie;
+            if (imdbMovie != null)
+            {
+                logger.LogError("Movie '{movieTitle}' ({movieReleseYear}) found: {imdbId} - '{primaryTitle}' ({year})", 
+                    movieTitle, movieReleaseYear, imdbMovie.ImdbId, imdbMovie.PrimaryTitle, imdbMovie.Year);
+                return 0;
+            }
+            else
+            {
+                logger.LogError("Movie '{movieTitle}' ({movieReleseYear}) not found", movieTitle, movieReleaseYear);
+                return 1;
+            }
+        }
     }
 }
