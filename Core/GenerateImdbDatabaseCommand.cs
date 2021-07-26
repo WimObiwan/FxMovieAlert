@@ -28,6 +28,8 @@ namespace FxMovies.Core
         public string ImdbMoviesList { get; set; }
         public string ImdbAlsoKnownAsList { get; set; }
         public string ImdbRatingsList { get; set; }
+        public string[] AkaFilterRegion { get; set; }
+        public string[] AkaFilterLanguage { get; set; }
     }
 
     public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
@@ -209,6 +211,8 @@ namespace FxMovies.Core
         private async Task ImportImdbData_AlsoKnownAs()
         {
             int debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+            string[] akaFilterRegion = generateImdbDatabaseCommandOptions.AkaFilterRegion;
+            string[] akaFilterLanguage = generateImdbDatabaseCommandOptions.AkaFilterLanguage;
 
             var fileToDecompress = new FileInfo(generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList);
             using (var originalFileStream = fileToDecompress.OpenRead())
@@ -231,20 +235,6 @@ namespace FxMovies.Core
 
                 // Skip header
                 textReader.ReadLine();
-
-                var FilterRegion = new string[]
-                {
-                    "\\N",
-                    "BE",
-                    "NL",
-                    "US",
-                    "GB"
-                };
-                // var FilterLanguage = new string[]
-                // {
-                //     "en",
-                //     "nl",
-                // };
 
                 do {
 
@@ -277,8 +267,9 @@ namespace FxMovies.Core
                                 continue;
                             }
 
-                            if (!(FilterRegion.Contains(match.Groups[3].Value) 
-                                //|| FilterLanguage.Contains(match.Groups[4].Value)
+                            if (!(
+                                akaFilterRegion.Contains(match.Groups[3].Value) 
+                                || akaFilterLanguage.Contains(match.Groups[4].Value)
                                 ))
                             {
                                 skipped++;
