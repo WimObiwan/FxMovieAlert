@@ -44,8 +44,8 @@ namespace FxMovieAlert.HealthChecks
 
             HealthCheckResult result = new HealthCheckResult(status, null, null, 
                     new Dictionary<string, object>() {
-                        { "ImdbDb-LastWriteTimeUtc", lastWriteTimeUtc },
-                        { "ImdbDb-AgeDays", ageDays }
+                        { "ImdbDbLastWriteTimeUtc", lastWriteTimeUtc },
+                        { "ImdbDbAgeDays", ageDays }
                     });
                 
             return Task.FromResult(result);
