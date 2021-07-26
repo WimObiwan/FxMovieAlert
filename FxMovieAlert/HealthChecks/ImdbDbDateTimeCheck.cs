@@ -34,16 +34,18 @@ namespace FxMovieAlert.HealthChecks
             string filePath = connectionStringBuilder["Data Source"].ToString();
             var fileInfo = new System.IO.FileInfo(filePath);
             var lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+            var ageDays = (DateTime.UtcNow - lastWriteTimeUtc).TotalDays;
 
             HealthStatus status;
-            if (lastWriteTimeUtc < DateTime.UtcNow.AddMonths(-3))
+            if (ageDays > 92.0)
                 status = HealthStatus.Unhealthy;
             else
                 status = HealthStatus.Healthy;
 
             HealthCheckResult result = new HealthCheckResult(status, null, null, 
                     new Dictionary<string, object>() {
-                        { "ImdbDb-LastWriteTimeUtc", lastWriteTimeUtc }
+                        { "ImdbDb-LastWriteTimeUtc", lastWriteTimeUtc },
+                        { "ImdbDb-AgeDays", ageDays }
                     });
                 
             return Task.FromResult(result);
