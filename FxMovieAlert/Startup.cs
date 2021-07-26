@@ -22,8 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace FxMovieAlert
 {
@@ -278,27 +277,42 @@ namespace FxMovieAlert
             });
         }
 
-        private static Task WriteZabbixResponse(HttpContext httpContext, HealthReport result)
+        private class ZabbixResponse
+        {
+            public class ResultItem
+            {
+                public string name { get; set; }
+                public int status { get; set; }
+                public string statusText { get; set; }
+                public string description { get; set; }
+                public IDictionary<string, object> data { get; set; }
+            }
+
+            public int status { get; set; }
+            public string statusText { get; set; }
+            public List<ResultItem> results { get; set; }            
+        }
+
+        private static async Task WriteZabbixResponse(HttpContext httpContext, HealthReport result)
         {
             httpContext.Response.ContentType = "application/json";
 
-            var json = new JObject(
-                new JProperty("status", result.Status),
-                new JProperty("statusText", result.Status.ToString()),
-                new JProperty("results", new JArray(result.Entries.Select(pair =>
-                {
-                    List<JProperty> properties = new List<JProperty>();
-                    properties.Add(new JProperty("name", pair.Key));
-                    properties.Add(new JProperty("status", pair.Value.Status));
-                    properties.Add(new JProperty("statusText", pair.Value.Status.ToString()));
-                    if (pair.Value.Description != null) 
-                        properties.Add(new JProperty("description", pair.Value.Description));
-                    if (pair.Value.Data.Any())
-                        properties.Add(new JProperty("data", 
-                            new JObject(pair.Value.Data.Select(p => new JProperty(p.Key, p.Value)))));
-                    return new JObject(properties);
-                }))));
-            return httpContext.Response.WriteAsync(json.ToString(Formatting.None));
+            var zabbixResponse = new ZabbixResponse()
+            {
+                status = (int)result.Status,
+                statusText = result.Status.ToString(),
+                results = result.Entries.Select(pair => 
+                    new ZabbixResponse.ResultItem()
+                    {
+                        name = pair.Key,
+                        status = (int)pair.Value.Status,
+                        statusText = pair.Value.Status.ToString(),
+                        description = pair.Value.Description,
+                        data = pair.Value.Data.ToDictionary((s) => s.Key, (s) => s.Value)
+                    }).ToList()
+            };
+
+            await httpContext.Response.WriteAsJsonAsync(zabbixResponse);
         }
     }
 }
