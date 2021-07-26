@@ -173,7 +173,8 @@ namespace FxMovieAlert
                 .AddCheck<MovieDbBroadcastsDataCheck>("FxMoviesDB-Broadcasts-data")
                 .AddCheck<MovieDbStreamingDataCheck>("FxMoviesDB-Streaming-data")
                 .AddCheck<MovieDbBroadcastsMissingImdbLinkCheck>("FxMoviesDB-Broadcasts-missingImdbLink")
-                .AddCheck<MovieDbStreamingMissingImdbLinkCheck>("FxMoviesDB-Streaming-missingImdbLink");
+                .AddCheck<MovieDbStreamingMissingImdbLinkCheck>("FxMoviesDB-Streaming-missingImdbLink")
+                .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime");
 
             //services.AddHealthChecksUI();
             
