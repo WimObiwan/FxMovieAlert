@@ -29,7 +29,6 @@ namespace FxMovies.Core
         public string[] MovieTitlesToTransform { get; set; }
         public int? MaxDays { get; set; }
         public string ImageBasePath { get; set; }
-        public int? ImdbHuntingYearDiff { get; set; }
         public Dictionary<string, string> ImageOverrideMap { get; set; }
     }
 
@@ -43,6 +42,7 @@ namespace FxMovies.Core
         private readonly IVtmGoService vtmGoService;
         private readonly IVrtNuService vrtNuService;
         private readonly IHumoService humoService;
+        private readonly IImdbMatchingQuery imdbMatchingQuery;
         private readonly IHttpClientFactory httpClientFactory;
 
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
@@ -52,6 +52,7 @@ namespace FxMovies.Core
             IVtmGoService vtmGoService, 
             IVrtNuService vrtNuService, 
             IHumoService humoService,
+            IImdbMatchingQuery imdbMatchingQuery,
             IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;
@@ -62,6 +63,7 @@ namespace FxMovies.Core
             this.vtmGoService = vtmGoService;
             this.vrtNuService = vrtNuService;
             this.humoService = humoService;
+            this.imdbMatchingQuery = imdbMatchingQuery;
             this.httpClientFactory = httpClientFactory;
         }
 
@@ -539,68 +541,6 @@ namespace FxMovies.Core
         private async Task UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies) 
         where T : IHasImdbLink
         {
-            int imdbHuntingYearDiff = updateEpgCommandOptions.ImdbHuntingYearDiff ?? 2;
-
-            var huntingProcedure = new List<Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>>();
-
-            // Search for PrimaryTitle (Year)
-            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-            (
-                (movieWithImdbLink) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                    return imdbDbContext.MovieAlternatives
-                        .Where(ma =>
-                            ma.AlternativeTitle == null 
-                            && ma.Normalized == normalizedTitle
-                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue || ma.Movie.Year == movieWithImdbLink.Year)
-                        ).Select(ma => ma.Movie);
-                    }
-            ));
-
-            // Search for AlternativeTitle (Year)
-            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-            (
-                (movieWithImdbLink) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                    return imdbDbContext.MovieAlternatives
-                        .Where(ma => 
-                            ma.AlternativeTitle != null 
-                            && ma.Normalized == normalizedTitle
-                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue || ma.Movie.Year == movieWithImdbLink.Year)
-                        ).Select(ma => ma.Movie);
-                    }
-            ));
-
-            // Search for PrimaryTitle (+/-Year)
-            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-            (
-                (movieWithImdbLink) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                    return imdbDbContext.MovieAlternatives
-                        .Where(ma =>
-                            ma.AlternativeTitle == null 
-                            && ma.Normalized == normalizedTitle
-                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
-                                || ((ma.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (ma.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
-                        ).Select(ma => ma.Movie);
-                    }
-            ));
-
-            // Search for AlternativeTitle (+/-Year)
-            huntingProcedure.Add((Func<IHasImdbLink, IQueryable<ImdbDB.Movie>>)
-            (
-                (movieWithImdbLink) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(movieWithImdbLink.Title);
-                    return imdbDbContext.MovieAlternatives
-                        .Where(ma => 
-                            ma.AlternativeTitle != null 
-                            && ma.Normalized == normalizedTitle
-                            && (!ma.Movie.Year.HasValue || !movieWithImdbLink.Year.HasValue 
-                                || ((ma.Movie.Year >= movieWithImdbLink.Year - imdbHuntingYearDiff) && (ma.Movie.Year <= movieWithImdbLink.Year + imdbHuntingYearDiff)))
-                        ).Select(ma => ma.Movie);
-                    }
-            ));
-
             var groups = fnGetMovies(fxMoviesDbContext).AsEnumerable().GroupBy(m => new { m.Title, m.Year });
             int totalCount = groups.Count();
             int current = 0;
@@ -620,20 +560,10 @@ namespace FxMovies.Core
                     continue;
                 }
 
-                ImdbDB.Movie imdbMovie = null;
                 var first = group.First();
-                int huntNo = 0;
-                foreach (var hunt in huntingProcedure)
-                {                        
-                    imdbMovie = await hunt(first)
-                        .OrderByDescending(m => m.Votes)
-                        .FirstOrDefaultAsync();
-
-                    if (imdbMovie != null)
-                        break;
-                
-                    huntNo++;
-                }
+                var imdbMatchingQueryResult = await imdbMatchingQuery.Run(first.Title, first.Year);
+                var imdbMovie = imdbMatchingQueryResult.ImdbMovie;
+                var huntNo = imdbMatchingQueryResult.HuntNo;
                 
                 if (imdbMovie == null)
                 {
