@@ -31,5 +31,6 @@ namespace FxMovies.FxMoviesDB
         public string PosterS_Local { get; set; }
         public string PosterM_Local { get; set; }
         public string VodLink { get; set; }
+        public DateTime? AddedTime { get; set; }
     }   
 }

@@ -213,9 +213,12 @@ namespace FxMovies.Core
                     existingMovie.YeloUrl = movie.YeloUrl;
                     existingMovie.Vod = movie.Vod;
                     existingMovie.VodLink = movie.VodLink;
+                    if (existingMovie.AddedTime == null)
+                        existingMovie.AddedTime = DateTime.UtcNow;
                 }
                 else
                 {
+                    movie.AddedTime = DateTime.UtcNow;
                     fxMoviesDbContext.MovieEvents.Add(movie);
                 }
             }
@@ -350,11 +353,14 @@ namespace FxMovies.Core
                         existingMovie.Opinion = movie.Opinion;
                         existingMovie.Type = movie.Type;
                         existingMovie.YeloUrl = movie.YeloUrl;
+                        if (existingMovie.AddedTime == null)
+                            existingMovie.AddedTime = DateTime.UtcNow;
                     }
                     else
                     {
                         if (movie.StartTime == DateTime.MinValue)
                             movie.StartTime = DateTime.Today;
+                        movie.AddedTime = DateTime.UtcNow;
                         fxMoviesDbContext.MovieEvents.Add(movie);
                     }
                 }
