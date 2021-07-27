@@ -514,7 +514,7 @@
                                 @if (!string.IsNullOrEmpty(movieEvent.VodLink))
                                 {
                                     @: &nbsp;
-                                    <a href="@movieEvent.VodLink" target="_new" title="Speel @movieEvent.Title af op VTMGO..." style="text-decoration: none">
+                                    <a href="@movieEvent.VodLink" target="_new" title="Speel @movieEvent.Title af op @movieEvent.Channel.Name..." style="text-decoration: none">
                                         <img src="/images/play.png" loading="lazy" alt="Yelo" height="32px" />
                                     </a>
                                 }
