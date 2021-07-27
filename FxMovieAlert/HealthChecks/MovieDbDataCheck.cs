@@ -17,13 +17,18 @@ namespace FxMovieAlert.HealthChecks
         private readonly IConfiguration configuration;
         private readonly IServiceScopeFactory serviceScopeFactory;
         private readonly Expression<Func<MovieEvent, bool>> filter;
+        private readonly bool dontCheckMovieStartTime;
 
-        public MovieDbDataCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory,
-            Expression<Func<MovieEvent, bool>> filter)
+        public MovieDbDataCheck(
+            IConfiguration configuration,
+            IServiceScopeFactory serviceScopeFactory,
+            Expression<Func<MovieEvent, bool>> filter,
+            bool dontCheckMovieStartTime)
         {
             this.configuration = configuration;
             this.serviceScopeFactory = serviceScopeFactory;
             this.filter = filter;
+            this.dontCheckMovieStartTime = dontCheckMovieStartTime;
         }
 
         public async Task<HealthCheckResult> CheckHealthAsync(
@@ -38,24 +43,42 @@ namespace FxMovieAlert.HealthChecks
             {
                 var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
                 
-                DateTime last;
-                last = await fxMoviesDbContext.MovieEvents
+                DateTime lastMovieAddedTime = await fxMoviesDbContext.MovieEvents
                     .Where(filter)
-                    .MaxAsync(me => me.StartTime);
-
-                var lastMovieAge = (last - DateTime.Now).TotalDays;
-
+                    .Where(me => me.AddedTime.HasValue)
+                    .MaxAsync(me => me.AddedTime.Value);
+                var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime).TotalDays;
+                
                 HealthStatus status;
-                if (lastMovieAge <= this.configuration.GetValue("HealthCheck:CheckLastMovieMoreThanDays", 4.0))
+                if (lastMovieAddedDaysAgo >= this.configuration.GetValue("HealthCheck:CheckLastMovieAddedMoreThanDaysAgo", 1.1))
                     status = HealthStatus.Unhealthy;
                 else
-                    status = HealthStatus.Healthy;
+                    status = HealthStatus.Healthy;                
 
-                HealthCheckResult result = new HealthCheckResult(status, null, null, 
-                    new Dictionary<string, object>() {
-                        { "LastMovieAge", lastMovieAge }
-                    });
-                
+                var values = new Dictionary<string, object>()
+                {
+                    { "LastMovieAddedAge", lastMovieAddedDaysAgo },
+                    { "LastMovieAddedTime", lastMovieAddedTime },
+                };
+
+                if (!dontCheckMovieStartTime)
+                {
+                    DateTime lastMovieStartTime = await fxMoviesDbContext.MovieEvents
+                        .Where(filter)
+                        .MaxAsync(me => me.StartTime);
+                    var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
+
+                    if (status == HealthStatus.Healthy && lastMovieStartDaysFromNow <= this.configuration.GetValue("HealthCheck:CheckLastMovieMoreThanDays", 4.0))
+                        status = HealthStatus.Unhealthy;
+                    else
+                        status = HealthStatus.Healthy;
+
+                    values.Add("LastMovieStartTimeAge", lastMovieStartDaysFromNow);
+                    values.Add("LastMovieStartTime", lastMovieStartTime);
+                }
+
+                HealthCheckResult result = new HealthCheckResult(status, null, null, values);
+
                 return result;
             }
         }
@@ -64,7 +87,7 @@ namespace FxMovieAlert.HealthChecks
     public class MovieDbBroadcastsDataCheck : MovieDbDataCheck
     {
         public MovieDbBroadcastsDataCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory)
-            : base(configuration, serviceScopeFactory, (me) => me.Vod == false)
+            : base(configuration, serviceScopeFactory, (me) => me.Vod == false, false)
         {
         }
     }
@@ -72,7 +95,7 @@ namespace FxMovieAlert.HealthChecks
     public class MovieDbStreamingDataCheck : MovieDbDataCheck
     {
         public MovieDbStreamingDataCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory)
-            : base(configuration, serviceScopeFactory, (me) => me.Vod == true)
+            : base(configuration, serviceScopeFactory, (me) => me.Vod == true, true)
         {
         }
     }
