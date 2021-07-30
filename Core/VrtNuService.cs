@@ -111,7 +111,10 @@ namespace FxMovies.Core
             //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
             var response = await client.GetAsync("/suggest?facets[categories]=films");
             response.EnsureSuccessStatusCode();
-            // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
+            // Troubleshoot: Debug console: 
+            //   response.Content.ReadAsStringAsync().Result,nq 
+            // ==> nq = non-quoted
+
             var responseObject = await response.Content.ReadFromJsonAsync<List<SuggestMovieInfo>>();
             return responseObject;
         }
@@ -143,7 +146,10 @@ namespace FxMovies.Core
             //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
             var response = await client.GetAsync($"/search?facets[programUrl]={programUrl}");
             response.EnsureSuccessStatusCode();
-            // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
+            // Troubleshoot: Debug console: 
+            //   response.Content.ReadAsStringAsync().Result,nq 
+            // ==> nq = non-quoted
+
             var responseObject = await response.Content.ReadFromJsonAsync<SearchResult>();
             return responseObject.results?.FirstOrDefault();
         }

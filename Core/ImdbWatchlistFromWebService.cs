@@ -75,7 +75,9 @@ namespace FxMovies.Core
             var client = httpClientFactory.CreateClient("imdb");
             var response = await client.GetAsync($"/user/{imdbUserId}/watchlist?sort=date_added%2Cdesc&view=detail");
             response.EnsureSuccessStatusCode();
-            // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
+            // Troubleshoot: Debug console: 
+            //   response.Content.ReadAsStringAsync().Result,nq 
+            // ==> nq = non-quoted
 
             string text;
             using (Stream stream = await response.Content.ReadAsStreamAsync())

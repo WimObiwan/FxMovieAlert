@@ -49,7 +49,9 @@ namespace FxMovies.Core
             var client = httpClientFactory.CreateClient("imdb");
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
-            // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
+            // Troubleshoot: Debug console: 
+            //   response.Content.ReadAsStringAsync().Result,nq 
+            // ==> nq = non-quoted
 
             using Stream stream = await response.Content.ReadAsStreamAsync();
             HtmlParser parser = new HtmlParser();

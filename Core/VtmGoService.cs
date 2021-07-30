@@ -169,7 +169,10 @@ namespace FxMovies.Core
             // var responseObject = await client.GetFromJsonAsync<DpgProfileResponse[]>("/profiles?products=VTM_GO,VTM_GO_KIDS");
             var response = await client.GetAsync("/profiles?products=VTM_GO,VTM_GO_KIDS");
             response.EnsureSuccessStatusCode();
-            // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
+            // Troubleshoot: Debug console: 
+            //   response.Content.ReadAsStringAsync().Result,nq 
+            // ==> nq = non-quoted
+
             var responseObject = await response.Content.ReadFromJsonAsync<DpgProfileResponse[]>();
             return responseObject[0].id;
         }
@@ -204,7 +207,10 @@ namespace FxMovies.Core
             //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
             var response = await client.GetAsync("/vtmgo/catalog?pageSize=2000");
             response.EnsureSuccessStatusCode();
-            // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
+            // Troubleshoot: Debug console: 
+            //   response.Content.ReadAsStringAsync().Result,nq 
+            // ==> nq = non-quoted
+
             var responseObject = await response.Content.ReadFromJsonAsync<DpgCatalogResponse>();
             var movies = responseObject.pagedTeasers.content.Where(c => c.target.type == "MOVIE").Select(c => c.target.id).ToList();
             return movies;
@@ -234,7 +240,10 @@ namespace FxMovies.Core
             //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
             var response = await client.GetAsync("/vtmgo/movies/" + movieId);
             response.EnsureSuccessStatusCode();
-            // Troubleshoot: Debug console: response.Content.ReadAsStringAsync().Result
+            // Troubleshoot: Debug console: 
+            //   response.Content.ReadAsStringAsync().Result,nq 
+            // ==> nq = non-quoted
+
             var responseObject = await response.Content.ReadFromJsonAsync<DpgMovieResponse>();
             return responseObject;
         }
