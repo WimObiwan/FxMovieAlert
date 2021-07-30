@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core;
@@ -18,6 +19,7 @@ namespace FxMovieAlert.Pages
         public MovieEvent MovieEvent { get; set; }
         public UserRating UserRating { get; set; }
         public UserWatchListItem UserWatchListItem { get; set; }
+        public bool Highlighted { get; set; }
     }
 
     [Flags]
@@ -47,6 +49,7 @@ namespace FxMovieAlert.Pages
         public DateTime? LastRefreshRatingsTime = null;
         public bool? LastRefreshSuccess = null;       
 
+        public bool FilterOnlyHighlights = false;
         public int FilterTypeMask = 1;
         public int FilterTypeMaskDefault = 1;
         public decimal? FilterMinRating = null;
@@ -104,7 +107,7 @@ namespace FxMovieAlert.Pages
             this.usersRepository = usersRepository;
         }
 
-        public async Task OnGet(int? m = null, int? typeMask = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
+        public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
             int? movieeventid = null, string setimdbid = null, int? maxdays = null)
         {
             string userId = ClaimChecker.UserId(User.Identity);
@@ -117,6 +120,9 @@ namespace FxMovieAlert.Pages
             FilterTypeMask = FilterTypeMaskDefault;
 
             EditImdbLinks = ClaimChecker.Has(User.Identity, ClaimEditImdbLinks);
+
+            if (onlyHighlights.HasValue)
+                FilterOnlyHighlights = onlyHighlights.Value;
 
             if (typeMask.HasValue)
                 FilterTypeMask = typeMask.Value;
@@ -257,7 +263,7 @@ namespace FxMovieAlert.Pages
             Count5days = await dbMovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(5)).CountAsync();
             Count8days = await dbMovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(8)).CountAsync();
 
-            Records = await dbMovieEvents
+            var tmp = dbMovieEvents
                 .Where(me => 
                     (
                         ((FilterTypeMask & 1) == 1 && me.Type == 1)
@@ -275,14 +281,32 @@ namespace FxMovieAlert.Pages
                 .AsNoTracking()
                 .Include(me => me.Channel)
                 .Include(me => me.Movie)
-                .Select(me => new Record()
+                .Select(me => new {
+                    MovieEvent = me,
+                    UserRating = me.Movie.UserRatings.FirstOrDefault(ur => ur.User.UserId == userId),
+                    UserWatchListItem = me.Movie.UserWatchListItems.FirstOrDefault(ur => ur.User.UserId == userId)
+                })
+                .Select(r => new Record()
                     {
-                        MovieEvent = me,
-                        UserRating = me.Movie.UserRatings.FirstOrDefault(ur => ur.User.UserId == userId),
-                        UserWatchListItem = me.Movie.UserWatchListItems.FirstOrDefault(ur => ur.User.UserId == userId)
+                        MovieEvent = r.MovieEvent,
+                        UserRating = r.UserRating,
+                        UserWatchListItem = r.UserWatchListItem,
+                        Highlighted = 
+                            r.UserWatchListItem != null
+                            ||
+                            r.UserRating != null && r.UserRating.Rating >= 8 && r.UserRating.RatingDate < now.AddYears(-1)
                     }
-                )
-                .ToListAsync();
+                );
+
+            if (FilterOnlyHighlights)
+            {
+                tmp = tmp
+                    .OrderByDescending(r => r.Highlighted)
+                    .ThenByDescending(r => r.MovieEvent.Movie.ImdbRating)
+                    .Take(30);
+            }
+            
+            Records = await tmp.ToListAsync();
         }
 
         private static Cert ParseCertification(string certification)
