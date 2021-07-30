@@ -27,6 +27,7 @@ namespace FxMovies.Core
 
         public string[] MovieTitlesToIgnore { get; set; }
         public string[] MovieTitlesToTransform { get; set; }
+        public string[] YearSplitterPatterns { get; set; }
         public int? MaxDays { get; set; }
         public string ImageBasePath { get; set; }
         public Dictionary<string, string> ImageOverrideMap { get; set; }
@@ -274,12 +275,31 @@ namespace FxMovies.Core
                 {
                     foreach (var item in updateEpgCommandOptions.MovieTitlesToTransform)
                     {
-                        var newTitle = Regex.Replace(movie.Title, item, "$1");
                         var match = Regex.Match(movie.Title, item);
-                        if (movie.Title != newTitle)
+                        if (match.Success)
                         {
-                            logger.LogInformation($"Transforming movie {movie.Title} to {newTitle}");
-                            movie.Title = newTitle;
+                            var newTitle = match.Groups[1].Value;
+                            if (movie.Title != newTitle)
+                            {
+                                logger.LogInformation($"Transforming movie {movie.Title} to {newTitle}");
+                                movie.Title = newTitle;
+                            }
+                        }
+                    }
+
+                    foreach (var item in updateEpgCommandOptions.YearSplitterPatterns)
+                    {
+                        var match = Regex.Match(movie.Title, item);
+                        if (match.Success)
+                        {
+                            var newTitle = match.Groups[1].Value;
+                            var yearText = match.Groups[2].Value;
+                            if (int.TryParse(yearText, out int year))
+                            {
+                                logger.LogInformation($"Transforming[YearSplitter] movie {movie.Title} to {newTitle}, year {year}");
+                                movie.Title = newTitle;
+                                movie.Year = year;
+                            }
                         }
                     }
                 }
