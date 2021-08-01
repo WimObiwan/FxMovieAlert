@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -294,7 +294,7 @@ namespace FxMovieAlert.Pages
                         Highlighted = 
                             r.UserWatchListItem != null
                             ||
-                            r.UserRating != null && r.UserRating.Rating >= 8 && r.UserRating.RatingDate < now.AddYears(-1)
+                            r.UserRating != null && r.UserRating.Rating >= 8 && r.UserRating.RatingDate < now.AddYears(-3)
                     }
                 );
 
@@ -306,7 +306,7 @@ namespace FxMovieAlert.Pages
                     .ThenByDescending(r => r.MovieEvent.Movie.ImdbRating)
                     .Take(30);
             }
-            
+
             Records = await tmp.ToListAsync();
         }
 
