@@ -49,7 +49,8 @@ namespace FxMovieAlert.Pages
         public DateTime? LastRefreshRatingsTime = null;
         public bool? LastRefreshSuccess = null;       
 
-        public bool FilterOnlyHighlights = false;
+        public bool? FilterOnlyHighlights = null;
+        public bool FilterOnlyHighlightsDefault = true;
         public int FilterTypeMask = 1;
         public int FilterTypeMaskDefault = 1;
         public decimal? FilterMinRating = null;
@@ -121,8 +122,7 @@ namespace FxMovieAlert.Pages
 
             EditImdbLinks = ClaimChecker.Has(User.Identity, ClaimEditImdbLinks);
 
-            if (onlyHighlights.HasValue)
-                FilterOnlyHighlights = onlyHighlights.Value;
+            FilterOnlyHighlights = onlyHighlights;
 
             if (typeMask.HasValue)
                 FilterTypeMask = typeMask.Value;
@@ -298,7 +298,7 @@ namespace FxMovieAlert.Pages
                     }
                 );
 
-            if (FilterOnlyHighlights)
+            if (FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault))
             {
                 tmp = tmp
                     .Where(r => r.UserRating == null || r.Highlighted)

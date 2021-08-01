@@ -49,9 +49,18 @@
 
     @functions 
     {
-        string FormatQueryString(int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
+        string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
         {
             StringBuilder sb = null;
+            if (onlyHighlights.HasValue)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("onlyHighlights=");
+                sb.Append(onlyHighlights.Value ? "true" : "false");
+            }
             if (typeMask != Model.FilterTypeMaskDefault)
             {
                 if (sb == null)
@@ -102,33 +111,40 @@
             return sb?.ToString() ?? "";
         }
 
+        string FormatQueryStringWithOnlyHighlights(bool onlyHighlights)
+        {
+            //if (typeMask != 7 && Model.FilterTypeMask != 7)
+            //    typeMask = Model.FilterTypeMask ^ typeMask;
+            return FormatQueryString(onlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
+        }
+
         string FormatQueryStringWithTypeMask(int typeMask)
         {
             //if (typeMask != 7 && Model.FilterTypeMask != 7)
             //    typeMask = Model.FilterTypeMask ^ typeMask;
-            return FormatQueryString(typeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
+            return FormatQueryString(Model.FilterOnlyHighlights, typeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithMinRating(decimal? minrating)
         {
-            return FormatQueryString(Model.FilterTypeMask, minrating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
+            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, minrating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithNotYetRated(bool? notyetrated)
         {
-            return FormatQueryString(Model.FilterTypeMask, Model.FilterMinRating, notyetrated, Model.FilterCert, Model.FilterMaxDays);
+            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, notyetrated, Model.FilterCert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithToggleCert(Cert cert)
         {
             if (cert != Cert.all)
                 cert = Model.FilterCert ^ cert;
-            return FormatQueryString(Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, cert, Model.FilterMaxDays);
+            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, cert, Model.FilterMaxDays);
         }
 
         string FormatQueryStringWithMaxDays(int maxdays)
         {
-            return FormatQueryString(Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays);
+            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays);
         }
 
         string GetFilterStyle(bool hasValue)
@@ -211,7 +227,12 @@
         }
     }
 
-    <a id="filter-link" href="#filter-buttons" data-toggle="collapse">Filters</a>
+    <div class="btn-group" role="group" aria-label="Basic example">
+        <a href="?@FormatQueryStringWithOnlyHighlights(false)" class="btn btn-@GetFilterStyle(!Model.FilterOnlyHighlights.GetValueOrDefault(Model.FilterOnlyHighlightsDefault))">Alle films</a>
+        <a href="?@FormatQueryStringWithOnlyHighlights(true)" class="btn btn-@GetFilterStyle(Model.FilterOnlyHighlights.GetValueOrDefault(Model.FilterOnlyHighlightsDefault))">Uitgekozen films</a>
+    </div>
+
+    <a id="filter-link" href="#filter-buttons" data-toggle="collapse">Geavanceerde filters</a>
     <div id="filter-buttons" class="collapse">
         <div class="btn-group">
             <a href="?@FormatQueryStringWithTypeMask(Model.FilterTypeMaskDefault)" class="btn btn-@GetFilterStyle(Model.FilterTypeMask != 7)">
