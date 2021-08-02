@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FxMovieAlert.Components;
 using FxMovies.Core;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
@@ -24,67 +25,51 @@ namespace FxMovieAlert.Pages
         public bool Highlighted { get; set; }
     }
 
-    [Flags]
-    public enum Cert
+    public class BroadcastModelBase : PageModel, IFilterBarParentModel
     {
-        all = 0,
-        none = 1,
-        other = 2,
-        g = 4,
-        pg = 8,
-        pg13 = 16,
-        r = 32,
-        nc17 = 64,
-        all2 = 127,
-    }
-
-    public class BroadcastModelBase : PageModel
-    {
-        public const decimal NO_IMDB_ID = -1.0m;
-        public const decimal NO_IMDB_RATING = -2.0m;
         const string ClaimEditImdbLinks = "edit:imdblinks";
         public bool EditImdbLinks = false;
         public MovieEvent MovieEvent = null;
         public IList<Record> Records = new List<Record>();
-        public string ImdbUserId = null;
-        public DateTime? RefreshRequestTime = null;
-        public DateTime? LastRefreshRatingsTime = null;
+        public string ImdbUserId { get; private set; } = null;
+        public DateTime? RefreshRequestTime { get; private set; } = null;
+        public DateTime? LastRefreshRatingsTime { get; private set; } = null;
         public bool? LastRefreshSuccess = null;       
 
-        public bool? FilterOnlyHighlights = null;
-        public bool FilterOnlyHighlightsDefault = true;
-        public int FilterTypeMask = 1;
-        public int FilterTypeMaskDefault = 1;
-        public decimal? FilterMinRating = null;
-        public bool? FilterNotYetRated = null;
-        public Cert FilterCert = Cert.all;
-        public int FilterMaxDaysDefault = 8;
-        public int FilterMaxDays = 8;
+        public bool? FilterOnlyHighlights { get; private set; } = null;
+        public bool FilterOnlyHighlightsDefault { get; private set; } = true;
+        public int FilterTypeMask { get; private set; } = 1;
+        public int FilterTypeMaskDefault { get; private set; } = 1;
+        public decimal? FilterMinRating { get; private set; } = null;
+        public bool? FilterNotYetRated { get; private set; } = null;
+        public Cert FilterCert { get; private set; } = Cert.all;
+        public int FilterMaxDaysDefault { get; private set; } = 8;
+        public int FilterMaxDays { get; private set; } = 8;
 
-        public int Count = 0;
-        public int CountTypeFilm = 0;
-        public int CountTypeShort = 0;
-        public int CountTypeSerie = 0;
-        public int CountMinRating5 = 0;
-        public int CountMinRating6 = 0;
-        public int CountMinRating65 = 0;
-        public int CountMinRating7 = 0;
-        public int CountMinRating8 = 0;
-        public int CountMinRating9 = 0;
-        public int CountNotOnImdb = 0;
-        public int CountNotRatedOnImdb = 0;
-        public int CountNotYetRated = 0;
-        public int CountRated = 0;
-        public int CountCertNone = 0;
-        public int CountCertG = 0;
-        public int CountCertPG = 0;
-        public int CountCertPG13 = 0;
-        public int CountCertR = 0;
-        public int CountCertNC17 = 0;
-        public int CountCertOther = 0;
-        public int Count3days = 0;
-        public int Count5days = 0;
-        public int Count8days = 0;
+        public int Count { get; private set; } = 0;
+        public int CountTypeFilm { get; private set; } = 0;
+        public int CountTypeShort { get; private set; } = 0;
+        public int CountTypeSerie { get; private set; } = 0;
+        public int CountMinRating5 { get; private set; } = 0;
+        public int CountMinRating6 { get; private set; } = 0;
+        public int CountMinRating65 { get; private set; } = 0;
+        public int CountMinRating7 { get; private set; } = 0;
+        public int CountMinRating8 { get; private set; } = 0;
+        public int CountMinRating9 { get; private set; } = 0;
+        public int CountNotOnImdb { get; private set; } = 0;
+        public int CountNotRatedOnImdb { get; private set; } = 0;
+        public int CountNotYetRated { get; private set; } = 0;
+        public int CountRated { get; private set; } = 0;
+        public int CountCertNone { get; private set; } = 0;
+        public int CountCertG { get; private set; } = 0;
+        public int CountCertPG { get; private set; } = 0;
+        public int CountCertPG13 { get; private set; } = 0;
+        public int CountCertR { get; private set; } = 0;
+        public int CountCertNC17 { get; private set; } = 0;
+        public int CountCertOther { get; private set; } = 0;
+        public int Count3days { get; private set; } = 0;
+        public int Count5days { get; private set; } = 0;
+        public int Count8days { get; private set; } = 0;
         public int AdsInterval = 5;
 
         private readonly bool streaming;
@@ -274,8 +259,8 @@ namespace FxMovieAlert.Pages
                     )
                     &&
                     (!FilterMinRating.HasValue 
-                        || (FilterMinRating.Value == NO_IMDB_ID && string.IsNullOrEmpty(me.Movie.ImdbId))
-                        || (FilterMinRating.Value == NO_IMDB_RATING && me.Movie.ImdbRating == null)
+                        || (FilterMinRating.Value == Components.FilterBar.NO_IMDB_ID && string.IsNullOrEmpty(me.Movie.ImdbId))
+                        || (FilterMinRating.Value == Components.FilterBar.NO_IMDB_RATING && me.Movie.ImdbRating == null)
                         || (FilterMinRating.Value >= 0.0m && (me.Movie.ImdbRating >= FilterMinRating.Value * 10)))
                     // && 
                     // (FilterCert == Cert.all || (ParseCertification(me.Movie.Certification) & FilterCert) != 0)
@@ -341,175 +326,6 @@ namespace FxMovieAlert.Pages
 
         #region Filter helper functions
 
-        public string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
-        {
-            StringBuilder sb = null;
-            if (onlyHighlights.HasValue)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("onlyHighlights=");
-                sb.Append(onlyHighlights.Value ? "true" : "false");
-            }
-            if (typeMask != FilterTypeMaskDefault)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("typemask=");
-                sb.Append(typeMask);
-            }
-            if (minrating.HasValue)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("minrating=");
-                sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
-            }
-            if (notyetrated.HasValue)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                if (notyetrated.Value)
-                    sb.Append("notyetrated=true");
-                else
-                    sb.Append("notyetrated=false");
-            }
-            if (cert != Cert.all)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("cert=");
-                sb.Append(cert.ToString("g"));
-            }
-            if (maxdays != FilterMaxDaysDefault)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("maxdays=");
-                sb.Append(maxdays);
-            }
-            return sb?.ToString() ?? "";
-        }
-
-        public string FormatQueryStringWithOnlyHighlights(bool onlyHighlights)
-        {
-            //if (typeMask != 7 && FilterTypeMask != 7)
-            //    typeMask = FilterTypeMask ^ typeMask;
-            return FormatQueryString(onlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert, FilterMaxDays);
-        }
-
-        public string FormatQueryStringWithTypeMask(int typeMask)
-        {
-            //if (typeMask != 7 && FilterTypeMask != 7)
-            //    typeMask = FilterTypeMask ^ typeMask;
-            return FormatQueryString(FilterOnlyHighlights, typeMask, FilterMinRating, FilterNotYetRated, FilterCert, FilterMaxDays);
-        }
-
-        public string FormatQueryStringWithMinRating(decimal? minrating)
-        {
-            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, minrating, FilterNotYetRated, FilterCert, FilterMaxDays);
-        }
-
-        public string FormatQueryStringWithNotYetRated(bool? notyetrated)
-        {
-            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, notyetrated, FilterCert, FilterMaxDays);
-        }
-
-        public string FormatQueryStringWithToggleCert(Cert cert)
-        {
-            if (cert != Cert.all)
-                cert = FilterCert ^ cert;
-            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, cert, FilterMaxDays);
-        }
-
-        public string FormatQueryStringWithMaxDays(int maxdays)
-        {
-            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert, maxdays);
-        }
-
-        public string GetFilterStyle(bool hasValue)
-        {
-            if (hasValue)
-                return "primary";
-            else
-                return "default";
-        }
-
-        public string FormatCert(Cert cert)
-        {
-            StringBuilder sb = null;
-            if ((cert & Cert.none) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("Zonder");
-            }
-            if ((cert & Cert.g) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("G");
-            }
-            if ((cert & Cert.pg) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("PG");
-            }
-            if ((cert & Cert.pg13) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("PG-13");
-            }
-            if ((cert & Cert.r) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("R");
-            }
-            if ((cert & Cert.nc17) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("NC-17");
-            }
-            if ((cert & Cert.other) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("Overige");
-            }
-
-            return sb?.ToString() ?? "";
-        }
-
         public string GetImageUrl(string local, string remote)
         {
             if (string.IsNullOrEmpty(local))
@@ -519,6 +335,5 @@ namespace FxMovieAlert.Pages
         }
 
         #endregion
-
     }
 }
