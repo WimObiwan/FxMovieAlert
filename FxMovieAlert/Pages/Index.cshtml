@@ -14,8 +14,8 @@
         description = char.ToUpper(description[0]) + description.Substring(1);
         ViewData["og:description"] = description;
         ViewData["og:url"] = $"/?m={@Model.MovieEvent.Id}";
-        ViewData["og:image"] = GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
-        ViewData["og:image:secure_url"] = GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
+        ViewData["og:image"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
+        ViewData["og:image:secure_url"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
     }
     DateTime now = DateTime.Now;
 }
@@ -46,186 +46,6 @@
 
     </script>
 
-    @functions 
-    {
-        string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
-        {
-            StringBuilder sb = null;
-            if (onlyHighlights.HasValue)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("onlyHighlights=");
-                sb.Append(onlyHighlights.Value ? "true" : "false");
-            }
-            if (typeMask != Model.FilterTypeMaskDefault)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("typemask=");
-                sb.Append(typeMask);
-            }
-            if (minrating.HasValue)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("minrating=");
-                sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
-            }
-            if (notyetrated.HasValue)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                if (notyetrated.Value)
-                    sb.Append("notyetrated=true");
-                else
-                    sb.Append("notyetrated=false");
-            }
-            if (cert != Cert.all)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("cert=");
-                sb.Append(cert.ToString("g"));
-            }
-            if (maxdays != Model.FilterMaxDaysDefault)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("maxdays=");
-                sb.Append(maxdays);
-            }
-            return sb?.ToString() ?? "";
-        }
-
-        string FormatQueryStringWithOnlyHighlights(bool onlyHighlights)
-        {
-            //if (typeMask != 7 && Model.FilterTypeMask != 7)
-            //    typeMask = Model.FilterTypeMask ^ typeMask;
-            return FormatQueryString(onlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
-        }
-
-        string FormatQueryStringWithTypeMask(int typeMask)
-        {
-            //if (typeMask != 7 && Model.FilterTypeMask != 7)
-            //    typeMask = Model.FilterTypeMask ^ typeMask;
-            return FormatQueryString(Model.FilterOnlyHighlights, typeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
-        }
-
-        string FormatQueryStringWithMinRating(decimal? minrating)
-        {
-            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, minrating, Model.FilterNotYetRated, Model.FilterCert, Model.FilterMaxDays);
-        }
-
-        string FormatQueryStringWithNotYetRated(bool? notyetrated)
-        {
-            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, notyetrated, Model.FilterCert, Model.FilterMaxDays);
-        }
-
-        string FormatQueryStringWithToggleCert(Cert cert)
-        {
-            if (cert != Cert.all)
-                cert = Model.FilterCert ^ cert;
-            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, cert, Model.FilterMaxDays);
-        }
-
-        string FormatQueryStringWithMaxDays(int maxdays)
-        {
-            return FormatQueryString(Model.FilterOnlyHighlights, Model.FilterTypeMask, Model.FilterMinRating, Model.FilterNotYetRated, Model.FilterCert, maxdays);
-        }
-
-        string GetFilterStyle(bool hasValue)
-        {
-            if (hasValue)
-                return "primary";
-            else
-                return "default";
-        }
-
-        string FormatCert(Cert cert)
-        {
-            StringBuilder sb = null;
-            if ((cert & Cert.none) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("Zonder");
-            }
-            if ((cert & Cert.g) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("G");
-            }
-            if ((cert & Cert.pg) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("PG");
-            }
-            if ((cert & Cert.pg13) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("PG-13");
-            }
-            if ((cert & Cert.r) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("R");
-            }
-            if ((cert & Cert.nc17) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("NC-17");
-            }
-            if ((cert & Cert.other) != 0)
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append(",");
-                sb.Append("Overige");
-            }
-
-            return sb?.ToString() ?? "";
-        }
-
-        string GetImageUrl(string local, string remote)
-        {
-            if (string.IsNullOrEmpty(local))
-                return remote;
-            
-            return "/images/cache/" + local;
-        }
-    }
-
     <p class=""><div class="alert alert-success small-alert">
         NIEUW!  Je vindt nu ook een overzicht van VTM GO en VRT NU films!  Klik hiervoor op 
         <a asp-page="/Streaming"><i class="far fa-eye"></i>
@@ -235,14 +55,14 @@
     </div></p>
 
     <div class="btn-group" role="group" aria-label="Basic example">
-        <a href="?@FormatQueryStringWithOnlyHighlights(false)" class="btn btn-@GetFilterStyle(!Model.FilterOnlyHighlights.GetValueOrDefault(Model.FilterOnlyHighlightsDefault))">Alle films</a>
-        <a href="?@FormatQueryStringWithOnlyHighlights(true)" class="btn btn-@GetFilterStyle(Model.FilterOnlyHighlights.GetValueOrDefault(Model.FilterOnlyHighlightsDefault))">Uitgekozen films</a>
+        <a href="?@Model.FormatQueryStringWithOnlyHighlights(false)" class="btn btn-@Model.GetFilterStyle(!Model.FilterOnlyHighlights.GetValueOrDefault(Model.FilterOnlyHighlightsDefault))">Alle films</a>
+        <a href="?@Model.FormatQueryStringWithOnlyHighlights(true)" class="btn btn-@Model.GetFilterStyle(Model.FilterOnlyHighlights.GetValueOrDefault(Model.FilterOnlyHighlightsDefault))">Uitgekozen films</a>
     </div>
 
     <a id="filter-link" href="#filter-buttons" data-toggle="collapse">Geavanceerde&nbsp;filters</a>
     <div id="filter-buttons" class="collapse">
         <div class="btn-group">
-            <a href="?@FormatQueryStringWithTypeMask(Model.FilterTypeMaskDefault)" class="btn btn-@GetFilterStyle(Model.FilterTypeMask != 7)">
+            <a href="?@Model.FormatQueryStringWithTypeMask(Model.FilterTypeMaskDefault)" class="btn btn-@Model.GetFilterStyle(Model.FilterTypeMask != 7)">
                 @if (Model.FilterTypeMask == 7)
                 {
                     @: Alle soorten
@@ -263,22 +83,22 @@
                     }
                 }
             </a>
-            <button type="button" class="btn btn-@GetFilterStyle(Model.FilterTypeMask != 7) dropdown-toggle" data-toggle="dropdown">
+            <button type="button" class="btn btn-@Model.GetFilterStyle(Model.FilterTypeMask != 7) dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>  <!-- caret -->
                 <span class="sr-only">Soorten</span>
             </button>
             
             <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-                <li><a href="?@FormatQueryStringWithTypeMask(7)" class="btn-@GetFilterStyle(Model.FilterTypeMask == 7)">Toon alle (@Model.Count)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithTypeMask(7)" class="btn-@Model.GetFilterStyle(Model.FilterTypeMask == 7)">Toon alle (@Model.Count)</a></li>
                 <li class="divider"></li>
-                <li><a href="?@FormatQueryStringWithTypeMask(1)" class="btn-@GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 1) != 0)">Enkel films (@Model.CountTypeFilm)</a></li>
-                <li><a href="?@FormatQueryStringWithTypeMask(2)" class="btn-@GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 2) != 0)">Enkel kortfilms (@Model.CountTypeShort)</a></li>
-                <li><a href="?@FormatQueryStringWithTypeMask(4)" class="btn-@GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 4) != 0)">Enkel series (@Model.CountTypeSerie)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithTypeMask(1)" class="btn-@Model.GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 1) != 0)">Enkel films (@Model.CountTypeFilm)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithTypeMask(2)" class="btn-@Model.GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 2) != 0)">Enkel kortfilms (@Model.CountTypeShort)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithTypeMask(4)" class="btn-@Model.GetFilterStyle(Model.FilterTypeMask != 7 && (Model.FilterTypeMask & 4) != 0)">Enkel series (@Model.CountTypeSerie)</a></li>
             </ul>
         </div>
 
         <div class="btn-group">
-            <a href="?@FormatQueryStringWithMinRating(null)" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue)">
+            <a href="?@Model.FormatQueryStringWithMinRating(null)" class="btn btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue)">
                 IMDb Sterren
                 @if (Model.FilterMinRating.HasValue)
                 {
@@ -296,58 +116,58 @@
                     }
                 }
             </a>
-            <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
+            <button type="button" class="btn btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>  <!-- caret -->
                 <span class="sr-only">IMDb Sterren</span>
             </button>
             
             <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-                <li><a href="?@FormatQueryStringWithMinRating(null)" class="btn-@GetFilterStyle(!Model.FilterMinRating.HasValue)">Toon alle films (@Model.Count)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(null)" class="btn-@Model.GetFilterStyle(!Model.FilterMinRating.HasValue)">Toon alle films (@Model.Count)</a></li>
                 <li class="divider"></li>
-                <li><a href="?@FormatQueryStringWithMinRating(9.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 9.0m)">Enkel met 9+ sterren (@Model.CountMinRating9)</a></li>
-                <li><a href="?@FormatQueryStringWithMinRating(8.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@Model.CountMinRating8)</a></li>
-                <li><a href="?@FormatQueryStringWithMinRating(7.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@Model.CountMinRating7)</a></li>
-                <li><a href="?@FormatQueryStringWithMinRating(6.5m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.5m)">Enkel met 6.5+ sterren (@Model.CountMinRating65)</a></li>
-                <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
-                <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(9.0m)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 9.0m)">Enkel met 9+ sterren (@Model.CountMinRating9)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(8.0m)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@Model.CountMinRating8)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(7.0m)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@Model.CountMinRating7)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(6.5m)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.5m)">Enkel met 6.5+ sterren (@Model.CountMinRating65)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(6.0m)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@Model.CountMinRating6)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(5.0m)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@Model.CountMinRating5)</a></li>
                 <li class="divider"></li>
-                <li><a href="?@FormatQueryStringWithMinRating(BroadcastModelBase.NO_IMDB_ID)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == BroadcastModelBase.NO_IMDB_ID)">Niet gevonden op IMDb (@Model.CountNotOnImdb)</a></li>
-                <li><a href="?@FormatQueryStringWithMinRating(BroadcastModelBase.NO_IMDB_RATING)" class="btn-@GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == BroadcastModelBase.NO_IMDB_RATING)">Niet beoordeeld op IMDb (@Model.CountNotRatedOnImdb)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(BroadcastModelBase.NO_IMDB_ID)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == BroadcastModelBase.NO_IMDB_ID)">Niet gevonden op IMDb (@Model.CountNotOnImdb)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMinRating(BroadcastModelBase.NO_IMDB_RATING)" class="btn-@Model.GetFilterStyle(Model.FilterMinRating.HasValue && Model.FilterMinRating.Value == BroadcastModelBase.NO_IMDB_RATING)">Niet beoordeeld op IMDb (@Model.CountNotRatedOnImdb)</a></li>
             </ul>
         </div>
 
         <div class="btn-group">
-            <a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all)">
+            <a href="?@Model.FormatQueryStringWithToggleCert(Cert.all)" class="btn btn-@Model.GetFilterStyle(Model.FilterCert != Cert.all)">
                 @if (Model.FilterCert == Cert.all)
                 {
                     @: Alle Certificaties
                 }
                 else
                 {
-                    @: Certificaties (@FormatCert(Model.FilterCert))
+                    @: Certificaties (@Model.FormatCert(Model.FilterCert))
                 }
             </a>
-            <button type="button" class="btn btn-@GetFilterStyle(Model.FilterCert != Cert.all) dropdown-toggle" data-toggle="dropdown">
+            <button type="button" class="btn btn-@Model.GetFilterStyle(Model.FilterCert != Cert.all) dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>  <!-- caret -->
                 <span class="sr-only">Certificaties</span>
             </button>
             
             <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(Model.FilterCert == Cert.all)">Alle films tonen (@Model.Count)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.all)" class="btn-@Model.GetFilterStyle(Model.FilterCert == Cert.all)">Alle films tonen (@Model.Count)</a></li>
                 <li class="divider"></li>
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.g)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.g) != 0)">G (@Model.CountCertG)</a></li>
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg) != 0)">PG (@Model.CountCertPG)</a></li>
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.pg13) != 0)">PG-13 (@Model.CountCertPG13)</a></li>
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.r)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.r) != 0)">R (@Model.CountCertR)</a></li>
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.nc17) != 0)">NC-17 (@Model.CountCertNC17)</a></li>
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.other) != 0)">Overige (@Model.CountCertOther)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.g)" class="btn-@Model.GetFilterStyle((Model.FilterCert & Cert.g) != 0)">G (@Model.CountCertG)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@Model.GetFilterStyle((Model.FilterCert & Cert.pg) != 0)">PG (@Model.CountCertPG)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@Model.GetFilterStyle((Model.FilterCert & Cert.pg13) != 0)">PG-13 (@Model.CountCertPG13)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.r)" class="btn-@Model.GetFilterStyle((Model.FilterCert & Cert.r) != 0)">R (@Model.CountCertR)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@Model.GetFilterStyle((Model.FilterCert & Cert.nc17) != 0)">NC-17 (@Model.CountCertNC17)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.other)" class="btn-@Model.GetFilterStyle((Model.FilterCert & Cert.other) != 0)">Overige (@Model.CountCertOther)</a></li>
                 <li class="divider"></li>
-                <li><a href="?@FormatQueryStringWithToggleCert(Cert.none)" class="btn-@GetFilterStyle((Model.FilterCert & Cert.none) != 0)">Zonder (@Model.CountCertNone)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithToggleCert(Cert.none)" class="btn-@Model.GetFilterStyle((Model.FilterCert & Cert.none) != 0)">Zonder (@Model.CountCertNone)</a></li>
             </ul>
         </div>
 
         <div class="btn-group">
-            <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue)">
+            <a href="?@Model.FormatQueryStringWithNotYetRated(null)" class="btn btn-@Model.GetFilterStyle(Model.FilterNotYetRated.HasValue)">
                 @if (Model.FilterNotYetRated.HasValue)
                 {
                     @if (Model.FilterNotYetRated.Value)
@@ -364,25 +184,25 @@
                     @: Zowel bekeken als niet bekeken
                 }
             </a>
-            <button type="button" class="btn btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue) dropdown-toggle" data-toggle="dropdown">
+            <button type="button" class="btn btn-@Model.GetFilterStyle(Model.FilterNotYetRated.HasValue) dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>  <!-- caret -->
                 <span class="sr-only"></span>
             </button>
             
             <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
                 <li>
-                    <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn-@GetFilterStyle(!Model.FilterNotYetRated.HasValue)">
+                    <a href="?@Model.FormatQueryStringWithNotYetRated(null)" class="btn-@Model.GetFilterStyle(!Model.FilterNotYetRated.HasValue)">
                         Alle films tonen (@Model.Count)
                     </a>
                 </li>
                 <li class="divider"></li>
                 <li class="@(string.IsNullOrEmpty(Model.ImdbUserId)? "disabled" : "")">
-                    <a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue && Model.FilterNotYetRated.Value)">
+                    <a href="?@Model.FormatQueryStringWithNotYetRated(true)" class="btn-@Model.GetFilterStyle(Model.FilterNotYetRated.HasValue && Model.FilterNotYetRated.Value)">
                         Enkel films tonen die nog niet bekeken zijn (@Model.CountNotYetRated)
                     </a>
                 </li>
                 <li class="@(string.IsNullOrEmpty(Model.ImdbUserId)? "disabled" : "")">
-                    <a href="?@FormatQueryStringWithNotYetRated(false)" class="btn-@GetFilterStyle(Model.FilterNotYetRated.HasValue && !Model.FilterNotYetRated.Value)">
+                    <a href="?@Model.FormatQueryStringWithNotYetRated(false)" class="btn-@Model.GetFilterStyle(Model.FilterNotYetRated.HasValue && !Model.FilterNotYetRated.Value)">
                         Enkel films tonen die wel bekeken zijn (@Model.CountRated)
                     </a>
                 </li>
@@ -422,7 +242,7 @@
         </div>
 
         <div class="btn-group">
-            <a href="?@FormatQueryStringWithMaxDays(0)" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != Model.FilterMaxDaysDefault)">
+            <a href="?@Model.FormatQueryStringWithMaxDays(0)" class="btn btn-@Model.GetFilterStyle(Model.FilterMaxDays != Model.FilterMaxDaysDefault)">
                 @if (Model.FilterMaxDays == 0)
                 {
                     @: Aantal dagen (maximum)
@@ -432,17 +252,17 @@
                     @: Aantal dagen (@Model.FilterMaxDays)
                 }
             </a>
-            <button type="button" class="btn btn-@GetFilterStyle(Model.FilterMaxDays != Model.FilterMaxDaysDefault) dropdown-toggle" data-toggle="dropdown">
+            <button type="button" class="btn btn-@Model.GetFilterStyle(Model.FilterMaxDays != Model.FilterMaxDaysDefault) dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>  <!-- caret -->
                 <span class="sr-only">Certificaties</span>
             </button>
             
             <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-                <li><a href="?@FormatQueryStringWithMaxDays(0)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 0)">Maximum aantal dagen (@Model.Count)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMaxDays(0)" class="btn-@Model.GetFilterStyle(Model.FilterMaxDays == 0)">Maximum aantal dagen (@Model.Count)</a></li>
                 <li class="divider"></li>
-                <li><a href="?@FormatQueryStringWithMaxDays(8)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 8)">8 dagen (@Model.Count8days)</a></li>
-                <li><a href="?@FormatQueryStringWithMaxDays(5)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 5)">5 dagen (@Model.Count5days)</a></li>
-                <li><a href="?@FormatQueryStringWithMaxDays(3)" class="btn-@GetFilterStyle(Model.FilterMaxDays == 3)">3 dagen (@Model.Count3days)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMaxDays(8)" class="btn-@Model.GetFilterStyle(Model.FilterMaxDays == 8)">8 dagen (@Model.Count8days)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMaxDays(5)" class="btn-@Model.GetFilterStyle(Model.FilterMaxDays == 5)">5 dagen (@Model.Count5days)</a></li>
+                <li><a href="?@Model.FormatQueryStringWithMaxDays(3)" class="btn-@Model.GetFilterStyle(Model.FilterMaxDays == 3)">3 dagen (@Model.Count3days)</a></li>
             </ul>
         </div>
     </div>
@@ -497,7 +317,7 @@
 
             <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
                 <td class="collapsible">
-                    <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
+                    <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                     <br/>
                     @(@movieEvent.StartTime.ToString("dddd"))
                     <br/>
@@ -513,13 +333,13 @@
                 <td class="collapsible">
                     @if (@movieEvent.PosterS != null)
                     {
-                        <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
+                        <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
                     }
                 </td>
                 <td>
                     <a class="anchor" name="@movieEvent.Id" ></a>
                     <div class="reverse-collapsible">
-                        <img src="@(GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
+                        <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
                         &nbsp;
                         @(@movieEvent.StartTime.ToString("dddd"))
                         @(@movieEvent.StartTime.ToShortDateString())
@@ -644,7 +464,7 @@
                     <div class="reverse-collapsible">
                         @if (@movieEvent.PosterS != null)
                         {
-                            <img src="@(GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
+                            <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
                         }
                     </div>
                     <div style="clear: both;">

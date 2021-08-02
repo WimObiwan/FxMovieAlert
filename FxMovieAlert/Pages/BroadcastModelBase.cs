@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core;
@@ -336,6 +338,187 @@ namespace FxMovieAlert.Pages
         {
             await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties() { RedirectUri = returnUrl });
         }
+
+        #region Filter helper functions
+
+        public string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
+        {
+            StringBuilder sb = null;
+            if (onlyHighlights.HasValue)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("onlyHighlights=");
+                sb.Append(onlyHighlights.Value ? "true" : "false");
+            }
+            if (typeMask != FilterTypeMaskDefault)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("typemask=");
+                sb.Append(typeMask);
+            }
+            if (minrating.HasValue)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("minrating=");
+                sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
+            }
+            if (notyetrated.HasValue)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                if (notyetrated.Value)
+                    sb.Append("notyetrated=true");
+                else
+                    sb.Append("notyetrated=false");
+            }
+            if (cert != Cert.all)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("cert=");
+                sb.Append(cert.ToString("g"));
+            }
+            if (maxdays != FilterMaxDaysDefault)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append('&');
+                sb.Append("maxdays=");
+                sb.Append(maxdays);
+            }
+            return sb?.ToString() ?? "";
+        }
+
+        public string FormatQueryStringWithOnlyHighlights(bool onlyHighlights)
+        {
+            //if (typeMask != 7 && FilterTypeMask != 7)
+            //    typeMask = FilterTypeMask ^ typeMask;
+            return FormatQueryString(onlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert, FilterMaxDays);
+        }
+
+        public string FormatQueryStringWithTypeMask(int typeMask)
+        {
+            //if (typeMask != 7 && FilterTypeMask != 7)
+            //    typeMask = FilterTypeMask ^ typeMask;
+            return FormatQueryString(FilterOnlyHighlights, typeMask, FilterMinRating, FilterNotYetRated, FilterCert, FilterMaxDays);
+        }
+
+        public string FormatQueryStringWithMinRating(decimal? minrating)
+        {
+            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, minrating, FilterNotYetRated, FilterCert, FilterMaxDays);
+        }
+
+        public string FormatQueryStringWithNotYetRated(bool? notyetrated)
+        {
+            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, notyetrated, FilterCert, FilterMaxDays);
+        }
+
+        public string FormatQueryStringWithToggleCert(Cert cert)
+        {
+            if (cert != Cert.all)
+                cert = FilterCert ^ cert;
+            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, cert, FilterMaxDays);
+        }
+
+        public string FormatQueryStringWithMaxDays(int maxdays)
+        {
+            return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert, maxdays);
+        }
+
+        public string GetFilterStyle(bool hasValue)
+        {
+            if (hasValue)
+                return "primary";
+            else
+                return "default";
+        }
+
+        public string FormatCert(Cert cert)
+        {
+            StringBuilder sb = null;
+            if ((cert & Cert.none) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("Zonder");
+            }
+            if ((cert & Cert.g) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("G");
+            }
+            if ((cert & Cert.pg) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("PG");
+            }
+            if ((cert & Cert.pg13) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("PG-13");
+            }
+            if ((cert & Cert.r) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("R");
+            }
+            if ((cert & Cert.nc17) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("NC-17");
+            }
+            if ((cert & Cert.other) != 0)
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else
+                    sb.Append(",");
+                sb.Append("Overige");
+            }
+
+            return sb?.ToString() ?? "";
+        }
+
+        public string GetImageUrl(string local, string remote)
+        {
+            if (string.IsNullOrEmpty(local))
+                return remote;
+            
+            return "/images/cache/" + local;
+        }
+
+        #endregion
 
     }
 }
