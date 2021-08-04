@@ -1,6 +1,8 @@
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using FxMovieAlert.Pages;
 using Microsoft.AspNetCore.Components;
@@ -68,66 +70,62 @@ namespace FxMovieAlert.Components
         protected DateTime? RefreshRequestTime => ParentModel.RefreshRequestTime;
         protected DateTime? LastRefreshRatingsTime => ParentModel.LastRefreshRatingsTime;
 
-        public string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
+
+        public static string FormatQueryString(bool? onlyHighlights, int? typeMask, decimal? minrating, bool? notyetrated, Cert? cert, int? maxdays)
         {
-            StringBuilder sb = null;
+            var items = new List<Tuple<string, string>>();
             if (onlyHighlights.HasValue)
             {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("onlyHighlights=");
-                sb.Append(onlyHighlights.Value ? "true" : "false");
+                items.Add(Tuple.Create(
+                    "onlyHighlights", 
+                    onlyHighlights.Value ? "true" : "false"));
             }
-            if (typeMask != FilterTypeMaskDefault)
+            if (typeMask.HasValue)
             {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("typemask=");
-                sb.Append(typeMask);
+                items.Add(Tuple.Create(
+                    "typemask",
+                    typeMask.Value.ToString()));
             }
             if (minrating.HasValue)
             {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("minrating=");
-                sb.Append(minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat));
+                items.Add(Tuple.Create(
+                    "minrating",
+                    minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat)));
             }
             if (notyetrated.HasValue)
             {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                if (notyetrated.Value)
-                    sb.Append("notyetrated=true");
-                else
-                    sb.Append("notyetrated=false");
+                items.Add(Tuple.Create(
+                    "notyetrated",
+                    notyetrated.Value.ToString()));
             }
-            if (cert != Cert.all)
+            if (cert.HasValue)
             {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("cert=");
-                sb.Append(cert.ToString("g"));
+                items.Add(Tuple.Create(
+                    "cert",
+                    cert.Value.ToString("g")));
             }
-            if (maxdays != FilterMaxDaysDefault)
+            if (maxdays.HasValue)
             {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else
-                    sb.Append('&');
-                sb.Append("maxdays=");
-                sb.Append(maxdays);
+                items.Add(Tuple.Create(
+                    "maxdays",
+                    maxdays.Value.ToString()));
             }
-            return sb?.ToString() ?? "";
+
+            if (items.Any())
+                return string.Join('&', items.Select(i => $"{i.Item1}={i.Item2}"));
+            else
+                return "";
+        }
+
+        public string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
+        {
+            if (onlyHighlights.HasValue && onlyHighlights.Value == FilterOnlyHighlightsDefault)
+                onlyHighlights = null;
+            return FormatQueryString(onlyHighlights, 
+                typeMask == FilterTypeMaskDefault ? (int?)null : typeMask,
+                minrating, notyetrated,
+                cert == Cert.all ? (Cert?)null : cert,
+                maxdays == FilterMaxDaysDefault ? (int?)null : maxdays);
         }
 
         public string FormatQueryStringWithOnlyHighlights(bool onlyHighlights)
