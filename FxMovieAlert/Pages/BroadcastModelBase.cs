@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -27,7 +27,6 @@ namespace FxMovieAlert.Pages
 
     public class BroadcastModelBase : PageModel, IFilterBarParentModel
     {
-        const string ClaimEditImdbLinks = "edit:imdblinks";
         public bool EditImdbLinks = false;
         public MovieEvent MovieEvent = null;
         public IList<Record> Records = new List<Record>();
@@ -107,7 +106,7 @@ namespace FxMovieAlert.Pages
             FilterMaxDays = FilterMaxDaysDefault;
             FilterTypeMask = FilterTypeMaskDefault;
 
-            EditImdbLinks = ClaimChecker.Has(User.Identity, ClaimEditImdbLinks);
+            EditImdbLinks = ClaimChecker.Has(User.Identity, Claims.EditImdbLinks);
 
             FilterOnlyHighlights = onlyHighlights;
 
