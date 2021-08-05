@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FxMovies.ImdbDB
@@ -28,8 +30,25 @@ namespace FxMovies.ImdbDB
             title = title.ToUpperInvariant();
             foreach (var item in RomanNumbers)
                 title = Regex.Replace(title, item.Item1, item.Item2);
-            //title = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding(28598).GetBytes(title));
+            title = RemoveDiacritics(title);
             return title;
+        }
+
+        private static string RemoveDiacritics(string text)
+        {
+            string formD = text.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            foreach (char ch in formD)
+            {
+                UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (uc != UnicodeCategory.NonSpacingMark)
+                {
+                sb.Append(ch);
+                }
+            }
+
+            return sb.ToString().Normalize(NormalizationForm.FormC);
         }
     }
 }
