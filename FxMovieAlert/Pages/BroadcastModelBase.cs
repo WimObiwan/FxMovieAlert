@@ -1,10 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovieAlert.Components;
 using FxMovies.Core;
@@ -74,28 +70,22 @@ namespace FxMovieAlert.Pages
         private readonly bool streaming;
         private readonly IConfiguration configuration;
         private readonly FxMoviesDbContext fxMoviesDbContext;
-        private readonly ImdbDbContext imdbDbContext;
-        private readonly IMovieCreationHelper movieCreationHelper;
         private readonly IUsersRepository usersRepository;
 
         public BroadcastModelBase(
             bool streaming,
             IConfiguration configuration,
             FxMoviesDbContext fxMoviesDbContext,
-            ImdbDbContext imdbDbContext,
-            IMovieCreationHelper movieCreationHelper,
             IUsersRepository usersRepository)
         {
             this.streaming = streaming;
             this.configuration = configuration;
             this.fxMoviesDbContext = fxMoviesDbContext;
-            this.imdbDbContext = imdbDbContext;
-            this.movieCreationHelper = movieCreationHelper;
             this.usersRepository = usersRepository;
         }
 
-        public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null, bool? notyetrated = null, Cert cert = Cert.all,
-            int? movieeventid = null, string setimdbid = null, int? maxdays = null)
+        public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null, 
+            bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null)
         {
             string userId = ClaimChecker.UserId(User.Identity);
 
@@ -137,58 +127,6 @@ namespace FxMovieAlert.Pages
             else
             {
                 dbMovieEvents = dbMovieEvents.Where(me => me.EndTime == null || me.EndTime >= now);
-            }
-
-            if (EditImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
-            {
-                bool overwrite = false;
-                var match = Regex.Match(setimdbid, @"(tt\d+)");
-                if (match.Success)
-                {
-                    setimdbid = match.Groups[0].Value;
-                    overwrite = true;
-                }
-                else if (setimdbid.Equals("remove", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    setimdbid = null;
-                    overwrite = true;
-                }
-                
-                if (overwrite)
-                {
-                    var movieEvent = await dbMovieEvents
-                        .Include(me => me.Movie)
-                        .Include(me => me.Channel)
-                        .SingleOrDefaultAsync(me => me.Id == movieeventid.Value);
-                    if (movieEvent != null)
-                    {
-                        if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == setimdbid)
-                        {
-                            // Already ok, Do nothing
-                        }
-                        else
-                        {
-                            movieEvent.Movie = null;
-                            if (setimdbid != null)
-                            {
-                                FxMovies.FxMoviesDB.Movie movie = await movieCreationHelper.GetOrCreateMovieByImdbId(setimdbid);
-                                movieEvent.Movie = movie;
-                                movie.ImdbId = setimdbid; 
-
-                                var imdbMovie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == setimdbid);
-                                if (imdbMovie != null)
-                                {
-                                    movieEvent.Movie.ImdbRating = imdbMovie.Rating;
-                                    movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
-                                    if (!movieEvent.Year.HasValue)
-                                        movieEvent.Year = imdbMovie.Year;
-                                }
-                            }
-                        }
-
-                        await fxMoviesDbContext.SaveChangesAsync();
-                    } 
-                }
             }
 
             if (userId != null)

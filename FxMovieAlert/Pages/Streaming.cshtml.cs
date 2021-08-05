@@ -12,14 +12,10 @@ namespace FxMovieAlert.Pages
         public StreamingModel(
             IConfiguration configuration,
             FxMoviesDbContext fxMoviesDbContext,
-            ImdbDbContext imdbDbContext,
-            IMovieCreationHelper movieCreationHelper,
             IUsersRepository usersRepository)
             : base(true,
                 configuration,
                 fxMoviesDbContext,
-                imdbDbContext,
-                movieCreationHelper,
                 usersRepository)
         {}
     }

@@ -182,7 +182,8 @@
                                         </a>
                                         <div id="manualImdbLink-@movieEvent.Id" class="collapse">
                                             MovieEventId: @movieEvent.Id <br/>
-                                            <form action="#" method="GET">
+                                            <form action="UpdateImdbLink" method="POST">
+                                                @Html.AntiForgeryToken()
                                                 Manual input: 
                                                 IMDb search 
                                                 <a href="https://www.imdb.com/find?q=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))&amp;s=all" target="_new">all</a>
@@ -190,26 +191,7 @@
                                                 <br/>
                                                 IMDb ID: <input type="edit" name="setimdbid" value="" /> <br/>
                                                 <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
-                                                @if (Model.FilterTypeMask != Model.FilterTypeMaskDefault)
-                                                {
-                                                    <input type="hidden" name="minrating" value="@Model.FilterTypeMask.ToString()" /> <br/>
-                                                }
-                                                @if (Model.FilterMinRating.HasValue)
-                                                {
-                                                    <input type="hidden" name="minrating" value="@Model.FilterMinRating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat)" /> <br/>
-                                                }
-                                                @if (Model.FilterNotYetRated.HasValue)
-                                                {
-                                                    <input type="hidden" name="notyetrated" value="@Model.FilterNotYetRated.Value.ToString()" /> <br/>
-                                                }
-                                                @if (Model.FilterCert != Cert.all)
-                                                {
-                                                    <input type="hidden" name="cert" value="@Model.FilterCert.ToString("g")" /> <br/>
-                                                }
-                                                @if (Model.FilterMaxDays != Model.FilterMaxDaysDefault)
-                                                {
-                                                    <input type="hidden" name="maxdays" value="@Model.FilterMaxDays" /> <br/>
-                                                }
+                                                <input type="hidden" name="returnPage" value="@Request.Path@Request.QueryString.Add("m", movieEvent.Id.ToString())" /> <br/>                                                
                                                 <input type="submit" value="Set" /> 
                                             </form>
                                         </div>

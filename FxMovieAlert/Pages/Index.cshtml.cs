@@ -12,14 +12,10 @@ namespace FxMovieAlert.Pages
         public BroadcastModel(
             IConfiguration configuration,
             FxMoviesDbContext fxMoviesDbContext,
-            ImdbDbContext imdbDbContext,
-            IMovieCreationHelper movieCreationHelper,
             IUsersRepository usersRepository)
             : base(false,
                 configuration,
                 fxMoviesDbContext,
-                imdbDbContext,
-                movieCreationHelper,
                 usersRepository)
         { }
     }
