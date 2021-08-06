@@ -9,20 +9,24 @@ using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FxMovieAlert.Pages
 {
     public class UpdateImdbLinkModel : PageModel
     {
+        private readonly ILogger<UpdateImdbLinkModel> logger;
         private readonly FxMoviesDbContext fxMoviesDbContext;
         private readonly ImdbDbContext imdbDbContext;
         private readonly IMovieCreationHelper movieCreationHelper;
 
         public UpdateImdbLinkModel(
+            ILogger<UpdateImdbLinkModel> logger,
             FxMoviesDbContext fxMoviesDbContext,
             ImdbDbContext imdbDbContext,
             IMovieCreationHelper movieCreationHelper)
         {
+            this.logger = logger;
             this.fxMoviesDbContext = fxMoviesDbContext;
             this.imdbDbContext = imdbDbContext;
             this.movieCreationHelper = movieCreationHelper;
@@ -71,6 +75,7 @@ namespace FxMovieAlert.Pages
                         if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == setimdbid && movieEvent.Movie.ImdbIgnore != setIgnore)
                         {
                             // Already ok, Do nothing
+                            logger.LogInformation("Skipped saving {ImdbId}, no changes", setimdbid);
                         }
                         else
                         {
