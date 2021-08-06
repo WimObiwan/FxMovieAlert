@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -174,7 +174,7 @@ namespace FxMovieAlert.Pages
             CountMinRating7 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 70).CountAsync();
             CountMinRating8 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 80).CountAsync();
             CountMinRating9 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 90).CountAsync();
-            CountNotOnImdb = await dbMovieEvents.Where(me => string.IsNullOrEmpty(me.Movie.ImdbId)).CountAsync();
+            CountNotOnImdb = await dbMovieEvents.Where(me => me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)).CountAsync();
             CountNotRatedOnImdb = await dbMovieEvents.Where(me => me.Movie.ImdbRating == null).CountAsync();
             CountCertNone = await dbMovieEvents.Where(me => string.IsNullOrEmpty(me.Movie.Certification)).CountAsync();
             CountCertG = await dbMovieEvents.Where(me => me.Movie.Certification == "US:G").CountAsync();
@@ -198,7 +198,7 @@ namespace FxMovieAlert.Pages
                     )
                     &&
                     (!FilterMinRating.HasValue 
-                        || (FilterMinRating.Value == Components.FilterBar.NO_IMDB_ID && string.IsNullOrEmpty(me.Movie.ImdbId))
+                        || (FilterMinRating.Value == Components.FilterBar.NO_IMDB_ID && (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)))
                         || (FilterMinRating.Value == Components.FilterBar.NO_IMDB_RATING && me.Movie.ImdbRating == null)
                         || (FilterMinRating.Value >= 0.0m && (me.Movie.ImdbRating >= FilterMinRating.Value * 10)))
                     // && 

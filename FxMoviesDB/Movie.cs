@@ -17,6 +17,7 @@ namespace FxMovies.FxMoviesDB
         public int? ImdbVotes { get; set; }
         public string Certification { get; set; }
         public string OriginalTitle { get; set; }
+        public bool ImdbIgnore { get; set; }
 
         public List<MovieEvent> MovieEvents { get; set; }
         public List<UserRating> UserRatings { get; set; }

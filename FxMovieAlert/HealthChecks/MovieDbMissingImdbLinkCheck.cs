@@ -40,7 +40,7 @@ namespace FxMovieAlert.HealthChecks
                 
                 int count = await fxMoviesDbContext.MovieEvents
                     .Where(filter)
-                    .CountAsync(me => string.IsNullOrEmpty(me.Movie.ImdbId) && me.Type == 1);
+                    .CountAsync(me => (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)) && me.Type == 1);
 
                 HealthStatus status;
                 if (count <= this.configuration.GetValue("HealthCheck:CheckMissingImdbLinkCount", 7))

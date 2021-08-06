@@ -41,11 +41,18 @@ namespace FxMovieAlert.Pages
             if (editImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
             {
                 bool overwrite = false;
+                bool setIgnore = false;
                 var match = Regex.Match(setimdbid, @"(tt\d+)");
                 if (match.Success)
                 {
                     setimdbid = match.Groups[0].Value;
                     overwrite = true;
+                }
+                else if (setimdbid.Equals("ignore", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    setimdbid = null;
+                    overwrite = true;
+                    setIgnore = true;
                 }
                 else if (setimdbid.Equals("remove", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -61,19 +68,23 @@ namespace FxMovieAlert.Pages
                         .SingleOrDefaultAsync(me => me.Id == movieeventid.Value);
                     if (movieEvent != null)
                     {
-                        if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == setimdbid)
+                        if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == setimdbid && movieEvent.Movie.ImdbIgnore != setIgnore)
                         {
                             // Already ok, Do nothing
                         }
                         else
                         {
-                            movieEvent.Movie = null;
+                            FxMovies.FxMoviesDB.Movie movie;
+                            if (setimdbid != null)
+                                movie = await movieCreationHelper.GetOrCreateMovieByImdbId(setimdbid);
+                            else
+                                movie = new FxMovies.FxMoviesDB.Movie();
+
+                            movieEvent.Movie = movie;
+                            movie.ImdbIgnore = setIgnore;
+
                             if (setimdbid != null)
                             {
-                                FxMovies.FxMoviesDB.Movie movie = await movieCreationHelper.GetOrCreateMovieByImdbId(setimdbid);
-                                movieEvent.Movie = movie;
-                                movie.ImdbId = setimdbid; 
-
                                 var imdbMovie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == setimdbid);
                                 if (imdbMovie != null)
                                 {
