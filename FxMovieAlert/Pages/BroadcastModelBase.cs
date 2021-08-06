@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -65,6 +65,8 @@ namespace FxMovieAlert.Pages
         public int Count3days { get; private set; } = 0;
         public int Count5days { get; private set; } = 0;
         public int Count8days { get; private set; } = 0;
+        public int HighlightedFilterMonthsThreshold { get; private set; } = 36;
+        public int HighlightedFilterRatingThreshold { get; private set; } = 8;
         public int AdsInterval = 5;
 
         private readonly bool streaming;
@@ -218,7 +220,9 @@ namespace FxMovieAlert.Pages
                         Highlighted = 
                             r.UserWatchListItem != null
                             ||
-                            r.UserRating != null && r.UserRating.Rating >= 8 && r.UserRating.RatingDate < now.AddYears(-3)
+                            (r.UserRating != null 
+                                && r.UserRating.Rating >= HighlightedFilterRatingThreshold 
+                                && r.UserRating.RatingDate < now.AddMonths(-HighlightedFilterMonthsThreshold))
                     }
                 );
 

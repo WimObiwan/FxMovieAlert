@@ -176,7 +176,11 @@ namespace FxMovies.Core
 
             foreach (var movie in movieEvents)
             {
-                var existingDuplicates = await existingMovies.Where(me => me.ExternalId == movie.ExternalId).Skip(1).ToListAsync();
+                var existingDuplicates = await existingMovies
+                    .Where(me => me.ExternalId == movie.ExternalId)
+                    .OrderBy(me => me.Id)
+                    .Skip(1)
+                    .ToListAsync();
                 fxMoviesDbContext.MovieEvents.RemoveRange(existingDuplicates);
                 await fxMoviesDbContext.SaveChangesAsync();
             }
