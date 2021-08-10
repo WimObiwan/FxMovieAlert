@@ -97,13 +97,13 @@ namespace FxMovies.Core
         private async Task UpdateDatabaseEpg_VtmGo()
         {
             var movieEvents = await vtmGoService.GetMovieEvents();
-            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Channel.Code == "vtmgo");
+            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == "vtmgo");
         }
 
         private async Task UpdateDatabaseEpg_VrtNu()
         {
             var movieEvents = await vrtNuService.GetMovieEvents();
-            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Channel.Code == "vrtnu");
+            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == "vrtnu");
         }
 
         private async Task UpdateMovieEvents(IList<MovieEvent> movieEvents, Expression<Func<MovieEvent, bool>> movieEventsSubset)
