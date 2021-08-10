@@ -120,7 +120,7 @@ namespace FxMovies.Core
             };
             foreach (var movie in movieEvents.Where(isMovieIgnored))
             {
-                logger.LogInformation($"Ignoring movie: {movie.Id} {movie.Title}");
+                logger.LogInformation("Ignoring movie: {Id} {Title}", movie.Id, movie.Title);
             }
             movieEvents = movieEvents.Where(m => !isMovieIgnored(m)).ToList();
 
@@ -133,7 +133,7 @@ namespace FxMovies.Core
                     var match = Regex.Match(movie.Title, item);
                     if (movie.Title != newTitle)
                     {
-                        logger.LogInformation($"Transforming movie {movie.Title} to {newTitle}");
+                        logger.LogInformation("Transforming movie: {Id} {Title} to {NewTitle}", movie.Id, movie.Title, newTitle);
                         movie.Title = newTitle;
                     }
                 }
@@ -141,12 +141,13 @@ namespace FxMovies.Core
 
             foreach (var movie in movieEvents)
             {
-                logger.LogInformation($"{movie.Channel.Name} {movie.Title} {movie.Year} {movie.StartTime}");
+                logger.LogInformation("{ChannelName} {Id} {Title} {Year} {StartTime}",
+                    movie.Channel.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
             }
 
             var existingMovies = fxMoviesDbContext.MovieEvents.Where(movieEventsSubset);
-            logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
-            logger.LogInformation("New movies: {0}", movieEvents.Count());
+            logger.LogInformation("Existing movies: {ExistingMovieCount}", await existingMovies.CountAsync());
+            logger.LogInformation("New movies: {NewMovieCount}", movieEvents.Count());
 
             // Update channels
             foreach (var channel in movieEvents.Select(m => m.Channel).Distinct())
@@ -169,7 +170,7 @@ namespace FxMovies.Core
             // Remove exising movies that don't appear in new movies
             {
                 var remove = existingMovies.ToList().Where(m1 => !movieEvents.Any(m2 => m2.ExternalId == m1.ExternalId));
-                logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
+                logger.LogInformation("Existing movies to be removed: {ExistingMoviesToRemove}", remove.Count());
                 fxMoviesDbContext.RemoveRange(remove);
                 await fxMoviesDbContext.SaveChangesAsync();
             }
@@ -270,7 +271,7 @@ namespace FxMovies.Core
                 };
                 foreach (var movie in movies.Where(isMovieIgnored))
                 {
-                    logger.LogInformation($"Ignoring movie: {movie.Id} {movie.Title}");
+                    logger.LogInformation("Ignoring movie: {Id} {Title}", movie.Id, movie.Title);
                 }
                 movies = movies.Where(m => !isMovieIgnored(m)).ToList();
 
@@ -285,7 +286,7 @@ namespace FxMovies.Core
                             var newTitle = match.Groups[1].Value;
                             if (movie.Title != newTitle)
                             {
-                                logger.LogInformation($"Transforming movie {movie.Title} to {newTitle}");
+                                logger.LogInformation("Transforming movie: {Id} {Title} to {NewTitle}", movie.Id, movie.Title, newTitle);
                                 movie.Title = newTitle;
                             }
                         }
@@ -300,7 +301,8 @@ namespace FxMovies.Core
                             var yearText = match.Groups[2].Value;
                             if (int.TryParse(yearText, out int year))
                             {
-                                logger.LogInformation($"Transforming[YearSplitter] movie {movie.Title} to {newTitle}, year {year}");
+                                logger.LogInformation("Transforming[YearSplitter] movie: {Id} {Title} to {NewTitle}, year {Year}", 
+                                    movie.Id, movie.Title, newTitle, year);
                                 movie.Title = newTitle;
                                 movie.Year = year;
                             }
@@ -308,15 +310,16 @@ namespace FxMovies.Core
                     }
                 }
 
-                logger.LogInformation(date.ToString());
+                logger.LogInformation("Using date {Date}", date);
                 foreach (var movie in movies)
                 {
-                    logger.LogInformation($"{movie.Channel.Name} {movie.Title} {movie.Year} {movie.StartTime}");
+                    logger.LogInformation("{ChannelName} {Id} {Title} {Year} {StartTime}",
+                        movie.Channel.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
                 }
 
                 var existingMovies = fxMoviesDbContext.MovieEvents.Where(x => x.StartTime.Date == date);
-                logger.LogInformation("Existing movies: {0}", await existingMovies.CountAsync());
-                logger.LogInformation("New movies: {0}", movies.Count());
+                logger.LogInformation("Existing movies: {ExistingMovieCount}", await existingMovies.CountAsync());
+                logger.LogInformation("New movies: {NewMovieCount}", movies.Count());
 
                 // Update channels
                 foreach (var channel in movies.Select(m => m.Channel).Distinct())
@@ -339,7 +342,7 @@ namespace FxMovies.Core
                 // Remove exising movies that don't appear in new movies
                 {
                     var remove = existingMovies.ToList().Where(m1 => !movies.Any(m2 => m2.Id == m1.Id));
-                    logger.LogInformation("Existing movies to be removed: {0}", remove.Count());
+                    logger.LogInformation("Existing movies to be removed: {ExistingMoviesToRemove}", remove.Count());
                     fxMoviesDbContext.RemoveRange(remove);
                 }
 
@@ -424,7 +427,7 @@ namespace FxMovies.Core
                     }
                     catch(Exception x)
                     {
-                        logger.LogError(x, $"UpdateMissingImageLinks failed for movie {movieEvent.Movie.ImdbId}");
+                        logger.LogError(x, "UpdateMissingImageLinks failed for movie {ImdbId}", movieEvent.Movie.ImdbId);
                     }
                 }
             }
@@ -516,7 +519,7 @@ namespace FxMovies.Core
             }
             catch (Exception x)
             {
-                logger.LogWarning(x, $"Failed to resize {imageFile}");
+                logger.LogWarning(x, "Failed to resize {ImageFile}", imageFile);
             }
         }
 
@@ -542,7 +545,8 @@ namespace FxMovies.Core
                 }
                 name = name + ext;
                 target = Path.Combine(basePath, name);
-                logger.LogInformation($"Downloading {url} to {target}, {contentType}");
+                logger.LogInformation("Downloading {Url} to {FileName}, {ContentType}",
+                    url, target, contentType);
                 using (var stm = await rsp.Content.ReadAsStreamAsync())
                 using (var fileStream = File.Create(target))
                 {
@@ -551,7 +555,7 @@ namespace FxMovies.Core
             }
             catch (Exception x)
             {
-                logger.LogWarning($"FAILED download of {url}, Exception={x.Message}");
+                logger.LogWarning(x, "FAILED download of {Url}", url);
                 return null;
             }
 
@@ -598,11 +602,14 @@ namespace FxMovies.Core
                 if (imdbMovie == null)
                 {
                     await fxMoviesDbContext.SaveChangesAsync();
-                    logger.LogInformation($"UpdateEpgDataWithImdb: Could not find movie '{first.Title} ({first.Year})' in IMDb");
+                    logger.LogInformation("UpdateEpgDataWithImdb: Could not find movie '{Title} ({Year})' in IMDb",
+                        first.Title, first.Year);
                     continue;
                 }
 
-                logger.LogInformation($"{(100 * current) / totalCount}% {first.Title} ({first.Year}) ==> {imdbMovie.ImdbId}, duplicity={group.Count()}, HUNT#{huntNo}");
+                logger.LogInformation("{PercentDone}% {Title} ({Year}) ==> {ImdbId}, duplicity={Duplicity}, HUNT#{HuntNo}",
+                    (100 * current) / totalCount, first.Title, first.Year,
+                    imdbMovie.ImdbId, group.Count(), huntNo);
 
                 var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
 

@@ -90,7 +90,7 @@ namespace FxMovies.Core
                 var certifications = releases?.countries;
                 if (certifications == null)
                 {
-                    logger.LogInformation($"Certification {imdbId} ==> NONE");
+                    logger.LogInformation("Certification {ImdbId} ==> NONE", imdbId);
                     return null;
                 }
                 foreach (var countryId in certificationCountryPreference)
@@ -98,17 +98,17 @@ namespace FxMovies.Core
                     var certification = certifications.FirstOrDefault(c => c.iso_3166_1 == countryId && !string.IsNullOrEmpty(c.certification));
                     if (certification != null)
                     {
-                        string text = $"{certification.iso_3166_1}:{certification.certification}";
-                        logger.LogInformation($"Certification {imdbId} ==> {text}");
-                        return text;
+                        string label = $"{certification.iso_3166_1}:{certification.certification}";
+                        logger.LogInformation("Certification {ImdbId} ==> {Label}", imdbId, label);
+                        return label;
                     }
                 }
 
-                logger.LogInformation($"Certification {imdbId} ==> NOT FOUND IN {certifications.Count} items");
+                logger.LogInformation("Certification {ImdbId} ==> NOT FOUND IN {CertificationsCount} items", imdbId, certifications.Count);
             }
             catch (Exception x)
             {
-                logger.LogError(x, $"Certification {imdbId} ==> EXCEPTION");
+                logger.LogError(x, "Certification {ImdbId} ==> EXCEPTION", imdbId);
             }
 
             return null;
@@ -128,7 +128,7 @@ namespace FxMovies.Core
             {
                 var movie = await client.GetFromJsonAsync<Movie>(url);
 
-                logger.LogInformation($"Image {imdbId} ==> {movie.original_title}");
+                logger.LogInformation("Image {ImdbId} ==> {OriginalTitle}", imdbId, movie.original_title);
                 
                 string baseUrl = "http://image.tmdb.org/t/p";
                 string posterM, posterS;

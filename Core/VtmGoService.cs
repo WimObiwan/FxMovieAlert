@@ -68,7 +68,8 @@ namespace FxMovies.Core
                 var movieInfo = await GetMovieInfo(lfvpToken, profileId, movieId);
                 if (movieInfo.movie.durationSeconds < 75 * 60)
                 {
-                    logger.LogWarning($"Skipped {movieInfo.movie.name}, duration {movieInfo.movie.durationSeconds} too small");
+                    logger.LogWarning("Skipped {Name}, duration {DurationSeconds} too small",
+                        movieInfo.movie.name, movieInfo.movie.durationSeconds);
                     continue;
                 }
                 movieEvents.Add(

@@ -68,7 +68,7 @@ namespace FxMovies.Core
 
         private async Task<Humo> GetHumoData(string url)
         {
-            logger.LogInformation($"Retrieving from Humo: {url}");
+            logger.LogInformation("Retrieving from Humo: {Url}", url);
             var request = WebRequest.CreateHttp(url);
             using (var response = await request.GetResponseAsync())
             {
@@ -113,7 +113,7 @@ namespace FxMovies.Core
             }
             catch (Exception e)
             {
-                logger.LogError($"First try failed\n{e.Message}");
+                logger.LogError(e, "First try failed, {Url}", url);
             }
 
             await Task.Delay(5000);
@@ -124,7 +124,7 @@ namespace FxMovies.Core
             }
             catch (Exception e)
             {
-                logger.LogError($"Second try failed\n{e.Message}");
+                logger.LogError(e, "Second try failed, {Url}", url);
 
                 throw;
             }
@@ -181,7 +181,8 @@ namespace FxMovies.Core
             {
                 if (!humo.channels.Any(b => b != null && b.seoKey == channel))
                 {
-                    logger.LogWarning($"No broadcasts found for channel {channel} on {date.ToShortDateString()}");
+                    logger.LogWarning("No broadcasts found for Channel {channel} on {Date}",
+                        channel, date.ToShortDateString());
                 }
             }
 

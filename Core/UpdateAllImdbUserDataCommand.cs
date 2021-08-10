@@ -34,7 +34,7 @@ namespace FxMovies.Core
                 }
                 catch (Exception x)
                 {
-                    logger.LogError(x, $"Failed to update ratings for ImdbUserId={imdbUserId}");
+                    logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", imdbUserId);
                 }
             }
             return 0;

@@ -138,8 +138,11 @@ namespace FxMovies.Core
                             if (count % batchSize == 0)
                             {
                                 logger.LogInformation(
-                                    $"UpdateImdbDataWithMovies: {count} records done ({originalFileStream.Position * 100 / originalFileStream.Length}%), "
-                                    + $"{countAlternatives} alternatives, {skipped} records skipped ({skipped * 100 / count}%), {stopwatch.ElapsedMilliseconds}");
+                                    "UpdateImdbDataWithMovies: {CountDone} records done ({PercentDone}%), "
+                                    + "{CountAlternatives} alternatives, {CountSkipped} records skipped ({PercentSkipped}%), {msecs}",
+                                    count, originalFileStream.Position * 100 / originalFileStream.Length,
+                                    countAlternatives, skipped, skipped * 100 / count,
+                                    stopwatch.ElapsedMilliseconds);
                                 stopwatch.Restart();                            
 
                                 // For debugging
@@ -150,7 +153,7 @@ namespace FxMovies.Core
                             var match = regex.Match(text);
                             if (!match.Success)
                             {
-                                logger.LogWarning($"Unable to parse line {count}: {text}");
+                                logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
                                 continue;
                             }
 
@@ -204,7 +207,7 @@ namespace FxMovies.Core
                     }
                 } while (text != null);
                 
-                logger.LogInformation($"IMDb movies scanned: {count}");
+                logger.LogInformation("IMDb movies scanned: {Count}", count);
             }
         }        
 
@@ -251,8 +254,11 @@ namespace FxMovies.Core
                             {
                                 await db.SaveChangesAsync();
                                 logger.LogInformation(
-                                    $"UpdateImdbDataWithAkas: {count} records done ({originalFileStream.Position * 100 / originalFileStream.Length}%), "
-                                    + $"{countAlternatives} alternatives, {skipped} records skipped ({skipped * 100 / count}%), {stopwatch.ElapsedMilliseconds}");
+                                    "UpdateImdbDataWithAkas: {CountDone} records done ({PercentDone}%), "
+                                    + "{CountAlternatives} alternatives, {CountSkipped} records skipped ({PercentSkipped}%), {msecs}",
+                                    count, originalFileStream.Position * 100 / originalFileStream.Length,
+                                    countAlternatives, skipped, skipped * 100 / count,
+                                    stopwatch.ElapsedMilliseconds);
                                 stopwatch.Restart();                            
 
                                 // For debugging
@@ -263,7 +269,7 @@ namespace FxMovies.Core
                             var match = regex.Match(text);
                             if (!match.Success)
                             {
-                                logger.LogWarning($"Unable to parse line {count}: {text}");
+                                logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
                                 continue;
                             }
 
@@ -307,7 +313,7 @@ namespace FxMovies.Core
 
                 } while (text != null);
 
-                logger.LogInformation($"IMDb movies scanned: {count}");
+                logger.LogInformation("IMDb movies scanned: {Count}", count);
             }
         }
 
@@ -350,8 +356,11 @@ namespace FxMovies.Core
                             {
                                 await db.SaveChangesAsync();
                                 logger.LogInformation(
-                                    $"UpdateImdbDataWithRatings: {count} records done ({originalFileStream.Position * 100 / originalFileStream.Length}%), "
-                                    + $"{skipped} records skipped, {stopwatch.ElapsedMilliseconds}");
+                                    "UpdateImdbDataWithRatings: {CountDone} records done ({PercentDone}%), "
+                                    + "{CountSkipped} records skipped ({PercentSkipped}%), {msecs}",
+                                    count, originalFileStream.Position * 100 / originalFileStream.Length,
+                                    skipped, skipped * 100 / count,
+                                    stopwatch.ElapsedMilliseconds);
                                 stopwatch.Restart();                            
 
                                 // For debugging
@@ -363,7 +372,7 @@ namespace FxMovies.Core
                             var match = regex.Match(text);
                             if (!match.Success)
                             {
-                                logger.LogWarning($"Unable to parse line {count}: {text}");
+                                logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
                                 continue;
                             }
 
@@ -392,7 +401,7 @@ namespace FxMovies.Core
 
                 } while (text != null);
 
-                logger.LogInformation($"IMDb ratings scanned: {count}");
+                logger.LogInformation("IMDb ratings scanned: {Count}", count);
             }
         }
 
@@ -400,7 +409,7 @@ namespace FxMovies.Core
         {
             int year = DateTime.Now.Year - 2;
 
-            logger.LogInformation($"Removing Movies without Rating");
+            logger.LogInformation("Removing Movies without Rating");
 
             int total;
             using (var scope = serviceScopeFactory.CreateScope())
@@ -409,7 +418,7 @@ namespace FxMovies.Core
                 total = db.Movies.Where((m) => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Count();
             }
             
-            logger.LogInformation($"Removing {total} Movies without Rating");
+            logger.LogInformation("Removing {Count} Movies without Rating", total);
             long count = 0;
             do {
                 using (var scope = serviceScopeFactory.CreateScope())
@@ -427,7 +436,7 @@ namespace FxMovies.Core
                     // This also removes Alternatives
                     db.Movies.RemoveRange(batch);
                     await db.SaveChangesAsync();
-                    logger.LogInformation($"Removing {total} Movies without Rating, {count * 100 / total}%");
+                    logger.LogInformation("Removing {TotalCount} Movies without Rating, {PercentDone}%", total, count * 100 / total);
                 }
             } while (true);
         }

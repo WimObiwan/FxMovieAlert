@@ -54,7 +54,8 @@ namespace FxMovies.Core
                 var movieDetails = await GetSearchMovieInfo(movie.programUrl);
                 if (movieDetails.duration < 75)
                 {
-                    logger.LogWarning($"Skipped {movieDetails.program}, duration {movieDetails.duration} too small");
+                    logger.LogWarning("Skipped {Program}, duration {Duration} too small",
+                        movieDetails.program, movieDetails.duration);
                     continue;
                 }
                 string seasonName = movieDetails.seasonName;

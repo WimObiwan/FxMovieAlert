@@ -134,13 +134,13 @@ namespace FxMovies.Core
             var imdbMovie = result.ImdbMovie;
             if (imdbMovie != null)
             {
-                logger.LogError("Movie '{movieTitle}' ({movieReleseYear}) found: {imdbId} - '{primaryTitle}' ({year})", 
+                logger.LogError("Movie '{MovieTitle}' ({LovieReleaseYear}) found: {ImdbId} - '{PrimaryTitle}' ({Year})", 
                     movieTitle, movieReleaseYear, imdbMovie.ImdbId, imdbMovie.PrimaryTitle, imdbMovie.Year);
                 return 0;
             }
             else
             {
-                logger.LogError("Movie '{movieTitle}' ({movieReleseYear}) not found", movieTitle, movieReleaseYear);
+                logger.LogError("Movie '{MovieTitle}' ({MovieReleaseYear}) not found", movieTitle, movieReleaseYear);
                 return 1;
             }
         }

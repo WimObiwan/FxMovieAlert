@@ -124,7 +124,7 @@ namespace FxMovies.Grabber
                 var config = host.Services.GetRequiredService<IConfiguration>();
                 var version = config.GetValue<string>("Version");
                 var logger = host.Services.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation($"Version {version}");
+                logger.LogInformation("Version {Version}", version);
 
                 var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
                 using (var scope = serviceProvider.CreateScope())
