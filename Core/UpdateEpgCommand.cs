@@ -70,11 +70,63 @@ namespace FxMovies.Core
 
         public async Task<int> Run()
         {
-            await UpdateDatabaseEpg();
-            await UpdateEpgDataWithImdb();
-            await UpdateMissingImageLinks();
-            await DownloadImageData();
-            //UpdateDatabaseEpgHistory();
+            Exception firstException = null;
+            int failedOperations = 0;
+
+            try
+            {
+                await UpdateDatabaseEpg();
+            }
+            catch (Exception x)
+            {
+                logger.LogError(x, "UpdateDatabaseEpg failed.  Trying to continue.");
+                failedOperations++;
+                if (firstException == null)
+                    firstException = x;
+            }
+
+            try
+            {
+                await UpdateEpgDataWithImdb();
+            }
+            catch (Exception x)
+            {
+                logger.LogError(x, "UpdateEpgDataWithImdb failed.  Trying to continue.");
+                failedOperations++;
+                if (firstException == null)
+                    firstException = x;
+            }
+
+            try
+            {
+                await UpdateMissingImageLinks();
+            }
+            catch (Exception x)
+            {
+                logger.LogError(x, "UpdateMissingImageLinks failed.  Trying to continue.");
+                failedOperations++;
+                if (firstException == null)
+                    firstException = x;
+            }
+
+            try
+            {
+                await DownloadImageData();
+            }
+            catch (Exception x)
+            {
+                logger.LogError(x, "DownloadImageData failed.  Trying to continue.");
+                failedOperations++;
+                if (firstException == null)
+                    firstException = x;
+            }
+
+            if (firstException != null)
+            {
+                throw new Exception($"UpdateEpgCommand.Run failed for {failedOperations} operations.  InnerException contains first failure.", 
+                    firstException);
+            }
+
             return 0;
         }
 
@@ -110,7 +162,7 @@ namespace FxMovies.Core
             }
             catch (Exception x)
             {
-                logger.LogError(x, "UpdateDatabaseEpg failed for VtmGo.  Trying to continue with other providers.");
+                logger.LogError(x, "UpdateDatabaseEpg failed for VrtNu.  Trying to continue with other providers.");
                 failedProviders++;
                 if (firstException == null)
                     firstException = x;
@@ -122,7 +174,7 @@ namespace FxMovies.Core
             }
             catch (Exception x)
             {
-                logger.LogError(x, "UpdateDatabaseEpg failed for VtmGo.  Trying to continue with other providers.");
+                logger.LogError(x, "UpdateDatabaseEpg failed for Humo.  Trying to continue with other providers.");
                 failedProviders++;
                 if (firstException == null)
                     firstException = x;
