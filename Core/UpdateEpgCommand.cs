@@ -106,6 +106,20 @@ namespace FxMovies.Core
             await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == "vrtnu");
         }
 
+        private async Task UpdateDatabaseEpg_Humo()
+        {
+            DateTime now = DateTime.Now;
+
+            int maxDays = updateEpgCommandOptions.MaxDays ?? 7;
+            for (int days = 0; days <= maxDays; days++)
+            {
+                DateTime date = now.Date.AddDays(days);
+                var movieEvents = await humoService.GetGuide(date);
+
+                await UpdateMovieEvents(movieEvents, (MovieEvent me) => !me.Vod && me.StartTime.Date == date);
+            }
+        }
+
         private async Task UpdateMovieEvents(IList<MovieEvent> movieEvents, Expression<Func<MovieEvent, bool>> movieEventsSubset)
         {
             // Remove movies that should be ignored
@@ -229,186 +243,7 @@ namespace FxMovies.Core
                 }
             }
 
-            // {
-            //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
-            //     db.SaveChanges();
-            // }
-
             await fxMoviesDbContext.SaveChangesAsync();
-
-            // using (var db = fxMoviesDbContextFactory.CreateDbContext())
-            // {
-            //     // Remove all old MovieEvents
-            //     {
-            //         var set = db.Channels.Where(ch => db.MovieEvents.All(me => me.Channel != ch));
-            //         db.RemoveRange(set);
-            //     }
-            //     await db.SaveChangesAsync();
-            // }
-        }
-
-        private async Task UpdateDatabaseEpg_Humo()
-        {
-            DateTime now = DateTime.Now;
-
-            int maxDays = updateEpgCommandOptions.MaxDays ?? 7;
-            for (int days = 0; days <= maxDays; days++)
-            {
-                DateTime date = now.Date.AddDays(days);
-                var movies = await humoService.GetGuide(date);
-
-                //YeloGrabber.GetGuide(date, movies);
-
-                // Remove movies that should be ignored
-                Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
-                {
-                    foreach (var item in updateEpgCommandOptions.MovieTitlesToIgnore)
-                    {
-                        if (Regex.IsMatch(movieEvent.Title, item))
-                            return true;
-                    }
-                    return false;
-                };
-                foreach (var movie in movies.Where(isMovieIgnored))
-                {
-                    logger.LogInformation("Ignoring movie: {Id} {Title}", movie.Id, movie.Title);
-                }
-                movies = movies.Where(m => !isMovieIgnored(m)).ToList();
-
-                // Transform movie titles
-                foreach (var movie in movies)
-                {
-                    foreach (var item in updateEpgCommandOptions.MovieTitlesToTransform)
-                    {
-                        var match = Regex.Match(movie.Title, item);
-                        if (match.Success)
-                        {
-                            var newTitle = match.Groups[1].Value;
-                            if (movie.Title != newTitle)
-                            {
-                                logger.LogInformation("Transforming movie: {Id} {Title} to {NewTitle}", movie.Id, movie.Title, newTitle);
-                                movie.Title = newTitle;
-                            }
-                        }
-                    }
-
-                    foreach (var item in updateEpgCommandOptions.YearSplitterPatterns)
-                    {
-                        var match = Regex.Match(movie.Title, item);
-                        if (match.Success)
-                        {
-                            var newTitle = match.Groups[1].Value;
-                            var yearText = match.Groups[2].Value;
-                            if (int.TryParse(yearText, out int year))
-                            {
-                                logger.LogInformation("Transforming[YearSplitter] movie: {Id} {Title} to {NewTitle}, year {Year}", 
-                                    movie.Id, movie.Title, newTitle, year);
-                                movie.Title = newTitle;
-                                movie.Year = year;
-                            }
-                        }
-                    }
-                }
-
-                logger.LogInformation("Using date {Date}", date);
-                foreach (var movie in movies)
-                {
-                    logger.LogInformation("{ChannelName} {Id} {Title} {Year} {StartTime}",
-                        movie.Channel.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
-                }
-
-                var existingMovies = fxMoviesDbContext.MovieEvents.Where(x => x.StartTime.Date == date);
-                logger.LogInformation("Existing movies: {ExistingMovieCount}", await existingMovies.CountAsync());
-                logger.LogInformation("New movies: {NewMovieCount}", movies.Count());
-
-                // Update channels
-                foreach (var channel in movies.Select(m => m.Channel).Distinct())
-                {
-                    Channel existingChannel = await fxMoviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
-                    if (existingChannel != null)
-                    {
-                        existingChannel.Name = channel.Name;
-                        existingChannel.LogoS = channel.LogoS;
-                        fxMoviesDbContext.Channels.Update(existingChannel);
-                        foreach (var movie in movies.Where(m => m.Channel == channel))
-                            movie.Channel = existingChannel;
-                    }
-                    else
-                    {
-                        fxMoviesDbContext.Channels.Add(channel);
-                    }
-                }
-
-                // Remove exising movies that don't appear in new movies
-                {
-                    var remove = existingMovies.ToList().Where(m1 => !movies.Any(m2 => m2.Id == m1.Id));
-                    logger.LogInformation("Existing movies to be removed: {ExistingMoviesToRemove}", remove.Count());
-                    fxMoviesDbContext.RemoveRange(remove);
-                }
-
-                // Update movies
-                foreach (var movie in movies)
-                {
-                    var existingMovie = fxMoviesDbContext.MovieEvents.Find(movie.Id);
-                    if (existingMovie != null)
-                    {
-                        if (existingMovie.Title != movie.Title)
-                        {
-                            existingMovie.Title = movie.Title;
-                            existingMovie.Movie = null;
-                        }
-                        existingMovie.Year = movie.Year;
-                        if (movie.StartTime != DateTime.MinValue)
-                            existingMovie.StartTime = movie.StartTime;
-                        else if (existingMovie.StartTime == DateTime.MinValue)
-                            existingMovie.StartTime = DateTime.Today;
-                        existingMovie.EndTime = movie.EndTime;
-                        existingMovie.Channel = movie.Channel;
-                        if (existingMovie.PosterS != movie.PosterS)
-                        {
-                            existingMovie.PosterS = movie.PosterS;
-                            existingMovie.PosterS_Local = null;
-                        }
-                        if (existingMovie.PosterM != movie.PosterM)
-                        {
-                            existingMovie.PosterM = movie.PosterM;
-                            existingMovie.PosterM_Local = null;
-                        }
-                        existingMovie.Duration = movie.Duration;
-                        existingMovie.Genre = movie.Genre;
-                        existingMovie.Content = movie.Content;
-                        existingMovie.Opinion = movie.Opinion;
-                        existingMovie.Type = movie.Type;
-                        existingMovie.YeloUrl = movie.YeloUrl;
-                        if (existingMovie.AddedTime == null)
-                            existingMovie.AddedTime = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        if (movie.StartTime == DateTime.MinValue)
-                            movie.StartTime = DateTime.Today;
-                        movie.AddedTime = DateTime.UtcNow;
-                        fxMoviesDbContext.MovieEvents.Add(movie);
-                    }
-                }
-
-                // {
-                //     set.RemoveRange(set.Where(x => x.StartTime.Date == date));
-                //     db.SaveChanges();
-                // }
-
-                await fxMoviesDbContext.SaveChangesAsync();
-            }
-
-            // using (var db = fxMoviesDbContextFactory.CreateDbContext())
-            // {
-            //     // Remove all old MovieEvents
-            //     {
-            //         var set = db.Channels.Where(ch => db.MovieEvents.All(me => me.Channel != ch));
-            //         db.RemoveRange(set);
-            //     }
-            //     await db.SaveChangesAsync();
-            // }
         }
 
         private async Task UpdateMissingImageLinks()
