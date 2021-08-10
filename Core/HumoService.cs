@@ -281,7 +281,7 @@ namespace FxMovies.Core
 
                     var movie = new MovieEvent()
                     {
-                        Id = broadcast.uuid.GetHashCode(),
+                        ExternalId = broadcast.uuid.ToString(),
                         Channel = channel,
                         Title = broadcast.title,
                         Year = year,
