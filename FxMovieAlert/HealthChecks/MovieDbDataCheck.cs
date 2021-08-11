@@ -12,23 +12,45 @@ using System.Threading.Tasks;
 
 namespace FxMovieAlert.HealthChecks
 {
-    public abstract class MovieDbDataCheck : IHealthCheck
+    public static class MovieDbDataCheckBuilderExtensions
+    {
+        public static IHealthChecksBuilder AddMovieDbDataCheck(
+            this IHealthChecksBuilder builder,
+            string name,
+            bool videoOnDemand,
+            string channelCode = null,
+            HealthStatus? failureStatus = default,
+            IEnumerable<string> tags = default)
+        {
+            return builder.Add(new HealthCheckRegistration(
+                name,
+                sp => new MovieDbDataCheck(
+                    sp.GetRequiredService<IConfiguration>(),
+                    sp.GetRequiredService<IServiceScopeFactory>(),
+                    videoOnDemand,
+                    channelCode),
+                failureStatus,
+                tags));
+        }
+    }
+
+    public class MovieDbDataCheck : IHealthCheck
     {
         private readonly IConfiguration configuration;
         private readonly IServiceScopeFactory serviceScopeFactory;
-        private readonly Expression<Func<MovieEvent, bool>> filter;
-        private readonly bool dontCheckMovieStartTime;
+        private readonly bool videoOnDemand;
+        private readonly string channelCode;
 
         public MovieDbDataCheck(
             IConfiguration configuration,
             IServiceScopeFactory serviceScopeFactory,
-            Expression<Func<MovieEvent, bool>> filter,
-            bool dontCheckMovieStartTime)
+            bool videoOnDemand,
+            string channelCode)
         {
             this.configuration = configuration;
             this.serviceScopeFactory = serviceScopeFactory;
-            this.filter = filter;
-            this.dontCheckMovieStartTime = dontCheckMovieStartTime;
+            this.videoOnDemand = videoOnDemand;
+            this.channelCode = channelCode;
         }
 
         public async Task<HealthCheckResult> CheckHealthAsync(
@@ -44,8 +66,7 @@ namespace FxMovieAlert.HealthChecks
                 var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
                 
                 DateTime lastMovieAddedTime = await fxMoviesDbContext.MovieEvents
-                    .Where(filter)
-                    .Where(me => me.AddedTime.HasValue)
+                    .Where(me => me.Vod == videoOnDemand && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode))
                     .MaxAsync(me => me.AddedTime.Value);
                 var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime).TotalDays;
                 
@@ -61,10 +82,10 @@ namespace FxMovieAlert.HealthChecks
                     { "LastMovieAddedTime", lastMovieAddedTime },
                 };
 
-                if (!dontCheckMovieStartTime)
+                if (!videoOnDemand)
                 {
                     DateTime lastMovieStartTime = await fxMoviesDbContext.MovieEvents
-                        .Where(filter)
+                        .Where(me => !me.Vod && (channelCode == null || me.Channel.Code == channelCode))
                         .MaxAsync(me => me.StartTime);
                     var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
 
@@ -81,22 +102,6 @@ namespace FxMovieAlert.HealthChecks
 
                 return result;
             }
-        }
-    }
-
-    public class MovieDbBroadcastsDataCheck : MovieDbDataCheck
-    {
-        public MovieDbBroadcastsDataCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory)
-            : base(configuration, serviceScopeFactory, (me) => me.Vod == false, false)
-        {
-        }
-    }
-
-    public class MovieDbStreamingDataCheck : MovieDbDataCheck
-    {
-        public MovieDbStreamingDataCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory)
-            : base(configuration, serviceScopeFactory, (me) => me.Vod == true, true)
-        {
         }
     }
 }
