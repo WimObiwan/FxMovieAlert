@@ -12,18 +12,38 @@ using System.Threading.Tasks;
 
 namespace FxMovieAlert.HealthChecks
 {
-    public abstract class MovieDbMissingImdbLinkCheck : IHealthCheck
+    public static class MovieDbMissingImdbLinkCheckBuilderExtensions
+    {
+        public static IHealthChecksBuilder AddMovieDbMissingImdbLinkCheck(
+            this IHealthChecksBuilder builder,
+            string name,
+            bool videoOnDemand,
+            HealthStatus? failureStatus = default,
+            IEnumerable<string> tags = default)
+        {
+            return builder.Add(new HealthCheckRegistration(
+                name,
+                sp => new MovieDbMissingImdbLinkCheck(
+                    sp.GetRequiredService<IConfiguration>(),
+                    sp.GetRequiredService<IServiceScopeFactory>(),
+                    videoOnDemand),
+                failureStatus,
+                tags));
+        }
+    }
+
+    public class MovieDbMissingImdbLinkCheck : IHealthCheck
     {
         private readonly IConfiguration configuration;
         private readonly IServiceScopeFactory serviceScopeFactory;
-        private readonly Expression<Func<MovieEvent, bool>> filter;
+        private readonly bool videoOnDemand;
 
         public MovieDbMissingImdbLinkCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory, 
-            Expression<Func<MovieEvent, bool>> filter)
+            bool videoOnDemand)
         {
             this.configuration = configuration;
             this.serviceScopeFactory = serviceScopeFactory;
-            this.filter = filter;
+            this.videoOnDemand = videoOnDemand;
         }
 
         public async Task<HealthCheckResult> CheckHealthAsync(
@@ -39,7 +59,7 @@ namespace FxMovieAlert.HealthChecks
                 var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
                 
                 int count = await fxMoviesDbContext.MovieEvents
-                    .Where(filter)
+                    .Where(me => me.Vod == videoOnDemand)
                     .CountAsync(me => (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)) && me.Type == 1);
 
                 HealthStatus status;
@@ -55,22 +75,6 @@ namespace FxMovieAlert.HealthChecks
                 
                 return result;
             }
-        }
-    }
-
-    public class MovieDbBroadcastsMissingImdbLinkCheck : MovieDbMissingImdbLinkCheck
-    {
-        public MovieDbBroadcastsMissingImdbLinkCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory)
-            : base(configuration, serviceScopeFactory, (MovieEvent me) => me.Vod == false)
-        {
-        }
-    }
-
-    public class MovieDbStreamingMissingImdbLinkCheck : MovieDbMissingImdbLinkCheck
-    {
-        public MovieDbStreamingMissingImdbLinkCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory)
-            : base(configuration, serviceScopeFactory, (MovieEvent me) => me.Vod == true)
-        {
         }
     }
 }

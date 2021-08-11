@@ -174,8 +174,8 @@ namespace FxMovieAlert
                 .AddMovieDbDataCheck("FxMoviesDB-Streaming-data", true)
                 .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", true, "vtmgo")
                 .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", true, "vrtnu")
-                .AddCheck<MovieDbBroadcastsMissingImdbLinkCheck>("FxMoviesDB-Broadcasts-missingImdbLink")
-                .AddCheck<MovieDbStreamingMissingImdbLinkCheck>("FxMoviesDB-Streaming-missingImdbLink")
+                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", false)
+                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Streaming-missingImdbLink", true)
                 .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime");
 
 
