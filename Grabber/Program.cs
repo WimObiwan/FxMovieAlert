@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using FxMovies.Core;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Sentry;
 
 namespace FxMovies.Grabber
 {
@@ -140,33 +141,49 @@ namespace FxMovies.Grabber
                     //await imdbDbContext.Database.MigrateAsync();
                 }
 
-                using (Sentry.SentrySdk.Init("https://3181503fa0264cdb827506614c8973f2@sentry.io/1335361"))
+                using (SentrySdk.Init(o =>
+                    {
+                        o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
+                        // When configuring for the first time, to see what the SDK is doing:
+                        o.Debug = true;
+                        // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+                        // We recommend adjusting this value in production.
+                        o.TracesSampleRate = 1.0;
+                    }))
                 {
-                    return await Parser.Default
-                        .ParseArguments<
-                            HelpOptions,
-                            GenerateImdbDatabaseOptions,
-                            UpdateImdbUserDataOptions,
-                            UpdateAllImdbUsersDataOptions,
-                            AutoUpdateImdbUserDataOptions,
-                            UpdateEpgOptions,
-                            // TwitterBotOptions,
-                            // ManualOptions,
-                            TestImdbMatchingOptions,
-                            TestSentryOptions
-                            >(args)
-                        .MapResult(
-                            (HelpOptions o) => Run(o),
-                            (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
-                            (UpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IUpdateImdbUserDataCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
-                            (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
-                            (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
-                            (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
-                            // (TwitterBotOptions o) => Run(o),
-                            // (ManualOptions o) => Run(o),
-                            (TestImdbMatchingOptions o) => host.Services.GetRequiredService<IImdbMatchingQuery>().RunTest(o.Title, o.Year),
-                            (TestSentryOptions o) => Run(o),
-                            errs => Task.FromResult(1));
+                    try
+                    {
+                        return await Parser.Default
+                            .ParseArguments<
+                                HelpOptions,
+                                GenerateImdbDatabaseOptions,
+                                UpdateImdbUserDataOptions,
+                                UpdateAllImdbUsersDataOptions,
+                                AutoUpdateImdbUserDataOptions,
+                                UpdateEpgOptions,
+                                // TwitterBotOptions,
+                                // ManualOptions,
+                                TestImdbMatchingOptions,
+                                TestSentryOptions
+                                >(args)
+                            .MapResult(
+                                (HelpOptions o) => Run(o),
+                                (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
+                                (UpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IUpdateImdbUserDataCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
+                                (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
+                                (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
+                                (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
+                                // (TwitterBotOptions o) => Run(o),
+                                // (ManualOptions o) => Run(o),
+                                (TestImdbMatchingOptions o) => host.Services.GetRequiredService<IImdbMatchingQuery>().RunTest(o.Title, o.Year),
+                                (TestSentryOptions o) => Run(o),
+                                errs => Task.FromResult(1));
+                    }
+                    catch (Exception x)
+                    {
+                        SentrySdk.CaptureException(x);
+                        throw;
+                    }
                 }
             }
         }
