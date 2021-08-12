@@ -31,6 +31,7 @@ namespace FxMovies.Core
         public int? MaxDays { get; set; }
         public string ImageBasePath { get; set; }
         public Dictionary<string, string> ImageOverrideMap { get; set; }
+        public string[] ActivateProviders { get; set; }
     }
 
     public class UpdateEpgCommand : IUpdateEpgCommand
@@ -130,6 +131,14 @@ namespace FxMovies.Core
             return 0;
         }
 
+        private bool IsProviderActivated(string provider)
+        {
+            var activateProviders = updateEpgCommandOptions.ActivateProviders;
+            return activateProviders == null
+                || !updateEpgCommandOptions.ActivateProviders.Any()
+                || updateEpgCommandOptions.ActivateProviders.Contains(provider);
+        }
+
         private async Task UpdateDatabaseEpg()
         {
             DateTime now = DateTime.Now;
@@ -144,40 +153,49 @@ namespace FxMovies.Core
             Exception firstException = null;
             int failedProviders = 0;
 
-            try
+            if (IsProviderActivated("vtmgo"))
             {
-                await UpdateDatabaseEpg_VtmGo();
-            }
-            catch (Exception x)
-            {
-                logger.LogError(x, "UpdateDatabaseEpg failed for VtmGo.  Trying to continue with other providers.");
-                failedProviders++;
-                if (firstException == null)
-                    firstException = x;
-            }
-
-            try
-            {
-                await UpdateDatabaseEpg_VrtNu();
-            }
-            catch (Exception x)
-            {
-                logger.LogError(x, "UpdateDatabaseEpg failed for VrtNu.  Trying to continue with other providers.");
-                failedProviders++;
-                if (firstException == null)
-                    firstException = x;
+                try
+                {
+                    await UpdateDatabaseEpg_VtmGo();
+                }
+                catch (Exception x)
+                {
+                    logger.LogError(x, "UpdateDatabaseEpg failed for VtmGo.  Trying to continue with other providers.");
+                    failedProviders++;
+                    if (firstException == null)
+                        firstException = x;
+                }
             }
 
-            try
+            if (IsProviderActivated("vrtnu"))
             {
-                await UpdateDatabaseEpg_Humo();
+                try
+                {
+                    await UpdateDatabaseEpg_VrtNu();
+                }
+                catch (Exception x)
+                {
+                    logger.LogError(x, "UpdateDatabaseEpg failed for VrtNu.  Trying to continue with other providers.");
+                    failedProviders++;
+                    if (firstException == null)
+                        firstException = x;
+                }
             }
-            catch (Exception x)
+
+            if (IsProviderActivated("humo"))
             {
-                logger.LogError(x, "UpdateDatabaseEpg failed for Humo.  Trying to continue with other providers.");
-                failedProviders++;
-                if (firstException == null)
-                    firstException = x;
+                try
+                {
+                    await UpdateDatabaseEpg_Humo();
+                }
+                catch (Exception x)
+                {
+                    logger.LogError(x, "UpdateDatabaseEpg failed for Humo.  Trying to continue with other providers.");
+                    failedProviders++;
+                    if (firstException == null)
+                        firstException = x;
+                }
             }
 
             if (firstException != null)
