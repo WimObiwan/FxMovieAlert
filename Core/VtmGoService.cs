@@ -20,6 +20,8 @@ namespace FxMovies.Core
     {
         public static string Position => "VtmGoService";
 
+        // https://vtm.be/vtmgo --> login --> F12 --> Tab "Storage" --> Cookies --> https://vtm.be --> lfvp_auth_token --> "ey...
+        public string AuthToken { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
     }
@@ -27,6 +29,7 @@ namespace FxMovies.Core
     public class VtmGoService : IVtmGoService
     {
         private readonly ILogger<VtmGoService> logger;
+        private readonly string authToken;
         private readonly string username;
         private readonly string password;
         private readonly IHttpClientFactory httpClientFactory;
@@ -37,8 +40,10 @@ namespace FxMovies.Core
             IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;
-            this.username = vtmGoServiceOptions.Value.Username;
-            this.password = vtmGoServiceOptions.Value.Password;
+            var options = vtmGoServiceOptions.Value;
+            this.authToken = options.AuthToken;
+            this.username = options.Username;
+            this.password = options.Password;
             this.httpClientFactory = httpClientFactory;
         }
 
@@ -47,11 +52,27 @@ namespace FxMovies.Core
             // https://github.com/timrijckaert/vrtnu-vtmgo-goplay-service/tree/master/vtmgo/src/main/java/be/tapped/vtmgo/content
             // https://github.com/add-ons/plugin.video.vtm.go/blob/master/resources/lib/vtmgo/vtmgo.py
 
-            // why?
-            await VtmGoAuthorize();
+            string lfvpToken;
+            if (string.IsNullOrEmpty(authToken))
+            {
+                // why?
+                await VtmGoAuthorize();
 
-            var idToken = await VtmGoLogin();
-            var lfvpToken = await DpgLogin(idToken);
+                var idToken = await VtmGoLogin();
+                lfvpToken = await DpgLogin(idToken);
+            }
+            else
+            {
+                var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(authToken);
+                if (DateTime.UtcNow < jwtToken.ValidTo)
+                {
+                    lfvpToken = authToken;
+                }
+                else
+                {
+                    lfvpToken = await DpgRefreshToken(authToken);
+                }
+            }
             var profileId = await GetProfileId(lfvpToken);
             var movieIds = await GetCatalog(lfvpToken, profileId);
 
@@ -154,6 +175,19 @@ namespace FxMovies.Core
 
             var client = httpClientFactory.CreateClient("vtmgo_dpg");
             var response = await client.PostAsJsonAsync("/vtmgo/tokens", body);
+            response.EnsureSuccessStatusCode();
+            var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
+            return responseObject.lfvpToken;
+        }
+
+        private async Task<string> DpgRefreshToken(string oldToken)
+        {
+            var body = new {
+                lfvpToken = oldToken
+            };
+
+            var client = httpClientFactory.CreateClient("vtmgo_dpg");
+            var response = await client.PostAsJsonAsync("/vtmgo/tokens/refresh", body);
             response.EnsureSuccessStatusCode();
             var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
             return responseObject.lfvpToken;
