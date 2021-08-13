@@ -6,5 +6,7 @@ namespace FxMovieAlert
 
         public string SentryBrowserDsn { get; set; }
         public string GoogleAnalyticsPropertyId { get; set; }
+        public string GoogleAdsensePublishId { get; set; }
+        public string GoogleAdsenseVerticleAdSlot {get; set; }
     }
 }

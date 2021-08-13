@@ -9,25 +9,25 @@
 <head>
     @if (!string.IsNullOrEmpty(SiteOptions.Value.SentryBrowserDsn))
     {
-    <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" crossorigin="anonymous"></script>
-    <script>
+        <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" crossorigin="anonymous"></script>
+        <script>
         Sentry.init({ dsn: '@SiteOptions.Value.SentryBrowserDsn',
-        whitelistUrls: [ /filmoptv\.be/, /www\.filmoptv\.be/ ]
-    });
-    </script>
+            whitelistUrls: [ /filmoptv\.be/, /www\.filmoptv\.be/ ]
+        });
+        </script>
     }
 
     @if (!string.IsNullOrEmpty(SiteOptions.Value.GoogleAnalyticsPropertyId))
     {
-    <!-- Global Site Tag (gtag.js) - Google Analytics -->
+        <!-- Global Site Tag (gtag.js) - Google Analytics -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=@SiteOptions.Value.GoogleAnalyticsPropertyId"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
         gtag('config', '@SiteOptions.Value.GoogleAnalyticsPropertyId');
-    </script>
+        </script>
     }
 
     <script>
@@ -36,12 +36,12 @@
     }
     </script>
 
-@if (!User.Identity.IsAuthenticated)
+@if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsensePublishId))
 {
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <script>
      (adsbygoogle = window.adsbygoogle || []).push({
-          google_ad_client: "ca-pub-6612546844038667",
+          google_ad_client: "@SiteOptions.Value.GoogleAdsensePublishId",
           enable_page_level_ads: true
      });
 </script>
@@ -113,7 +113,7 @@
 </head>
 <body>
  
-@if (!User.Identity.IsAuthenticated)
+@if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsensePublishId) && !string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsenseVerticleAdSlot))
 {
     <div id="ad" class="sideBar boxLeft">
 
@@ -121,8 +121,8 @@
 <!-- FilmOpTV - vertical -->
 <ins class="adsbygoogle"
      style="display:inline-block;width:120px;height:600px"
-     data-ad-client="ca-pub-6612546844038667"
-     data-ad-slot="4517047599"></ins>
+     data-ad-client="@SiteOptions.Value.GoogleAdsensePublishId"
+     data-ad-slot="@SiteOptions.Value.GoogleAdsenseVerticleAdSlot"></ins>
 <script>
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
