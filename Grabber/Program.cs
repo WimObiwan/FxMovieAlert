@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
+using CommandLine;
+using FxMovies.Core;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using CommandLine;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using FxMovies.Core;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sentry;
 

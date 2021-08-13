@@ -68,27 +68,6 @@
             var movieEvent = record.MovieEvent;
             @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
             {
-                @* if (lastDate != null && moviesSinceLastAd >= Model.AdsInterval && !User.Identity.IsAuthenticated)
-                {
-                    <tr class="ad">
-                        <td colspan="3" style="border: none;">
-                            <div style="overflow: hidden;">
-                                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-                                <!-- FilmOpTV -->
-                                <ins class="adsbygoogle"
-                                    style="display: inline-block;"
-                                    data-ad-client="ca-pub-6612546844038667"
-                                    data-ad-slot="4129964976"
-                                    data-ad-format="auto"></ins>
-                                <script>
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                                </script>
-                            </div>
-                        </td>
-                    </tr>
-                    moviesSinceLastAd = 0;
-                } *@
-
                 <tr class="date-header">
                     <td colspan="3">
                         @for (DateTime enumDate = (lastDate ?? movieEvent.StartTime).AddDays(1); enumDate <= movieEvent.StartTime; enumDate = enumDate.AddDays(1))
