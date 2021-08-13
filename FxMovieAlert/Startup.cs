@@ -191,6 +191,7 @@ namespace FxMovieAlert
             services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
                 options.UseSqlite(_configuration.GetConnectionString("ImdbDb")));
 
+            services.Configure<SiteOptions>(_configuration.GetSection(SiteOptions.Position));
             services.Configure<TheMovieDbServiceOptions>(_configuration.GetSection(TheMovieDbServiceOptions.Position));
 
             services.AddSingleton<IVersionInfo, VersionInfo>((_) => new VersionInfo(typeof(Startup).Assembly));
