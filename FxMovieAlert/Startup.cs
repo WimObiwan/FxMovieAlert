@@ -23,24 +23,31 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using FxMovieAlert.Options;
+using Microsoft.Extensions.Options;
 
 namespace FxMovieAlert
 {
     public class Startup
     {
-        private readonly IConfiguration _configuration;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration configuration;
+        private readonly Options.HealthCheckOptions healthCheckOptions;
+        private readonly IWebHostEnvironment environment;
 
-        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
+        public Startup(
+            IConfiguration configuration, 
+            IWebHostEnvironment environment)
         {
-            _configuration = configuration;
-            _environment = environment;
+            this.configuration = configuration;
+            this.environment = environment;
+
+            healthCheckOptions = new Options.HealthCheckOptions();
+            configuration.GetSection(Options.HealthCheckOptions.Position).Bind(healthCheckOptions);
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            string pathToCryptoKeys = Path.Join(_environment.ContentRootPath, "dp_keys");
+            string pathToCryptoKeys = Path.Join(environment.ContentRootPath, "dp_keys");
             Directory.CreateDirectory(pathToCryptoKeys);
             services.AddDataProtection()
                 .PersistKeysToFileSystem(new DirectoryInfo(pathToCryptoKeys));
@@ -70,11 +77,11 @@ namespace FxMovieAlert
             .AddOpenIdConnect("Auth0", options => {
                 // Set the authority to your Auth0 domain
                 //options.Authority = $"https://{_configuration["Auth0:Domain"]}";
-                options.Authority = $"https://{_configuration["Auth0:Domain"]}";
+                options.Authority = $"https://{configuration["Auth0:Domain"]}";
 
                 // Configure the Auth0 Client ID and Client Secret
-                options.ClientId = _configuration["Auth0:ClientId"];
-                options.ClientSecret = _configuration["Auth0:ClientSecret"];
+                options.ClientId = configuration["Auth0:ClientId"];
+                options.ClientSecret = configuration["Auth0:ClientSecret"];
 
                 // Set response type to code
                 options.ResponseType = "code";
@@ -128,7 +135,7 @@ namespace FxMovieAlert
                     // handle the logout redirection 
                     OnRedirectToIdentityProviderForSignOut = (context) =>
                     {
-                        var logoutUri = $"https://{_configuration["Auth0:Domain"]}/v2/logout?client_id={_configuration["Auth0:ClientId"]}";
+                        var logoutUri = $"https://{configuration["Auth0:Domain"]}/v2/logout?client_id={configuration["Auth0:ClientId"]}";
 
                         var postLogoutUri = context.Properties.RedirectUri;
                         if (!string.IsNullOrEmpty(postLogoutUri))
@@ -157,27 +164,29 @@ namespace FxMovieAlert
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
-            services.AddHealthChecks()
-                .AddSqlite(
-                    sqliteConnectionString: _configuration.GetConnectionString("FxMoviesDB"), 
-                    name: "sqlite-FxMoviesDB")
-                // .AddSqlite(
-                //     sqliteConnectionString: _configuration.GetConnectionString("FxMoviesHistoryDb"), 
-                //     name: "sqlite-FxMoviesHistoryDb")
-                .AddSqlite(
-                    sqliteConnectionString: _configuration.GetConnectionString("ImdbDb"),
-                    name: "sqlite-ImdbDb")
-                .AddIdentityServer(
-                    idSvrUri: new Uri($"https://{_configuration["Auth0:Domain"]}"),
-                    name: "idsvr-Auth0")
-                .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", false)
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-data", true)
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", true, "vtmgo")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", true, "vrtnu")
-                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", false)
-                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Streaming-missingImdbLink", true)
-                .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime");
-
+            if (healthCheckOptions.Uri != null)
+            {
+                services.AddHealthChecks()
+                    .AddSqlite(
+                        sqliteConnectionString: configuration.GetConnectionString("FxMoviesDB"), 
+                        name: "sqlite-FxMoviesDB")
+                    // .AddSqlite(
+                    //     sqliteConnectionString: _configuration.GetConnectionString("FxMoviesHistoryDb"), 
+                    //     name: "sqlite-FxMoviesHistoryDb")
+                    .AddSqlite(
+                        sqliteConnectionString: configuration.GetConnectionString("ImdbDb"),
+                        name: "sqlite-ImdbDb")
+                    .AddIdentityServer(
+                        idSvrUri: new Uri($"https://{configuration["Auth0:Domain"]}"),
+                        name: "idsvr-Auth0")
+                    .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", healthCheckOptions, false)
+                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-data", healthCheckOptions, true)
+                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", healthCheckOptions, true, "vtmgo")
+                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions, true, "vrtnu")
+                    .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", false)
+                    .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Streaming-missingImdbLink", true)
+                    .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime");
+            }
 
             //services.AddHealthChecksUI();
             
@@ -187,13 +196,13 @@ namespace FxMovieAlert
             services.AddWebOptimizer();
 
             services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
-                options.UseSqlite(_configuration.GetConnectionString("FxMoviesDB")));
+                options.UseSqlite(configuration.GetConnectionString("FxMoviesDB")));
 
             services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
-                options.UseSqlite(_configuration.GetConnectionString("ImdbDb")));
+                options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
 
-            services.Configure<SiteOptions>(_configuration.GetSection(SiteOptions.Position));
-            services.Configure<TheMovieDbServiceOptions>(_configuration.GetSection(TheMovieDbServiceOptions.Position));
+            services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
+            services.Configure<TheMovieDbServiceOptions>(configuration.GetSection(TheMovieDbServiceOptions.Position));
 
             services.AddSingleton<IVersionInfo, VersionInfo>((_) => new VersionInfo(typeof(Startup).Assembly));
             services.AddScoped<IUserRatingsRepository, UserRatingsRepository>();
@@ -226,7 +235,7 @@ namespace FxMovieAlert
                 SupportedUICultures = supportedCultures
             });
 
-            if (_environment.IsDevelopment())
+            if (environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -261,12 +270,15 @@ namespace FxMovieAlert
 
             app.UseAuthentication();
 
-            app.UseHealthChecks(_configuration.GetValue("HealthCheck:Uri", "/hc"), new HealthCheckOptions()
+            if (healthCheckOptions.Uri != null)
             {
-                Predicate = _ => true,
-                //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                ResponseWriter = WriteZabbixResponse
-            });
+                app.UseHealthChecks(healthCheckOptions.Uri, new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions()
+                {
+                    Predicate = _ => true,
+                    //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                    ResponseWriter = WriteZabbixResponse
+                });
+            }
             // app.UseHealthChecksUI(o => 
             // {
             //     o.UIPath = "/hc-ui";

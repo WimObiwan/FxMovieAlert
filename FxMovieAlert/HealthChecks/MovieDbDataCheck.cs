@@ -1,8 +1,10 @@
+using FxMovieAlert.Options;
 using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,7 @@ namespace FxMovieAlert.HealthChecks
         public static IHealthChecksBuilder AddMovieDbDataCheck(
             this IHealthChecksBuilder builder,
             string name,
+            HealthCheckOptions healthCheckOptions,
             bool videoOnDemand,
             string channelCode = null,
             HealthStatus? failureStatus = default,
@@ -24,8 +27,8 @@ namespace FxMovieAlert.HealthChecks
             return builder.Add(new HealthCheckRegistration(
                 name,
                 sp => new MovieDbDataCheck(
-                    sp.GetRequiredService<IConfiguration>(),
                     sp.GetRequiredService<IServiceScopeFactory>(),
+                    healthCheckOptions,
                     videoOnDemand,
                     channelCode),
                 failureStatus,
@@ -35,19 +38,19 @@ namespace FxMovieAlert.HealthChecks
 
     public class MovieDbDataCheck : IHealthCheck
     {
-        private readonly IConfiguration configuration;
+        private readonly HealthCheckOptions healthCheckOptions;
         private readonly IServiceScopeFactory serviceScopeFactory;
         private readonly bool videoOnDemand;
         private readonly string channelCode;
 
         public MovieDbDataCheck(
-            IConfiguration configuration,
             IServiceScopeFactory serviceScopeFactory,
+            HealthCheckOptions healthCheckOptions,
             bool videoOnDemand,
             string channelCode)
         {
-            this.configuration = configuration;
             this.serviceScopeFactory = serviceScopeFactory;
+            this.healthCheckOptions = healthCheckOptions;
             this.videoOnDemand = videoOnDemand;
             this.channelCode = channelCode;
         }
@@ -70,7 +73,7 @@ namespace FxMovieAlert.HealthChecks
                 var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime).TotalDays;
                 
                 HealthStatus status;
-                if (lastMovieAddedDaysAgo >= this.configuration.GetValue("HealthCheck:CheckLastMovieAddedMoreThanDaysAgo", 1.1))
+                if (lastMovieAddedDaysAgo >= (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo ?? 1.1))
                     status = HealthStatus.Unhealthy;
                 else
                     status = HealthStatus.Healthy;                
@@ -88,7 +91,7 @@ namespace FxMovieAlert.HealthChecks
                         .MaxAsync(me => me.StartTime);
                     var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
 
-                    if (status == HealthStatus.Healthy && lastMovieStartDaysFromNow <= this.configuration.GetValue("HealthCheck:CheckLastMovieMoreThanDays", 4.0))
+                    if (status == HealthStatus.Healthy && lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
                         status = HealthStatus.Unhealthy;
                     else
                         status = HealthStatus.Healthy;

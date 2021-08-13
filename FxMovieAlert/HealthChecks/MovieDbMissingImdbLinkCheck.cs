@@ -1,14 +1,13 @@
-using FxMovies.FxMoviesDB;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using FxMovieAlert.Options;
+using FxMovies.FxMoviesDB;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
 namespace FxMovieAlert.HealthChecks
 {
@@ -24,7 +23,7 @@ namespace FxMovieAlert.HealthChecks
             return builder.Add(new HealthCheckRegistration(
                 name,
                 sp => new MovieDbMissingImdbLinkCheck(
-                    sp.GetRequiredService<IConfiguration>(),
+                    sp.GetRequiredService<IOptions<HealthCheckOptions>>(),
                     sp.GetRequiredService<IServiceScopeFactory>(),
                     videoOnDemand),
                 failureStatus,
@@ -34,14 +33,14 @@ namespace FxMovieAlert.HealthChecks
 
     public class MovieDbMissingImdbLinkCheck : IHealthCheck
     {
-        private readonly IConfiguration configuration;
+        private readonly HealthCheckOptions healthCheckOptions;
         private readonly IServiceScopeFactory serviceScopeFactory;
         private readonly bool videoOnDemand;
 
-        public MovieDbMissingImdbLinkCheck(IConfiguration configuration, IServiceScopeFactory serviceScopeFactory, 
+        public MovieDbMissingImdbLinkCheck(IOptions<HealthCheckOptions> healthCheckOptions, IServiceScopeFactory serviceScopeFactory, 
             bool videoOnDemand)
         {
-            this.configuration = configuration;
+            this.healthCheckOptions = healthCheckOptions.Value;
             this.serviceScopeFactory = serviceScopeFactory;
             this.videoOnDemand = videoOnDemand;
         }
@@ -63,7 +62,7 @@ namespace FxMovieAlert.HealthChecks
                     .CountAsync(me => (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)) && me.Type == 1);
 
                 HealthStatus status;
-                if (count <= this.configuration.GetValue("HealthCheck:CheckMissingImdbLinkCount", 7))
+                if (count <= (healthCheckOptions.CheckMissingImdbLinkCount ?? 7))
                     status = HealthStatus.Healthy;
                 else
                     status = HealthStatus.Unhealthy;
