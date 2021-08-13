@@ -97,7 +97,7 @@ namespace FxMovieAlert.Pages
             var now = DateTime.Now;
 
             AdsInterval = siteOptions.AdsInterval;
-            FilterMaxDaysDefault = configuration.GetValue("DefaultMaxDays", FilterMaxDaysDefault);
+            FilterMaxDaysDefault = siteOptions.DefaultMaxDays;
             FilterMaxDays = FilterMaxDaysDefault;
             FilterTypeMask = FilterTypeMaskDefault;
 
