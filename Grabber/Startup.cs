@@ -55,6 +55,8 @@ namespace FxMovies.Grabber
                 c.BaseAddress = new Uri("https://www.imdb.com");
             });
 
+            services.AddSingleton<IVersionInfo, VersionInfo>((_) => new VersionInfo(typeof(Startup).Assembly));
+
             services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
             services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
             services.AddScoped<IUpdateImdbUserDataCommand, UpdateImdbUserDataCommand>();

@@ -1,6 +1,7 @@
 @using Microsoft.Extensions.Configuration
 @using FxMovieAlert.Utilities
-@inject IConfiguration Configuration
+@using FxMovies.Core
+@inject IVersionInfo VersionInfo
 
 <!DOCTYPE html>
 <html>
@@ -207,7 +208,7 @@
         <hr />
         <footer>
             <p class="text-muted">
-                Versie @(Configuration["Version"]).  Running on @(Configuration["DotNetCoreVersion"]).<br/>                
+                Versie @VersionInfo.Version.  Running on @VersionInfo.DotNetCoreVersion.<br/>                
                 Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.  
                 &copy;
                 @if (DateTime.Now.Year > 2017)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using CommandLine;
 using FxMovies.Core;
@@ -121,10 +121,9 @@ namespace FxMovies.Grabber
         {
             using (var host = CreateHostBuilder(args).Build())
             {
-                var config = host.Services.GetRequiredService<IConfiguration>();
-                var version = config.GetValue<string>("Version");
+                var versionInfo = host.Services.GetRequiredService<IVersionInfo>();
                 var logger = host.Services.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation("Version {Version}", version);
+                logger.LogInformation("Version {Version}, running on {DotNetCoreVersion}", versionInfo.Version, versionInfo.DotNetCoreVersion);
 
                 var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
                 using (var scope = serviceProvider.CreateScope())
@@ -192,27 +191,12 @@ namespace FxMovies.Grabber
             return Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    config.AddInMemoryCollection(
-                        new List<KeyValuePair<string, string>>()
-                        {
-                            new KeyValuePair<string, string>("Version", 
-                                ThisAssembly.Git.SemVer.Major + "."
-                                + ThisAssembly.Git.SemVer.Minor + "."
-                                + ThisAssembly.Git.Commits + "-"
-                                + ThisAssembly.Git.Branch + "+"
-                                + ThisAssembly.Git.Commit
-                                //+ (ThisAssembly.Git.IsDirty ? "*" : "")
-                                ),
-                            new KeyValuePair<string, string>("DotNetCoreVersion", 
-                                System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription)
-
-                        }
-                    )
-                    //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
-                    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
-                    .AddEnvironmentVariables();
+                    config
+                        //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                        .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+                        .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
+                        .AddEnvironmentVariables();
                 })
                 .UseStartup<Startup>();
         }
