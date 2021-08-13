@@ -66,10 +66,12 @@ namespace FxMovies.Core
                 var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(authToken);
                 if (DateTime.UtcNow < jwtToken.ValidTo)
                 {
+                    logger.LogInformation("Configured refresh token is still valid ({JwtTokenValidTo})", jwtToken.ValidTo);
                     lfvpToken = authToken;
                 }
                 else
                 {
+                    logger.LogInformation("Configured refresh token is no longer valid ({JwtTokenValidTo})", jwtToken.ValidTo);
                     lfvpToken = await DpgRefreshToken(authToken);
                 }
             }
