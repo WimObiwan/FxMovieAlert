@@ -1,5 +1,7 @@
 ﻿@page
 @model AboutModel
+@using Microsoft.Extensions.Options
+@inject IOptions<FxMovieAlert.SiteOptions> SiteOptions
 @{
     ViewData["Title"] = "Over FilmOpTV.be";
 }
@@ -115,8 +117,14 @@ Op deze website worden cookies gebruikt voor:
             tenzij er meer dan 30 dagen zijn verlopen sinds je laatste bezoek aan de website. 
         </li>
         <li>Auth0 authenticatie (OAuth2)</li>
+        @if (!string.IsNullOrEmpty(SiteOptions.Value.GoogleAnalyticsPropertyId))
+        {
         <li>Google Analytics statistieken</li>
+        }
+        @if (!string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsensePublishId))
+        {
         <li>Google Adsense advertenties</li>
+        }
     </ul>
 </p>
 <p>    
