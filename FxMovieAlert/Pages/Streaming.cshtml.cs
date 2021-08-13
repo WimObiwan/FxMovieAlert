@@ -1,6 +1,5 @@
-﻿using FxMovies.Core;
+using FxMovies.Core;
 using FxMovies.FxMoviesDB;
-using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 
