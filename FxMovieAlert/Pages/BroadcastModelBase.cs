@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,7 +8,6 @@ using FxMovies.FxMoviesDB;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace FxMovieAlert.Pages
@@ -70,20 +69,17 @@ namespace FxMovieAlert.Pages
         public int AdsInterval = 5;
 
         private readonly bool streaming;
-        private readonly IConfiguration configuration;
         private readonly SiteOptions siteOptions;
         private readonly FxMoviesDbContext fxMoviesDbContext;
         private readonly IUsersRepository usersRepository;
 
         public BroadcastModelBase(
             bool streaming,
-            IConfiguration configuration,
             IOptions<SiteOptions> siteOptions,
             FxMoviesDbContext fxMoviesDbContext,
             IUsersRepository usersRepository)
         {
             this.streaming = streaming;
-            this.configuration = configuration;
             this.siteOptions = siteOptions.Value;
             this.fxMoviesDbContext = fxMoviesDbContext;
             this.usersRepository = usersRepository;

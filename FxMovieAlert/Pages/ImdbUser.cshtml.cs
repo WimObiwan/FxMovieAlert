@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace FxMovieAlert.Pages
 {
@@ -43,10 +42,7 @@ namespace FxMovieAlert.Pages
         
         public readonly List<Tuple<string, string, string>> LastImportErrors = new List<Tuple<string, string, string>>();
 
-        private IConfiguration configuration;
-
         public ImdbUserModel(
-            IConfiguration configuration, 
             IMovieCreationHelper movieCreationHelper,
             IUserRatingsRepository userRatingsRepository,
             IUserWatchlistRepository userWatchlistRepository,
@@ -55,7 +51,6 @@ namespace FxMovieAlert.Pages
             FxMoviesDbContext fxMoviesDbContext,
             ImdbDbContext imdbDbContext)
         {
-            this.configuration = configuration;
             this.movieCreationHelper = movieCreationHelper;
             this.userRatingsRepository = userRatingsRepository;
             this.userWatchlistRepository = userWatchlistRepository;
