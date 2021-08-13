@@ -1,3 +1,4 @@
+﻿using FxMovieAlert.Options;
 using FxMovies.Core;
 using FxMovies.FxMoviesDB;
 using Microsoft.AspNetCore.Authorization;

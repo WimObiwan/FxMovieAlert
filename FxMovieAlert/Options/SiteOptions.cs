@@ -1,4 +1,4 @@
-namespace FxMovieAlert
+namespace FxMovieAlert.Options
 {
     public class SiteOptions
     {
