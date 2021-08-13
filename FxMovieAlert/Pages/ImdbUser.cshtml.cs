@@ -96,13 +96,7 @@ namespace FxMovieAlert.Pages
                 var match = Regex.Match(setimdbuserid, @"(ur\d+)");
                 if (match.Success)
                 {
-                    var imdbuserid = match.Groups[1].Value;
-                    
-                    int expirationDays = configuration.GetValue("LoginCookieExpirationDays", 30);
-                    CookieOptions options = new CookieOptions();
-                    options.Expires = DateTime.Now.AddDays(expirationDays);
-                    ImdbUserId = imdbuserid;
-
+                    ImdbUserId = match.Groups[1].Value;
                     forcerefresh = true;
                 }
                 else
