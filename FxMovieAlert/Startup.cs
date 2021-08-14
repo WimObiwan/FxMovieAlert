@@ -183,7 +183,8 @@ namespace FxMovieAlert
                     .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions, true, "vrtnu")
                     .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", false)
                     .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Streaming-missingImdbLink", true)
-                    .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime");
+                    .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime")
+                    .AddCheck<SystemInfoCheck>("SystemInfo");
             }
 
             //services.AddHealthChecksUI();
