@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using FxMovieAlert.Pages;
 using Microsoft.AspNetCore.Components;
 
 namespace FxMovieAlert.Components
