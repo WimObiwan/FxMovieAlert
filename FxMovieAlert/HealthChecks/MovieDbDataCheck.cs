@@ -70,8 +70,17 @@ namespace FxMovieAlert.HealthChecks
                     .MaxAsync(me => me.AddedTime.Value);
                 var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime).TotalDays;
                 
+                const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
+                double checkLastMovieAddedMoreThanDaysAgo;
+                if (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
+                    checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
+                else 
+                    if (channelCode == null || !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode, out checkLastMovieAddedMoreThanDaysAgo))
+                        if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("", out checkLastMovieAddedMoreThanDaysAgo))
+                            checkLastMovieAddedMoreThanDaysAgo = 1.1;
+
                 HealthStatus status;
-                if (lastMovieAddedDaysAgo >= (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo ?? 1.1))
+                if (lastMovieAddedDaysAgo >= checkLastMovieAddedMoreThanDaysAgo)
                     status = HealthStatus.Unhealthy;
                 else
                     status = HealthStatus.Healthy;                

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace FxMovieAlert.Options
 {
     public class HealthCheckOptions
@@ -6,7 +8,7 @@ namespace FxMovieAlert.Options
 
         public string Uri { get; set; }
         public int? CheckMissingImdbLinkCount { get; set; }
-        public double? CheckLastMovieAddedMoreThanDaysAgo { get; set; }
+        public Dictionary<string, double> CheckLastMovieAddedMoreThanDaysAgo { get; set; }
         public double? CheckLastMovieMoreThanDays { get; set; }
     }
 }
