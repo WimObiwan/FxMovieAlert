@@ -52,6 +52,12 @@ namespace FxMovies.FxMoviesDB
                 .HasIndex(uw => new { uw.UserId, uw.MovieId });
             modelBuilder.Entity<MovieEvent>()
                 .HasKey(me => me.Id);
+            modelBuilder.Entity<ManualMatch>()
+                .HasKey(m => m.Id);
+            modelBuilder.Entity<Movie>()
+                .HasMany(m => m.ManualMatches)
+                .WithOne(mm => mm.Movie)
+                .HasForeignKey(mm => mm.MovieId);
         }
 
         public DbSet<Channel> Channels { get; set; }
@@ -60,6 +66,7 @@ namespace FxMovies.FxMoviesDB
         public DbSet<UserRating> UserRatings { get; set; }
         public DbSet<UserWatchListItem> UserWatchLists { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<ManualMatch> ManualMatches { get; set; }
     }
 
     // /// <summary>

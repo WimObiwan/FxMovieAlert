@@ -22,5 +22,6 @@ namespace FxMovies.FxMoviesDB
         public List<MovieEvent> MovieEvents { get; set; }
         public List<UserRating> UserRatings { get; set; }
         public List<UserWatchListItem> UserWatchListItems { get; set; }
+        public List<ManualMatch> ManualMatches { get; set; }
     }   
 }

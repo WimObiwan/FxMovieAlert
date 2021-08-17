@@ -65,6 +65,15 @@ namespace FxMovies.Core
                                 movieEvent.Year = imdbMovie.Year;
                         }
                     }
+
+                    fxMoviesDbContext.ManualMatches.Add(
+                        new ManualMatch()
+                        {
+                            Movie = movie,
+                            Title = movieEvent.Title,
+                            NormalizedTitle = ImdbDB.Util.NormalizeTitle(movieEvent.Title)
+                        }
+                    );
                 }
 
                 await fxMoviesDbContext.SaveChangesAsync();
