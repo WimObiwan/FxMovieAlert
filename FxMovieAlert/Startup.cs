@@ -211,6 +211,7 @@ namespace FxMovieAlert
             services.AddScoped<IImdbWatchlistFromFileService, ImdbWatchlistFromFileService>();
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
+            services.AddScoped<IUpdateImdbLinkCommand, UpdateImdbLinkCommand>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

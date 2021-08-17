@@ -6,7 +6,6 @@ using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FxMovieAlert.Pages
@@ -17,17 +16,20 @@ namespace FxMovieAlert.Pages
         private readonly FxMoviesDbContext fxMoviesDbContext;
         private readonly ImdbDbContext imdbDbContext;
         private readonly IMovieCreationHelper movieCreationHelper;
+        private readonly IUpdateImdbLinkCommand updateImdbLinkCommand;
 
         public UpdateImdbLinkModel(
             ILogger<UpdateImdbLinkModel> logger,
             FxMoviesDbContext fxMoviesDbContext,
             ImdbDbContext imdbDbContext,
-            IMovieCreationHelper movieCreationHelper)
+            IMovieCreationHelper movieCreationHelper,
+            IUpdateImdbLinkCommand updateImdbLinkCommand)
         {
             this.logger = logger;
             this.fxMoviesDbContext = fxMoviesDbContext;
             this.imdbDbContext = imdbDbContext;
             this.movieCreationHelper = movieCreationHelper;
+            this.updateImdbLinkCommand = updateImdbLinkCommand;
         }
 
         public IActionResult OnGet()
@@ -35,8 +37,7 @@ namespace FxMovieAlert.Pages
             return RedirectToPage("Index");
         }
 
-        public async Task<IActionResult> OnPostAsync(int? movieeventid, string setimdbid,
-            string returnPage)
+        public async Task<IActionResult> OnPostAsync(int? movieeventid, string setimdbid, string returnPage)
         {
             var editImdbLinks = ClaimChecker.Has(User.Identity, Claims.EditImdbLinks);
 
@@ -64,43 +65,7 @@ namespace FxMovieAlert.Pages
                 
                 if (overwrite)
                 {
-                    var movieEvent = await fxMoviesDbContext.MovieEvents
-                        .Include(me => me.Movie)
-                        .Include(me => me.Channel)
-                        .SingleOrDefaultAsync(me => me.Id == movieeventid.Value);
-                    if (movieEvent != null)
-                    {
-                        if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == setimdbid && movieEvent.Movie.ImdbIgnore != setIgnore)
-                        {
-                            // Already ok, Do nothing
-                            logger.LogInformation("Skipped saving {ImdbId}, no changes", setimdbid);
-                        }
-                        else
-                        {
-                            FxMovies.FxMoviesDB.Movie movie;
-                            if (setimdbid != null)
-                                movie = await movieCreationHelper.GetOrCreateMovieByImdbId(setimdbid);
-                            else
-                                movie = new FxMovies.FxMoviesDB.Movie();
-
-                            movieEvent.Movie = movie;
-                            movie.ImdbIgnore = setIgnore;
-
-                            if (setimdbid != null)
-                            {
-                                var imdbMovie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == setimdbid);
-                                if (imdbMovie != null)
-                                {
-                                    movieEvent.Movie.ImdbRating = imdbMovie.Rating;
-                                    movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
-                                    if (!movieEvent.Year.HasValue)
-                                        movieEvent.Year = imdbMovie.Year;
-                                }
-                            }
-                        }
-
-                        await fxMoviesDbContext.SaveChangesAsync();
-                    } 
+                    await updateImdbLinkCommand.Run(movieeventid.Value, setimdbid, setIgnore);
                 }
             }
             
