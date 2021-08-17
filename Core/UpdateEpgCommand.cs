@@ -46,6 +46,7 @@ namespace FxMovies.Core
         private readonly IHumoService humoService;
         private readonly IImdbMatchingQuery imdbMatchingQuery;
         private readonly IHttpClientFactory httpClientFactory;
+        private readonly IManualMatchesQuery manualMatchesQuery;
 
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
             FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
@@ -55,7 +56,8 @@ namespace FxMovies.Core
             IVrtNuService vrtNuService, 
             IHumoService humoService,
             IImdbMatchingQuery imdbMatchingQuery,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            IManualMatchesQuery manualMatchesQuery)
         {
             this.logger = logger;
             this.fxMoviesDbContext = fxMoviesDbContext;
@@ -67,6 +69,7 @@ namespace FxMovies.Core
             this.humoService = humoService;
             this.imdbMatchingQuery = imdbMatchingQuery;
             this.httpClientFactory = httpClientFactory;
+            this.manualMatchesQuery = manualMatchesQuery;
         }
 
         public async Task<int> Run()
@@ -544,10 +547,25 @@ namespace FxMovies.Core
                 var imdbMatchingQueryResult = await imdbMatchingQuery.Run(first.Title, first.Year);
                 var imdbMovie = imdbMatchingQueryResult.ImdbMovie;
                 var huntNo = imdbMatchingQueryResult.HuntNo;
-                
+
+                FxMoviesDB.Movie movie = null;
                 if (imdbMovie == null)
                 {
-                    await fxMoviesDbContext.SaveChangesAsync();
+                    huntNo = -1;
+
+                    var manualMatch = await manualMatchesQuery.Run(first.Title);
+                    movie = manualMatch?.Movie;
+                    if (movie != null)
+                    {
+                        logger.LogInformation("UpdateEpgDataWithImdb: Fallback using ManualMatch for '{Title} ({Year})' to existing Movie {MovieID} {ImdbId}",
+                            first.Title, first.Year, movie.Id, movie.ImdbId);
+
+                        imdbMovie = await imdbDbContext.Movies.FirstOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
+                    }
+                }
+
+                if (movie == null && imdbMovie == null)
+                {
                     logger.LogInformation("UpdateEpgDataWithImdb: Could not find movie '{Title} ({Year})' in IMDb",
                         first.Title, first.Year);
                     continue;
@@ -555,18 +573,23 @@ namespace FxMovies.Core
 
                 logger.LogInformation("{PercentDone}% {Title} ({Year}) ==> {ImdbId}, duplicity={Duplicity}, HUNT#{HuntNo}",
                     (100 * current) / totalCount, first.Title, first.Year,
-                    imdbMovie.ImdbId, group.Count(), huntNo);
+                    movie?.ImdbId ?? imdbMovie?.ImdbId, group.Count(), huntNo);
 
-                var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
+                if (movie == null)
+                    movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
 
                 if (movie == null)
                 {
                     movie = new FxMoviesDB.Movie();
-                    movie.ImdbId = imdbMovie.ImdbId;
+                    movie.ImdbId = imdbMovie?.ImdbId;
                 }
 
-                movie.ImdbRating = imdbMovie.Rating;
-                movie.ImdbVotes = imdbMovie.Votes;
+                if (imdbMovie != null)
+                {
+                    movie.ImdbRating = imdbMovie.Rating;
+                    movie.ImdbVotes = imdbMovie.Votes;
+                }
+
                 if (movie.Certification == null)
                     movie.Certification = (await theMovieDbService.GetCertification(movie.ImdbId)) ?? "";
 
@@ -574,12 +597,9 @@ namespace FxMovies.Core
                 {
                     movieWithImdbLink.Movie = movie;
                 }
-
-                await fxMoviesDbContext.SaveChangesAsync();
             }
 
             await fxMoviesDbContext.SaveChangesAsync();
         }
-
     }
 }
