@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using CommandLine;
 using FxMovies.Core;
@@ -89,6 +89,11 @@ namespace FxMovies.Grabber
         {
         }
 
+        [Verb("ListManualMatches", HelpText = "List manual matches.")]
+        class ListManualMatchesOptions
+        {
+        }
+
         // [Verb("TwitterBot", HelpText = "Twitter Bot.")]
         // class TwitterBotOptions
         // {
@@ -159,6 +164,7 @@ namespace FxMovies.Grabber
                                 UpdateAllImdbUsersDataOptions,
                                 AutoUpdateImdbUserDataOptions,
                                 UpdateEpgOptions,
+                                ListManualMatchesOptions,
                                 // TwitterBotOptions,
                                 // ManualOptions,
                                 TestImdbMatchingOptions,
@@ -171,6 +177,7 @@ namespace FxMovies.Grabber
                                 (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
                                 (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
                                 (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
+                                (ListManualMatchesOptions o) => Run(host, o),
                                 // (TwitterBotOptions o) => Run(o),
                                 // (ManualOptions o) => Run(o),
                                 (TestImdbMatchingOptions o) => Run(host, o),
@@ -218,6 +225,20 @@ namespace FxMovies.Grabber
         //     return 0;
         // }
 
+        private static async Task<int> Run(IHost host, ListManualMatchesOptions o)
+        {
+            var logger = host.Services.GetRequiredService<ILogger<Program>>();
+
+            var query = host.Services.GetRequiredService<IListManualMatchesQuery>();
+            foreach (var manualMatch in await query.Run())
+            {
+                logger.LogInformation("{Id} {Title} {ImdbId}", 
+                    manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId);
+            }
+
+            return 0;
+        }
+        
         private static async Task<int> Run(IHost host, TestImdbMatchingOptions o)
         {
             var movieTitle = o.Title;
