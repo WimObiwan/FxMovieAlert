@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using CommandLine;
 using FxMovies.Core;
@@ -173,7 +173,7 @@ namespace FxMovies.Grabber
                                 (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
                                 // (TwitterBotOptions o) => Run(o),
                                 // (ManualOptions o) => Run(o),
-                                (TestImdbMatchingOptions o) => host.Services.GetRequiredService<IImdbMatchingQuery>().RunTest(o.Title, o.Year),
+                                (TestImdbMatchingOptions o) => Run(host, o),
                                 (TestSentryOptions o) => Run(o),
                                 errs => Task.FromResult(1));
                     }
@@ -217,6 +217,28 @@ namespace FxMovies.Grabber
         //     UpdateEpgDataWithImdbManual(options.MovieEventId, options.ImdbId);
         //     return 0;
         // }
+
+        private static async Task<int> Run(IHost host, TestImdbMatchingOptions o)
+        {
+            var movieTitle = o.Title;
+            var movieReleaseYear = o.Year;
+            var logger = host.Services.GetRequiredService<ILogger<Program>>();
+
+            var query = host.Services.GetRequiredService<IImdbMatchingQuery>();
+            var result = await query.Run(movieTitle, movieReleaseYear);
+            var imdbMovie = result.ImdbMovie;
+            if (imdbMovie != null)
+            {
+                logger.LogError("Movie '{MovieTitle}' ({LovieReleaseYear}) found: {ImdbId} - '{PrimaryTitle}' ({Year})", 
+                    movieTitle, movieReleaseYear, imdbMovie.ImdbId, imdbMovie.PrimaryTitle, imdbMovie.Year);
+                return 0;
+            }
+            else
+            {
+                logger.LogError("Movie '{MovieTitle}' ({MovieReleaseYear}) not found", movieTitle, movieReleaseYear);
+                return 1;
+            }
+        }
 
         private static Task<int> Run(TestSentryOptions options)
         {

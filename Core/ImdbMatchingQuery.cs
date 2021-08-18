@@ -12,7 +12,6 @@ namespace FxMovies.Core
     public interface IImdbMatchingQuery
     {
         Task<ImdbMatchingQueryResult> Run(string movieTitle, int? movieReleaseYear);
-        Task<int> RunTest(string movieTitle, int? movieReleaseYear);
     }
 
     public class ImdbMatchingQueryOptions
@@ -125,23 +124,6 @@ namespace FxMovies.Core
                 ImdbMovie = imdbMovie,
                 HuntNo = huntNo
             };
-        }
-
-        public async Task<int> RunTest(string movieTitle, int? movieReleaseYear)
-        {
-            var result = await Run(movieTitle, movieReleaseYear);
-            var imdbMovie = result.ImdbMovie;
-            if (imdbMovie != null)
-            {
-                logger.LogError("Movie '{MovieTitle}' ({LovieReleaseYear}) found: {ImdbId} - '{PrimaryTitle}' ({Year})", 
-                    movieTitle, movieReleaseYear, imdbMovie.ImdbId, imdbMovie.PrimaryTitle, imdbMovie.Year);
-                return 0;
-            }
-            else
-            {
-                logger.LogError("Movie '{MovieTitle}' ({MovieReleaseYear}) not found", movieTitle, movieReleaseYear);
-                return 1;
-            }
         }
     }
 }
