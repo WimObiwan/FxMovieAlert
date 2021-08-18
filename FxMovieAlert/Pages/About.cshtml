@@ -20,6 +20,7 @@
 
 <p>
     De website is een handige programma-gids die alle films toont op de Vlaamse (en bepaalde Nederlandse) zenders.
+    Sinds midden 2021 worden ook de films op de gratis streaming platformen van VTM GO en VRT NU getoond.  
 </p>
 <p>
     Op de onderstaande schermafbeelding wordt getoond hoe de integratie met IMDb werkt.
@@ -91,16 +92,19 @@
 <h3>Technologie</h3>
 
 <p>
-    Deze website is gemaakt in Microsoft ASP.net Core 2.0, en wordt ontwikkeld en gehost op Linux.
+    Deze website is gemaakt in Microsoft .net Core, en wordt ontwikkeld en gehost op Linux.
     De broncode is opensource (<a href="https://github.com/WimObiwan/FxMovieAlert/blob/master/LICENSE" target="_new">GPLv3</a>), 
     en vind je op <a href="https://github.com/WimObiwan/FxMovieAlert" target="_new">GitHub</a>.
 </p>
 
+@if (!string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsensePublishId))
+{
 <h3>Advertenties</h3>
 
 <p>
     De Google Adsense advertenties worden gebruikt om (een fractie van) de domein- en hosting-kosten te betalen.
 </p>
+}
 
 <h3><a name="privacybeleid"></a>Privacybeleid</h3>
 
