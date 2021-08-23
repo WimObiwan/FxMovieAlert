@@ -1,3 +1,5 @@
+using System;
+
 namespace FxMovies.FxMoviesDB
 {
     /// <summary>
@@ -10,6 +12,7 @@ namespace FxMovies.FxMoviesDB
         }
 
         public int Id { get; set; }
+        public DateTime AddedDateTime { get; set; }
         public string Title { get; set; }
         public string NormalizedTitle { get; set; }
         public Movie Movie { get; set; }

@@ -253,10 +253,10 @@ namespace FxMovies.Grabber
             var query = host.Services.GetRequiredService<IListManualMatchesQuery>();
             foreach (var manualMatch in await query.Run())
             {
-                logger.LogInformation("{Id} {Title} {ImdbId}", 
-                    manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId);
-                Console.WriteLine("{0} {1} {2}", 
-                    manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId);
+                logger.LogInformation("{Id} {Title} {ImdbId} {AddedDateTime}", 
+                    manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId, manualMatch.AddedDateTime);
+                Console.WriteLine("{0} {1} {2} {3}", 
+                    manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId, manualMatch.AddedDateTime);
             }
 
             return 0;

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
@@ -69,6 +70,7 @@ namespace FxMovies.Core
                     fxMoviesDbContext.ManualMatches.Add(
                         new ManualMatch()
                         {
+                            AddedDateTime = DateTime.UtcNow,
                             Movie = movie,
                             Title = movieEvent.Title,
                             NormalizedTitle = ImdbDB.Util.NormalizeTitle(movieEvent.Title)
