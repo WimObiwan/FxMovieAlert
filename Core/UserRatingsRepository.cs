@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace FxMovies.Core
 {
     public interface IUserRatingsRepository
     {
+        Task<DateTime?> GetLastRatingCheckByImdbUserId(string imdbUserId);
         Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId, IEnumerable<ImdbRating> imdbRatings, bool replace = false);
         Task<UserListRepositoryStoreResult> StoreByUserId(string userId, IEnumerable<ImdbRating> imdbRatings, bool replace = false);
     }
@@ -27,6 +29,12 @@ namespace FxMovies.Core
             this.logger = logger;
             this.fxMoviesDbContext = fxMoviesDbContext;
             this.movieCreationHelper = movieCreationHelper;
+        }
+
+        public async Task<DateTime?> GetLastRatingCheckByImdbUserId(string imdbUserId)
+        {
+            User user = await fxMoviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+            return user.LastRefreshRatingsTime;
         }
 
         public async Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId, IEnumerable<ImdbRating> imdbRatings, bool replace = false)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -15,6 +16,7 @@ namespace FxMovies.Core
     public interface IImdbRatingsFromWebService
     {
         Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, bool getAll);
+        Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, DateTime? fromDateTime);
     }
 
     public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
@@ -32,6 +34,11 @@ namespace FxMovies.Core
 
         public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, bool getAll)
         {
+            return await GetRatingsAsync(imdbUserId, getAll ? DateTime.MinValue : null);
+        }
+
+        public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, DateTime? fromDateTime)
+        {
             IList<ImdbRating> ratings = new List<ImdbRating>();
             string url = $"/user/{imdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
             do
@@ -40,7 +47,7 @@ namespace FxMovies.Core
                 {
                     url = GetRatingsSinglePageAsync(htmlDocument, ratings);
                 }
-            } while (getAll && url != null);
+            } while (url != null && fromDateTime.HasValue && fromDateTime.Value < ratings.Min(r => r.Date));
             return ratings;
         }
 

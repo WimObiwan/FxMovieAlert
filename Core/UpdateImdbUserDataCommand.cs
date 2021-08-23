@@ -37,7 +37,13 @@ namespace FxMovies.Core
         {
             try
             {
-                var ratings = await imdbRatingsService.GetRatingsAsync(imdbUserId, updateAllRatings);
+                DateTime? fromDateTime;
+                if (updateAllRatings)
+                    fromDateTime = DateTime.MinValue;
+                else
+                    fromDateTime = (await userRatingsRepository.GetLastRatingCheckByImdbUserId(imdbUserId)) ?? DateTime.MinValue;
+
+                var ratings = await imdbRatingsService.GetRatingsAsync(imdbUserId, fromDateTime);
                 var result = await userRatingsRepository.StoreByImdbUserId(imdbUserId, ratings, updateAllRatings);
                 string message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films.";
                 if (updateAllRatings)
