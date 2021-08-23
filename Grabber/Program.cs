@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using CommandLine;
 using FxMovies.Core;
@@ -137,24 +137,24 @@ namespace FxMovies.Grabber
                 using (var host = CreateHostBuilder(args).Build())
                 {
                     var versionInfo = host.Services.GetRequiredService<IVersionInfo>();
-                var logger = host.Services.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation("Version {Version}, running on {DotNetCoreVersion}", versionInfo.Version, versionInfo.DotNetCoreVersion);
+                    var logger = host.Services.GetRequiredService<ILogger<Program>>();
+                    logger.LogInformation("Version {Version}, running on {DotNetCoreVersion}", versionInfo.Version, versionInfo.DotNetCoreVersion);
 
-                var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
-                using (var scope = serviceProvider.CreateScope())
-                {
-                    var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
-                    //await fxMoviesDbContext.Database.EnsureCreatedAsync();
-                    await fxMoviesDbContext.Database.MigrateAsync();
-                }
-                using (var scope = serviceProvider.CreateScope())
-                {
-                    var imdbDbContext = scope.ServiceProvider.GetRequiredService<ImdbDbContext>();
-                    await imdbDbContext.Database.EnsureCreatedAsync();
-                    //await imdbDbContext.Database.MigrateAsync();
-                }
+                    var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
+                    using (var scope = serviceProvider.CreateScope())
+                    {
+                        var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
+                        //await fxMoviesDbContext.Database.EnsureCreatedAsync();
+                        await fxMoviesDbContext.Database.MigrateAsync();
+                    }
+                    using (var scope = serviceProvider.CreateScope())
+                    {
+                        var imdbDbContext = scope.ServiceProvider.GetRequiredService<ImdbDbContext>();
+                        await imdbDbContext.Database.EnsureCreatedAsync();
+                        //await imdbDbContext.Database.MigrateAsync();
+                    }
 
-                using (SentrySdk.Init(o =>
+                    using (SentrySdk.Init(o =>
                         {
                             o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
                             // When configuring for the first time, to see what the SDK is doing:
@@ -162,43 +162,43 @@ namespace FxMovies.Grabber
                             // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
                             // We recommend adjusting this value in production.
                             o.TracesSampleRate = 1.0;
-                    }))
-                {
-                    try
+                        }))
                     {
-                        return await Parser.Default
-                            .ParseArguments<
-                                HelpOptions,
-                                GenerateImdbDatabaseOptions,
-                                UpdateImdbUserDataOptions,
-                                UpdateAllImdbUsersDataOptions,
-                                AutoUpdateImdbUserDataOptions,
-                                UpdateEpgOptions,
-                                ListManualMatchesOptions,
-                                // TwitterBotOptions,
-                                // ManualOptions,
-                                TestImdbMatchingOptions,
-                                TestSentryOptions
-                                >(args)
-                            .MapResult(
-                                (HelpOptions o) => Run(o),
-                                (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
-                                (UpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IUpdateImdbUserDataCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
-                                (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
-                                (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
-                                (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
-                                (ListManualMatchesOptions o) => Run(host, o),
-                                // (TwitterBotOptions o) => Run(o),
-                                // (ManualOptions o) => Run(o),
-                                (TestImdbMatchingOptions o) => Run(host, o),
-                                (TestSentryOptions o) => Run(o),
-                                errs => Task.FromResult(1));
-                    }
-                    catch (Exception x)
-                    {
-                        SentrySdk.CaptureException(x);
-                        throw;
-                    }
+                        try
+                        {
+                            return await Parser.Default
+                                .ParseArguments<
+                                    HelpOptions,
+                                    GenerateImdbDatabaseOptions,
+                                    UpdateImdbUserDataOptions,
+                                    UpdateAllImdbUsersDataOptions,
+                                    AutoUpdateImdbUserDataOptions,
+                                    UpdateEpgOptions,
+                                    ListManualMatchesOptions,
+                                    // TwitterBotOptions,
+                                    // ManualOptions,
+                                    TestImdbMatchingOptions,
+                                    TestSentryOptions
+                                    >(args)
+                                .MapResult(
+                                    (HelpOptions o) => Run(o),
+                                    (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
+                                    (UpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IUpdateImdbUserDataCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
+                                    (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
+                                    (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
+                                    (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
+                                    (ListManualMatchesOptions o) => Run(host, o),
+                                    // (TwitterBotOptions o) => Run(o),
+                                    // (ManualOptions o) => Run(o),
+                                    (TestImdbMatchingOptions o) => Run(host, o),
+                                    (TestSentryOptions o) => Run(o),
+                                    errs => Task.FromResult(1));
+                        }
+                        catch (Exception x)
+                        {
+                            SentrySdk.CaptureException(x);
+                            throw;
+                        }
                     }
                 }
             }
@@ -254,6 +254,8 @@ namespace FxMovies.Grabber
             foreach (var manualMatch in await query.Run())
             {
                 logger.LogInformation("{Id} {Title} {ImdbId}", 
+                    manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId);
+                Console.WriteLine("{0} {1} {2}", 
                     manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId);
             }
 
