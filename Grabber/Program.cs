@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sentry;
+using Serilog;
+using Serilog.Events;
 
 namespace FxMovies.Grabber
 {
@@ -124,9 +126,17 @@ namespace FxMovies.Grabber
 
         static async Task<int> Main(string[] args)
         {
-            using (var host = CreateHostBuilder(args).Build())
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .CreateLogger();
+                
+            try
             {
-                var versionInfo = host.Services.GetRequiredService<IVersionInfo>();
+                using (var host = CreateHostBuilder(args).Build())
+                {
+                    var versionInfo = host.Services.GetRequiredService<IVersionInfo>();
                 var logger = host.Services.GetRequiredService<ILogger<Program>>();
                 logger.LogInformation("Version {Version}, running on {DotNetCoreVersion}", versionInfo.Version, versionInfo.DotNetCoreVersion);
 
@@ -189,13 +199,24 @@ namespace FxMovies.Grabber
                         SentrySdk.CaptureException(x);
                         throw;
                     }
+                    }
                 }
+            }
+            catch (Exception x)
+            {
+                Log.Fatal(x, "Host terminated unexpectedly");
+                return 1;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
             }
         }
 
         static IHostBuilder CreateHostBuilder(string[] args)
         {
             return Host.CreateDefaultBuilder(args)
+                .UseSerilog()
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
                     config
