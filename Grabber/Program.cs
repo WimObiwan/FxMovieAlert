@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using CommandLine;
 using FxMovies.Core;
@@ -145,13 +145,13 @@ namespace FxMovies.Grabber
                 }
 
                 using (SentrySdk.Init(o =>
-                    {
-                        o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
-                        // When configuring for the first time, to see what the SDK is doing:
-                        o.Debug = true;
-                        // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-                        // We recommend adjusting this value in production.
-                        o.TracesSampleRate = 1.0;
+                        {
+                            o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
+                            // When configuring for the first time, to see what the SDK is doing:
+                            //o.Debug = true;
+                            // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+                            // We recommend adjusting this value in production.
+                            o.TracesSampleRate = 1.0;
                     }))
                 {
                     try
