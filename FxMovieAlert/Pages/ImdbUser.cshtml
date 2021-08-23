@@ -48,13 +48,13 @@ td, th {
         <li>De <i>IMDb Watchlist</i> wordt gebruikt voor de films die je nog wilt zien.</li>
     </ul> 
 </p>
-@if (User.Identity.IsAuthenticated)
-{
 <p>
-    Je kunt deze hieronder manueel uploaden.
+    Hiervoor moet je in IMDb je 
+        <a href="https://help.imdb.com/article/imdb/track-movies-tv/watchlist-faq/G9PA556494DM8YBA">watchlist</a> en
+        <a href="https://help.imdb.com/article/imdb/track-movies-tv/how-do-i-change-the-privacy-setting-for-my-ratings/G59Z2UQUXC3WS6YL">ratings</a> "publiek" zetten, en moet je hieronder je IMDb user ID invullen.
+    Deze heeft het formaat "ur12345678", en vind je in de adresbalk op je <a href="https://www.imdb.com/profile">profielpagina</a>.
 </p>
-}
-else
+@if (!User.Identity.IsAuthenticated)
 {
 <p>
     Je dient eerst 
@@ -80,7 +80,7 @@ else
 <p>
     <form action="#" method="GET">
         Vul hier je IMDb Gebruikers ID in:
-        <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" />
+        <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" placeholder="ur12345678" pattern="ur[0-9]{7,10}"/>
         <input type="submit" value="Bewaren" /> 
     </form>
 </p>
