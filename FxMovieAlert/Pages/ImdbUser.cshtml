@@ -50,9 +50,9 @@ td, th {
 </p>
 <p>
     Hiervoor moet je in IMDb je 
-        <a href="https://help.imdb.com/article/imdb/track-movies-tv/watchlist-faq/G9PA556494DM8YBA">watchlist</a> en
-        <a href="https://help.imdb.com/article/imdb/track-movies-tv/how-do-i-change-the-privacy-setting-for-my-ratings/G59Z2UQUXC3WS6YL">ratings</a> "publiek" zetten, en moet je hieronder je IMDb user ID invullen.
-    Deze heeft het formaat "ur12345678", en vind je in de adresbalk op je <a href="https://www.imdb.com/profile">profielpagina</a>.
+        <a href="https://help.imdb.com/article/imdb/track-movies-tv/watchlist-faq/G9PA556494DM8YBA" target="_blank" rel="noopener">watchlist</a> en
+        <a href="https://help.imdb.com/article/imdb/track-movies-tv/how-do-i-change-the-privacy-setting-for-my-ratings/G59Z2UQUXC3WS6YL" target="_blank" rel="noopener">ratings</a> "publiek" zetten, en moet je hieronder je IMDb user ID invullen.
+    Deze heeft het formaat "ur12345678", en vind je in de adresbalk op je <a href="https://www.imdb.com/profile" target="_blank" rel="noopener">profielpagina</a>.
 </p>
 @if (!User.Identity.IsAuthenticated)
 {
@@ -70,7 +70,7 @@ td, th {
 
 <p>
     De IMDb Gebruikers ID heeft het formaat <i>ur98765432</i>.  Surf naar 
-    <a href="https://www.imdb.com/profile" target="_new">https://www.imdb.com/profile</a>,
+    <a href="https://www.imdb.com/profile" target="_blank" rel="noopener">https://www.imdb.com/profile</a>,
     waarna je je gebruikersnaam vindt in de adresbalk. 
 </p>
 -->
@@ -152,10 +152,10 @@ td, th {
         IMDb links
     </td>
     <td>
-        <a href="https://www.imdb.com/user/@Model.ImdbUserId/ratings" target="_new">https://www.imdb.com/user/@Model.ImdbUserId/ratings</a>
+        <a href="https://www.imdb.com/user/@Model.ImdbUserId/ratings" target="_blank" rel="noopener">https://www.imdb.com/user/@Model.ImdbUserId/ratings</a>
     </td>
     <td>
-        <a href="https://www.imdb.com/user/@Model.ImdbUserId/watchlist" target="_new">https://www.imdb.com/user/@Model.ImdbUserId/watchlist</a>
+        <a href="https://www.imdb.com/user/@Model.ImdbUserId/watchlist" target="_blank" rel="noopener">https://www.imdb.com/user/@Model.ImdbUserId/watchlist</a>
     </td>
 </tr>
 <tr>
@@ -280,12 +280,12 @@ td, th {
     </td>
     <td>
         Exporteer eerst je ratings op de IMDb website met deze link:<br/>
-        <a href="https://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_new">IMDb Ratings export</a><br/>
+        <a href="https://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_blank" rel="noopener">IMDb Ratings export</a><br/>
         En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
     </td>
     <td>
         Exporteer eerst je watchlist op de IMDb website met deze link:<br/>
-        <a href="https://www.imdb.com/user/@(Model.ImdbUserId)/watchlist" target="_new">IMDb Watchlist export</a><br/>
+        <a href="https://www.imdb.com/user/@(Model.ImdbUserId)/watchlist" target="_blank" rel="noopener">IMDb Watchlist export</a><br/>
         En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
     </td>
 </tr>
