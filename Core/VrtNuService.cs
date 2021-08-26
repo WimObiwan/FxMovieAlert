@@ -51,6 +51,8 @@ namespace FxMovies.Core
             List<MovieEvent> movieEvents = new List<MovieEvent>();
             foreach (var movie in movies)
             {
+                System.Threading.Thread.Sleep(500);
+                
                 var movieDetails = await GetSearchMovieInfo(movie.programUrl);
                 if (movieDetails.duration < 75)
                 {
