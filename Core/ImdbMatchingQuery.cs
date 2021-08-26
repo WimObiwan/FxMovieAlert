@@ -77,12 +77,14 @@ namespace FxMovies.Core
             (
                 (title, releaseYear) => {
                     string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
+                    if (!releaseYear.HasValue)
+                        return null;
                     return imdbDbContext.MovieAlternatives
                         .Where(ma =>
                             ma.AlternativeTitle == null 
                             && ma.Normalized == normalizedTitle
-                            && (!ma.Movie.Year.HasValue || !releaseYear.HasValue 
-                                || ((ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff) && (ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff)))
+                            && ma.Movie.Year.HasValue
+                            && (ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff) && (ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff)
                         ).Select(ma => ma.Movie);
                     }
             ));
@@ -92,12 +94,14 @@ namespace FxMovies.Core
             (
                 (title, releaseYear) => {
                     string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
+                    if (!releaseYear.HasValue)
+                        return null;
                     return imdbDbContext.MovieAlternatives
                         .Where(ma => 
                             ma.AlternativeTitle != null 
                             && ma.Normalized == normalizedTitle
-                            && (!ma.Movie.Year.HasValue || !releaseYear.HasValue 
-                                || ((ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff) && (ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff)))
+                            && ma.Movie.Year.HasValue
+                            && (ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff) && (ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff)
                         ).Select(ma => ma.Movie);
                     }
             ));
@@ -108,10 +112,13 @@ namespace FxMovies.Core
             ImdbDB.Movie imdbMovie = null;
             int huntNo = 0;
             foreach (var hunt in huntingProcedure)
-            {                        
-                imdbMovie = await hunt(movieTitle, movieReleaseYear)
-                    .OrderByDescending(m => m.Votes)
-                    .FirstOrDefaultAsync();
+            {
+                var huntResult = hunt(movieTitle, movieReleaseYear);
+
+                if (huntResult != null)
+                    imdbMovie = await huntResult
+                        .OrderByDescending(m => m.Votes)
+                        .FirstOrDefaultAsync();
 
                 if (imdbMovie != null)
                     break;
