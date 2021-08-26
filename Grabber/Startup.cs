@@ -72,6 +72,7 @@ namespace FxMovies.Grabber
             services.Configure<UpdateEpgCommandOptions>(Configuration.GetSection(UpdateEpgCommandOptions.Position));
             services.Configure<GenerateImdbDatabaseCommandOptions>(Configuration.GetSection(GenerateImdbDatabaseCommandOptions.Position));
             services.Configure<AutoUpdateImdbUserDataCommandOptions>(Configuration.GetSection(AutoUpdateImdbUserDataCommandOptions.Position));
+            services.Configure<ImdbMatchingQueryOptions>(Configuration.GetSection(ImdbMatchingQueryOptions.Position));
 
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
             services.AddScoped<IImdbRatingsFromWebService, ImdbRatingsFromWebService>();
