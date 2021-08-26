@@ -117,7 +117,8 @@ namespace FxMovies.Core
 
                 if (huntResult != null)
                     imdbMovie = await huntResult
-                        .OrderByDescending(m => m.Votes)
+                        .OrderBy(m => Math.Abs((m.Year ?? 0) - (movieReleaseYear ?? m.Year ?? 0)))
+                        .ThenByDescending(m => m.Votes)
                         .FirstOrDefaultAsync();
 
                 if (imdbMovie != null)
