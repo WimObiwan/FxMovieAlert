@@ -12,11 +12,11 @@ namespace FxMovies.Core
 
     public class ManualMatchesQuery : IManualMatchesQuery
     {
-        private readonly ILogger<ImdbMatchingQuery> logger;
+        private readonly ILogger<ManualMatchesQuery> logger;
         private readonly FxMoviesDbContext fxMoviesDbContext;
 
         public ManualMatchesQuery(
-            ILogger<ImdbMatchingQuery> logger,
+            ILogger<ManualMatchesQuery> logger,
             FxMoviesDbContext fxMoviesDbContext)
         {
             this.logger = logger;
