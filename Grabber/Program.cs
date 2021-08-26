@@ -273,13 +273,12 @@ namespace FxMovies.Grabber
             var imdbMovie = result.ImdbMovie;
             if (imdbMovie != null)
             {
-                logger.LogError("Movie '{MovieTitle}' ({LovieReleaseYear}) found: {ImdbId} - '{PrimaryTitle}' ({Year})", 
-                    movieTitle, movieReleaseYear, imdbMovie.ImdbId, imdbMovie.PrimaryTitle, imdbMovie.Year);
+                Console.WriteLine($"Movie '{movieTitle}' ({movieReleaseYear}) found (#{result.HuntNo}): {imdbMovie.ImdbId} - '{imdbMovie.PrimaryTitle}' ({imdbMovie.Year})");
                 return 0;
             }
             else
             {
-                logger.LogError("Movie '{MovieTitle}' ({MovieReleaseYear}) not found", movieTitle, movieReleaseYear);
+                logger.LogError($"Movie '{movieTitle}' ({movieReleaseYear}) not found");
                 return 1;
             }
         }
