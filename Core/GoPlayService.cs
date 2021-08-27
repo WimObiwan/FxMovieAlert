@@ -93,7 +93,7 @@ namespace FxMovies.Core {
                             Channel = channel,
                             PosterS = episode.image, 
                             PosterM = episode.image,
-                            Duration = episode.duration,
+                            Duration = (episode.duration + 30) / 60,
                             Content = episode.description,
                             VodLink = episode.link,
                             AddedTime = DateTime.UtcNow,
