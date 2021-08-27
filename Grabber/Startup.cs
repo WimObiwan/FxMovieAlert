@@ -23,6 +23,10 @@ namespace FxMovies.Grabber
             services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("ImdbDb")));
 
+            services.AddHttpClient("goplay", c =>
+            {
+                c.BaseAddress = new Uri("https://www.goplay.be");
+            });
             services.AddHttpClient("vtmgo_login", c =>
             {
                 c.BaseAddress = new Uri("https://login2.vtm.be");
@@ -78,6 +82,7 @@ namespace FxMovies.Grabber
             services.AddScoped<IImdbRatingsFromWebService, ImdbRatingsFromWebService>();
             services.AddScoped<IImdbWatchlistFromWebService, ImdbWatchlistFromWebService>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
+            services.AddScoped<IGoPlayService, GoPlayService>();
             services.AddScoped<IVtmGoService, VtmGoService>();
             services.AddScoped<IVrtNuService, VrtNuService>();
             services.AddScoped<IHumoService, HumoService>();

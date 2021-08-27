@@ -41,6 +41,7 @@ namespace FxMovies.Core
         private readonly ImdbDbContext imdbDbContext;
         private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
         private readonly ITheMovieDbService theMovieDbService;
+        private readonly IGoPlayService goPlayService;
         private readonly IVtmGoService vtmGoService;
         private readonly IVrtNuService vrtNuService;
         private readonly IHumoService humoService;
@@ -52,6 +53,7 @@ namespace FxMovies.Core
             FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
             IOptionsSnapshot<UpdateEpgCommandOptions> updateEpgCommandOptions,
             ITheMovieDbService theMovieDbService,
+            IGoPlayService goPlayService,
             IVtmGoService vtmGoService, 
             IVrtNuService vrtNuService, 
             IHumoService humoService,
@@ -64,6 +66,7 @@ namespace FxMovies.Core
             this.imdbDbContext = imdbDbContext;
             this.updateEpgCommandOptions = updateEpgCommandOptions.Value;
             this.theMovieDbService = theMovieDbService;
+            this.goPlayService = goPlayService;
             this.vtmGoService = vtmGoService;
             this.vrtNuService = vrtNuService;
             this.humoService = humoService;
@@ -156,6 +159,21 @@ namespace FxMovies.Core
             Exception firstException = null;
             int failedProviders = 0;
 
+            if (IsProviderActivated("goplay"))
+            {
+                try
+                {
+                    await UpdateDatabaseEpg_GoPlay();
+                }
+                catch (Exception x)
+                {
+                    logger.LogError(x, "UpdateDatabaseEpg failed for GoPlay.  Trying to continue with other providers.");
+                    failedProviders++;
+                    if (firstException == null)
+                        firstException = x;
+                }
+            }
+
             if (IsProviderActivated("vtmgo"))
             {
                 try
@@ -206,6 +224,12 @@ namespace FxMovies.Core
                 throw new Exception($"UpdateDatabaseEpg failed for {failedProviders} providers.  InnerException contains first failure.", 
                     firstException);
             }
+        }
+
+        private async Task UpdateDatabaseEpg_GoPlay()
+        {
+            var movieEvents = await goPlayService.GetMovieEvents();
+            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == "goplay");
         }
 
         private async Task UpdateDatabaseEpg_VtmGo()
