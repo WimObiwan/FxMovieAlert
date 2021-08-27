@@ -57,7 +57,7 @@ namespace FxMovies.Core {
             Channel channel = new Channel()
             {
                 Code = "goplay",
-                Name = "GO PLAY",
+                Name = "GoPlay",
                 LogoS = "https://www.filmoptv.be/images/goplay.png"
             };
 
