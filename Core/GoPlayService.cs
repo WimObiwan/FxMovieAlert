@@ -81,6 +81,9 @@ namespace FxMovies.Core {
                             endTime = DateTime.UnixEpoch.AddSeconds(value);
                         else
                             endTime = null;
+                        string link = episode.link;
+                        if (link.StartsWith('/'))
+                            link = "https://www.goplay.be" + link;
                         return new MovieEvent()
                         {
                             ExternalId = dataProgram.id,
@@ -95,7 +98,7 @@ namespace FxMovies.Core {
                             PosterM = episode.image,
                             Duration = (episode.duration + 30) / 60,
                             Content = episode.description,
-                            VodLink = episode.link,
+                            VodLink = link,
                             AddedTime = DateTime.UtcNow,
                         };
                     }
