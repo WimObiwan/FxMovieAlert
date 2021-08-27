@@ -58,7 +58,7 @@ namespace FxMovies.Core {
             {
                 Code = "goplay",
                 Name = "GO PLAY",
-                LogoS = "https://www.filmoptv.be/images/goplaybe.webp"
+                LogoS = "https://www.filmoptv.be/images/goplay.png"
             };
 
             return document
