@@ -88,7 +88,7 @@ namespace FxMovies.Core {
                         {
                             ExternalId = dataProgram.id,
                             Type = 1,  // 1 = movie, 2 = short movie, 3 = serie
-                            Title = dataProgram.title, 
+                            Title = dataProgram.title.Trim(), 
                             Year = null, 
                             Vod = true,
                             StartTime = startTime ?? DateTime.UtcNow,
