@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using CommandLine;
 using FxMovies.Core;
@@ -116,7 +116,7 @@ namespace FxMovies.Grabber
             [Option("title", Required = true, HelpText = "Movie title")]
             public string Title { get; set; }
             [Option("year", Required = false, HelpText = "Movie release year")]
-            public int Year { get; set; }
+            public int? Year { get; set; }
         }
 
         [Verb("TestSentry", HelpText = "Test Sentry.")]
