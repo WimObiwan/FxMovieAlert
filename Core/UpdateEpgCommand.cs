@@ -32,6 +32,13 @@ namespace FxMovies.Core
         public string ImageBasePath { get; set; }
         public Dictionary<string, string> ImageOverrideMap { get; set; }
         public string[] ActivateProviders { get; set; }
+        public enum DownloadImagesOption
+        {
+            Active,
+            Disabled,
+            IfNotPresent
+        }
+        public DownloadImagesOption? DownloadImages { get; set; }
     }
 
     public class UpdateEpgCommand : IUpdateEpgCommand
@@ -48,6 +55,7 @@ namespace FxMovies.Core
         private readonly IImdbMatchingQuery imdbMatchingQuery;
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IManualMatchesQuery manualMatchesQuery;
+        private readonly UpdateEpgCommandOptions.DownloadImagesOption downloadImagesOption;
 
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
             FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
@@ -73,6 +81,8 @@ namespace FxMovies.Core
             this.imdbMatchingQuery = imdbMatchingQuery;
             this.httpClientFactory = httpClientFactory;
             this.manualMatchesQuery = manualMatchesQuery;
+
+            this.downloadImagesOption = this.updateEpgCommandOptions.DownloadImages ?? UpdateEpgCommandOptions.DownloadImagesOption.Active;
         }
 
         public async Task<int> Run()
@@ -116,16 +126,19 @@ namespace FxMovies.Core
                     firstException = x;
             }
 
-            try
+            if (downloadImagesOption != UpdateEpgCommandOptions.DownloadImagesOption.Disabled)
             {
-                await DownloadImageData();
-            }
-            catch (Exception x)
-            {
-                logger.LogError(x, "DownloadImageData failed.  Trying to continue.");
-                failedOperations++;
-                if (firstException == null)
-                    firstException = x;
+                try
+                {
+                    await DownloadImageData();
+                }
+                catch (Exception x)
+                {
+                    logger.LogError(x, "DownloadImageData failed.  Trying to continue.");
+                    failedOperations++;
+                    if (firstException == null)
+                        firstException = x;
+                }
             }
 
             if (firstException != null)
@@ -409,6 +422,9 @@ namespace FxMovies.Core
 
         private async Task DownloadImageData()
         {
+            if (downloadImagesOption == UpdateEpgCommandOptions.DownloadImagesOption.Disabled)
+                return;
+
             string basePath = updateEpgCommandOptions.ImageBasePath;
             if (!Directory.Exists(basePath))
                 Directory.CreateDirectory(basePath);
@@ -419,6 +435,13 @@ namespace FxMovies.Core
 
                 if (url == null)
                     continue;
+
+                if (CheckDownloadNotNeeded(url, channel.LogoS_Local))
+                {
+                    logger.LogInformation("Skipping existing image {url}, local {local}",
+                        url, channel.LogoS_Local);
+                    continue;
+                }
 
                 string name = "channel-" + channel.Code;
 
@@ -461,15 +484,35 @@ namespace FxMovies.Core
                     if (url == null)
                         continue;
 
+                    if (CheckDownloadNotNeeded(url, movieEvent.PosterS_Local))
+                    {
+                        logger.LogInformation("Skipping existing image {url}, local {local}",
+                            url, movieEvent.PosterS_Local);
+                        continue;
+                    }
+
                     string name = "movie-" + movieEvent.Id.ToString() + "-S";
 
                     movieEvent.PosterS_Local = await DownloadFile(url, basePath, name, 150);
                 }
+
+                if (movieEvent.PosterM == movieEvent.PosterS)
+                {
+                    movieEvent.PosterM_Local = movieEvent.PosterS_Local;
+                }
+                else
                 {
                     string url = movieEvent.PosterM;
 
                     if (url == null)
                         continue;
+
+                    if (CheckDownloadNotNeeded(url, movieEvent.PosterM_Local))
+                    {
+                        logger.LogInformation("Skipping existing image {url}, local {local}",
+                            url, movieEvent.PosterM_Local);
+                        continue;
+                    }
 
                     string name = "movie-" + movieEvent.Id.ToString() + "-M";
 
@@ -478,6 +521,24 @@ namespace FxMovies.Core
             }
 
             await fxMoviesDbContext.SaveChangesAsync();    
+        }
+
+        private bool CheckDownloadNotNeeded(string url, string localFile)
+        {
+            if (downloadImagesOption == UpdateEpgCommandOptions.DownloadImagesOption.Active)
+                return false;
+            if (downloadImagesOption == UpdateEpgCommandOptions.DownloadImagesOption.Disabled)
+                return true;
+            if (downloadImagesOption == UpdateEpgCommandOptions.DownloadImagesOption.IfNotPresent)
+            {
+                if (string.IsNullOrEmpty(localFile))
+                    return false;
+                
+                string file = Path.Combine(updateEpgCommandOptions.ImageBasePath, localFile);
+                return File.Exists(file);
+            }
+
+            throw new InvalidOperationException();
         }
 
         private async Task ResizeFile(string imageFile, int width)
@@ -499,9 +560,7 @@ namespace FxMovies.Core
         private async Task<string> DownloadFile(string url, string basePath, string name, int resize)
         {
             if (string.IsNullOrEmpty(url))
-            {
                 return null;
-            }
 
             string target;
 
