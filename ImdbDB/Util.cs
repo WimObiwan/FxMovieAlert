@@ -24,6 +24,7 @@ namespace FxMovies.ImdbDB
 
         public static string NormalizeTitle(string title)
         {
+            title = title.Trim();
             title = title.Normalize();
             title = Regex.Replace(title, @"[^\w\s]", "");
             title = Regex.Replace(title, @"\s+", " ");
