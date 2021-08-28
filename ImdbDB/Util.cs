@@ -24,7 +24,6 @@ namespace FxMovies.ImdbDB
 
         public static string NormalizeTitle(string title)
         {
-            title = title.Trim();
             title = title.Normalize();
             title = Regex.Replace(title, @"[^\w\s]", "");
             title = Regex.Replace(title, @"\s+", " ");
@@ -32,6 +31,7 @@ namespace FxMovies.ImdbDB
             foreach (var item in RomanNumbers)
                 title = Regex.Replace(title, item.Item1, item.Item2);
             title = RemoveDiacritics(title);
+            title = title.Trim();
             return title;
         }
 
