@@ -130,6 +130,7 @@ namespace FxMovieAlert.Pages
                     .Include(ur => ur.Movie)
                     .Where(ur => ur.User.UserId == userId)
                     .OrderByDescending(ur => ur.RatingDate)
+                    .ThenByDescending(ur => ur.Id)
                     .FirstOrDefaultAsync();
                 if (ratingLast != null)
                 {
@@ -146,6 +147,7 @@ namespace FxMovieAlert.Pages
                     .Include(uw => uw.Movie)
                     .Where(uw => uw.User.UserId == userId)
                     .OrderByDescending(uw => uw.AddedDate)
+                    .ThenByDescending(uw => uw.Id)
                     .FirstOrDefaultAsync();
                 if (watchListLast != null)
                 {
