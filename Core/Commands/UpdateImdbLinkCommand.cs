@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
+using FxMovies.Core.Utilities;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -74,7 +75,7 @@ namespace FxMovies.Core.Commands
                             AddedDateTime = DateTime.UtcNow,
                             Movie = movie,
                             Title = movieEvent.Title,
-                            NormalizedTitle = ImdbDB.Util.NormalizeTitle(movieEvent.Title)
+                            NormalizedTitle = TitleNormalizer.NormalizeTitle(movieEvent.Title)
                         }
                     );
                 }

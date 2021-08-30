@@ -4,9 +4,9 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace FxMovies.ImdbDB
+namespace FxMovies.Core.Utilities
 {
-    public static class Util
+    public static class TitleNormalizer
     {
         private static readonly IList<Tuple<string, string>> RomanNumbers = new List<Tuple<string, string>>
         {

@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
+using FxMovies.Core.Utilities;
 using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -26,7 +27,7 @@ namespace FxMovies.Core.Queries
 
         public async Task<ManualMatch> Execute(string movieTitle)
         {
-            string movieTitleNormalized = ImdbDB.Util.NormalizeTitle(movieTitle);
+            string movieTitleNormalized = TitleNormalizer.NormalizeTitle(movieTitle);
             var manualMatch = await fxMoviesDbContext.ManualMatches
                 .Include(mm => mm.Movie)
                 .FirstOrDefaultAsync(mm => mm.NormalizedTitle == movieTitleNormalized);

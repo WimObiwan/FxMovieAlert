@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Services;
+using FxMovies.Core.Utilities;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -176,7 +177,7 @@ namespace FxMovies.Core.Commands
                             if (int.TryParse(match.Groups[5].Value, out int startYear))
                                 movie.Year = startYear;
 
-                            string primaryTitleNormalized = ImdbDB.Util.NormalizeTitle(movie.PrimaryTitle);
+                            string primaryTitleNormalized = TitleNormalizer.NormalizeTitle(movie.PrimaryTitle);
 
                             countAlternatives++;
                             movie.MovieAlternatives = new List<ImdbMovieAlternative>
@@ -189,7 +190,7 @@ namespace FxMovies.Core.Commands
                                 }
                             };
                             
-                            string originalTitleNormalized = ImdbDB.Util.NormalizeTitle(originalTitle);
+                            string originalTitleNormalized = TitleNormalizer.NormalizeTitle(originalTitle);
                             if (primaryTitleNormalized != originalTitleNormalized)
                             {
                                 countAlternatives++;
@@ -294,7 +295,7 @@ namespace FxMovies.Core.Commands
 
                             string alternativeTitle = match.Groups[2].Value;
 
-                            string normalized = ImdbDB.Util.NormalizeTitle(alternativeTitle);
+                            string normalized = TitleNormalizer.NormalizeTitle(alternativeTitle);
                             // Not in DB
                             if (movie.MovieAlternatives.Any(ma => ma.Normalized == normalized))
                             {

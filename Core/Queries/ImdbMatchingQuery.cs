@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
+using FxMovies.Core.Utilities;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -49,7 +50,7 @@ namespace FxMovies.Core.Queries
             huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
+                    string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
                     return imdbDbContext.MovieAlternatives
                         .Where(ma =>
                             ma.AlternativeTitle == null 
@@ -63,7 +64,7 @@ namespace FxMovies.Core.Queries
             huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
+                    string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
                     return imdbDbContext.MovieAlternatives
                         .Where(ma => 
                             ma.AlternativeTitle != null 
@@ -77,7 +78,7 @@ namespace FxMovies.Core.Queries
             huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
+                    string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
                     if (!releaseYear.HasValue)
                         return null;
                     return imdbDbContext.MovieAlternatives
@@ -94,7 +95,7 @@ namespace FxMovies.Core.Queries
             huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
-                    string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
+                    string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
                     if (!releaseYear.HasValue)
                         return null;
                     return imdbDbContext.MovieAlternatives
