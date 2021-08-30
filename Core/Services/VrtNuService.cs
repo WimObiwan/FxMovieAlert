@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Services
 {
     public interface IVrtNuService
     {

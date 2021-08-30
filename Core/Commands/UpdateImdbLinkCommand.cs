@@ -5,11 +5,11 @@ using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Commands
 {
     public interface IUpdateImdbLinkCommand
     {
-        Task Run(int movieEventId, string imdbId, bool ignoreImdbLink);
+        Task Execute(int movieEventId, string imdbId, bool ignoreImdbLink);
     }
 
     public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
@@ -31,7 +31,7 @@ namespace FxMovies.Core
             this.movieCreationHelper = movieCreationHelper;
         }
 
-        public async Task Run(int movieEventId, string imdbId, bool ignoreImdbLink)
+        public async Task Execute(int movieEventId, string imdbId, bool ignoreImdbLink)
         {
             var movieEvent = await fxMoviesDbContext.MovieEvents
                 .Include(me => me.Movie)

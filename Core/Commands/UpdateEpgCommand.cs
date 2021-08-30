@@ -6,6 +6,8 @@ using System.Linq.Expressions;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FxMovies.Core.Queries;
+using FxMovies.Core.Services;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +16,11 @@ using Microsoft.Extensions.Options;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Commands
 {
     public interface IUpdateEpgCommand
     {
-        Task<int> Run();
+        Task<int> Execute();
     }
 
     public class UpdateEpgCommandOptions
@@ -57,6 +59,8 @@ namespace FxMovies.Core
         private readonly IManualMatchesQuery manualMatchesQuery;
         private readonly UpdateEpgCommandOptions.DownloadImagesOption downloadImagesOption;
 
+        public IManualMatchesQuery ManualMatchesQuery => manualMatchesQuery;
+
         public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger, 
             FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
             IOptionsSnapshot<UpdateEpgCommandOptions> updateEpgCommandOptions,
@@ -85,7 +89,7 @@ namespace FxMovies.Core
             this.downloadImagesOption = this.updateEpgCommandOptions.DownloadImages ?? UpdateEpgCommandOptions.DownloadImagesOption.Active;
         }
 
-        public async Task<int> Run()
+        public async Task<int> Execute()
         {
             Exception firstException = null;
             int failedOperations = 0;
@@ -627,7 +631,7 @@ namespace FxMovies.Core
                 }
 
                 var first = group.First();
-                var imdbMatchingQueryResult = await imdbMatchingQuery.Run(first.Title, first.Year);
+                var imdbMatchingQueryResult = await imdbMatchingQuery.Execute(first.Title, first.Year);
                 var imdbMovie = imdbMatchingQueryResult.ImdbMovie;
                 var huntNo = imdbMatchingQueryResult.HuntNo;
 
@@ -636,7 +640,7 @@ namespace FxMovies.Core
                 {
                     huntNo = -1;
 
-                    var manualMatch = await manualMatchesQuery.Run(first.Title);
+                    var manualMatch = await ManualMatchesQuery.Execute(first.Title);
                     movie = manualMatch?.Movie;
                     if (movie != null)
                     {

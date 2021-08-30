@@ -2,6 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core;
+using FxMovies.Core.Commands;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Mvc;
@@ -65,7 +66,7 @@ namespace FxMovieAlert.Pages
                 
                 if (overwrite)
                 {
-                    await updateImdbLinkCommand.Run(movieeventid.Value, setimdbid, setIgnore);
+                    await updateImdbLinkCommand.Execute(movieeventid.Value, setimdbid, setIgnore);
                 }
             }
             

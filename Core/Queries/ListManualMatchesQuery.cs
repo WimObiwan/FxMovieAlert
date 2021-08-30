@@ -4,11 +4,11 @@ using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Queries
 {
     public interface IListManualMatchesQuery
     {
-        Task<List<ManualMatch>> Run();
+        Task<List<ManualMatch>> Execute();
     }
 
     public class ListManualMatchesQuery : IListManualMatchesQuery
@@ -24,7 +24,7 @@ namespace FxMovies.Core
             this.fxMoviesDbContext = fxMoviesDbContext;
         }
 
-        public async Task<List<ManualMatch>> Run()
+        public async Task<List<ManualMatch>> Execute()
         {
             return await fxMoviesDbContext.ManualMatches
                 .Include(mm => mm.Movie)

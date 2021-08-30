@@ -11,7 +11,7 @@ using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Services
 {
     public interface IImdbRatingsFromWebService
     {

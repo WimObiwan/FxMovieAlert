@@ -1,5 +1,5 @@
 ﻿using FxMovieAlert.Options;
-using FxMovies.Core;
+using FxMovies.Core.Repositories;
 using FxMovies.FxMoviesDB;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;

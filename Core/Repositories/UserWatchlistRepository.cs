@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FxMovies.Core.Services;
 using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Repositories
 {
     public interface IUserWatchlistRepository
     {

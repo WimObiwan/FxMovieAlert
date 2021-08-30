@@ -1,5 +1,9 @@
 using System;
 using FxMovies.Core;
+using FxMovies.Core.Commands;
+using FxMovies.Core.Queries;
+using FxMovies.Core.Repositories;
+using FxMovies.Core.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,4 +1,4 @@
-namespace FxMovies.Core
+namespace FxMovies.Core.Repositories
 {
     public class UserListRepositoryStoreResult
     {

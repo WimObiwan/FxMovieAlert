@@ -22,6 +22,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using FxMovieAlert.Options;
+using FxMovies.Core.Services;
+using FxMovies.Core.Repositories;
+using FxMovies.Core.Commands;
 
 namespace FxMovieAlert
 {

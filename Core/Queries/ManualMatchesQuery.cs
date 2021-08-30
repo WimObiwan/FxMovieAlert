@@ -3,11 +3,11 @@ using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Queries
 {
     public interface IManualMatchesQuery
     {
-        Task<ManualMatch> Run(string movieTitle);
+        Task<ManualMatch> Execute(string movieTitle);
     }
 
     public class ManualMatchesQuery : IManualMatchesQuery
@@ -23,7 +23,7 @@ namespace FxMovies.Core
             this.fxMoviesDbContext = fxMoviesDbContext;
         }
 
-        public async Task<ManualMatch> Run(string movieTitle)
+        public async Task<ManualMatch> Execute(string movieTitle)
         {
             string movieTitleNormalized = ImdbDB.Util.NormalizeTitle(movieTitle);
             var manualMatch = await fxMoviesDbContext.ManualMatches

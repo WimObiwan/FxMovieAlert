@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Services
 {
     public class GetImagesResult
     {

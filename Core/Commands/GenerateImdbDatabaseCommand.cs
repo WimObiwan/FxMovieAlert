@@ -7,17 +7,18 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FxMovies.Core.Services;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Commands
 {
     public interface IGenerateImdbDatabaseCommand
     {
-        Task<int> Run();
+        Task<int> Execute();
     }
 
     public class GenerateImdbDatabaseCommandOptions
@@ -52,7 +53,7 @@ namespace FxMovies.Core
             this.theMovieDbService = theMovieDbService;
         }
 
-        public async Task<int> Run()
+        public async Task<int> Execute()
         {
             await ImportImdbData_Remove();
             await ImportImdbData_Movies();

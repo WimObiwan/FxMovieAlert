@@ -1,12 +1,14 @@
 using System;
 using System.Threading.Tasks;
+using FxMovies.Core.Repositories;
+using FxMovies.Core.Services;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Commands
 {
     public interface IUpdateImdbUserDataCommand
     {
-        Task<int> Run(string ImdbUserId, bool updateAllRatings);
+        Task<int> Execute(string ImdbUserId, bool updateAllRatings);
     }
 
     public class UpdateImdbUserDataCommand : IUpdateImdbUserDataCommand
@@ -33,7 +35,7 @@ namespace FxMovies.Core
             this.usersRepository = usersRepository;
         }
 
-        public async Task<int> Run(string imdbUserId, bool updateAllRatings)
+        public async Task<int> Execute(string imdbUserId, bool updateAllRatings)
         {
             try
             {

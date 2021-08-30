@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Queries
 {
     public interface IImdbMatchingQuery
     {
-        Task<ImdbMatchingQueryResult> Run(string movieTitle, int? movieReleaseYear);
+        Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear);
     }
 
     public class ImdbMatchingQueryOptions
@@ -107,7 +107,7 @@ namespace FxMovies.Core
             ));
         }
 
-        public async Task<ImdbMatchingQueryResult> Run(string movieTitle, int? movieReleaseYear)
+        public async Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear)
         {
             ImdbDB.Movie imdbMovie = null;
             int huntNo = 0;

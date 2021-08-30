@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using CommandLine;
 using FxMovies.Core;
+using FxMovies.Core.Commands;
+using FxMovies.Core.Queries;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -182,11 +184,11 @@ namespace FxMovies.Grabber
                                     >(args)
                                 .MapResult(
                                     (HelpOptions o) => Run(o),
-                                    (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Run(),
-                                    (UpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IUpdateImdbUserDataCommand>().Run(o.ImdbUserId, o.UpdateAllRatings),
-                                    (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Run(),
-                                    (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Run(),
-                                    (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Run(),
+                                    (GenerateImdbDatabaseOptions o) => host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Execute(),
+                                    (UpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IUpdateImdbUserDataCommand>().Execute(o.ImdbUserId, o.UpdateAllRatings),
+                                    (UpdateAllImdbUsersDataOptions o) => host.Services.GetRequiredService<IUpdateAllImdbUsersDataCommand>().Execute(),
+                                    (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Execute(),
+                                    (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Execute(),
                                     (ListManualMatchesOptions o) => Run(host, o),
                                     // (TwitterBotOptions o) => Run(o),
                                     // (ManualOptions o) => Run(o),
@@ -251,7 +253,7 @@ namespace FxMovies.Grabber
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
             var query = host.Services.GetRequiredService<IListManualMatchesQuery>();
-            foreach (var manualMatch in await query.Run())
+            foreach (var manualMatch in await query.Execute())
             {
                 logger.LogInformation("{Id} {Title} {ImdbId} {AddedDateTime}", 
                     manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId, manualMatch.AddedDateTime);
@@ -269,7 +271,7 @@ namespace FxMovies.Grabber
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
             var query = host.Services.GetRequiredService<IImdbMatchingQuery>();
-            var result = await query.Run(movieTitle, movieReleaseYear);
+            var result = await query.Execute(movieTitle, movieReleaseYear);
             var imdbMovie = result.ImdbMovie;
             if (imdbMovie != null)
             {

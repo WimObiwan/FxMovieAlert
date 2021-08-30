@@ -3,16 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AngleSharp.Html.Parser;
 using FxMovies.FxMoviesDB;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
-namespace FxMovies.Core {
+namespace FxMovies.Core.Services
+{
     public interface IGoPlayService
     {
         Task<IList<MovieEvent>> GetMovieEvents();

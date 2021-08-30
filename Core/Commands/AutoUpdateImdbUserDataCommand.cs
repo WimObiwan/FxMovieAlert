@@ -1,13 +1,14 @@
 using System;
 using System.Threading.Tasks;
+using FxMovies.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FxMovies.Core
+namespace FxMovies.Core.Commands
 {
     public interface IAutoUpdateImdbUserDataCommand
     {
-        Task<int> Run();
+        Task<int> Execute();
     }
 
     public class AutoUpdateImdbUserDataCommandOptions
@@ -41,7 +42,7 @@ namespace FxMovies.Core
             this.updateAllRatings = autoUpdateImdbUserDataCommandOptions.Value.UpdateAllRatings ?? false;
         }
 
-        public async Task<int> Run()
+        public async Task<int> Execute()
         {
             var now = DateTime.UtcNow;
             var lastUpdateThreshold = now.Add(-autoUpdateInterval);
@@ -68,7 +69,7 @@ namespace FxMovies.Core
                         user.LastRefreshRatingsTime.Value);
                 try
                 {
-                    await updateImdbUserDataCommand.Run(user.ImdbUserId, updateAllRatings);
+                    await updateImdbUserDataCommand.Execute(user.ImdbUserId, updateAllRatings);
                 }
                 catch (Exception x)
                 {
