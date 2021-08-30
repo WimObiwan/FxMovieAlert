@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.Core.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +7,7 @@ namespace FxMovies.Core
 {
     public interface IMovieCreationHelper
     {
-        Task<FxMovies.FxMoviesDB.Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
+        Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
     }
 
     public class MovieCreationHelper : IMovieCreationHelper
@@ -25,7 +26,7 @@ namespace FxMovies.Core
             this.theMovieDbService = theMovieDbService;
         }
 
-        public async Task<FxMovies.FxMoviesDB.Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
+        public async Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
         {
             var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
@@ -33,7 +34,7 @@ namespace FxMovies.Core
 
             if (newMovie)
             {
-                movie = new FxMoviesDB.Movie()
+                movie = new Movie()
                 {
                     ImdbId = imdbId
                 };
@@ -46,7 +47,7 @@ namespace FxMovies.Core
             return movie;
         }
 
-        public async Task<bool> RefreshIfNeeded(FxMovies.FxMoviesDB.Movie movie)
+        public async Task<bool> RefreshIfNeeded(Movie movie)
         {
             if (string.IsNullOrEmpty(movie.OriginalTitle))
             {
@@ -55,7 +56,7 @@ namespace FxMovies.Core
             return false;
         }
 
-        public async Task<bool> Refresh(FxMovies.FxMoviesDB.Movie movie)
+        public async Task<bool> Refresh(Movie movie)
         {
             if (movie == null)
                 return false;

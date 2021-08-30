@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.Core.Services;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -167,7 +168,7 @@ namespace FxMovies.Core.Commands
 
                             string movieId = match.Groups[1].Value;
 
-                            var movie = new ImdbDB.Movie();
+                            var movie = new ImdbMovie();
                             movie.ImdbId = movieId;
                             movie.PrimaryTitle = match.Groups[3].Value;
                             string originalTitle = match.Groups[4].Value;
@@ -178,9 +179,9 @@ namespace FxMovies.Core.Commands
                             string primaryTitleNormalized = ImdbDB.Util.NormalizeTitle(movie.PrimaryTitle);
 
                             countAlternatives++;
-                            movie.MovieAlternatives = new List<MovieAlternative>
+                            movie.MovieAlternatives = new List<ImdbMovieAlternative>
                             {
-                                new MovieAlternative()
+                                new ImdbMovieAlternative()
                                 {
                                     Movie = movie,
                                     AlternativeTitle = null,
@@ -193,7 +194,7 @@ namespace FxMovies.Core.Commands
                             {
                                 countAlternatives++;
                                 movie.MovieAlternatives.Add(
-                                    new MovieAlternative()
+                                    new ImdbMovieAlternative()
                                     {
                                         Movie = movie,
                                         AlternativeTitle = originalTitle,
@@ -284,7 +285,7 @@ namespace FxMovies.Core.Commands
                             }
 
                             string movieId = match.Groups[1].Value;
-                            ImdbDB.Movie movie = await db.Movies.Include(m => m.MovieAlternatives).SingleOrDefaultAsync(m => m.ImdbId == movieId);
+                            ImdbMovie movie = await db.Movies.Include(m => m.MovieAlternatives).SingleOrDefaultAsync(m => m.ImdbId == movieId);
                             if (movie == null)
                             {
                                 skipped++;
@@ -301,7 +302,7 @@ namespace FxMovies.Core.Commands
                                 continue;
                             }
 
-                            var movieAlternative = new MovieAlternative();
+                            var movieAlternative = new ImdbMovieAlternative();
                             movieAlternative.Movie = movie;
                             movieAlternative.AlternativeTitle = alternativeTitle;
                             movieAlternative.Normalized = normalized;

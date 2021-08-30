@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace FxMovies.ImdbDB
+namespace FxMovies.Core.Entities
+
 {
-    public class Movie
+    public class ImdbMovie
     {
         public int Id { get; set; }
         public string PrimaryTitle { get; set; }
@@ -12,6 +13,6 @@ namespace FxMovies.ImdbDB
         public int? Votes { get; set; }
         public int? Rating { get; set; } // 100
 
-        public List<MovieAlternative> MovieAlternatives { get; set; }
+        public List<ImdbMovieAlternative> MovieAlternatives { get; set; }
     }
 }

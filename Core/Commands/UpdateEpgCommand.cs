@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.Core.Queries;
 using FxMovies.Core.Services;
 using FxMovies.FxMoviesDB;
@@ -635,7 +636,7 @@ namespace FxMovies.Core.Commands
                 var imdbMovie = imdbMatchingQueryResult.ImdbMovie;
                 var huntNo = imdbMatchingQueryResult.HuntNo;
 
-                FxMoviesDB.Movie movie = null;
+                Movie movie = null;
                 if (imdbMovie == null)
                 {
                     huntNo = -1;
@@ -667,7 +668,7 @@ namespace FxMovies.Core.Commands
 
                 if (movie == null)
                 {
-                    movie = new FxMoviesDB.Movie();
+                    movie = new Movie();
                     movie.ImdbId = imdbMovie?.ImdbId;
                 }
 

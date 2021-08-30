@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FxMoviesDB\FxMoviesDB.csproj" />
     <ProjectReference Include="..\ImdbDB\ImdbDB.csproj" />
+    <ProjectReference Include="..\Core.Entities\Core.Entities.csproj" />
   </ItemGroup>
 
 </Project>

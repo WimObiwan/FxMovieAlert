@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,7 @@ namespace FxMovies.Core.Queries
 
     public class ImdbMatchingQueryResult
     {
-        public ImdbDB.Movie ImdbMovie { get; set; }
+        public ImdbMovie ImdbMovie { get; set; }
         public int HuntNo { get; set; }
     }
 
@@ -32,7 +33,7 @@ namespace FxMovies.Core.Queries
         private readonly ILogger<ImdbMatchingQuery> logger;
         private readonly ImdbDbContext imdbDbContext;
 
-        private readonly List<Func<string, int?, IQueryable<ImdbDB.Movie>>> huntingProcedure;
+        private readonly List<Func<string, int?, IQueryable<ImdbMovie>>> huntingProcedure;
 
         public ImdbMatchingQuery(ILogger<ImdbMatchingQuery> logger,
             IOptionsSnapshot<ImdbMatchingQueryOptions> imdbMatchingQueryOptions,
@@ -42,10 +43,10 @@ namespace FxMovies.Core.Queries
             int imdbHuntingYearDiff = imdbMatchingQueryOptions.Value.ImdbHuntingYearDiff ?? 2;
             this.imdbDbContext = imdbDbContext;
 
-            huntingProcedure = new List<Func<string, int?, IQueryable<ImdbDB.Movie>>>();
+            huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>>>();
 
             // Search for PrimaryTitle (Year)
-            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbDB.Movie>>)
+            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
                     string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
@@ -59,7 +60,7 @@ namespace FxMovies.Core.Queries
             ));
 
             // Search for AlternativeTitle (Year)
-            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbDB.Movie>>)
+            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
                     string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
@@ -73,7 +74,7 @@ namespace FxMovies.Core.Queries
             ));
 
             // Search for PrimaryTitle (+/-Year)
-            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbDB.Movie>>)
+            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
                     string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
@@ -90,7 +91,7 @@ namespace FxMovies.Core.Queries
             ));
 
             // Search for AlternativeTitle (+/-Year)
-            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbDB.Movie>>)
+            huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
             (
                 (title, releaseYear) => {
                     string normalizedTitle = ImdbDB.Util.NormalizeTitle(title);
@@ -109,7 +110,7 @@ namespace FxMovies.Core.Queries
 
         public async Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear)
         {
-            ImdbDB.Movie imdbMovie = null;
+            ImdbMovie imdbMovie = null;
             int huntNo = 0;
             foreach (var hunt in huntingProcedure)
             {

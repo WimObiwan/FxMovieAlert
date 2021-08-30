@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Logging;
 

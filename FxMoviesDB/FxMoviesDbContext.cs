@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FxMovies.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.FxMoviesDB
 {

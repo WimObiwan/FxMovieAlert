@@ -1,21 +1,20 @@
 using System;
 
-namespace FxMovies.FxMoviesDB
+namespace FxMovies.Core.Entities
 {
     /// <summary>
-    /// A simple class representing a UserRating
+    /// A simple class representing a UserWatchListItem
     /// </summary>
-    public class UserRating
+    public class UserWatchListItem
     {
-        public UserRating()
+        public UserWatchListItem()
         {
         }
 
         public int Id { get; set; }
         public User User { get; set; }
         public Movie Movie { get; set; }
-        public DateTime RatingDate { get; set; }
-        public int Rating { get; set; }
+        public DateTime AddedDate { get; set; }
 
         public int? UserId { get; set; }
         public int? MovieId { get; set; }

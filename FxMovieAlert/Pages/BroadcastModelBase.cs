@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FxMovieAlert.Components;
 using FxMovieAlert.Options;
+using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
 using FxMovies.FxMoviesDB;
 using Microsoft.AspNetCore.Authentication;

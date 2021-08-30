@@ -1,3 +1,4 @@
+using FxMovies.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.ImdbDB
@@ -13,27 +14,27 @@ namespace FxMovies.ImdbDB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Movie>()
+            modelBuilder.Entity<ImdbMovie>()
                 .HasKey(m => m.Id);
-            modelBuilder.Entity<Movie>()
+            modelBuilder.Entity<ImdbMovie>()
                 .HasIndex(m => new { m.PrimaryTitle, m.Year });
-            modelBuilder.Entity<Movie>()
+            modelBuilder.Entity<ImdbMovie>()
                 .HasIndex(m => m.ImdbId)
                 .IsUnique();
-            modelBuilder.Entity<MovieAlternative>()
+            modelBuilder.Entity<ImdbMovieAlternative>()
                 .HasKey(ma => ma.Id);
-            modelBuilder.Entity<MovieAlternative>()
+            modelBuilder.Entity<ImdbMovieAlternative>()
                 .HasIndex(ma => new { ma.Normalized, ma.MovieId })
                 .IsUnique();
-            modelBuilder.Entity<MovieAlternative>()
+            modelBuilder.Entity<ImdbMovieAlternative>()
                 .HasOne(ma => ma.Movie)
                 .WithMany(m => m.MovieAlternatives)
                 .HasForeignKey(ma => ma.MovieId);
         }
 
-        public DbSet<Movie> Movies { get; set; }
+        public DbSet<ImdbMovie> Movies { get; set; }
 
-        public DbSet<MovieAlternative> MovieAlternatives { get; set; }
+        public DbSet<ImdbMovieAlternative> MovieAlternatives { get; set; }
     }
 
     // /// <summary>

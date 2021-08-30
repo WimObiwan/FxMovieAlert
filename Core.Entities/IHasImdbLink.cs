@@ -1,4 +1,4 @@
-namespace FxMovies.FxMoviesDB
+namespace FxMovies.Core.Entities
 {
     public interface IHasImdbLink
     {

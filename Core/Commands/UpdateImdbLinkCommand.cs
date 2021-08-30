@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -46,11 +47,11 @@ namespace FxMovies.Core.Commands
                 }
                 else
                 {
-                    FxMovies.FxMoviesDB.Movie movie;
+                    Movie movie;
                     if (imdbId != null)
                         movie = await movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
                     else
-                        movie = new FxMovies.FxMoviesDB.Movie();
+                        movie = new Movie();
 
                     movieEvent.Movie = movie;
                     movie.ImdbIgnore = ignoreImdbLink;

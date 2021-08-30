@@ -12,6 +12,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.7" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core.Entities\Core.Entities.csproj" />
+  </ItemGroup>
   <PropertyGroup>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Logging;
 

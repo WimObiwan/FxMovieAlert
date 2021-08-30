@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AngleSharp.Html.Parser;
+using FxMovies.Core.Entities;
 using FxMovies.FxMoviesDB;
 using Microsoft.Extensions.Logging;
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace FxMovies.FxMoviesDB
+namespace FxMovies.Core.Entities
 {
     /// <summary>
     /// A simple class representing a MovieEvent
