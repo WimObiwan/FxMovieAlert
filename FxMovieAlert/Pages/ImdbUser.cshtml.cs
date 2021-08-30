@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core;
+using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
 using FxMovies.Core.Services;
 using FxMovies.FxMoviesDB;

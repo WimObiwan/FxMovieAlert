@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
+using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services

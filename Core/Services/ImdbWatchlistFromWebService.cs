@@ -7,17 +7,11 @@ using System.Net.Http;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services
 {
-    public class ImdbWatchlist
-    {
-        public string ImdbId { get; set; }
-        public DateTime Date { get; set; }
-        public string Title { get; set; }
-    }
-
     public interface IImdbWatchlistFromWebService
     {
         Task<IList<ImdbWatchlist>> GetWatchlistAsync(string ImdbUserId);

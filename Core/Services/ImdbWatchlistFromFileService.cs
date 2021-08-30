@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using FileHelpers;
+using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services
