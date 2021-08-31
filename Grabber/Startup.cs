@@ -74,6 +74,7 @@ namespace FxMovies.Grabber
             services.AddScoped<IImdbMatchingQuery, ImdbMatchingQuery>();
             services.AddScoped<IManualMatchesQuery, ManualMatchesQuery>();
             services.AddScoped<IListManualMatchesQuery, ListManualMatchesQuery>();
+            services.AddScoped<IStatsQuery, StatsQuery>();
 
             services.Configure<TheMovieDbServiceOptions>(Configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.Configure<VtmGoServiceOptions>(Configuration.GetSection(VtmGoServiceOptions.Position));

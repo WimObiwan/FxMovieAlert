@@ -98,6 +98,11 @@ namespace FxMovies.Grabber
         {
         }
 
+        [Verb("Stats", HelpText = "Show statistics.")]
+        class StatsOptions
+        {
+        }
+
         // [Verb("TwitterBot", HelpText = "Twitter Bot.")]
         // class TwitterBotOptions
         // {
@@ -177,6 +182,7 @@ namespace FxMovies.Grabber
                                     AutoUpdateImdbUserDataOptions,
                                     UpdateEpgOptions,
                                     ListManualMatchesOptions,
+                                    StatsOptions,
                                     // TwitterBotOptions,
                                     // ManualOptions,
                                     TestImdbMatchingOptions,
@@ -190,6 +196,7 @@ namespace FxMovies.Grabber
                                     (AutoUpdateImdbUserDataOptions o) => host.Services.GetRequiredService<IAutoUpdateImdbUserDataCommand>().Execute(),
                                     (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Execute(),
                                     (ListManualMatchesOptions o) => Run(host, o),
+                                    (StatsOptions o) => Run(host, o),
                                     // (TwitterBotOptions o) => Run(o),
                                     // (ManualOptions o) => Run(o),
                                     (TestImdbMatchingOptions o) => Run(host, o),
@@ -259,6 +266,23 @@ namespace FxMovies.Grabber
                     manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId, manualMatch.AddedDateTime);
                 Console.WriteLine("{0} {1} {2} {3}", 
                     manualMatch.Id, manualMatch.Title, manualMatch.Movie?.ImdbId, manualMatch.AddedDateTime);
+            }
+
+            return 0;
+        }
+        
+        private static async Task<int> Run(IHost host, StatsOptions o)
+        {
+            var logger = host.Services.GetRequiredService<ILogger<Program>>();
+
+            var query = host.Services.GetRequiredService<IStatsQuery>();
+            var statsResult = await query.Execute();
+            foreach (var user in statsResult.Users)
+            {
+                logger.LogInformation("{UserId} {ImdbUserId} {LastUsageTime} {Usages} {RatingCount} {WatchListItemsCount}",
+                    user.UserId, user.ImdbUserId, user.LastUsageTime, user.Usages, user.RatingCount, user.WatchListItemsCount);
+                Console.WriteLine("{0} {1} {2} {3} {4} {5}", 
+                    user.UserId, user.ImdbUserId, user.LastUsageTime, user.Usages, user.RatingCount, user.WatchListItemsCount);
             }
 
             return 0;
