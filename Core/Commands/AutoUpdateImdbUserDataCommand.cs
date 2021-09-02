@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FxMovies.Core.Repositories;
 using Microsoft.Extensions.Logging;
@@ -51,7 +52,12 @@ namespace FxMovies.Core.Commands
             logger.LogInformation("Loading users that need to be refreshed (inactive user threshold {LastUpdateThreshold}, active user threshold {LastUpdateThresholdActiveUser})",
                 lastUpdateThreshold, lastUpdateThresholdActiveUser);
 
-            await foreach (var user in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold, lastUpdateThresholdActiveUser))
+            // ToList, to prevent locking errors when updating while iterating:
+            var usersToUpdate = new List<Entities.User>();
+            await foreach (var item in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold, lastUpdateThresholdActiveUser))
+                usersToUpdate.Add(item);
+            
+            foreach (var user in usersToUpdate)
             {
                 logger.LogInformation("User {ImdbUserId} needs a refresh of the IMDb User ratings, LastUsageTime = {LastUsageTime}",
                     user.ImdbUserId, user.LastUsageTime);
