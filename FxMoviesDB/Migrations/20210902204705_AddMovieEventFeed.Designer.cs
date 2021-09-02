@@ -3,14 +3,16 @@ using System;
 using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FxMoviesDB.Migrations
 {
     [DbContext(typeof(FxMoviesDbContext))]
-    partial class FxMoviesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210902204705_AddMovieEventFeed")]
+    partial class AddMovieEventFeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

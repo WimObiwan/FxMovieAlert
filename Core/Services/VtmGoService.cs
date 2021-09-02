@@ -107,6 +107,7 @@ namespace FxMovies.Core.Services
                         Channel = channel,
                         Duration = (movieInfo.movie.durationSeconds + 30) / 60,
                         Vod = true,
+                        Feed = MovieEvent.FeedType.FreeVod,
                         VodLink = $"https://vtm.be/vtmgo/~m{movieInfo.movie.id}",
                         Type = 1,
                         StartTime = DateTime.MinValue,

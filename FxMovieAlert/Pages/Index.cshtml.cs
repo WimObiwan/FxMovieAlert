@@ -1,4 +1,5 @@
 ﻿using FxMovieAlert.Options;
+using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
 using FxMovies.FxMoviesDB;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +14,7 @@ namespace FxMovieAlert.Pages
             IOptions<SiteOptions> siteOptions,
             FxMoviesDbContext fxMoviesDbContext,
             IUsersRepository usersRepository)
-            : base(false,
+            : base(MovieEvent.FeedType.Broadcast,
                 siteOptions,
                 fxMoviesDbContext,
                 usersRepository)

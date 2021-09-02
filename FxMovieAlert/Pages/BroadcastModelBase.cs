@@ -70,18 +70,18 @@ namespace FxMovieAlert.Pages
         public int HighlightedFilterRatingThreshold { get; private set; } = 8;
         public int AdsInterval = 5;
 
-        private readonly bool streaming;
+        private readonly MovieEvent.FeedType feed;
         private readonly SiteOptions siteOptions;
         private readonly FxMoviesDbContext fxMoviesDbContext;
         private readonly IUsersRepository usersRepository;
 
         public BroadcastModelBase(
-            bool streaming,
+            MovieEvent.FeedType feed,
             IOptions<SiteOptions> siteOptions,
             FxMoviesDbContext fxMoviesDbContext,
             IUsersRepository usersRepository)
         {
-            this.streaming = streaming;
+            this.feed = feed;
             this.siteOptions = siteOptions.Value;
             this.fxMoviesDbContext = fxMoviesDbContext;
             this.usersRepository = usersRepository;
@@ -118,9 +118,16 @@ namespace FxMovieAlert.Pages
             if (FilterCert == Cert.all2)
                 FilterCert = Cert.all;
 
-            var dbMovieEvents = fxMoviesDbContext.MovieEvents.Where(me => me.Vod == streaming);
+            bool? streaming;
+            switch (feed)
+            {
+                case MovieEvent.FeedType.Broadcast: streaming = false; break;
+                case MovieEvent.FeedType.FreeVod: streaming = true; break;
+                default: streaming = null; break;
+            } 
+            var dbMovieEvents = fxMoviesDbContext.MovieEvents.Where(me => me.Feed == feed || me.Feed == null && me.Vod == streaming);
 
-            if (!streaming)
+            if (feed == MovieEvent.FeedType.Broadcast)
             {
                 dbMovieEvents = dbMovieEvents.Where(me => 
                     (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))

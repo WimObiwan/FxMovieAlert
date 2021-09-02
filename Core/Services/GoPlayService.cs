@@ -89,6 +89,7 @@ namespace FxMovies.Core.Services
                             Title = dataProgram.title.Trim(), 
                             Year = null, 
                             Vod = true,
+                            Feed = MovieEvent.FeedType.FreeVod,
                             StartTime = startTime ?? DateTime.UtcNow,
                             EndTime = endTime, 
                             Channel = channel,

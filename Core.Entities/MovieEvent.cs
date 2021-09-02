@@ -7,6 +7,13 @@ namespace FxMovies.Core.Entities
     /// </summary>
     public class MovieEvent : IHasImdbLink
     {
+        public enum FeedType 
+        {
+            Broadcast,
+            FreeVod,
+            PaidVod
+        }
+
         public MovieEvent()
         {
         }
@@ -17,6 +24,7 @@ namespace FxMovies.Core.Entities
         public string Title { get; set; }
         public int? Year { get; set; }
         public bool Vod { get; set; }
+        public FeedType? Feed { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public Channel Channel { get; set; }

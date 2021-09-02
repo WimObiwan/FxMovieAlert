@@ -85,6 +85,7 @@ namespace FxMovies.Core.Services
                     PosterM = GetFullUrl(movieDetails.programImageUrl),
                     PosterS = GetFullUrl(movieDetails.programImageUrl),
                     Vod = true,
+                    Feed = MovieEvent.FeedType.FreeVod,
                     VodLink = GetFullUrl(movieDetails.url),
                     Type = 1,
                     ExternalId = movieDetails.id,
