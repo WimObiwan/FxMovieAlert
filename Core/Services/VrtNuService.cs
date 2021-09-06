@@ -9,20 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services
 {
-    public interface IVrtNuService
-    {
-        Task<IList<MovieEvent>> GetMovieEvents();
-    }
-
-    // public class VrtNuServiceOptions
-    // {
-    //     public static string Position => "VrtNuService";
-
-    //     public string Username { get; set; }
-    //     public string Password { get; set; }
-    // }
-
-    public class VrtNuService : IVrtNuService
+    public class VrtNuService : IMovieEventService
     {
         private readonly ILogger<VrtNuService> logger;
         private readonly IHttpClientFactory httpClientFactory;
@@ -34,6 +21,10 @@ namespace FxMovies.Core.Services
             this.logger = logger;
             this.httpClientFactory = httpClientFactory;
         }
+
+        public string ProviderName => "VrtNu";
+
+        public string ChannelCode => "vrtnu";
 
         public async Task<IList<MovieEvent>> GetMovieEvents()
         {

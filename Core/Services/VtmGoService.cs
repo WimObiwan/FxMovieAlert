@@ -11,11 +11,6 @@ using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core.Services
 {
-    public interface IVtmGoService
-    {
-        Task<IList<MovieEvent>> GetMovieEvents();
-    }
-
     public class VtmGoServiceOptions
     {
         public static string Position => "VtmGoService";
@@ -26,7 +21,7 @@ namespace FxMovies.Core.Services
         public string Password { get; set; }
     }
 
-    public class VtmGoService : IVtmGoService
+    public class VtmGoService : IMovieEventService
     {
         private readonly ILogger<VtmGoService> logger;
         private readonly string authToken;
@@ -46,6 +41,10 @@ namespace FxMovies.Core.Services
             this.password = options.Password;
             this.httpClientFactory = httpClientFactory;
         }
+
+        public string ProviderName => "VtmGo";
+
+        public string ChannelCode => "vtmgo";
 
         public async Task<IList<MovieEvent>> GetMovieEvents()
         {

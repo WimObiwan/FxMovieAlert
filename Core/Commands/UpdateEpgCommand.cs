@@ -51,9 +51,7 @@ namespace FxMovies.Core.Commands
         private readonly ImdbDbContext imdbDbContext;
         private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
         private readonly ITheMovieDbService theMovieDbService;
-        private readonly IGoPlayService goPlayService;
-        private readonly IVtmGoService vtmGoService;
-        private readonly IVrtNuService vrtNuService;
+        private readonly IEnumerable<IMovieEventService> movieEventServices;
         private readonly IHumoService humoService;
         private readonly IImdbMatchingQuery imdbMatchingQuery;
         private readonly IHttpClientFactory httpClientFactory;
@@ -66,9 +64,7 @@ namespace FxMovies.Core.Commands
             FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
             IOptionsSnapshot<UpdateEpgCommandOptions> updateEpgCommandOptions,
             ITheMovieDbService theMovieDbService,
-            IGoPlayService goPlayService,
-            IVtmGoService vtmGoService, 
-            IVrtNuService vrtNuService, 
+            IEnumerable<IMovieEventService> movieEventServices,
             IHumoService humoService,
             IImdbMatchingQuery imdbMatchingQuery,
             IHttpClientFactory httpClientFactory,
@@ -79,9 +75,7 @@ namespace FxMovies.Core.Commands
             this.imdbDbContext = imdbDbContext;
             this.updateEpgCommandOptions = updateEpgCommandOptions.Value;
             this.theMovieDbService = theMovieDbService;
-            this.goPlayService = goPlayService;
-            this.vtmGoService = vtmGoService;
-            this.vrtNuService = vrtNuService;
+            this.movieEventServices = movieEventServices;
             this.humoService = humoService;
             this.imdbMatchingQuery = imdbMatchingQuery;
             this.httpClientFactory = httpClientFactory;
@@ -177,48 +171,27 @@ namespace FxMovies.Core.Commands
             Exception firstException = null;
             int failedProviders = 0;
 
-            if (IsProviderActivated("goplay"))
+            foreach (var service in movieEventServices)
             {
-                try
+                var channelCode = service.ChannelCode;
+                if (IsProviderActivated(channelCode))
                 {
-                    await UpdateDatabaseEpg_GoPlay();
+                    try
+                    {
+                        var movieEvents = await service.GetMovieEvents();
+                        await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == channelCode);
+                    }
+                    catch (Exception x)
+                    {
+                        logger.LogError(x, "UpdateDatabaseEpg failed for {Provider}.  Trying to continue with other providers.", service.ProviderName);
+                        failedProviders++;
+                        if (firstException == null)
+                            firstException = x;
+                    }
                 }
-                catch (Exception x)
+                else
                 {
-                    logger.LogError(x, "UpdateDatabaseEpg failed for GoPlay.  Trying to continue with other providers.");
-                    failedProviders++;
-                    if (firstException == null)
-                        firstException = x;
-                }
-            }
-
-            if (IsProviderActivated("vtmgo"))
-            {
-                try
-                {
-                    await UpdateDatabaseEpg_VtmGo();
-                }
-                catch (Exception x)
-                {
-                    logger.LogError(x, "UpdateDatabaseEpg failed for VtmGo.  Trying to continue with other providers.");
-                    failedProviders++;
-                    if (firstException == null)
-                        firstException = x;
-                }
-            }
-
-            if (IsProviderActivated("vrtnu"))
-            {
-                try
-                {
-                    await UpdateDatabaseEpg_VrtNu();
-                }
-                catch (Exception x)
-                {
-                    logger.LogError(x, "UpdateDatabaseEpg failed for VrtNu.  Trying to continue with other providers.");
-                    failedProviders++;
-                    if (firstException == null)
-                        firstException = x;
+                    logger.LogWarning("UpdateDatabaseEpg disabled for {Provider}.", service.ProviderName);
                 }
             }
 
@@ -242,24 +215,6 @@ namespace FxMovies.Core.Commands
                 throw new Exception($"UpdateDatabaseEpg failed for {failedProviders} providers.  InnerException contains first failure.", 
                     firstException);
             }
-        }
-
-        private async Task UpdateDatabaseEpg_GoPlay()
-        {
-            var movieEvents = await goPlayService.GetMovieEvents();
-            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == "goplay");
-        }
-
-        private async Task UpdateDatabaseEpg_VtmGo()
-        {
-            var movieEvents = await vtmGoService.GetMovieEvents();
-            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == "vtmgo");
-        }
-
-        private async Task UpdateDatabaseEpg_VrtNu()
-        {
-            var movieEvents = await vrtNuService.GetMovieEvents();
-            await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == "vrtnu");
         }
 
         private async Task UpdateDatabaseEpg_Humo()

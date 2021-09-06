@@ -87,9 +87,9 @@ namespace FxMovies.Grabber
             services.AddScoped<IImdbRatingsFromWebService, ImdbRatingsFromWebService>();
             services.AddScoped<IImdbWatchlistFromWebService, ImdbWatchlistFromWebService>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
-            services.AddScoped<IGoPlayService, GoPlayService>();
-            services.AddScoped<IVtmGoService, VtmGoService>();
-            services.AddScoped<IVrtNuService, VrtNuService>();
+            services.AddScoped<IMovieEventService, GoPlayService>();
+            services.AddScoped<IMovieEventService, VtmGoService>();
+            services.AddScoped<IMovieEventService, VrtNuService>();
             services.AddScoped<IHumoService, HumoService>();
 
             services.AddScoped<IUserRatingsRepository, UserRatingsRepository>();

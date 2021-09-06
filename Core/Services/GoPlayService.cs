@@ -11,22 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services
 {
-    public interface IGoPlayService
-    {
-        Task<IList<MovieEvent>> GetMovieEvents();
-    }
-
-    // public class VtmGoServiceOptions
-    // {
-    //     public static string Position => "VtmGoService";
-
-    //     // https://vtm.be/vtmgo --> login --> F12 --> Tab "Storage" --> Cookies --> https://vtm.be --> lfvp_auth_token --> "ey...
-    //     public string AuthToken { get; set; }
-    //     public string Username { get; set; }
-    //     public string Password { get; set; }
-    // }
-
-    public class GoPlayService : IGoPlayService
+    public class GoPlayService : IMovieEventService
     {
         private readonly ILogger<GoPlayService> logger;
         private readonly IHttpClientFactory httpClientFactory;
@@ -38,6 +23,10 @@ namespace FxMovies.Core.Services
             this.logger = logger;
             this.httpClientFactory = httpClientFactory;
         }
+
+        public string ProviderName => "GoPlay";
+
+        public string ChannelCode => "goplay";
 
         public async Task<IList<MovieEvent>> GetMovieEvents()
         {
