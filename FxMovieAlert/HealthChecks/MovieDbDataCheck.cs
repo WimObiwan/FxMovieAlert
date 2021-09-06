@@ -64,10 +64,11 @@ namespace FxMovieAlert.HealthChecks
             using (var scope = serviceScopeFactory.CreateScope())
             {
                 var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
-                
-                DateTime lastMovieAddedTime = await fxMoviesDbContext.MovieEvents
-                    .Where(me => me.Vod == videoOnDemand && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode))
-                    .MaxAsync(me => me.AddedTime.Value);
+
+                var query = fxMoviesDbContext.MovieEvents
+                    .Where(me => me.Vod == videoOnDemand && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode));
+                DateTime lastMovieAddedTime = await query.MaxAsync(me => me.AddedTime.Value);
+                int count = await query.CountAsync();
                 var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime).TotalDays;
                 
                 const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
@@ -89,13 +90,13 @@ namespace FxMovieAlert.HealthChecks
                 {
                     { "LastMovieAddedAge", lastMovieAddedDaysAgo },
                     { "LastMovieAddedTime", lastMovieAddedTime },
+                    { "Count", count },
+                    { "AlarmThreshold", checkLastMovieAddedMoreThanDaysAgo },
                 };
 
                 if (!videoOnDemand)
                 {
-                    DateTime lastMovieStartTime = await fxMoviesDbContext.MovieEvents
-                        .Where(me => !me.Vod && (channelCode == null || me.Channel.Code == channelCode))
-                        .MaxAsync(me => me.StartTime);
+                    DateTime lastMovieStartTime = await query.MaxAsync(me => me.StartTime);
                     var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
 
                     if (status == HealthStatus.Healthy && lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
