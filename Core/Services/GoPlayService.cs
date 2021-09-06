@@ -69,19 +69,28 @@ namespace FxMovies.Core.Services
                     {
                         var dataProgram = JsonSerializer.Deserialize<DataProgram>(dataProgramText);
                         var episode = dataProgram.playlists.SelectMany(p => p.episodes).FirstOrDefault();
+                        if (episode == null)
+                        {
+                            logger.LogWarning("Skipping data-program without episode, Text={dataProgramText}", dataProgramText);
+                            return null;
+                        }
+                        
                         DateTime? startTime;
                         if (episode.publishDate.ValueKind == JsonValueKind.Number && episode.publishDate.TryGetInt64(out long value))
                             startTime = DateTime.UnixEpoch.AddSeconds(value);
                         else
                             startTime = null;
+
                         DateTime? endTime;
                         if (episode.unpublishDate.ValueKind == JsonValueKind.Number && episode.unpublishDate.TryGetInt64(out value))
                             endTime = DateTime.UnixEpoch.AddSeconds(value);
                         else
                             endTime = null;
+
                         string link = episode.link;
                         if (link.StartsWith('/'))
                             link = "https://www.goplay.be" + link;
+
                         return new MovieEvent()
                         {
                             ExternalId = dataProgram.id,
@@ -103,10 +112,11 @@ namespace FxMovies.Core.Services
                     }
                     catch (Exception x)
                     {
-                        logger.LogError(x, "Failed to parse {line}", dataProgramText);
+                        logger.LogWarning(x, "Skipping line with parsing exception, Text={dataProgramText}", dataProgramText);
                         throw;
                     }
                 })
+                .Where(e => e != null)
                 .ToList();
         }
 
