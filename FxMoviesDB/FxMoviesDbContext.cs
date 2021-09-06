@@ -17,8 +17,7 @@ namespace FxMovies.FxMoviesDB
             modelBuilder.Entity<Movie>()
                 .HasKey(m => m.Id);
             modelBuilder.Entity<Movie>()
-                .HasIndex(m => m.ImdbId)
-                .IsUnique();
+                .HasIndex(m => m.ImdbId);
             modelBuilder.Entity<Movie>()
                 .HasMany(m => m.MovieEvents)
                 .WithOne(me => me.Movie);
