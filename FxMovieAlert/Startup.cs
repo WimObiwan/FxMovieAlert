@@ -205,17 +205,8 @@ namespace FxMovieAlert
                 options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
 
             services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
-            services.Configure<TheMovieDbServiceOptions>(configuration.GetSection(TheMovieDbServiceOptions.Position));
 
-            services.AddSingleton<IVersionInfo, VersionInfo>((_) => new VersionInfo(typeof(Startup).Assembly));
-            services.AddScoped<IUserRatingsRepository, UserRatingsRepository>();
-            services.AddScoped<IUsersRepository, UsersRepository>();
-            services.AddScoped<IUserWatchlistRepository, UserWatchlistRepository>();
-            services.AddScoped<IImdbRatingsFromFileService, ImdbRatingsFromFileService>();
-            services.AddScoped<IImdbWatchlistFromFileService, ImdbWatchlistFromFileService>();
-            services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
-            services.AddScoped<ITheMovieDbService, TheMovieDbService>();
-            services.AddScoped<IUpdateImdbLinkCommand, UpdateImdbLinkCommand>();
+            services.AddFxMoviesCore(configuration, typeof(Startup).Assembly);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

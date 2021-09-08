@@ -54,6 +54,7 @@ namespace FxMovies.Core
             services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
             services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();
             services.AddScoped<IUpdateImdbUserDataCommand, UpdateImdbUserDataCommand>();
+            services.AddScoped<IUpdateImdbLinkCommand, UpdateImdbLinkCommand>();
             services.AddScoped<IUpdateAllImdbUsersDataCommand, UpdateAllImdbUsersDataCommand>();
             services.AddScoped<IAutoUpdateImdbUserDataCommand, AutoUpdateImdbUserDataCommand>();
 
@@ -71,7 +72,9 @@ namespace FxMovies.Core
 
             services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();
             services.AddScoped<IImdbRatingsFromWebService, ImdbRatingsFromWebService>();
+            services.AddScoped<IImdbRatingsFromFileService, ImdbRatingsFromFileService>();
             services.AddScoped<IImdbWatchlistFromWebService, ImdbWatchlistFromWebService>();
+            services.AddScoped<IImdbWatchlistFromFileService, ImdbWatchlistFromFileService>();
             services.AddScoped<ITheMovieDbService, TheMovieDbService>();
             services.AddScoped<IMovieEventService, GoPlayService>();
             services.AddScoped<IMovieEventService, VtmGoService>();
