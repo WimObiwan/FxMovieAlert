@@ -25,13 +25,6 @@ namespace FxMovies.Grabber
             services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
                 options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
 
-            services.Configure<TheMovieDbServiceOptions>(configuration.GetSection(TheMovieDbServiceOptions.Position));
-            services.Configure<VtmGoServiceOptions>(configuration.GetSection(VtmGoServiceOptions.Position));
-            services.Configure<UpdateEpgCommandOptions>(configuration.GetSection(UpdateEpgCommandOptions.Position));
-            services.Configure<GenerateImdbDatabaseCommandOptions>(configuration.GetSection(GenerateImdbDatabaseCommandOptions.Position));
-            services.Configure<AutoUpdateImdbUserDataCommandOptions>(configuration.GetSection(AutoUpdateImdbUserDataCommandOptions.Position));
-            services.Configure<ImdbMatchingQueryOptions>(configuration.GetSection(ImdbMatchingQueryOptions.Position));
-
             services.AddFxMoviesCore(configuration, typeof(Program).Assembly);
         }
     }
