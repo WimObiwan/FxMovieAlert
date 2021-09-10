@@ -1,5 +1,5 @@
 ﻿@page
-@model ImdbUserModel
+@model UserModel
 @{
     ViewData["Title"] = "IMDb Gebruiker configuratie";
 }
@@ -294,7 +294,7 @@ td, th {
         Manuele import
     </td>
     <td>
-        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
+        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="User">
             <div class="form-group">
                 <p>Kies hier het CSV bestand met je IMDb ratings:</p>
                 <input type="file" name="files" multiple />
@@ -306,7 +306,7 @@ td, th {
         </form>
     </td>
     <td>
-        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="ImdbUser">
+        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="User">
             <div class="form-group">
                 <p>Kies hier het CSV bestand met je IMDb ratings:</p>
                 <input type="file" name="files" multiple />

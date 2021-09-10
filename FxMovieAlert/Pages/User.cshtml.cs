@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FxMovieAlert.Pages
 {
-    public class ImdbUserModel : PageModel
+    public class UserModel : PageModel
     {
         private readonly IMovieCreationHelper movieCreationHelper;
         private readonly IUserRatingsRepository userRatingsRepository;
@@ -45,7 +45,7 @@ namespace FxMovieAlert.Pages
         
         public readonly List<Tuple<string, string, string>> LastImportErrors = new List<Tuple<string, string, string>>();
 
-        public ImdbUserModel(
+        public UserModel(
             IMovieCreationHelper movieCreationHelper,
             IUserRatingsRepository userRatingsRepository,
             IUserWatchlistRepository userWatchlistRepository,
