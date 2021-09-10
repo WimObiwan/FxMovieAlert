@@ -118,17 +118,8 @@
                         </small>
                         <span style="white-space: nowrap; float: right;">
                             <small>
-                                <a href="@shareUrl" target="_blank" title="Share link..." style="text-decoration: none">
-                                    <img src="/images/link-24x24.png" loading="lazy" alt="Link" height="24px" />
-                                </a>
-                                &nbsp;
-                                <!--div class="fb-share-button" data-href="@shareUrl" data-layout="button" data-size="small" data-mobile-iframe="true"></div-->
-                                <a href="https://www.facebook.com/sharer/sharer.php?u=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(@shareUrl))" target="_blank" rel="noopener" title="Share op facebook..." style="text-decoration: none">
-                                    <img src="/images/facebook-36x36.png" loading="lazy" alt="Facebook" height="36px" />
-                                </a>
                                 @if (!string.IsNullOrEmpty(movieEvent.VodLink))
                                 {
-                                    @: &nbsp;
                                     <a href="@movieEvent.VodLink" target="_blank" rel="noopener" title="Speel @movieEvent.Title af op @movieEvent.Channel.Name..." style="text-decoration: none">
                                         <img src="/images/play.png" loading="lazy" alt="Yelo" height="32px" />
                                     </a>
@@ -143,6 +134,15 @@
                                 }
                                 <a href="@yeloUrl" target="_blank" rel="noopener" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
                                     <img src="/images/yeloplay-55x32.png" loading="lazy" alt="Yelo" height="32px" />
+                                </a> *@
+                                &nbsp;
+                                <a href="@shareUrl" target="_blank" title="Share link..." style="text-decoration: none">
+                                    <img src="/images/link-24x24.png" loading="lazy" alt="Link" height="24px" />
+                                </a>
+                                @* &nbsp;
+                                <!--div class="fb-share-button" data-href="@shareUrl" data-layout="button" data-size="small" data-mobile-iframe="true"></div-->
+                                <a href="https://www.facebook.com/sharer/sharer.php?u=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(@shareUrl))" target="_blank" rel="noopener" title="Share op facebook..." style="text-decoration: none">
+                                    <img src="/images/facebook-36x36.png" loading="lazy" alt="Facebook" height="36px" />
                                 </a> *@
                                 &nbsp;
                                 @if (!string.IsNullOrEmpty(@movieEvent.Movie?.ImdbId))
