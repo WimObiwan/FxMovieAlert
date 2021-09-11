@@ -51,7 +51,11 @@
         <a asp-page="/Streaming"><i class="fas fa-play"></i>
             &nbsp;<span class="hidden-sm">Streaming</span>
         </a>
-        bovenaan.
+        bovenaan.<br/>
+        Voor de films op de betalende platformen zoals Amazon Prime Video kies je 
+        <a asp-page="/Paying"><i class="fas fa-euro-sign"></i>
+            &nbsp;<span class="hidden-sm">Betalend</span>
+        </a>.
     </div></p>
 
     <component type="typeof(FilterBar)" render-mode="Static" param-ParentModel='Model' />
