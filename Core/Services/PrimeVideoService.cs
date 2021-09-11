@@ -11,19 +11,30 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
+using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core.Services
 {
+    public class PrimeVideoServiceOptions
+    {
+        public static string Position => "PrimeVideoService";
+
+        public string LocalDownloadOverride { get; set; }
+    }
+
     public class PrimeVideoService : IMovieEventService
     {
         private readonly ILogger<PrimeVideoService> logger;
+        private readonly PrimeVideoServiceOptions primeVideoServiceOptions;
         private readonly HttpClient httpClient;
 
         public PrimeVideoService(
             ILogger<PrimeVideoService> logger,
+            IOptions<PrimeVideoServiceOptions> primeVideoServiceOptions,
             IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;
+            this.primeVideoServiceOptions = primeVideoServiceOptions.Value;
             this.httpClient = httpClientFactory.CreateClient("primevideo");
         }
 
@@ -137,12 +148,26 @@ namespace FxMovies.Core.Services
             public Props props { get; set; }
         }
 
+        private async Task<Stream> GetStream()
+        {
+            var localDownloadOverride = primeVideoServiceOptions.LocalDownloadOverride;
+            logger.LogInformation("Using LocalDownloadOverride {LocalDownloadOverride}", localDownloadOverride);
+            if (localDownloadOverride != null)
+            {
+                return File.OpenRead(localDownloadOverride);
+            }
+            else
+            {
+                var response = await httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE?ie=UTF8");
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadAsStreamAsync();
+            }
+        }
+
         private async Task<IList<Json.Props.Collection.Item>> GetMovieInfo()
         {
-            var response = await httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE");
-            response.EnsureSuccessStatusCode();
-
-            using Stream stream = await response.Content.ReadAsStreamAsync();
+            using Stream stream = await GetStream();
             HtmlParser parser = new HtmlParser();
             var document = await parser.ParseDocumentAsync(stream);
 

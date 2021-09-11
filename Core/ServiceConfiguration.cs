@@ -69,6 +69,7 @@ namespace FxMovies.Core
 
             services.Configure<TheMovieDbServiceOptions>(configuration.GetSection(TheMovieDbServiceOptions.Position));
             services.Configure<VtmGoServiceOptions>(configuration.GetSection(VtmGoServiceOptions.Position));
+            services.Configure<PrimeVideoServiceOptions>(configuration.GetSection(PrimeVideoServiceOptions.Position));
             services.Configure<UpdateEpgCommandOptions>(configuration.GetSection(UpdateEpgCommandOptions.Position));
             services.Configure<GenerateImdbDatabaseCommandOptions>(configuration.GetSection(GenerateImdbDatabaseCommandOptions.Position));
             services.Configure<AutoUpdateImdbUserDataCommandOptions>(configuration.GetSection(AutoUpdateImdbUserDataCommandOptions.Position));
