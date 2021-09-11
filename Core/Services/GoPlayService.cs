@@ -33,8 +33,7 @@ namespace FxMovies.Core.Services
             // https://github.com/timrijckaert/vrtnu-vtmgo-goplay-service/tree/master/vtmgo/src/main/java/be/tapped/vtmgo/content
 
             var client = httpClientFactory.CreateClient("goplay");
-            var request = new HttpRequestMessage(HttpMethod.Get, "/programmas/");
-            var response = await client.SendAsync(request);
+            var response = await client.GetAsync("/programmas/");
             response.EnsureSuccessStatusCode();
 
             using Stream stream = await response.Content.ReadAsStreamAsync();
