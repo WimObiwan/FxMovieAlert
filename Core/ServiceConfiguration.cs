@@ -37,7 +37,7 @@ namespace FxMovies.Core
             });
             services.AddHttpClient("vrtnu", c =>
             {
-                c.BaseAddress = new Uri("https://vrtnu-api.vrt.be");
+                c.BaseAddress = new Uri("https://search.vrt.be");
             });
             services.AddHttpClient("tmdb", c => 
             {
