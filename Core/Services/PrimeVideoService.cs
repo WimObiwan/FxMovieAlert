@@ -54,7 +54,7 @@ namespace FxMovies.Core.Services
                     year = null;
 
                 int? duration;
-                var match = Regex.Match(movie.runtime, @"(?:(\d+) uur )?(\d+) min");
+                var match = Regex.Match(movie.runtime, @"^(?:(\d+) (?:uur|h) )?(\d+) min$");
                 if (match.Success)
                 {
                     int duration2 = 0;
