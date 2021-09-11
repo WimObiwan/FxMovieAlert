@@ -48,6 +48,10 @@ namespace FxMovies.Core
             {
                 c.BaseAddress = new Uri("https://www.imdb.com");
             });
+            services.AddHttpClient("primevideo", c =>
+            {
+                c.BaseAddress = new Uri("https://www.primevideo.com");
+            });
 
             services.AddSingleton<IVersionInfo, VersionInfo>((_) => new VersionInfo(assembly));
 
@@ -79,6 +83,7 @@ namespace FxMovies.Core
             services.AddScoped<IMovieEventService, GoPlayService>();
             services.AddScoped<IMovieEventService, VtmGoService>();
             services.AddScoped<IMovieEventService, VrtNuService>();
+            services.AddScoped<IMovieEventService, PrimeVideoService>();
             services.AddScoped<IHumoService, HumoService>();
 
             services.AddScoped<IUserRatingsRepository, UserRatingsRepository>();
