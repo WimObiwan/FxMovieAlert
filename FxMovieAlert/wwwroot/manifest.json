@@ -23,19 +23,19 @@
             "name": "FilmOpTv.be uitzendingen",
             "short_name": "Uitzendingen",
             "description": "Welke films kun je bekijken op de Vlaamse zenders?",
-            "url": "/?source=pwa",
+            "url": "/?utm_source=pwa",
             "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
         },
         {
             "name": "FilmOpTv.be Streaming",
             "short_name": "Streaming",
             "description": "Welke films kun je bekijken via internet van de Vlaamse zenders?",
-            "url": "/Streaming?source=pwa",
+            "url": "/Streaming?utm_source=pwa",
             "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
         }
     ],
     "theme_color": "#ffffff",
     "background_color": "#ffffff",
     "display": "standalone",
-    "start_url": "/"
+    "start_url": "/?utm_source=pwa"
 }
