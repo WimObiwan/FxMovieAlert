@@ -54,7 +54,12 @@ namespace FxMovies.Core.Services
             };
 
             var movies = await GetMovieInfo();
- 
+            DateTime dateTime;
+            if (primeVideoServiceOptions.LocalDownloadOverride == null)
+                dateTime = DateTime.Now;
+            else
+                dateTime = new FileInfo(primeVideoServiceOptions.LocalDownloadOverride).LastWriteTime;
+
             List<MovieEvent> movieEvents = new List<MovieEvent>();
             foreach (var movie in movies)
             {
@@ -93,7 +98,7 @@ namespace FxMovies.Core.Services
                     VodLink = GetFullUrl(movie.link.url),
                     Type = 1,
                     ExternalId = movie.titleID,
-                    StartTime = DateTime.Now,
+                    StartTime = dateTime,
                     EndTime = null,
                     Duration = duration,
                     Year = year
