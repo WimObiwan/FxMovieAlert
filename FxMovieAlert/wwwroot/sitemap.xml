@@ -6,12 +6,12 @@
       <priority>0.8</priority>
    </url>
    <url>
-      <loc>https://www.filmoptv.be/Streaming</loc>
+      <loc>https://www.filmoptv.be/FreeStreaming</loc>
       <changefreq>daily</changefreq>
       <priority>0.8</priority>
    </url>
    <url>
-      <loc>https://www.filmoptv.be/Paying</loc>
+      <loc>https://www.filmoptv.be/PaidStreaming</loc>
       <changefreq>daily</changefreq>
       <priority>0.8</priority>
    </url>

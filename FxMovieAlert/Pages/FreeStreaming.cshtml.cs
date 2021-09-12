@@ -8,9 +8,9 @@ using Microsoft.Extensions.Options;
 namespace FxMovieAlert.Pages
 {
     [AllowAnonymous]
-    public class StreamingModel : BroadcastModelBase
+    public class FreeStreamingModel : BroadcastModelBase
     {
-        public StreamingModel(
+        public FreeStreamingModel(
             IOptions<SiteOptions> siteOptions,
             FxMoviesDbContext fxMoviesDbContext,
             IUsersRepository usersRepository)

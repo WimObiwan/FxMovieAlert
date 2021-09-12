@@ -1,9 +1,9 @@
 ﻿@page
-@model StreamingModel
+@model FreeStreamingModel
 @using System.Globalization;
 @{
-    ViewData["Title"] = "Streaming";
-    ViewData["Canonical"] = "/Streaming/";
+    ViewData["Title"] = "Gratis Streaming";
+    ViewData["Canonical"] = "/FreeStreaming/";
     if (Model.MovieEvent != null && Model.MovieEvent.Title != null)
     {
         ViewData["og:title"] = Model.MovieEvent.Title;
@@ -14,7 +14,7 @@
         if (Model.MovieEvent.Movie != null && Model.MovieEvent.Movie.ImdbRating.HasValue)
             description += $" - {Model.MovieEvent.Movie.ImdbRating.Value / 10.0}/10 op IMDb";
         ViewData["og:description"] = description;
-        ViewData["og:url"] = $"/Streaming/?m={@Model.MovieEvent.Id}";
+        ViewData["og:url"] = $"/FreeStreaming/?m={@Model.MovieEvent.Id}";
         ViewData["og:image"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
         ViewData["og:image:secure_url"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
     }
@@ -106,7 +106,7 @@
                             }
                             
                             @{
-                                var shareUrl = $"https://filmoptv.be/Streaming/?m={movieEvent.Id}";
+                                var shareUrl = $"https://filmoptv.be/FreeStreaming/?m={movieEvent.Id}";
                             }
 
                             @if (Model.EditImdbLinks)
