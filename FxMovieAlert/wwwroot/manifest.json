@@ -22,15 +22,22 @@
         {
             "name": "FilmOpTv.be uitzendingen",
             "short_name": "Uitzendingen",
-            "description": "Welke films kun je bekijken op de Vlaamse zenders?",
+            "description": "De beste films op de Vlaamse zenders",
             "url": "/?utm_source=pwa",
             "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
         },
         {
-            "name": "FilmOpTv.be Streaming",
+            "name": "FilmOpTv.be Gratis Streaming",
             "short_name": "Streaming",
-            "description": "Welke films kun je bekijken via internet van de Vlaamse zenders?",
-            "url": "/Streaming?utm_source=pwa",
+            "description": "De beste films op de gratis streaming sites in Vlaanderen",
+            "url": "/FreeStreaming?utm_source=pwa",
+            "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "FilmOpTv.be Betalende Streaming",
+            "short_name": "Streaming",
+            "description": "De beste films op de betalende streaming sites in Vlaanderen",
+            "url": "/PaidStreaming?utm_source=pwa",
             "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
         }
     ],
