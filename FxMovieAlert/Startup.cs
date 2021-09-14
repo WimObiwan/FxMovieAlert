@@ -292,6 +292,11 @@ namespace FxMovieAlert
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapGet("/Streaming", ctx => 
+                {
+                    ctx.Response.Redirect("/FreeStreaming" + ctx.Request.QueryString, true);
+                    return Task.CompletedTask;
+                });
             });
         }
 
