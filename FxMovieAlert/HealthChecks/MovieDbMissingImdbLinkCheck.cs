@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FxMovieAlert.Options;
+using FxMovies.Core.Entities;
 using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,7 @@ namespace FxMovieAlert.HealthChecks
         public static IHealthChecksBuilder AddMovieDbMissingImdbLinkCheck(
             this IHealthChecksBuilder builder,
             string name,
-            bool videoOnDemand,
+            MovieEvent.FeedType feedType,
             HealthStatus? failureStatus = default,
             IEnumerable<string> tags = default)
         {
@@ -25,7 +26,7 @@ namespace FxMovieAlert.HealthChecks
                 sp => new MovieDbMissingImdbLinkCheck(
                     sp.GetRequiredService<IOptions<HealthCheckOptions>>(),
                     sp.GetRequiredService<IServiceScopeFactory>(),
-                    videoOnDemand),
+                    feedType),
                 failureStatus,
                 tags));
         }
@@ -35,14 +36,14 @@ namespace FxMovieAlert.HealthChecks
     {
         private readonly HealthCheckOptions healthCheckOptions;
         private readonly IServiceScopeFactory serviceScopeFactory;
-        private readonly bool videoOnDemand;
+        private readonly MovieEvent.FeedType feedType;
 
         public MovieDbMissingImdbLinkCheck(IOptions<HealthCheckOptions> healthCheckOptions, IServiceScopeFactory serviceScopeFactory, 
-            bool videoOnDemand)
+            MovieEvent.FeedType feedType)
         {
             this.healthCheckOptions = healthCheckOptions.Value;
             this.serviceScopeFactory = serviceScopeFactory;
-            this.videoOnDemand = videoOnDemand;
+            this.feedType = feedType;
         }
 
         public async Task<HealthCheckResult> CheckHealthAsync(
@@ -58,7 +59,7 @@ namespace FxMovieAlert.HealthChecks
                 var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
                 
                 int count = await fxMoviesDbContext.MovieEvents
-                    .Where(me => me.Vod == videoOnDemand)
+                    .Where(me => me.Feed == feedType)
                     .CountAsync(me => (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)) && me.Type == 1);
 
                 HealthStatus status;

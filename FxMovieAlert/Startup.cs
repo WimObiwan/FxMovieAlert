@@ -25,6 +25,7 @@ using FxMovieAlert.Options;
 using FxMovies.Core.Services;
 using FxMovies.Core.Repositories;
 using FxMovies.Core.Commands;
+using FxMovies.Core.Entities;
 
 namespace FxMovieAlert
 {
@@ -180,14 +181,16 @@ namespace FxMovieAlert
                     .AddIdentityServer(
                         idSvrUri: new Uri($"https://{configuration["Auth0:Domain"]}"),
                         name: "idsvr-Auth0")
-                    .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", healthCheckOptions, false)
-                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-data", healthCheckOptions, true)
-                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", healthCheckOptions, true, "vtmgo")
-                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions, true, "vrtnu")
-                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", healthCheckOptions, true, "goplay")
-                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", healthCheckOptions, true, "primevideo")
-                    .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", false)
-                    .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Streaming-missingImdbLink", true)
+                    .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", healthCheckOptions, MovieEvent.FeedType.Broadcast)
+                    .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", healthCheckOptions, MovieEvent.FeedType.FreeVod)
+                    .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", healthCheckOptions, MovieEvent.FeedType.PaidVod)
+                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", healthCheckOptions, MovieEvent.FeedType.FreeVod, "vtmgo")
+                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions, MovieEvent.FeedType.FreeVod, "vrtnu")
+                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", healthCheckOptions, MovieEvent.FeedType.FreeVod, "goplay")
+                    .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", healthCheckOptions, MovieEvent.FeedType.PaidVod, "primevideo")
+                    .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", MovieEvent.FeedType.Broadcast)
+                    .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-FreeStreaming-missingImdbLink", MovieEvent.FeedType.FreeVod)
+                    .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)
                     .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime")
                     .AddCheck<SystemInfoCheck>("SystemInfo");
             }

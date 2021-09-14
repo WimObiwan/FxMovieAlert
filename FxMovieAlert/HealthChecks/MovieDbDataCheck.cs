@@ -1,4 +1,5 @@
 using FxMovieAlert.Options;
+using FxMovies.Core.Entities;
 using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ namespace FxMovieAlert.HealthChecks
             this IHealthChecksBuilder builder,
             string name,
             HealthCheckOptions healthCheckOptions,
-            bool videoOnDemand,
+            MovieEvent.FeedType feedType,
             string channelCode = null,
             HealthStatus? failureStatus = default,
             IEnumerable<string> tags = default)
@@ -27,7 +28,7 @@ namespace FxMovieAlert.HealthChecks
                 sp => new MovieDbDataCheck(
                     sp.GetRequiredService<IServiceScopeFactory>(),
                     healthCheckOptions,
-                    videoOnDemand,
+                    feedType,
                     channelCode),
                 failureStatus,
                 tags));
@@ -38,18 +39,18 @@ namespace FxMovieAlert.HealthChecks
     {
         private readonly HealthCheckOptions healthCheckOptions;
         private readonly IServiceScopeFactory serviceScopeFactory;
-        private readonly bool videoOnDemand;
+        private readonly MovieEvent.FeedType feedType;
         private readonly string channelCode;
 
         public MovieDbDataCheck(
             IServiceScopeFactory serviceScopeFactory,
             HealthCheckOptions healthCheckOptions,
-            bool videoOnDemand,
+            MovieEvent.FeedType feedType,
             string channelCode)
         {
             this.serviceScopeFactory = serviceScopeFactory;
             this.healthCheckOptions = healthCheckOptions;
-            this.videoOnDemand = videoOnDemand;
+            this.feedType = feedType;
             this.channelCode = channelCode;
         }
 
@@ -66,7 +67,7 @@ namespace FxMovieAlert.HealthChecks
                 var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
 
                 var query = fxMoviesDbContext.MovieEvents
-                    .Where(me => me.Vod == videoOnDemand && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode));
+                    .Where(me => me.Feed == feedType && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode));
                 DateTime lastMovieAddedTime = await query.MaxAsync(me => me.AddedTime.Value);
                 int count = await query.CountAsync();
                 var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime).TotalDays;
@@ -94,7 +95,7 @@ namespace FxMovieAlert.HealthChecks
                     { "AlarmThreshold", checkLastMovieAddedMoreThanDaysAgo },
                 };
 
-                if (!videoOnDemand)
+                if (feedType == MovieEvent.FeedType.Broadcast)
                 {
                     DateTime lastMovieStartTime = await query.MaxAsync(me => me.StartTime);
                     var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
