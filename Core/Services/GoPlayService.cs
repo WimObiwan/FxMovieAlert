@@ -56,10 +56,10 @@ namespace FxMovies.Core.Services
                     try
                     {
                         var dataProgram = JsonSerializer.Deserialize<DataProgram>(dataProgramText);
-                        var episode = dataProgram.playlists.SelectMany(p => p.episodes).FirstOrDefault();
+                        var episode = dataProgram.playlists?.SelectMany(p => p.episodes).FirstOrDefault();
                         if (episode == null)
                         {
-                            logger.LogWarning("Skipping data-program without episode, Text={dataProgramText}", dataProgramText);
+                            logger.LogWarning("Skipping data-program without playlist or episode, Text={dataProgramText}", dataProgramText);
                             return null;
                         }
                         
