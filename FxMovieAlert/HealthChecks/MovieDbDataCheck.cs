@@ -68,9 +68,13 @@ namespace FxMovieAlert.HealthChecks
 
                 var query = fxMoviesDbContext.MovieEvents
                     .Where(me => me.Feed == feedType && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode));
-                DateTime lastMovieAddedTime = await query.MaxAsync(me => me.AddedTime.Value);
                 int count = await query.CountAsync();
-                var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime).TotalDays;
+                DateTime? lastMovieAddedTime;
+                if (count > 0)
+                    lastMovieAddedTime = await query.MaxAsync(me => me.AddedTime);
+                else
+                    lastMovieAddedTime = null;
+                var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime)?.TotalDays;
                 
                 const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
                 double checkLastMovieAddedMoreThanDaysAgo;
@@ -82,7 +86,7 @@ namespace FxMovieAlert.HealthChecks
                             checkLastMovieAddedMoreThanDaysAgo = 1.1;
 
                 HealthStatus status;
-                if (lastMovieAddedDaysAgo >= checkLastMovieAddedMoreThanDaysAgo)
+                if (!lastMovieAddedDaysAgo.HasValue || lastMovieAddedDaysAgo.Value >= checkLastMovieAddedMoreThanDaysAgo)
                     status = HealthStatus.Unhealthy;
                 else
                     status = HealthStatus.Healthy;                
