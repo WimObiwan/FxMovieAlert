@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
@@ -30,6 +31,58 @@ namespace FxMovies.Core.Services
 
         public async Task<IList<MovieEvent>> GetMovieEvents()
         {
+            Channel channel = new Channel()
+            {
+                Code = "goplay",
+                Name = "GoPlay",
+                LogoS = "https://www.filmoptv.be/images/goplay.png"
+            };
+
+            var list = await GetDataProgramList();
+            return list
+                .Select(async dataProgram => 
+                {
+                    string link = dataProgram.link;
+                    string image = image = dataProgram.images.teaser;
+
+                    if (link != null && link.StartsWith('/'))
+                        link = "https://www.goplay.be" + link;
+
+                    var dataProgramDetails = await GetDataProgramDetails(link);
+
+                    return new MovieEvent()
+                    {
+                        ExternalId = dataProgram.id,
+                        Type = 1,  // 1 = movie, 2 = short movie, 3 = serie
+                        Title = dataProgram.title.Trim(), 
+                        Year = null, 
+                        Vod = true,
+                        Feed = MovieEvent.FeedType.FreeVod,
+                        StartTime = GetDateTime(dataProgramDetails.pageInfo.publishDate) ?? DateTime.UtcNow,
+                        EndTime = GetDateTime(dataProgramDetails.pageInfo.unpublishDate), 
+                        Channel = channel,
+                        PosterS = image, 
+                        PosterM = image,
+                        Duration = null,
+                        Content = dataProgramDetails.pageInfo.description,
+                        VodLink = link,
+                        AddedTime = DateTime.UtcNow,
+                    };
+                })
+                .Select(t => t.Result)
+                .ToList();
+        }
+
+        private DateTime? GetDateTime(int? date)
+        {
+            if (date.HasValue)
+                return new DateTime(1970, 1, 1).AddSeconds(date.Value).ToLocalTime();
+            else
+                return null;
+        }
+
+        private async Task<IList<DataProgram>> GetDataProgramList()
+        {
             // https://github.com/timrijckaert/vrtnu-vtmgo-goplay-service/tree/master/vtmgo/src/main/java/be/tapped/vtmgo/content
 
             var client = httpClientFactory.CreateClient("goplay");
@@ -40,13 +93,6 @@ namespace FxMovies.Core.Services
             HtmlParser parser = new HtmlParser();
             var document = await parser.ParseDocumentAsync(stream);
 
-            Channel channel = new Channel()
-            {
-                Code = "goplay",
-                Name = "GoPlay",
-                LogoS = "https://www.filmoptv.be/images/goplay.png"
-            };
-
             return document
                 .QuerySelectorAll(".poster-teaser")
                 .Where(e => e.GetAttribute("data-category") == "5286") // 5286 = Film
@@ -55,87 +101,61 @@ namespace FxMovies.Core.Services
                     string dataProgramText = e.GetAttribute("data-program");
                     try
                     {
-                        var dataProgram = JsonSerializer.Deserialize<DataProgram>(dataProgramText);
-                        var episode = dataProgram.playlists?.SelectMany(p => p.episodes).FirstOrDefault();
-                        if (episode == null)
-                        {
-                            logger.LogWarning("Skipping data-program without playlist or episode, Text={dataProgramText}", dataProgramText);
-                            return null;
-                        }
-                        
-                        DateTime? startTime;
-                        if (episode.publishDate.ValueKind == JsonValueKind.Number && episode.publishDate.TryGetInt64(out long value))
-                            startTime = DateTime.UnixEpoch.AddSeconds(value);
-                        else
-                            startTime = null;
-
-                        DateTime? endTime;
-                        if (episode.unpublishDate.ValueKind == JsonValueKind.Number && episode.unpublishDate.TryGetInt64(out value))
-                            endTime = DateTime.UnixEpoch.AddSeconds(value);
-                        else
-                            endTime = null;
-
-                        string link = episode.link;
-                        if (link.StartsWith('/'))
-                            link = "https://www.goplay.be" + link;
-
-                        return new MovieEvent()
-                        {
-                            ExternalId = dataProgram.id,
-                            Type = 1,  // 1 = movie, 2 = short movie, 3 = serie
-                            Title = dataProgram.title.Trim(), 
-                            Year = null, 
-                            Vod = true,
-                            Feed = MovieEvent.FeedType.FreeVod,
-                            StartTime = startTime ?? DateTime.UtcNow,
-                            EndTime = endTime, 
-                            Channel = channel,
-                            PosterS = episode.image, 
-                            PosterM = episode.image,
-                            Duration = (episode.duration + 30) / 60,
-                            Content = episode.description,
-                            VodLink = link,
-                            AddedTime = DateTime.UtcNow,
-                        };
+                        return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
                     }
                     catch (Exception x)
                     {
                         logger.LogWarning(x, "Skipping line with parsing exception, Text={dataProgramText}", dataProgramText);
-                        throw;
+                        return null;
                     }
                 })
                 .Where(e => e != null)
                 .ToList();
         }
 
+        private async Task<DataProgram> GetDataProgramDetails(string link)
+        {
+            var client = httpClientFactory.CreateClient("goplay");
+            var response = await client.GetAsync(link);
+            response.EnsureSuccessStatusCode();
+
+            using Stream stream = await response.Content.ReadAsStreamAsync();
+            HtmlParser parser = new HtmlParser();
+            var document = await parser.ParseDocumentAsync(stream);
+
+            var dataProgramText = document
+                .QuerySelectorAll("script")
+                .OfType<IHtmlScriptElement>()
+                .Where(s => s.Type == "application/json")
+                .Select(s => s.Text)
+                .OrderByDescending(s => s.Length)
+                .FirstOrDefault();
+
+            var dataProgramDetails =  JsonSerializer.Deserialize<DataProgram>(dataProgramText);
+            return dataProgramDetails;
+        }
+
         class DataProgram
         {
             public string id { get; set; }
             public string title { get; set; }
-            public string description { get; set; }
+            public string link { get; set; }
             public PageInfo pageInfo { get; set; }
-            public List<Playlist> playlists { get; set; }
+            public Images images { get; set; }
 
             public class PageInfo
             {
                 public string title { get; set; }
                 public string type { get; set; }
+                public int? publishDate { get; set; }
+                public int? unpublishDate { get; set; }
+                public string description { get; set; }
             }
 
-            public class Playlist
+            public class Images
             {
-                public List<Episode> episodes { get; set; }
-
-                public class Episode
-                {
-                    public int duration { get; set; }
-                    public JsonElement publishDate { get; set; }
-                    public JsonElement unpublishDate { get; set; }
-                    public string image { get; set; }
-                    public PageInfo pageInfo { get; set; }
-                    public string link { get; set; }
-                    public string description { get; set; }
-                }
+                public string poster { get; set; }
+                public string teaser { get; set; }
             }
         }
 
