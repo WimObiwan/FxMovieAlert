@@ -82,8 +82,9 @@ namespace FxMovieAlert.HealthChecks
                     checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
                 else 
                     if (channelCode == null || !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode, out checkLastMovieAddedMoreThanDaysAgo))
-                        if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("", out checkLastMovieAddedMoreThanDaysAgo))
-                            checkLastMovieAddedMoreThanDaysAgo = 1.1;
+                        if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{feedType}", out checkLastMovieAddedMoreThanDaysAgo))
+                            if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("", out checkLastMovieAddedMoreThanDaysAgo))
+                                checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
 
                 HealthStatus status;
                 if (!lastMovieAddedDaysAgo.HasValue || lastMovieAddedDaysAgo.Value >= checkLastMovieAddedMoreThanDaysAgo)
