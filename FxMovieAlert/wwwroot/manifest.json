@@ -23,7 +23,7 @@
             "name": "FilmOpTv.be uitzendingen",
             "short_name": "Uitzendingen",
             "description": "De beste films op de Vlaamse zenders",
-            "url": "/?utm_source=pwa",
+            "url": "/Broadcasts?utm_source=pwa",
             "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
         },
         {

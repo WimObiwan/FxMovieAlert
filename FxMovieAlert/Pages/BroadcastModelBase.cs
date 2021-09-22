@@ -22,7 +22,7 @@ namespace FxMovieAlert.Pages
         public bool Highlighted { get; set; }
     }
 
-    public class BroadcastModelBase : PageModel, IFilterBarParentModel
+    public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     {
         public bool EditImdbLinks = false;
         public MovieEvent MovieEvent = null;
@@ -75,7 +75,7 @@ namespace FxMovieAlert.Pages
         private readonly FxMoviesDbContext fxMoviesDbContext;
         private readonly IUsersRepository usersRepository;
 
-        public BroadcastModelBase(
+        public BroadcastsModelBase(
             MovieEvent.FeedType feed,
             IOptions<SiteOptions> siteOptions,
             FxMoviesDbContext fxMoviesDbContext,

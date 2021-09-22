@@ -8,16 +8,16 @@ using Microsoft.Extensions.Options;
 namespace FxMovieAlert.Pages
 {
     [AllowAnonymous]
-    public class PaidStreamingModel : BroadcastsModelBase
+    public class BroadcastsModel : BroadcastsModelBase
     {
-        public PaidStreamingModel(
+        public BroadcastsModel(
             IOptions<SiteOptions> siteOptions,
             FxMoviesDbContext fxMoviesDbContext,
             IUsersRepository usersRepository)
-            : base(MovieEvent.FeedType.PaidVod,
+            : base(MovieEvent.FeedType.Broadcast,
                 siteOptions,
                 fxMoviesDbContext,
                 usersRepository)
-        {}
+        { }
     }
 }

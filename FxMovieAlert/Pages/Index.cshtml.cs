@@ -1,23 +1,25 @@
-﻿using FxMovieAlert.Options;
-using FxMovies.Core.Entities;
-using FxMovies.Core.Repositories;
+using System;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using FxMovies.Core;
+using FxMovies.Core.Commands;
 using FxMovies.FxMoviesDB;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
+using FxMovies.ImdbDB;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
 namespace FxMovieAlert.Pages
 {
-    [AllowAnonymous]
-    public class BroadcastModel : BroadcastModelBase
+    public class IndexModel : PageModel
     {
-        public BroadcastModel(
-            IOptions<SiteOptions> siteOptions,
-            FxMoviesDbContext fxMoviesDbContext,
-            IUsersRepository usersRepository)
-            : base(MovieEvent.FeedType.Broadcast,
-                siteOptions,
-                fxMoviesDbContext,
-                usersRepository)
-        { }
+        public IndexModel()
+        {
+        }
+
+        public IActionResult OnGet()
+        {
+            return RedirectToPage("/Broadcasts");
+        }
     }
 }
