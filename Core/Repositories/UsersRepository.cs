@@ -100,6 +100,8 @@ namespace FxMovies.Core.Repositories
                 
             user.Usages++;
             user.LastUsageTime = DateTime.UtcNow;
+
+            // "SQLite Error 8: 'attempt to write a readonly database'."... 
             await fxMoviesDbContext.SaveChangesAsync();
 
             return new UserDataResult()
