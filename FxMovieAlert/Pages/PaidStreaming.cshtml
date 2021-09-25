@@ -1,9 +1,13 @@
-﻿@page
+@page
 @model PaidStreamingModel
 @using System.Globalization;
 @{
     ViewData["Title"] = "Betalende Streaming";
-    ViewData["Canonical"] = "/PaidStreaming/";
+    if (Model.FilterOnlyHighlights ?? Model.FilterOnlyHighlightsDefault)
+        ViewData["Canonical"] = "/PaidStreaming";
+    else
+        ViewData["Canonical"] = "/PaidStreaming?onlyHighlights=false";
+
     if (Model.MovieEvent != null && Model.MovieEvent.Title != null)
     {
         ViewData["og:title"] = Model.MovieEvent.Title;

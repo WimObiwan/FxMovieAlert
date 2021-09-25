@@ -1,9 +1,13 @@
-﻿@page
+@page
 @model FreeStreamingModel
 @using System.Globalization;
 @{
     ViewData["Title"] = "Gratis Streaming";
-    ViewData["Canonical"] = "/FreeStreaming/";
+    if (Model.FilterOnlyHighlights ?? Model.FilterOnlyHighlightsDefault)
+        ViewData["Canonical"] = "/FreeStreaming";
+    else
+        ViewData["Canonical"] = "/FreeStreaming?onlyHighlights=false";
+
     if (Model.MovieEvent != null && Model.MovieEvent.Title != null)
     {
         ViewData["og:title"] = Model.MovieEvent.Title;
