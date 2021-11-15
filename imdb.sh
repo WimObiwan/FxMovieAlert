@@ -8,4 +8,4 @@ wget https://datasets.imdbws.com/title.ratings.tsv.gz -O ~/tmp/filmoptv/title.ra
 cd Grabber
 dotnet ./bin/Release/net5.0/Grabber.dll GenerateImdbDatabase
 
-rsync -av --info=progress2 ~/tmp/filmoptv/imdb.db ./Grabber/bin/Release/$RELEASE/publish/* root@server3.foxinnovations.be:/var/www/$TARGET.filmoptv.be/
+rsync -av --info=progress2 ~/tmp/filmoptv/imdb.db root@server3.foxinnovations.be:/var/www/$TARGET.filmoptv.be/
