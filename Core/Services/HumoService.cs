@@ -1,9 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -60,10 +62,14 @@ namespace FxMovies.Core.Services
         #endregion
 
         private readonly ILogger<HumoService> logger;
+        private readonly IHttpClientFactory httpClientFactory;
 
-        public HumoService(ILogger<HumoService> logger)
+        public HumoService(
+            ILogger<HumoService> logger,
+            IHttpClientFactory httpClientFactory)
         {
             this.logger = logger;
+            this.httpClientFactory = httpClientFactory;
         }
 
         private async Task<Humo> GetHumoData(DateTime date)
@@ -72,40 +78,14 @@ namespace FxMovies.Core.Services
             string url = $"/tv-gids/api/v2/broadcasts/{dateYMD}";
 
             logger.LogInformation("Retrieving from Humo: {Url}", url);
-            var request = WebRequest.CreateHttp(url);
-            using (var response = await request.GetResponseAsync())
-            {
-                Encoding encoding;
-                if (response is HttpWebResponse httpWebResponse)
-                {
-                    encoding = Encoding.GetEncoding(httpWebResponse.CharacterSet);
-                }
-                else
-                {
-                    encoding = Encoding.UTF8;
-                }
+            
+            var client = httpClientFactory.CreateClient("humo");
+            var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
 
-                using (var textStream = new StreamReader(response.GetResponseStream(), encoding))
-                {
-                    string json = await textStream.ReadToEndAsync();
+            var humo = await response.Content.ReadFromJsonAsync<Humo>();
 
-                    // using (StreamWriter outputFile = new StreamWriter(string.Format(@"humo-{0}.json", dateYMD)))
-                    // {
-                    //     outputFile.WriteLine(json);
-                    // }
-
-                    // var settings = new JsonSerializerSettings();
-                    // settings.Error += (sender, args) =>
-                    // {
-                    //     args.ErrorContext.Handled = true;
-                    // };
-
-                    // var humo = JsonConvert.DeserializeObject<Humo>(json, settings);
-                    var humo = JsonSerializer.Deserialize<Humo>(json);
-
-                    return humo;
-                }
-            }
+            return humo;
         }
 
         private async Task<Humo> GetHumoDataWithRetry(DateTime date)

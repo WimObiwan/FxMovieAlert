@@ -13,6 +13,10 @@ namespace FxMovies.Core
     {
         public static IServiceCollection AddFxMoviesCore(this IServiceCollection services, IConfiguration configuration, Assembly assembly)
         {
+            services.AddHttpClient("humo", c =>
+            {
+                c.BaseAddress = new Uri("https://www.humo.be");
+            });
             services.AddHttpClient("goplay", c =>
             {
                 c.BaseAddress = new Uri("https://www.goplay.be");
