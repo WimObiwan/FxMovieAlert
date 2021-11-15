@@ -275,7 +275,6 @@ namespace FxMovies.Core.Services
             var client = httpClientFactory.CreateClient("vtmgo_dpg");
             client.DefaultRequestHeaders.Add("lfvp-auth", lfvpToken);
             client.DefaultRequestHeaders.Add("x-dpp-profile", profileId);
-            //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
             var response = await client.GetAsync("/vtmgo/movies/" + movieId);
             response.EnsureSuccessStatusCode();
             // Troubleshoot: Debug console: 
