@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -66,8 +66,11 @@ namespace FxMovies.Core.Services
             this.logger = logger;
         }
 
-        private async Task<Humo> GetHumoData(string url)
+        private async Task<Humo> GetHumoData(DateTime date)
         {
+            string dateYMD = date.ToString("yyyy-MM-dd");
+            string url = $"/tv-gids/api/v2/broadcasts/{dateYMD}";
+
             logger.LogInformation("Retrieving from Humo: {Url}", url);
             var request = WebRequest.CreateHttp(url);
             using (var response = await request.GetResponseAsync())
@@ -105,26 +108,26 @@ namespace FxMovies.Core.Services
             }
         }
 
-        private async Task<Humo> GetHumoDataWithRetry(string url)
+        private async Task<Humo> GetHumoDataWithRetry(DateTime date)
         {
             try 
             {
-                return await GetHumoData(url);
+                return await GetHumoData(date);
             }
             catch (Exception e)
             {
-                logger.LogError(e, "First try failed, {Url}", url);
+                logger.LogError(e, "First try failed, {Date}", date);
             }
 
             await Task.Delay(5000);
 
             try 
             {
-                return await GetHumoData(url);
+                return await GetHumoData(date);
             }
             catch (Exception e)
             {
-                logger.LogError(e, "Second try failed, {Url}", url);
+                logger.LogError(e, "Second try failed, {Date}", date);
 
                 throw;
             }
@@ -132,10 +135,7 @@ namespace FxMovies.Core.Services
 
         public async Task<IList<MovieEvent>> GetGuide(DateTime date)
         {
-            string dateYMD = date.ToString("yyyy-MM-dd");
-            string url = $"https://www.humo.be/tv-gids/api/v2/broadcasts/{dateYMD}";
-
-            Humo humo = await GetHumoDataWithRetry(url);
+            Humo humo = await GetHumoDataWithRetry(date);
 
             FilterBroadcasters(date, humo);
 
