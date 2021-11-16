@@ -58,6 +58,7 @@ namespace FxMovieAlert
             services.Configure<CookiePolicyOptions>(options => {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
+                options.Secure = CookieSecurePolicy.Always;
                 options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.None;
             });
 
@@ -71,6 +72,7 @@ namespace FxMovieAlert
                 // add an instance of the patched manager to the options:
                 options.CookieManager = new ChunkingCookieManager();
                 options.ExpireTimeSpan = TimeSpan.FromDays(31);
+                options.SlidingExpiration = true;
 
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;

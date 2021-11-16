@@ -17,7 +17,9 @@ namespace FxMovieAlert.Pages
         {
             await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties()
             {
-                RedirectUri = returnUrl
+                RedirectUri = returnUrl,
+                IsPersistent = true,
+                AllowRefresh = true
             });
         }
 
