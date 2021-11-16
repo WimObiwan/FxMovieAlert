@@ -80,7 +80,6 @@ namespace FxMovieAlert
             })
             .AddOpenIdConnect("Auth0", options => {
                 // Set the authority to your Auth0 domain
-                //options.Authority = $"https://{_configuration["Auth0:Domain"]}";
                 options.Authority = $"https://{configuration["Auth0:Domain"]}";
 
                 // Configure the Auth0 Client ID and Client Secret
