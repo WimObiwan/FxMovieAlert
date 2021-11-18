@@ -9,68 +9,67 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovieAlert.Pages
+namespace FxMovieAlert.Pages;
+
+public class UpdateImdbLinkModel : PageModel
 {
-    public class UpdateImdbLinkModel : PageModel
+    private readonly ILogger<UpdateImdbLinkModel> logger;
+    private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ImdbDbContext imdbDbContext;
+    private readonly IMovieCreationHelper movieCreationHelper;
+    private readonly IUpdateImdbLinkCommand updateImdbLinkCommand;
+
+    public UpdateImdbLinkModel(
+        ILogger<UpdateImdbLinkModel> logger,
+        FxMoviesDbContext fxMoviesDbContext,
+        ImdbDbContext imdbDbContext,
+        IMovieCreationHelper movieCreationHelper,
+        IUpdateImdbLinkCommand updateImdbLinkCommand)
     {
-        private readonly ILogger<UpdateImdbLinkModel> logger;
-        private readonly FxMoviesDbContext fxMoviesDbContext;
-        private readonly ImdbDbContext imdbDbContext;
-        private readonly IMovieCreationHelper movieCreationHelper;
-        private readonly IUpdateImdbLinkCommand updateImdbLinkCommand;
+        this.logger = logger;
+        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.imdbDbContext = imdbDbContext;
+        this.movieCreationHelper = movieCreationHelper;
+        this.updateImdbLinkCommand = updateImdbLinkCommand;
+    }
 
-        public UpdateImdbLinkModel(
-            ILogger<UpdateImdbLinkModel> logger,
-            FxMoviesDbContext fxMoviesDbContext,
-            ImdbDbContext imdbDbContext,
-            IMovieCreationHelper movieCreationHelper,
-            IUpdateImdbLinkCommand updateImdbLinkCommand)
+    public IActionResult OnGet()
+    {
+        return RedirectToPage("Index");
+    }
+
+    public async Task<IActionResult> OnPostAsync(int? movieeventid, string setimdbid, string returnPage)
+    {
+        var editImdbLinks = ClaimChecker.Has(User.Identity, Claims.EditImdbLinks);
+
+        if (editImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
         {
-            this.logger = logger;
-            this.fxMoviesDbContext = fxMoviesDbContext;
-            this.imdbDbContext = imdbDbContext;
-            this.movieCreationHelper = movieCreationHelper;
-            this.updateImdbLinkCommand = updateImdbLinkCommand;
-        }
-
-        public IActionResult OnGet()
-        {
-            return RedirectToPage("Index");
-        }
-
-        public async Task<IActionResult> OnPostAsync(int? movieeventid, string setimdbid, string returnPage)
-        {
-            var editImdbLinks = ClaimChecker.Has(User.Identity, Claims.EditImdbLinks);
-
-            if (editImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
+            bool overwrite = false;
+            bool setIgnore = false;
+            var match = Regex.Match(setimdbid, @"(tt\d+)");
+            if (match.Success)
             {
-                bool overwrite = false;
-                bool setIgnore = false;
-                var match = Regex.Match(setimdbid, @"(tt\d+)");
-                if (match.Success)
-                {
-                    setimdbid = match.Groups[0].Value;
-                    overwrite = true;
-                }
-                else if (setimdbid.Equals("ignore", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    setimdbid = null;
-                    overwrite = true;
-                    setIgnore = true;
-                }
-                else if (setimdbid.Equals("remove", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    setimdbid = null;
-                    overwrite = true;
-                }
-                
-                if (overwrite)
-                {
-                    await updateImdbLinkCommand.Execute(movieeventid.Value, setimdbid, setIgnore);
-                }
+                setimdbid = match.Groups[0].Value;
+                overwrite = true;
+            }
+            else if (setimdbid.Equals("ignore", StringComparison.InvariantCultureIgnoreCase))
+            {
+                setimdbid = null;
+                overwrite = true;
+                setIgnore = true;
+            }
+            else if (setimdbid.Equals("remove", StringComparison.InvariantCultureIgnoreCase))
+            {
+                setimdbid = null;
+                overwrite = true;
             }
             
-            return Redirect(returnPage);
+            if (overwrite)
+            {
+                await updateImdbLinkCommand.Execute(movieeventid.Value, setimdbid, setIgnore);
+            }
         }
+        
+        return Redirect(returnPage);
     }
 }

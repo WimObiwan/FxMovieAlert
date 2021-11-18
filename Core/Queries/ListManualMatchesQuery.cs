@@ -5,31 +5,30 @@ using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovies.Core.Queries
+namespace FxMovies.Core.Queries;
+
+public interface IListManualMatchesQuery
 {
-    public interface IListManualMatchesQuery
+    Task<List<ManualMatch>> Execute();
+}
+
+public class ListManualMatchesQuery : IListManualMatchesQuery
+{
+    private readonly ILogger<ListManualMatchesQuery> logger;
+    private readonly FxMoviesDbContext fxMoviesDbContext;
+
+    public ListManualMatchesQuery(
+        ILogger<ListManualMatchesQuery> logger,
+        FxMoviesDbContext fxMoviesDbContext)
     {
-        Task<List<ManualMatch>> Execute();
+        this.logger = logger;
+        this.fxMoviesDbContext = fxMoviesDbContext;
     }
 
-    public class ListManualMatchesQuery : IListManualMatchesQuery
+    public async Task<List<ManualMatch>> Execute()
     {
-        private readonly ILogger<ListManualMatchesQuery> logger;
-        private readonly FxMoviesDbContext fxMoviesDbContext;
-
-        public ListManualMatchesQuery(
-            ILogger<ListManualMatchesQuery> logger,
-            FxMoviesDbContext fxMoviesDbContext)
-        {
-            this.logger = logger;
-            this.fxMoviesDbContext = fxMoviesDbContext;
-        }
-
-        public async Task<List<ManualMatch>> Execute()
-        {
-            return await fxMoviesDbContext.ManualMatches
-                .Include(mm => mm.Movie)
-                .ToListAsync();
-        }
+        return await fxMoviesDbContext.ManualMatches
+            .Include(mm => mm.Movie)
+            .ToListAsync();
     }
 }

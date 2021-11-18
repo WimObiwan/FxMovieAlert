@@ -6,56 +6,55 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 
-namespace FxMovieAlert
+namespace FxMovieAlert;
+
+public class Program
 {
-    public class Program
+    public static int Main(string[] args)
     {
-        public static int Main(string[] args)
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .CreateLogger();
+
+        try
         {
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .CreateLogger();
-
-            try
-            {
-                Log.Information("Starting web host");
-                CreateHostBuilder(args).Build().Run();
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Log.Fatal(ex, "Host terminated unexpectedly");
-                return 1;
-            }
-            finally
-            {
-                Log.CloseAndFlush();
-            }
+            Log.Information("Starting web host");
+            CreateHostBuilder(args).Build().Run();
+            return 0;
         }
-
-        public static IWebHostBuilder CreateHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseSerilog()
-                .ConfigureAppConfiguration((hostingContext, config) =>
-                {
-                    config
-                        //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
-                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                        .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
-                        .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
-                        .AddEnvironmentVariables();
-                })
-                .UseSentry(o =>
-                {
-                    o.Dsn = "https://44d07a7cb1df484ca9a745af1ca94a2f@o210563.ingest.sentry.io/1335368";
-                    // When configuring for the first time, to see what the SDK is doing:
-                    // o.Debug = true;
-                    // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-                    // We recommend adjusting this value in production.
-                    o.TracesSampleRate = 1.0;
-                })
-                .UseStartup<Startup>();
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Host terminated unexpectedly");
+            return 1;
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
     }
+
+    public static IWebHostBuilder CreateHostBuilder(string[] args) =>
+        WebHost.CreateDefaultBuilder(args)
+            .UseSerilog()
+            .ConfigureAppConfiguration((hostingContext, config) =>
+            {
+                config
+                    //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+                    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
+                    .AddEnvironmentVariables();
+            })
+            .UseSentry(o =>
+            {
+                o.Dsn = "https://44d07a7cb1df484ca9a745af1ca94a2f@o210563.ingest.sentry.io/1335368";
+                // When configuring for the first time, to see what the SDK is doing:
+                // o.Debug = true;
+                // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+                // We recommend adjusting this value in production.
+                o.TracesSampleRate = 1.0;
+            })
+            .UseStartup<Startup>();
 }

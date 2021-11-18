@@ -1,7 +1,6 @@
-namespace FxMovieAlert
+namespace FxMovieAlert;
+
+public static class Claims
 {
-    public static class Claims
-    {
-        public const string EditImdbLinks = "edit:imdblinks";
-    }
+    public const string EditImdbLinks = "edit:imdblinks";
 }

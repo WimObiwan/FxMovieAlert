@@ -7,43 +7,42 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FxMovieAlert.HealthChecks
+namespace FxMovieAlert.HealthChecks;
+
+public class ImdbDbDateTimeCheck : IHealthCheck
 {
-    public class ImdbDbDateTimeCheck : IHealthCheck
+    private readonly IConfiguration configuration;
+
+    public ImdbDbDateTimeCheck(IConfiguration configuration)
     {
-        private readonly IConfiguration configuration;
+        this.configuration = configuration;
+    }
 
-        public ImdbDbDateTimeCheck(IConfiguration configuration)
-        {
-            this.configuration = configuration;
-        }
+    public Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var connectionString = configuration.GetConnectionString("ImdbDb");
 
-        public Task<HealthCheckResult> CheckHealthAsync(
-            HealthCheckContext context,
-            CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var connectionString = configuration.GetConnectionString("ImdbDb");
+        var connectionStringBuilder = new DbConnectionStringBuilder(); 
+        connectionStringBuilder.ConnectionString = connectionString;
+        string filePath = connectionStringBuilder["Data Source"].ToString();
+        var fileInfo = new System.IO.FileInfo(filePath);
+        var lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+        var ageDays = (DateTime.UtcNow - lastWriteTimeUtc).TotalDays;
 
-            var connectionStringBuilder = new DbConnectionStringBuilder(); 
-            connectionStringBuilder.ConnectionString = connectionString;
-            string filePath = connectionStringBuilder["Data Source"].ToString();
-            var fileInfo = new System.IO.FileInfo(filePath);
-            var lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
-            var ageDays = (DateTime.UtcNow - lastWriteTimeUtc).TotalDays;
+        HealthStatus status;
+        if (ageDays > 92.0)
+            status = HealthStatus.Unhealthy;
+        else
+            status = HealthStatus.Healthy;
 
-            HealthStatus status;
-            if (ageDays > 92.0)
-                status = HealthStatus.Unhealthy;
-            else
-                status = HealthStatus.Healthy;
-
-            HealthCheckResult result = new HealthCheckResult(status, null, null, 
-                    new Dictionary<string, object>() {
-                        { "ImdbDbLastWriteTimeUtc", lastWriteTimeUtc },
-                        { "ImdbDbAgeDays", ageDays }
-                    });
-                
-            return Task.FromResult(result);
-        }
+        HealthCheckResult result = new HealthCheckResult(status, null, null, 
+                new Dictionary<string, object>() {
+                    { "ImdbDbLastWriteTimeUtc", lastWriteTimeUtc },
+                    { "ImdbDbAgeDays", ageDays }
+                });
+            
+        return Task.FromResult(result);
     }
 }

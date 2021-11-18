@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace FxMovieAlert.Pages
-{
-    public class AboutModel : PageModel
-    {
-        public string Message { get; set; }
+namespace FxMovieAlert.Pages;
 
-        public void OnGet()
-        {
-        }
+public class AboutModel : PageModel
+{
+    public string Message { get; set; }
+
+    public void OnGet()
+    {
     }
 }

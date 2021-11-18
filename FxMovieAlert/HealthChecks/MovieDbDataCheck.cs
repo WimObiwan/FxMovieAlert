@@ -10,114 +10,113 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FxMovieAlert.HealthChecks
+namespace FxMovieAlert.HealthChecks;
+
+public static class MovieDbDataCheckBuilderExtensions
 {
-    public static class MovieDbDataCheckBuilderExtensions
+    public static IHealthChecksBuilder AddMovieDbDataCheck(
+        this IHealthChecksBuilder builder,
+        string name,
+        HealthCheckOptions healthCheckOptions,
+        MovieEvent.FeedType feedType,
+        string channelCode = null,
+        HealthStatus? failureStatus = default,
+        IEnumerable<string> tags = default)
     {
-        public static IHealthChecksBuilder AddMovieDbDataCheck(
-            this IHealthChecksBuilder builder,
-            string name,
-            HealthCheckOptions healthCheckOptions,
-            MovieEvent.FeedType feedType,
-            string channelCode = null,
-            HealthStatus? failureStatus = default,
-            IEnumerable<string> tags = default)
-        {
-            return builder.Add(new HealthCheckRegistration(
-                name,
-                sp => new MovieDbDataCheck(
-                    sp.GetRequiredService<IServiceScopeFactory>(),
-                    healthCheckOptions,
-                    feedType,
-                    channelCode),
-                failureStatus,
-                tags));
-        }
+        return builder.Add(new HealthCheckRegistration(
+            name,
+            sp => new MovieDbDataCheck(
+                sp.GetRequiredService<IServiceScopeFactory>(),
+                healthCheckOptions,
+                feedType,
+                channelCode),
+            failureStatus,
+            tags));
+    }
+}
+
+public class MovieDbDataCheck : IHealthCheck
+{
+    private readonly HealthCheckOptions healthCheckOptions;
+    private readonly IServiceScopeFactory serviceScopeFactory;
+    private readonly MovieEvent.FeedType feedType;
+    private readonly string channelCode;
+
+    public MovieDbDataCheck(
+        IServiceScopeFactory serviceScopeFactory,
+        HealthCheckOptions healthCheckOptions,
+        MovieEvent.FeedType feedType,
+        string channelCode)
+    {
+        this.serviceScopeFactory = serviceScopeFactory;
+        this.healthCheckOptions = healthCheckOptions;
+        this.feedType = feedType;
+        this.channelCode = channelCode;
     }
 
-    public class MovieDbDataCheck : IHealthCheck
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default(CancellationToken))
     {
-        private readonly HealthCheckOptions healthCheckOptions;
-        private readonly IServiceScopeFactory serviceScopeFactory;
-        private readonly MovieEvent.FeedType feedType;
-        private readonly string channelCode;
+        // Health checks are executed simultaneous, but with the same DataContext.
+        // Seems a bug to me, workaround is using a separate service scope scope.
+        // https://github.com/dotnet/aspnetcore/issues/14453
 
-        public MovieDbDataCheck(
-            IServiceScopeFactory serviceScopeFactory,
-            HealthCheckOptions healthCheckOptions,
-            MovieEvent.FeedType feedType,
-            string channelCode)
+        using (var scope = serviceScopeFactory.CreateScope())
         {
-            this.serviceScopeFactory = serviceScopeFactory;
-            this.healthCheckOptions = healthCheckOptions;
-            this.feedType = feedType;
-            this.channelCode = channelCode;
-        }
+            var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
 
-        public async Task<HealthCheckResult> CheckHealthAsync(
-            HealthCheckContext context,
-            CancellationToken cancellationToken = default(CancellationToken))
-        {
-            // Health checks are executed simultaneous, but with the same DataContext.
-            // Seems a bug to me, workaround is using a separate service scope scope.
-            // https://github.com/dotnet/aspnetcore/issues/14453
+            var query = fxMoviesDbContext.MovieEvents
+                .Where(me => me.Feed == feedType && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode));
+            int count = await query.CountAsync();
+            DateTime? lastMovieAddedTime;
+            if (count > 0)
+                lastMovieAddedTime = await query.MaxAsync(me => me.AddedTime);
+            else
+                lastMovieAddedTime = null;
+            var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime)?.TotalDays;
+            
+            const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
+            double checkLastMovieAddedMoreThanDaysAgo;
+            if (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
+                checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
+            else 
+                if (channelCode == null || !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode, out checkLastMovieAddedMoreThanDaysAgo))
+                    if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{feedType}", out checkLastMovieAddedMoreThanDaysAgo))
+                        if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("", out checkLastMovieAddedMoreThanDaysAgo))
+                            checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
 
-            using (var scope = serviceScopeFactory.CreateScope())
+            HealthStatus status;
+            if (!lastMovieAddedDaysAgo.HasValue || lastMovieAddedDaysAgo.Value >= checkLastMovieAddedMoreThanDaysAgo)
+                status = HealthStatus.Unhealthy;
+            else
+                status = HealthStatus.Healthy;                
+
+            var values = new Dictionary<string, object>()
             {
-                var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
+                { "LastMovieAddedAge", lastMovieAddedDaysAgo },
+                { "LastMovieAddedTime", lastMovieAddedTime },
+                { "Count", count },
+                { "AlarmThreshold", checkLastMovieAddedMoreThanDaysAgo },
+            };
 
-                var query = fxMoviesDbContext.MovieEvents
-                    .Where(me => me.Feed == feedType && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode));
-                int count = await query.CountAsync();
-                DateTime? lastMovieAddedTime;
-                if (count > 0)
-                    lastMovieAddedTime = await query.MaxAsync(me => me.AddedTime);
-                else
-                    lastMovieAddedTime = null;
-                var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime)?.TotalDays;
-                
-                const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
-                double checkLastMovieAddedMoreThanDaysAgo;
-                if (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
-                    checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
-                else 
-                    if (channelCode == null || !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode, out checkLastMovieAddedMoreThanDaysAgo))
-                        if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{feedType}", out checkLastMovieAddedMoreThanDaysAgo))
-                            if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("", out checkLastMovieAddedMoreThanDaysAgo))
-                                checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
+            if (feedType == MovieEvent.FeedType.Broadcast)
+            {
+                DateTime lastMovieStartTime = await query.MaxAsync(me => me.StartTime);
+                var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
 
-                HealthStatus status;
-                if (!lastMovieAddedDaysAgo.HasValue || lastMovieAddedDaysAgo.Value >= checkLastMovieAddedMoreThanDaysAgo)
+                if (status == HealthStatus.Healthy && lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
                     status = HealthStatus.Unhealthy;
                 else
-                    status = HealthStatus.Healthy;                
+                    status = HealthStatus.Healthy;
 
-                var values = new Dictionary<string, object>()
-                {
-                    { "LastMovieAddedAge", lastMovieAddedDaysAgo },
-                    { "LastMovieAddedTime", lastMovieAddedTime },
-                    { "Count", count },
-                    { "AlarmThreshold", checkLastMovieAddedMoreThanDaysAgo },
-                };
-
-                if (feedType == MovieEvent.FeedType.Broadcast)
-                {
-                    DateTime lastMovieStartTime = await query.MaxAsync(me => me.StartTime);
-                    var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
-
-                    if (status == HealthStatus.Healthy && lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
-                        status = HealthStatus.Unhealthy;
-                    else
-                        status = HealthStatus.Healthy;
-
-                    values.Add("LastMovieStartTimeAge", lastMovieStartDaysFromNow);
-                    values.Add("LastMovieStartTime", lastMovieStartTime);
-                }
-
-                HealthCheckResult result = new HealthCheckResult(status, null, null, values);
-
-                return result;
+                values.Add("LastMovieStartTimeAge", lastMovieStartDaysFromNow);
+                values.Add("LastMovieStartTime", lastMovieStartTime);
             }
+
+            HealthCheckResult result = new HealthCheckResult(status, null, null, values);
+
+            return result;
         }
     }
 }
