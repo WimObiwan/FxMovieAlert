@@ -21,6 +21,10 @@ public static class ServiceConfiguration
         {
             c.BaseAddress = new Uri("https://www.goplay.be");
         });
+        services.AddHttpClient("vtmgo", c =>
+        {
+            c.BaseAddress = new Uri("https://vtm.be/vtmgo/");
+        });
         services.AddHttpClient("vtmgo_login", c =>
         {
             c.BaseAddress = new Uri("https://login2.vtm.be");
@@ -86,7 +90,8 @@ public static class ServiceConfiguration
         services.AddScoped<IImdbWatchlistFromFileService, ImdbWatchlistFromFileService>();
         services.AddScoped<ITheMovieDbService, TheMovieDbService>();
         services.AddScoped<IMovieEventService, GoPlayService>();
-        services.AddScoped<IMovieEventService, VtmGoService>();
+        //services.AddScoped<IMovieEventService, VtmGoService>();
+        services.AddScoped<IMovieEventService, VtmGoService2>();
         services.AddScoped<IMovieEventService, VrtNuService>();
         services.AddScoped<IMovieEventService, PrimeVideoService>();
         services.AddScoped<IHumoService, HumoService>();
