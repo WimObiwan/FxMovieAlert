@@ -1,4 +1,6 @@
 using System;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FxMovies.Core.Repositories;
 using FxMovies.Core.Services;
@@ -55,7 +57,8 @@ public class UpdateImdbUserDataCommand : IUpdateImdbUserDataCommand
         catch (Exception x)
         {
             await usersRepository.SetRatingRefreshResult(imdbUserId, false, x.Message);
-            throw;
+            if (x is HttpRequestException x2 && x2.StatusCode != HttpStatusCode.Forbidden)
+                throw;
         }
 
         try
@@ -69,7 +72,8 @@ public class UpdateImdbUserDataCommand : IUpdateImdbUserDataCommand
         catch (Exception x)
         {
             await usersRepository.SetWatchlistRefreshResult(imdbUserId, false, x.Message);
-            throw;
+            if (x is HttpRequestException x2 && x2.StatusCode != HttpStatusCode.Forbidden)
+                throw;
         }
 
         await usersRepository.UnsetRefreshRequestTime(imdbUserId);
