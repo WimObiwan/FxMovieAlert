@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using AngleSharp.Html.Parser;
 using AngleSharp.Html.Dom;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Web;
 using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core.Services;
