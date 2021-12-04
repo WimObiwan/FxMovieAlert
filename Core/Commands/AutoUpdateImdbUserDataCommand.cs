@@ -38,9 +38,10 @@ public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
         this.logger = logger;
         this.updateImdbUserDataCommand = updateImdbUserDataCommand;
         this.usersRepository = usersRepository;
-        this.autoUpdateInterval = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateInterval ?? TimeSpan.FromDays(1);
-        this.autoUpdateIntervalActiveUser = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateIntervalActiveUser ?? TimeSpan.FromHours(1);
-        this.updateAllRatings = autoUpdateImdbUserDataCommandOptions.Value.UpdateAllRatings ?? false;
+        autoUpdateInterval = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateInterval ?? TimeSpan.FromDays(1);
+        autoUpdateIntervalActiveUser = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateIntervalActiveUser ??
+                                       TimeSpan.FromHours(1);
+        updateAllRatings = autoUpdateImdbUserDataCommandOptions.Value.UpdateAllRatings ?? false;
     }
 
     public async Task<int> Execute()
@@ -49,29 +50,37 @@ public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
         var lastUpdateThreshold = now.Add(-autoUpdateInterval);
         var lastUpdateThresholdActiveUser = now.Add(-autoUpdateIntervalActiveUser);
 
-        logger.LogInformation("Loading users that need to be refreshed (inactive user threshold {LastUpdateThreshold}, active user threshold {LastUpdateThresholdActiveUser})",
+        logger.LogInformation(
+            "Loading users that need to be refreshed (inactive user threshold {LastUpdateThreshold}, active user threshold {LastUpdateThresholdActiveUser})",
             lastUpdateThreshold, lastUpdateThresholdActiveUser);
 
         // ToList, to prevent locking errors when updating while iterating:
         var usersToUpdate = new List<Entities.User>();
-        await foreach (var item in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold, lastUpdateThresholdActiveUser))
+        await foreach (var item in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold,
+            lastUpdateThresholdActiveUser))
             usersToUpdate.Add(item);
-        
+
         foreach (var user in usersToUpdate)
         {
-            logger.LogInformation("User {ImdbUserId} needs a refresh of the IMDb User ratings, LastUsageTime = {LastUsageTime}",
+            logger.LogInformation(
+                "User {ImdbUserId} needs a refresh of the IMDb User ratings, LastUsageTime = {LastUsageTime}",
                 user.ImdbUserId, user.LastUsageTime);
             if (user.RefreshRequestTime.HasValue)
-                logger.LogInformation("   * Refresh requested (RefreshRequestTime {RefreshRequestTime}, {RefreshRequestTimeSecondsAgo} seconds ago)",
+                logger.LogInformation(
+                    "   * Refresh requested (RefreshRequestTime {RefreshRequestTime}, {RefreshRequestTimeSecondsAgo} seconds ago)",
                     user.RefreshRequestTime.Value, (now - user.RefreshRequestTime.Value).TotalSeconds);
             if (!user.LastRefreshRatingsTime.HasValue)
                 logger.LogInformation("   * Never refreshed");
             else if (user.LastRefreshRatingsTime.Value < lastUpdateThreshold)
-                logger.LogInformation("   * Last refresh too old for inactive user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
+                logger.LogInformation(
+                    "   * Last refresh too old for inactive user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
                     user.LastRefreshRatingsTime.Value);
-            else if (user.LastUsageTime.HasValue && user.LastUsageTime.Value > user.LastRefreshRatingsTime.Value  // used since last refreshtime
-                    && user.LastRefreshRatingsTime.Value < lastUpdateThresholdActiveUser) // last refresh is before active user threshold
-                logger.LogInformation("   * Last refresh too old for active user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
+            else if (user.LastUsageTime.HasValue && user.LastUsageTime.Value >
+                                                 user.LastRefreshRatingsTime.Value // used since last refreshtime
+                                                 && user.LastRefreshRatingsTime.Value <
+                                                 lastUpdateThresholdActiveUser) // last refresh is before active user threshold
+                logger.LogInformation(
+                    "   * Last refresh too old for active user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
                     user.LastRefreshRatingsTime.Value);
             try
             {

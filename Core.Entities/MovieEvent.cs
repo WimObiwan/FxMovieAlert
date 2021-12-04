@@ -7,7 +7,7 @@ namespace FxMovies.Core.Entities;
 /// </summary>
 public class MovieEvent : IHasImdbLink
 {
-    public enum FeedType 
+    public enum FeedType
     {
         Broadcast,
         FreeVod,
@@ -40,4 +40,4 @@ public class MovieEvent : IHasImdbLink
     public string PosterM_Local { get; set; }
     public string VodLink { get; set; }
     public DateTime? AddedTime { get; set; }
-}   
+}

@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -19,13 +18,12 @@ public enum Cert
     pg13 = 16,
     r = 32,
     nc17 = 64,
-    all2 = 127,
+    all2 = 127
 }
 
 public partial class FilterBar
-{        
-    [Parameter]
-    public IFilterBarParentModel ParentModel { get; set; }
+{
+    [Parameter] public IFilterBarParentModel ParentModel { get; set; }
 
     public const decimal NO_IMDB_ID = -1.0m;
     public const decimal NO_IMDB_RATING = -2.0m;
@@ -70,45 +68,34 @@ public partial class FilterBar
     protected DateTime? LastRefreshRatingsTime => ParentModel.LastRefreshRatingsTime;
 
 
-    public static string FormatQueryString(bool? onlyHighlights, int? typeMask, decimal? minrating, bool? notyetrated, Cert? cert, int? maxdays)
+    public static string FormatQueryString(bool? onlyHighlights, int? typeMask, decimal? minrating, bool? notyetrated,
+        Cert? cert, int? maxdays)
     {
         var items = new List<Tuple<string, string>>();
         if (onlyHighlights.HasValue)
-        {
             items.Add(Tuple.Create(
-                "onlyHighlights", 
+                "onlyHighlights",
                 onlyHighlights.Value ? "true" : "false"));
-        }
         if (typeMask.HasValue)
-        {
             items.Add(Tuple.Create(
                 "typemask",
                 typeMask.Value.ToString()));
-        }
         if (minrating.HasValue)
-        {
             items.Add(Tuple.Create(
                 "minrating",
                 minrating.Value.ToString(CultureInfo.InvariantCulture.NumberFormat)));
-        }
         if (notyetrated.HasValue)
-        {
             items.Add(Tuple.Create(
                 "notyetrated",
                 notyetrated.Value.ToString()));
-        }
         if (cert.HasValue)
-        {
             items.Add(Tuple.Create(
                 "cert",
                 cert.Value.ToString("g")));
-        }
         if (maxdays.HasValue)
-        {
             items.Add(Tuple.Create(
                 "maxdays",
                 maxdays.Value.ToString()));
-        }
 
         if (items.Any())
             return string.Join('&', items.Select(i => $"{i.Item1}={i.Item2}"));
@@ -116,11 +103,12 @@ public partial class FilterBar
             return "";
     }
 
-    public string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated, Cert cert, int maxdays)
+    public string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated,
+        Cert cert, int maxdays)
     {
         if (onlyHighlights.HasValue && onlyHighlights.Value == FilterOnlyHighlightsDefault)
             onlyHighlights = null;
-        return FormatQueryString(onlyHighlights, 
+        return FormatQueryString(onlyHighlights,
             typeMask == FilterTypeMaskDefault ? (int?)null : typeMask,
             minrating, notyetrated,
             cert == Cert.all ? (Cert?)null : cert,
@@ -131,36 +119,42 @@ public partial class FilterBar
     {
         //if (typeMask != 7 && FilterTypeMask != 7)
         //    typeMask = FilterTypeMask ^ typeMask;
-        return FormatQueryString(onlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert, FilterMaxDays);
+        return FormatQueryString(onlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert,
+            FilterMaxDays);
     }
 
     public string FormatQueryStringWithTypeMask(int typeMask)
     {
         //if (typeMask != 7 && FilterTypeMask != 7)
         //    typeMask = FilterTypeMask ^ typeMask;
-        return FormatQueryString(FilterOnlyHighlights, typeMask, FilterMinRating, FilterNotYetRated, FilterCert, FilterMaxDays);
+        return FormatQueryString(FilterOnlyHighlights, typeMask, FilterMinRating, FilterNotYetRated, FilterCert,
+            FilterMaxDays);
     }
 
     public string FormatQueryStringWithMinRating(decimal? minrating)
     {
-        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, minrating, FilterNotYetRated, FilterCert, FilterMaxDays);
+        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, minrating, FilterNotYetRated, FilterCert,
+            FilterMaxDays);
     }
 
     public string FormatQueryStringWithNotYetRated(bool? notyetrated)
     {
-        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, notyetrated, FilterCert, FilterMaxDays);
+        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, notyetrated, FilterCert,
+            FilterMaxDays);
     }
 
     public string FormatQueryStringWithToggleCert(Cert cert)
     {
         if (cert != Cert.all)
             cert = FilterCert ^ cert;
-        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, cert, FilterMaxDays);
+        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, cert,
+            FilterMaxDays);
     }
 
     public string FormatQueryStringWithMaxDays(int maxdays)
     {
-        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert, maxdays);
+        return FormatQueryString(FilterOnlyHighlights, FilterTypeMask, FilterMinRating, FilterNotYetRated, FilterCert,
+            maxdays);
     }
 
     public string GetFilterStyle(bool hasValue)
@@ -182,6 +176,7 @@ public partial class FilterBar
                 sb.Append(",");
             sb.Append("Zonder");
         }
+
         if ((cert & Cert.g) != 0)
         {
             if (sb == null)
@@ -190,6 +185,7 @@ public partial class FilterBar
                 sb.Append(",");
             sb.Append("G");
         }
+
         if ((cert & Cert.pg) != 0)
         {
             if (sb == null)
@@ -198,6 +194,7 @@ public partial class FilterBar
                 sb.Append(",");
             sb.Append("PG");
         }
+
         if ((cert & Cert.pg13) != 0)
         {
             if (sb == null)
@@ -206,6 +203,7 @@ public partial class FilterBar
                 sb.Append(",");
             sb.Append("PG-13");
         }
+
         if ((cert & Cert.r) != 0)
         {
             if (sb == null)
@@ -214,6 +212,7 @@ public partial class FilterBar
                 sb.Append(",");
             sb.Append("R");
         }
+
         if ((cert & Cert.nc17) != 0)
         {
             if (sb == null)
@@ -222,6 +221,7 @@ public partial class FilterBar
                 sb.Append(",");
             sb.Append("NC-17");
         }
+
         if ((cert & Cert.other) != 0)
         {
             if (sb == null)

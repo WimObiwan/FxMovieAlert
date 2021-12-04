@@ -5,208 +5,265 @@
 
 <a id="filter-link" href="#filter-buttons" data-toggle="collapse">Geavanceerde&nbsp;filters</a>
 <div id="filter-buttons" class="collapse">
-    <div class="btn-group">
-        <a href="?@FormatQueryStringWithTypeMask(FilterTypeMaskDefault)" class="btn btn-@GetFilterStyle(FilterTypeMask != 7)">
-            @if (FilterTypeMask == 7)
+<div class="btn-group">
+    <a href="?@FormatQueryStringWithTypeMask(FilterTypeMaskDefault)" class="btn btn-@GetFilterStyle(FilterTypeMask != 7)">
+        @if (FilterTypeMask == 7)
+        {
+            @: Alle soorten
+        }
+        else
+        {
+            if ((FilterTypeMask & 1) != 0)
             {
-                @: Alle soorten
+                @: Films
             }
-            else 
+            if ((FilterTypeMask & 2) != 0)
             {
-                if ((FilterTypeMask & 1) != 0)
-                {
-                    @: Films
-                }
-                if ((FilterTypeMask & 2) != 0)
-                {
-                    @: Kortfilms
-                }
-                if ((FilterTypeMask & 4) != 0)
-                {
-                    @: Series
-                }
+                @: Kortfilms
             }
-        </a>
-        <button type="button" class="btn btn-@GetFilterStyle(FilterTypeMask != 7) dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only">Soorten</span>
-        </button>
-        
-        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-            <li><a href="?@FormatQueryStringWithTypeMask(7)" class="btn-@GetFilterStyle(FilterTypeMask == 7)">Toon alle (@Count)</a></li>
-            <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithTypeMask(1)" class="btn-@GetFilterStyle(FilterTypeMask != 7 && (FilterTypeMask & 1) != 0)">Enkel films (@CountTypeFilm)</a></li>
-            <li><a href="?@FormatQueryStringWithTypeMask(2)" class="btn-@GetFilterStyle(FilterTypeMask != 7 && (FilterTypeMask & 2) != 0)">Enkel kortfilms (@CountTypeShort)</a></li>
-            <li><a href="?@FormatQueryStringWithTypeMask(4)" class="btn-@GetFilterStyle(FilterTypeMask != 7 && (FilterTypeMask & 4) != 0)">Enkel series (@CountTypeSerie)</a></li>
-        </ul>
-    </div>
+            if ((FilterTypeMask & 4) != 0)
+            {
+                @: Series
+            }
+        }
+    </a>
+    <button type="button" class="btn btn-@GetFilterStyle(FilterTypeMask != 7) dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span> <!-- caret -->
+        <span class="sr-only">Soorten</span>
+    </button>
 
-    <div class="btn-group">
-        <a href="?@FormatQueryStringWithMinRating(null)" class="btn btn-@GetFilterStyle(FilterMinRating.HasValue)">
-            IMDb Sterren
-            @if (FilterMinRating.HasValue)
-            {
-                if (FilterMinRating.Value == NO_IMDB_ID)
-                {
-                    @: (geen IMDb)
-                }
-                else if (FilterMinRating.Value == NO_IMDB_RATING)
-                {
-                    @: (geen Sterren)
-                }
-                else
-                {
-                    @: (@(FilterMinRating.Value.ToString("0.#"))+)
-                }
-            }
-        </a>
-        <button type="button" class="btn btn-@GetFilterStyle(FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only">IMDb Sterren</span>
-        </button>
-        
-        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-            <li><a href="?@FormatQueryStringWithMinRating(null)" class="btn-@GetFilterStyle(!FilterMinRating.HasValue)">Toon alle films (@Count)</a></li>
-            <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithMinRating(9.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 9.0m)">Enkel met 9+ sterren (@CountMinRating9)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(8.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@CountMinRating8)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(7.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@CountMinRating7)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(6.5m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 6.5m)">Enkel met 6.5+ sterren (@CountMinRating65)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@CountMinRating6)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@CountMinRating5)</a></li>
-            <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithMinRating(NO_IMDB_ID)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == NO_IMDB_ID)">Niet gevonden op IMDb (@CountNotOnImdb)</a></li>
-            <li><a href="?@FormatQueryStringWithMinRating(NO_IMDB_RATING)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == NO_IMDB_RATING)">Niet beoordeeld op IMDb (@CountNotRatedOnImdb)</a></li>
-        </ul>
-    </div>
+    <ul class="dropdown-menu" role="menu">
+        <!-- class dropdown-menu -->
+        <li>
+            <a href="?@FormatQueryStringWithTypeMask(7)" class="btn-@GetFilterStyle(FilterTypeMask == 7)">Toon alle (@Count)</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+            <a href="?@FormatQueryStringWithTypeMask(1)" class="btn-@GetFilterStyle(FilterTypeMask != 7 && (FilterTypeMask & 1) != 0)">Enkel films (@CountTypeFilm)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithTypeMask(2)" class="btn-@GetFilterStyle(FilterTypeMask != 7 && (FilterTypeMask & 2) != 0)">Enkel kortfilms (@CountTypeShort)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithTypeMask(4)" class="btn-@GetFilterStyle(FilterTypeMask != 7 && (FilterTypeMask & 4) != 0)">Enkel series (@CountTypeSerie)</a>
+        </li>
+    </ul>
+</div>
 
-    <div class="btn-group">
-        <a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn btn-@GetFilterStyle(FilterCert != Cert.all)">
-            @if (FilterCert == Cert.all)
+<div class="btn-group">
+    <a href="?@FormatQueryStringWithMinRating(null)" class="btn btn-@GetFilterStyle(FilterMinRating.HasValue)">
+        IMDb Sterren
+        @if (FilterMinRating.HasValue)
+        {
+            if (FilterMinRating.Value == NO_IMDB_ID)
             {
-                @: Alle Certificaties
+                @: (geen IMDb)
+            }
+            else if (FilterMinRating.Value == NO_IMDB_RATING)
+            {
+                @: (geen Sterren)
             }
             else
             {
-                @: Certificaties (@FormatCert(FilterCert))
+                @: (@(FilterMinRating.Value.ToString("0.#"))+)
             }
-        </a>
-        <button type="button" class="btn btn-@GetFilterStyle(FilterCert != Cert.all) dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only">Certificaties</span>
-        </button>
-        
-        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(FilterCert == Cert.all)">Alle films tonen (@Count)</a></li>
-            <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.g)" class="btn-@GetFilterStyle((FilterCert & Cert.g) != 0)">G (@CountCertG)</a></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@GetFilterStyle((FilterCert & Cert.pg) != 0)">PG (@CountCertPG)</a></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@GetFilterStyle((FilterCert & Cert.pg13) != 0)">PG-13 (@CountCertPG13)</a></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.r)" class="btn-@GetFilterStyle((FilterCert & Cert.r) != 0)">R (@CountCertR)</a></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@GetFilterStyle((FilterCert & Cert.nc17) != 0)">NC-17 (@CountCertNC17)</a></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((FilterCert & Cert.other) != 0)">Overige (@CountCertOther)</a></li>
-            <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithToggleCert(Cert.none)" class="btn-@GetFilterStyle((FilterCert & Cert.none) != 0)">Zonder (@CountCertNone)</a></li>
-        </ul>
-    </div>
+        }
+    </a>
+    <button type="button" class="btn btn-@GetFilterStyle(FilterMinRating.HasValue) dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span> <!-- caret -->
+        <span class="sr-only">IMDb Sterren</span>
+    </button>
 
-    <div class="btn-group">
-        <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn btn-@GetFilterStyle(FilterNotYetRated.HasValue)">
-            @if (FilterNotYetRated.HasValue)
+    <ul class="dropdown-menu" role="menu">
+        <!-- class dropdown-menu -->
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(null)" class="btn-@GetFilterStyle(!FilterMinRating.HasValue)">Toon alle films (@Count)</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(9.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 9.0m)">Enkel met 9+ sterren (@CountMinRating9)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(8.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 8.0m)">Enkel met 8+ sterren (@CountMinRating8)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(7.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 7.0m)">Enkel met 7+ sterren (@CountMinRating7)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(6.5m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 6.5m)">Enkel met 6.5+ sterren (@CountMinRating65)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(6.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 6.0m)">Enkel met 6+ sterren (@CountMinRating6)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(5.0m)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == 5.0m)">Enkel met 5+ sterren (@CountMinRating5)</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(NO_IMDB_ID)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == NO_IMDB_ID)">Niet gevonden op IMDb (@CountNotOnImdb)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMinRating(NO_IMDB_RATING)" class="btn-@GetFilterStyle(FilterMinRating.HasValue && FilterMinRating.Value == NO_IMDB_RATING)">Niet beoordeeld op IMDb (@CountNotRatedOnImdb)</a>
+        </li>
+    </ul>
+</div>
+
+<div class="btn-group">
+    <a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn btn-@GetFilterStyle(FilterCert != Cert.all)">
+        @if (FilterCert == Cert.all)
+        {
+            @: Alle Certificaties
+        }
+        else
+        {
+            @: Certificaties (@FormatCert(FilterCert))
+        }
+    </a>
+    <button type="button" class="btn btn-@GetFilterStyle(FilterCert != Cert.all) dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span> <!-- caret -->
+        <span class="sr-only">Certificaties</span>
+    </button>
+
+    <ul class="dropdown-menu" role="menu">
+        <!-- class dropdown-menu -->
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.all)" class="btn-@GetFilterStyle(FilterCert == Cert.all)">Alle films tonen (@Count)</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.g)" class="btn-@GetFilterStyle((FilterCert & Cert.g) != 0)">G (@CountCertG)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.pg)" class="btn-@GetFilterStyle((FilterCert & Cert.pg) != 0)">PG (@CountCertPG)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.pg13)" class="btn-@GetFilterStyle((FilterCert & Cert.pg13) != 0)">PG-13 (@CountCertPG13)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.r)" class="btn-@GetFilterStyle((FilterCert & Cert.r) != 0)">R (@CountCertR)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.nc17)" class="btn-@GetFilterStyle((FilterCert & Cert.nc17) != 0)">NC-17 (@CountCertNC17)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.other)" class="btn-@GetFilterStyle((FilterCert & Cert.other) != 0)">Overige (@CountCertOther)</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+            <a href="?@FormatQueryStringWithToggleCert(Cert.none)" class="btn-@GetFilterStyle((FilterCert & Cert.none) != 0)">Zonder (@CountCertNone)</a>
+        </li>
+    </ul>
+</div>
+
+<div class="btn-group">
+    <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn btn-@GetFilterStyle(FilterNotYetRated.HasValue)">
+        @if (FilterNotYetRated.HasValue)
+        {
+            @if (FilterNotYetRated.Value)
             {
-                @if (FilterNotYetRated.Value)
-                {
-                    @: Enkel niet bekeken
-                }
-                else
-                {
-                    @: Enkel bekeken
-                }
+                @: Enkel niet bekeken
             }
             else
             {
-                @: Zowel bekeken als niet bekeken
+                @: Enkel bekeken
             }
-        </a>
-        <button type="button" class="btn btn-@GetFilterStyle(FilterNotYetRated.HasValue) dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only"></span>
-        </button>
-        
-        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-            <li>
-                <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn-@GetFilterStyle(!FilterNotYetRated.HasValue)">
-                    Alle films tonen (@Count)
-                </a>
-            </li>
-            <li class="divider"></li>
-            <li class="@(string.IsNullOrEmpty(ImdbUserId)? "disabled" : "")">
-                <a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(FilterNotYetRated.HasValue && FilterNotYetRated.Value)">
-                    Enkel films tonen die nog niet bekeken zijn (@CountNotYetRated)
-                </a>
-            </li>
-            <li class="@(string.IsNullOrEmpty(ImdbUserId)? "disabled" : "")">
-                <a href="?@FormatQueryStringWithNotYetRated(false)" class="btn-@GetFilterStyle(FilterNotYetRated.HasValue && !FilterNotYetRated.Value)">
-                    Enkel films tonen die wel bekeken zijn (@CountRated)
-                </a>
-            </li>
-            <li class="divider"></li>
+        }
+        else
+        {
+            @: Zowel bekeken als niet bekeken
+        }
+    </a>
+    <button type="button" class="btn btn-@GetFilterStyle(FilterNotYetRated.HasValue) dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span> <!-- caret -->
+        <span class="sr-only"></span>
+    </button>
 
-            @if (string.IsNullOrEmpty(ImdbUserId))
+    <ul class="dropdown-menu" role="menu">
+        <!-- class dropdown-menu -->
+        <li>
+            <a href="?@FormatQueryStringWithNotYetRated(null)" class="btn-@GetFilterStyle(!FilterNotYetRated.HasValue)">
+                Alle films tonen (@Count)
+            </a>
+        </li>
+        <li class="divider"></li>
+        <li class="@(string.IsNullOrEmpty(ImdbUserId) ? "disabled" : "")">
+            <a href="?@FormatQueryStringWithNotYetRated(true)" class="btn-@GetFilterStyle(FilterNotYetRated.HasValue && FilterNotYetRated.Value)">
+                Enkel films tonen die nog niet bekeken zijn (@CountNotYetRated)
+            </a>
+        </li>
+        <li class="@(string.IsNullOrEmpty(ImdbUserId) ? "disabled" : "")">
+            <a href="?@FormatQueryStringWithNotYetRated(false)" class="btn-@GetFilterStyle(FilterNotYetRated.HasValue && !FilterNotYetRated.Value)">
+                Enkel films tonen die wel bekeken zijn (@CountRated)
+            </a>
+        </li>
+        <li class="divider"></li>
+
+        @if (string.IsNullOrEmpty(ImdbUserId))
+        {
+            <li class="dropdown-header">IMDb gebruiker is niet ingesteld</li>
+        }
+        else
+        {
+            <li class="dropdown-header">Je gebruikt IMDb gebruiker @(ImdbUserId).</li>
+            @if (RefreshRequestTime.HasValue)
             {
-                <li class="dropdown-header">IMDb gebruiker is niet ingesteld</li>
+                <li class="dropdown-header">
+                    Er is een refresh van je IMDb ratings gepland.<br/>
+                    Refresh de pagina binnen enkele minuten om het resultaat te zien.
+                </li>
+            }
+            else if (LastRefreshRatingsTime.HasValue)
+            {
+                <li class="dropdown-header">
+                    Je IMDb ratings werden laatst herladen op @LastRefreshRatingsTime.Value.ToLocalTime().
+                </li>
             }
             else
             {
-                <li class="dropdown-header">Je gebruikt IMDb gebruiker @(ImdbUserId).</li>
-                @if (RefreshRequestTime.HasValue)
-                {
-                    <li class="dropdown-header">
-                        Er is een refresh van je IMDb ratings gepland.<br/>
-                        Refresh de pagina binnen enkele minuten om het resultaat te zien.
-                    </li>
-                }
-                else if (LastRefreshRatingsTime.HasValue)
-                {
-                    <li class="dropdown-header">
-                        Je IMDb ratings werden laatst herladen op @LastRefreshRatingsTime.Value.ToLocalTime().
-                    </li>
-                }
-                else
-                {
-                    <li class="dropdown-header">
-                        Je IMDb ratings werden nog niet opgehaald.
-                    </li>
-                }
-                <!--li><a href="/User?forcerefresh=true">IMDb ratings nu geforceerd herladen</a></li-->
-                <!--li class="divider"></li-->
+                <li class="dropdown-header">
+                    Je IMDb ratings werden nog niet opgehaald.
+                </li>
             }
-            <li><a href="/User">IMDb gebruiker instellen</a></li>
-        </ul>
-    </div>
+            <!--li><a href="/User?forcerefresh=true">IMDb ratings nu geforceerd herladen</a></li-->
+            <!--li class="divider"></li-->
+        }
+        <li>
+            <a href="/User">IMDb gebruiker instellen</a>
+        </li>
+    </ul>
+</div>
 
-    <div class="btn-group">
-        <a href="?@FormatQueryStringWithMaxDays(0)" class="btn btn-@GetFilterStyle(FilterMaxDays != FilterMaxDaysDefault)">
-            @if (FilterMaxDays == 0)
-            {
-                @: Aantal dagen (maximum)
-            }
-            else
-            {
-                @: Aantal dagen (@FilterMaxDays)
-            }
-        </a>
-        <button type="button" class="btn btn-@GetFilterStyle(FilterMaxDays != FilterMaxDaysDefault) dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>  <!-- caret -->
-            <span class="sr-only">Certificaties</span>
-        </button>
-        
-        <ul class="dropdown-menu" role="menu"> <!-- class dropdown-menu -->
-            <li><a href="?@FormatQueryStringWithMaxDays(0)" class="btn-@GetFilterStyle(FilterMaxDays == 0)">Maximum aantal dagen (@Count)</a></li>
-            <li class="divider"></li>
-            <li><a href="?@FormatQueryStringWithMaxDays(8)" class="btn-@GetFilterStyle(FilterMaxDays == 8)">8 dagen (@Count8days)</a></li>
-            <li><a href="?@FormatQueryStringWithMaxDays(5)" class="btn-@GetFilterStyle(FilterMaxDays == 5)">5 dagen (@Count5days)</a></li>
-            <li><a href="?@FormatQueryStringWithMaxDays(3)" class="btn-@GetFilterStyle(FilterMaxDays == 3)">3 dagen (@Count3days)</a></li>
-        </ul>
-    </div>
+<div class="btn-group">
+    <a href="?@FormatQueryStringWithMaxDays(0)" class="btn btn-@GetFilterStyle(FilterMaxDays != FilterMaxDaysDefault)">
+        @if (FilterMaxDays == 0)
+        {
+            @: Aantal dagen (maximum)
+        }
+        else
+        {
+            @: Aantal dagen (@FilterMaxDays)
+        }
+    </a>
+    <button type="button" class="btn btn-@GetFilterStyle(FilterMaxDays != FilterMaxDaysDefault) dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span> <!-- caret -->
+        <span class="sr-only">Certificaties</span>
+    </button>
+
+    <ul class="dropdown-menu" role="menu">
+        <!-- class dropdown-menu -->
+        <li>
+            <a href="?@FormatQueryStringWithMaxDays(0)" class="btn-@GetFilterStyle(FilterMaxDays == 0)">Maximum aantal dagen (@Count)</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+            <a href="?@FormatQueryStringWithMaxDays(8)" class="btn-@GetFilterStyle(FilterMaxDays == 8)">8 dagen (@Count8days)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMaxDays(5)" class="btn-@GetFilterStyle(FilterMaxDays == 5)">5 dagen (@Count5days)</a>
+        </li>
+        <li>
+            <a href="?@FormatQueryStringWithMaxDays(3)" class="btn-@GetFilterStyle(FilterMaxDays == 3)">3 dagen (@Count3days)</a>
+        </li>
+    </ul>
+</div>
 </div>

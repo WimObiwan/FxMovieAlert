@@ -23,4 +23,4 @@ public class Movie
     public List<UserRating> UserRatings { get; set; }
     public List<UserWatchListItem> UserWatchListItems { get; set; }
     public List<ManualMatch> ManualMatches { get; set; }
-}   
+}

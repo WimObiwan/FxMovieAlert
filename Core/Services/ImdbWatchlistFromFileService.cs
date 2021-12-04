@@ -28,8 +28,8 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
     {
         List<Tuple<string, string, string>> lastImportErrors2 = null;
         var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
-        
-        int moreErrors = 0;
+
+        var moreErrors = 0;
         using (var reader = new StreamReader(stream))
         using (engine.BeginReadStream(reader))
         {
@@ -38,10 +38,10 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
                 {
                     try
                     {
-                        string _const = record.Const;
+                        var _const = record.Const;
 
-                        DateTime date = DateTime.ParseExact(record.Created, 
-                            new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
+                        var date = DateTime.ParseExact(record.Created,
+                            new string[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
                             CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
 
                         return new ImdbWatchlist()
@@ -84,48 +84,38 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 #pragma warning disable CS0649
     [IgnoreFirst]
     [DelimitedRecord(",")]
-    class ImdbUserWatchlistRecord
+    private class ImdbUserWatchlistRecord
     {
         // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
 
-        [FieldQuoted]
-        public string Position;
-        [FieldQuoted]
-        public string Const;
+        [FieldQuoted] public string Position;
+        [FieldQuoted] public string Const;
+
         [FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'
         public string Created;
+
         //[FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'?
         public string Modified;
-        [FieldQuoted]
-        public string description;
-        [FieldQuoted]
-        public string Title;
-        [FieldQuoted]
-        public string Url;
-        [FieldQuoted]
-        public string TitleType;
-        [FieldQuoted]
-        public string IMDbRating;
-        [FieldQuoted]
-        public string Runtime;
-        [FieldQuoted]
-        public string Year;
-        [FieldQuoted]
-        public string Genres;
-        [FieldQuoted]
-        public string NumVotes;
+        [FieldQuoted] public string description;
+        [FieldQuoted] public string Title;
+        [FieldQuoted] public string Url;
+        [FieldQuoted] public string TitleType;
+        [FieldQuoted] public string IMDbRating;
+        [FieldQuoted] public string Runtime;
+        [FieldQuoted] public string Year;
+        [FieldQuoted] public string Genres;
+        [FieldQuoted] public string NumVotes;
+
         [FieldQuoted]
         //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
         public string ReleaseDate;
-        [FieldQuoted]
-        public string Directors;
-        [FieldQuoted]
-        public string YourRating;
-        [FieldQuoted]
-        public string Rated;
+
+        [FieldQuoted] public string Directors;
+        [FieldQuoted] public string YourRating;
+        [FieldQuoted] public string Rated;
     }
 }

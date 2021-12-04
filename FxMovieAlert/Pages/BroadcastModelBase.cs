@@ -30,7 +30,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     public string ImdbUserId { get; private set; } = null;
     public DateTime? RefreshRequestTime { get; private set; } = null;
     public DateTime? LastRefreshRatingsTime { get; private set; } = null;
-    public bool? LastRefreshSuccess = null;       
+    public bool? LastRefreshSuccess = null;
 
     public bool? FilterOnlyHighlights { get; private set; } = null;
     public bool FilterOnlyHighlightsDefault { get; private set; } = true;
@@ -87,10 +87,10 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         this.usersRepository = usersRepository;
     }
 
-    public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null, 
+    public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null,
         bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null)
     {
-        string userId = ClaimChecker.UserId(User.Identity);
+        var userId = ClaimChecker.UserId(User.Identity);
 
         var now = DateTime.Now;
 
@@ -108,7 +108,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         if (minrating.HasValue)
             FilterMinRating = minrating.Value;
-        
+
         // Only allow setting more days when authenticated
         if (maxdays.HasValue && User.Identity.IsAuthenticated)
             FilterMaxDays = maxdays.Value;
@@ -121,23 +121,26 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         bool? streaming;
         switch (feed)
         {
-            case MovieEvent.FeedType.Broadcast: streaming = false; break;
-            case MovieEvent.FeedType.FreeVod: streaming = true; break;
-            default: streaming = null; break;
-        } 
-        var dbMovieEvents = fxMoviesDbContext.MovieEvents.Where(me => me.Feed == feed || me.Feed == null && me.Vod == streaming);
+            case MovieEvent.FeedType.Broadcast:
+                streaming = false;
+                break;
+            case MovieEvent.FeedType.FreeVod:
+                streaming = true;
+                break;
+            default:
+                streaming = null;
+                break;
+        }
+
+        var dbMovieEvents =
+            fxMoviesDbContext.MovieEvents.Where(me => me.Feed == feed || me.Feed == null && me.Vod == streaming);
 
         if (feed == MovieEvent.FeedType.Broadcast)
-        {
-            dbMovieEvents = dbMovieEvents.Where(me => 
-                (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays))
-                &&
-                (me.EndTime >= now && me.StartTime >= now.AddMinutes(-30)));
-        }
+            dbMovieEvents = dbMovieEvents.Where(me =>
+                (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays)) && me.EndTime >= now &&
+                me.StartTime >= now.AddMinutes(-30));
         else
-        {
             dbMovieEvents = dbMovieEvents.Where(me => me.EndTime == null || me.EndTime >= now);
-        }
 
         if (userId != null)
         {
@@ -165,7 +168,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
                     .SingleOrDefault(me => me.Id == m.Value);
                 if (MovieEvent != null)
                 {
-                    int days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
+                    var days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
                     if (FilterMaxDays != 0 && FilterMaxDays < days)
                         FilterMaxDays = days;
                 }
@@ -182,11 +185,13 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         CountMinRating7 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 70).CountAsync();
         CountMinRating8 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 80).CountAsync();
         CountMinRating9 = await dbMovieEvents.Where(me => me.Movie.ImdbRating >= 90).CountAsync();
-        CountNotOnImdb = await dbMovieEvents.Where(me => me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)).CountAsync();
+        CountNotOnImdb = await dbMovieEvents
+            .Where(me => me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)
+            .CountAsync();
         CountNotRatedOnImdb = await dbMovieEvents.Where(me => me.Movie.ImdbRating == null).CountAsync();
         CountCertNone = await dbMovieEvents.Where(me => string.IsNullOrEmpty(me.Movie.Certification)).CountAsync();
         CountCertG = await dbMovieEvents.Where(me => me.Movie.Certification == "US:G").CountAsync();
-        CountCertPG =  await dbMovieEvents.Where(me => me.Movie.Certification == "US:PG").CountAsync();
+        CountCertPG = await dbMovieEvents.Where(me => me.Movie.Certification == "US:PG").CountAsync();
         CountCertPG13 = await dbMovieEvents.Where(me => me.Movie.Certification == "US:PG-13").CountAsync();
         CountCertR = await dbMovieEvents.Where(me => me.Movie.Certification == "US:R").CountAsync();
         CountCertNC17 = await dbMovieEvents.Where(me => me.Movie.Certification == "US:NC-17").CountAsync();
@@ -198,24 +203,26 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         Count8days = await dbMovieEvents.Where(me => me.StartTime.Date <= now.Date.AddDays(8)).CountAsync();
 
         var tmp = dbMovieEvents
-            .Where(me => 
-                (
-                    ((FilterTypeMask & 1) == 1 && me.Type == 1)
-                    || ((FilterTypeMask & 2) == 2 && me.Type == 2)
-                    || ((FilterTypeMask & 4) == 4 && me.Type == 3)
-                )
-                &&
-                (!FilterMinRating.HasValue 
-                    || (FilterMinRating.Value == Components.FilterBar.NO_IMDB_ID && (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)))
-                    || (FilterMinRating.Value == Components.FilterBar.NO_IMDB_RATING && me.Movie.ImdbRating == null)
-                    || (FilterMinRating.Value >= 0.0m && (me.Movie.ImdbRating >= FilterMinRating.Value * 10)))
+            .Where(me =>
+                    (
+                        (FilterTypeMask & 1) == 1 && me.Type == 1
+                        || (FilterTypeMask & 2) == 2 && me.Type == 2
+                        || (FilterTypeMask & 4) == 4 && me.Type == 3
+                    )
+                    &&
+                    (!FilterMinRating.HasValue
+                     || FilterMinRating.Value == Components.FilterBar.NO_IMDB_ID && (me.Movie == null ||
+                         string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)
+                     || FilterMinRating.Value == Components.FilterBar.NO_IMDB_RATING && me.Movie.ImdbRating == null
+                     || FilterMinRating.Value >= 0.0m && me.Movie.ImdbRating >= FilterMinRating.Value * 10)
                 // && 
                 // (FilterCert == Cert.all || (ParseCertification(me.Movie.Certification) & FilterCert) != 0)
             )
             .AsNoTracking()
             .Include(me => me.Channel)
             .Include(me => me.Movie)
-            .Select(me => new {
+            .Select(me => new
+            {
                 MovieEvent = me,
                 UserRating = me.Movie.UserRatings.FirstOrDefault(ur => ur.User.UserId == userId),
                 UserWatchListItem = me.Movie.UserWatchListItems.FirstOrDefault(ur => ur.User.UserId == userId)
@@ -225,23 +232,21 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
                     MovieEvent = r.MovieEvent,
                     UserRating = r.UserRating,
                     UserWatchListItem = r.UserWatchListItem,
-                    Highlighted = 
+                    Highlighted =
                         r.UserWatchListItem != null
                         ||
-                        (r.UserRating != null 
-                            && r.UserRating.Rating >= HighlightedFilterRatingThreshold 
-                            && r.UserRating.RatingDate < now.AddMonths(-HighlightedFilterMonthsThreshold))
+                        r.UserRating != null
+                        && r.UserRating.Rating >= HighlightedFilterRatingThreshold
+                        && r.UserRating.RatingDate < now.AddMonths(-HighlightedFilterMonthsThreshold)
                 }
             );
 
         if (FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault))
-        {
             tmp = tmp
                 .Where(r => r.UserRating == null || r.Highlighted)
                 .OrderByDescending(r => r.Highlighted)
                 .ThenByDescending(r => r.MovieEvent.Movie.ImdbRating)
                 .Take(30);
-        }
 
         Records = await tmp.ToListAsync();
     }
@@ -279,7 +284,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     {
         if (string.IsNullOrEmpty(local))
             return remote;
-        
+
         return "/images/cache/" + local;
     }
 

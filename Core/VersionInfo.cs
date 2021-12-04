@@ -10,7 +10,7 @@ public interface IVersionInfo
 
 public class VersionInfo : IVersionInfo
 {
-    string assemblyVersion;
+    private string assemblyVersion;
 
     public VersionInfo(Assembly assemblyForVersion)
     {
@@ -23,4 +23,3 @@ public class VersionInfo : IVersionInfo
 
     public string DotNetCoreVersion => System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
 }
-

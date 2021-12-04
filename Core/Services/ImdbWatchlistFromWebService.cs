@@ -30,30 +30,29 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
         this.httpClientFactory = httpClientFactory;
     }
 
-    class JsonData
+    private class JsonData
     {
         public List list { get; set; }
         public Dictionary<string, Title> titles { get; set; }
     }
 
-    class List
+    private class List
     {
         public List<Item> items { get; set; }
     }
 
-    class Item
+    private class Item
     {
         public string added { get; set; }
-        [JsonPropertyName("const")]
-        public string imdbMovieId { get; set; }
+        [JsonPropertyName("const")] public string imdbMovieId { get; set; }
     }
 
-    class Title
+    private class Title
     {
         public Primary primary { get; set; }
     }
 
-    class Primary
+    private class Primary
     {
         public string title { get; set; }
     }
@@ -74,11 +73,12 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
         // ==> nq = non-quoted
 
         string text;
-        using (Stream stream = await response.Content.ReadAsStreamAsync())
+        using (var stream = await response.Content.ReadAsStreamAsync())
         using (TextReader textReader = new StreamReader(stream))
         {
             text = await textReader.ReadToEndAsync();
         }
+
         var jsonString = Regex.Match(text, @"IMDbReactInitialState\.push\(({.*})\);").Groups[1].Value;
         return System.Text.Json.JsonSerializer.Deserialize<JsonData>(jsonString);
     }
@@ -87,9 +87,9 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
     {
         return jsonData.list.items.Select(i =>
         {
-            jsonData.titles.TryGetValue(i.imdbMovieId, out Title title);
-            DateTime.TryParseExact(i.added, "dd MMM yyyy", CultureInfo.GetCultureInfo("en-GB"), 
-                DateTimeStyles.AllowWhiteSpaces, out DateTime dateTimeAdded);
+            jsonData.titles.TryGetValue(i.imdbMovieId, out var title);
+            DateTime.TryParseExact(i.added, "dd MMM yyyy", CultureInfo.GetCultureInfo("en-GB"),
+                DateTimeStyles.AllowWhiteSpaces, out var dateTimeAdded);
             return new ImdbWatchlist()
             {
                 ImdbId = i.imdbMovieId,

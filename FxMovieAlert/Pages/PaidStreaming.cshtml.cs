@@ -18,5 +18,6 @@ public class PaidStreamingModel : BroadcastsModelBase
             siteOptions,
             fxMoviesDbContext,
             usersRepository)
-    {}
+    {
+    }
 }

@@ -12,9 +12,7 @@ span.stars, span.stars span {
     height: 16px;
 }
 
-span.stars span {
-    background-position: 0 0;
-}
+span.stars span { background-position: 0 0; }
 
 h2 {
     padding: 0px;
@@ -22,8 +20,8 @@ h2 {
 }
 
 div.small-alert {
-    padding-left: 10px; 
-    padding-right: 10px; 
+    padding-left: 10px;
+    padding-right: 10px;
     padding-top: 3px;
     padding-bottom: 3px;
     margin-bottom: 0px;
@@ -36,18 +34,12 @@ p.slim {
     margin: 0px;
 }
 
-div.reverse-collapsible {
-    display: none;
-}
+div.reverse-collapsible { display: none; }
 
 @media only screen and (max-width: 1000px) {
-    td.collapsible {
-        display: none;
-    }
+    td.collapsible { display: none; }
 
-    div.reverse-collapsible {
-        display: inline-block;
-    }
+    div.reverse-collapsible { display: inline-block; }
 
     span.stars, span.stars span {
         display: none;

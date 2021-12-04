@@ -17,15 +17,16 @@ public class SystemInfoCheck : IHealthCheck
 
     public Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
-        HealthCheckResult result = new HealthCheckResult(HealthStatus.Healthy, null, null, 
-                new Dictionary<string, object>() {
-                    { "Version", versionInfo.Version },
-                    { "DotNetCoreVersion", versionInfo.DotNetCoreVersion },
-                    { "MachineName", System.Environment.MachineName }
-                });
-            
+        var result = new HealthCheckResult(HealthStatus.Healthy, null, null,
+            new Dictionary<string, object>()
+            {
+                { "Version", versionInfo.Version },
+                { "DotNetCoreVersion", versionInfo.DotNetCoreVersion },
+                { "MachineName", System.Environment.MachineName }
+            });
+
         return Task.FromResult(result);
     }
 }

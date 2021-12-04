@@ -18,4 +18,4 @@ public class ManualMatch
     public Movie Movie { get; set; }
 
     public int? MovieId { get; set; }
-}   
+}

@@ -22,7 +22,7 @@ public class UpdateImdbUserDataCommand : IUpdateImdbUserDataCommand
     private readonly IUserWatchlistRepository userWatchlistRepository;
     private readonly IUsersRepository usersRepository;
 
-    public UpdateImdbUserDataCommand(ILogger<UpdateImdbUserDataCommand> logger, 
+    public UpdateImdbUserDataCommand(ILogger<UpdateImdbUserDataCommand> logger,
         IImdbRatingsFromWebService imdbRatingsService,
         IImdbWatchlistFromWebService imdbWatchlistService,
         IUserRatingsRepository userRatingsRepository,
@@ -45,11 +45,12 @@ public class UpdateImdbUserDataCommand : IUpdateImdbUserDataCommand
             if (updateAllRatings)
                 fromDateTime = DateTime.MinValue;
             else
-                fromDateTime = (await userRatingsRepository.GetLastRatingCheckByImdbUserId(imdbUserId)) ?? DateTime.MinValue;
+                fromDateTime = await userRatingsRepository.GetLastRatingCheckByImdbUserId(imdbUserId) ??
+                               DateTime.MinValue;
 
             var ratings = await imdbRatingsService.GetRatingsAsync(imdbUserId, fromDateTime);
             var result = await userRatingsRepository.StoreByImdbUserId(imdbUserId, ratings, updateAllRatings);
-            string message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films.";
+            var message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films.";
             if (updateAllRatings)
                 message = $"  {result.RemovedCount} films verwijderd.";
             await usersRepository.SetRatingRefreshResult(imdbUserId, true, message);
@@ -65,8 +66,8 @@ public class UpdateImdbUserDataCommand : IUpdateImdbUserDataCommand
         {
             var watchlistEntries = await imdbWatchlistService.GetWatchlistAsync(imdbUserId);
             var result = await userWatchlistRepository.StoreByImdbUserId(imdbUserId, watchlistEntries, true);
-            string message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films."
-                + $"  {result.RemovedCount} films verwijderd.";
+            var message = $"{result.NewCount} nieuwe en {result.ExistingCount} bestaande films."
+                          + $"  {result.RemovedCount} films verwijderd.";
             await usersRepository.SetWatchlistRefreshResult(imdbUserId, true, message);
         }
         catch (Exception x)

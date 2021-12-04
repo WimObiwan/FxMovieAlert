@@ -152,7 +152,7 @@
 //                 if (yeloBroadcast == null)
 //                 {
 //                     Console.WriteLine($"WARNING: {yeloChannelId}/{humoChannelId} {movieEvent.StartTime} {movieEvent.Title} not found in broadcast list");
-                    
+
 //                     Console.WriteLine("Other broadcasts:");
 //                     foreach (var item in yeloChannel.broadcast.Where (b => b.starttime >= time_t - 3600 * 3 && b.starttime <= time_t + 3600 * 3))
 //                     {
@@ -179,3 +179,4 @@
 //         }
 //     }
 // }
+

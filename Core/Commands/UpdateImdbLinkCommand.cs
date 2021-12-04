@@ -41,7 +41,8 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
             .SingleOrDefaultAsync(me => me.Id == movieEventId);
         if (movieEvent != null)
         {
-            if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == imdbId && movieEvent.Movie.ImdbIgnore != ignoreImdbLink)
+            if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == imdbId &&
+                movieEvent.Movie.ImdbIgnore != ignoreImdbLink)
             {
                 // Already ok, Do nothing
                 logger.LogInformation("Skipped saving {ImdbId}, no changes", imdbId);
@@ -81,6 +82,6 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
             }
 
             await fxMoviesDbContext.SaveChangesAsync();
-        } 
+        }
     }
 }

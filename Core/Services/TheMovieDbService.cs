@@ -21,7 +21,6 @@ public interface ITheMovieDbService
 {
     Task<string> GetCertification(string imdbId);
     Task<GetImagesResult> GetImages(string imdbId);
-
 }
 
 public class TheMovieDbServiceOptions
@@ -62,14 +61,15 @@ public class TheMovieDbService : ITheMovieDbService
     private readonly string apiKey;
     private readonly string[] certificationCountryPreference;
 
-    public TheMovieDbService(ILogger<TheMovieDbServiceOptions> logger, IOptionsSnapshot<TheMovieDbServiceOptions> options,
+    public TheMovieDbService(ILogger<TheMovieDbServiceOptions> logger,
+        IOptionsSnapshot<TheMovieDbServiceOptions> options,
         IHttpClientFactory httpClientFactory)
     {
         this.logger = logger;
         this.httpClientFactory = httpClientFactory;
         var o = options.Value;
-        this.apiKey = o.ApiKey;
-        this.certificationCountryPreference = o.CertificationCountryPreference;
+        apiKey = o.ApiKey;
+        certificationCountryPreference = o.CertificationCountryPreference;
     }
 
     public async Task<string> GetCertification(string imdbId)
@@ -93,18 +93,21 @@ public class TheMovieDbService : ITheMovieDbService
                 logger.LogInformation("Certification {ImdbId} ==> NONE", imdbId);
                 return null;
             }
+
             foreach (var countryId in certificationCountryPreference)
             {
-                var certification = certifications.FirstOrDefault(c => c.iso_3166_1 == countryId && !string.IsNullOrEmpty(c.certification));
+                var certification = certifications.FirstOrDefault(c =>
+                    c.iso_3166_1 == countryId && !string.IsNullOrEmpty(c.certification));
                 if (certification != null)
                 {
-                    string label = $"{certification.iso_3166_1}:{certification.certification}";
+                    var label = $"{certification.iso_3166_1}:{certification.certification}";
                     logger.LogInformation("Certification {ImdbId} ==> {Label}", imdbId, label);
                     return label;
                 }
             }
 
-            logger.LogInformation("Certification {ImdbId} ==> NOT FOUND IN {CertificationsCount} items", imdbId, certifications.Count);
+            logger.LogInformation("Certification {ImdbId} ==> NOT FOUND IN {CertificationsCount} items", imdbId,
+                certifications.Count);
         }
         catch (Exception x)
         {
@@ -129,8 +132,8 @@ public class TheMovieDbService : ITheMovieDbService
             var movie = await client.GetFromJsonAsync<Movie>(url);
 
             logger.LogInformation("Image {ImdbId} ==> {OriginalTitle}", imdbId, movie.original_title);
-            
-            string baseUrl = "http://image.tmdb.org/t/p";
+
+            var baseUrl = "http://image.tmdb.org/t/p";
             string posterM, posterS;
 
             // Image sizes:

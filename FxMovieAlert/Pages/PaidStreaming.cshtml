@@ -1,6 +1,7 @@
 ﻿@page
 @model PaidStreamingModel
 @using System.Globalization;
+
 @{
     ViewData["Title"] = "Betalende Streaming";
     if (Model.FilterOnlyHighlights ?? Model.FilterOnlyHighlightsDefault)
@@ -22,113 +23,113 @@
         ViewData["og:image"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
         ViewData["og:image:secure_url"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
     }
-    DateTime now = DateTime.Now;
+    var now = DateTime.Now;
 }
 
-    <link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/index.css" asp-append-version="true"/>
 
-    <script>
+<script>
 
-        @if (Model.MovieEvent != null)
-        {
-            @: setTimeout(function() { window.location.hash = "#@Model.MovieEvent.Id"; })
-        }
+    @if (Model.MovieEvent != null)
+    {
+        @: setTimeout(function() { window.location.hash = "#@Model.MovieEvent.Id"; })
+    }
 
-    </script>
+</script>
 
-    <component type="typeof(FilterBar)" render-mode="Static" param-ParentModel='Model' />
+<component type="typeof(FilterBar)" render-mode="Static" param-ParentModel="Model"/>
 
-    <table class="table">
-    <tbody>
-        @foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.EndTime).ThenByDescending(m => m.MovieEvent.Movie?.ImdbRating ?? 0))
-        {
-            var movieEvent = record.MovieEvent;
-            
-            DateTime? endDate;
-            int? daysAvailable;
-            if (!movieEvent.EndTime.HasValue || movieEvent.EndTime.Value >= now.AddMonths(6))
+<table class="table">
+<tbody>
+@foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.EndTime).ThenByDescending(m => m.MovieEvent.Movie?.ImdbRating ?? 0))
+{
+    var movieEvent = record.MovieEvent;
+
+    DateTime? endDate;
+    int? daysAvailable;
+    if (!movieEvent.EndTime.HasValue || movieEvent.EndTime.Value >= now.AddMonths(6))
+    {
+        endDate = null;
+        daysAvailable = null;
+    }
+    else
+    {
+        if (movieEvent.EndTime.Value.Hour >= 22)
+            endDate = movieEvent.EndTime.Value.Date;
+        else
+            endDate = movieEvent.EndTime.Value.AddHours(-1).Date;
+        daysAvailable = (int)(endDate.Value - now.Date).TotalDays;
+    }
+
+    <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
+        <td class="collapsible">
+            <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50/>
+            <br/>
+            <del>@(@endDate?.ToString("dddd"))</del>
+            <br/>
+            <del>@(@endDate?.ToShortDateString())</del>
+            <br/>
+            @if (movieEvent.Duration.HasValue)
             {
-                endDate = null;
-                daysAvailable = null;
+                @: @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
             }
-            else
-            { 
-                if (movieEvent.EndTime.Value.Hour >= 22)
-                    endDate = movieEvent.EndTime.Value.Date;
-                else
-                    endDate = movieEvent.EndTime.Value.AddHours(-1).Date;
-                daysAvailable = (int)(endDate.Value - now.Date).TotalDays;
+        </td>
+        <td class="collapsible">
+            @if (@movieEvent.PosterS != null)
+            {
+                <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150/>
             }
+        </td>
+        <td>
+            <a class="anchor" name="@movieEvent.Id"></a>
+            <div class="reverse-collapsible">
+                <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50/>
+                &nbsp;
+                <del>@(@endDate?.ToString("dddd")) @(@endDate?.ToShortDateString())</del>
+                @if (movieEvent.Duration.HasValue)
+                {
+                    @: &nbsp; (@(new TimeSpan((long)@movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
+                }
+            </div>
+            <h2>
+                @movieEvent.Title
+                @if (movieEvent.Year > 0)
+                {
+                    <small>@movieEvent.Year</small>
+                }
+                <small>
+                    @if (!string.IsNullOrEmpty(@movieEvent.Movie?.Certification))
+                    {
+                        @if (@movieEvent.Movie.Certification.Substring(0, 3) == "US:")
+                        {
+                            @movieEvent.Movie.Certification.Substring(3)
+                        }
+                        else
+                        {
+                            @movieEvent.Movie.Certification
+                        }
+                    }
 
-            <tr class="@(movieEvent.Id == Model.MovieEvent?.Id ? "info" : "")">
-                <td class="collapsible">
-                    <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
-                    <br/>
-                        <del>@(@endDate?.ToString("dddd"))</del>
-                    <br/>
-                        <del>@(@endDate?.ToShortDateString())</del>
-                    <br/>
-                    @if (movieEvent.Duration.HasValue)
-                    {
-                        @: @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
+                    @{
+                        var shareUrl = $"https://filmoptv.be/PaidStreaming/?m={movieEvent.Id}";
                     }
-                </td>
-                <td class="collapsible">
-                    @if (@movieEvent.PosterS != null)
+
+                    @if (Model.EditImdbLinks)
                     {
-                        <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
-                    }
-                </td>
-                <td>
-                    <a class="anchor" name="@movieEvent.Id" ></a>
-                    <div class="reverse-collapsible">
-                        <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50 />
-                        &nbsp;
-                        <del>@(@endDate?.ToString("dddd")) @(@endDate?.ToShortDateString())</del>
-                        @if (movieEvent.Duration.HasValue)
-                        {
-                            @: &nbsp; (@(new TimeSpan((long)@movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
-                        }
-                    </div>
-                    <h2>
-                        @movieEvent.Title
-                        @if (movieEvent.Year > 0)
-                        {
-                            <small>@movieEvent.Year</small>
-                        }
                         <small>
-                            @if (!string.IsNullOrEmpty(@movieEvent.Movie?.Certification))
-                            {
-                                @if (@movieEvent.Movie.Certification.Substring(0, 3) == "US:")
-                                {
-                                    @movieEvent.Movie.Certification.Substring(3)
-                                }
-                                else
-                                {
-                                    @movieEvent.Movie.Certification
-                                }
-                            }
-                            
-                            @{
-                                var shareUrl = $"https://filmoptv.be/PaidStreaming/?m={movieEvent.Id}";
-                            }
-
-                            @if (Model.EditImdbLinks)
-                            {
-                                <small>
-                                    <a href="@shareUrl">&pi;</a>
-                                </small>
-                            }
+                            <a href="@shareUrl">&pi;</a>
                         </small>
-                        <span style="white-space: nowrap; float: right;">
-                            <small>
-                                @if (!string.IsNullOrEmpty(movieEvent.VodLink))
-                                {
-                                    <a href="@movieEvent.VodLink" target="_blank" rel="noopener" title="Speel @movieEvent.Title af op @movieEvent.Channel.Name..." style="text-decoration: none">
-                                        <img src="/images/play.png" loading="lazy" alt="Yelo" height="32px" />
-                                    </a>
-                                }
-                                @* &nbsp;
+                    }
+                </small>
+                <span style="white-space: nowrap; float: right;">
+                    <small>
+                        @if (!string.IsNullOrEmpty(movieEvent.VodLink))
+                        {
+                            <a href="@movieEvent.VodLink" target="_blank" rel="noopener" title="Speel @movieEvent.Title af op @movieEvent.Channel.Name..." style="text-decoration: none">
+                                <img src="/images/play.png" loading="lazy" alt="Yelo" height="32px"/>
+                            </a>
+                        }
+                        @* &nbsp;
                                 @{
                                     string yeloUrl = movieEvent.YeloUrl;
                                     if (yeloUrl == null)
@@ -139,93 +140,98 @@
                                 <a href="@yeloUrl" target="_blank" rel="noopener" title="Programmeer @movieEvent.Title op je digicorder..." style="text-decoration: none">
                                     <img src="/images/yeloplay-55x32.png" loading="lazy" alt="Yelo" height="32px" />
                                 </a> *@
-                                &nbsp;
-                                <a href="@shareUrl" target="_blank" title="Share link..." style="text-decoration: none">
-                                    <img src="/images/link-24x24.png" loading="lazy" alt="Link" height="24px" />
-                                </a>
-                                @* &nbsp;
+                        &nbsp;
+                        <a href="@shareUrl" target="_blank" title="Share link..." style="text-decoration: none">
+                            <img src="/images/link-24x24.png" loading="lazy" alt="Link" height="24px"/>
+                        </a>
+                        @* &nbsp;
                                 <!--div class="fb-share-button" data-href="@shareUrl" data-layout="button" data-size="small" data-mobile-iframe="true"></div-->
                                 <a href="https://www.facebook.com/sharer/sharer.php?u=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(@shareUrl))" target="_blank" rel="noopener" title="Share op facebook..." style="text-decoration: none">
                                     <img src="/images/facebook-36x36.png" loading="lazy" alt="Facebook" height="36px" />
                                 </a> *@
-                                &nbsp;
-                                @if (!string.IsNullOrEmpty(@movieEvent.Movie?.ImdbId))
+                        &nbsp;
+                        @if (!string.IsNullOrEmpty(@movieEvent.Movie?.ImdbId))
+                        {
+                            <a href="https://www.imdb.com/title/@movieEvent.Movie.ImdbId" target="_blank" rel="noopener" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
+                                <img src="/images/imdb-50x24.png" loading="lazy" alt="IMDb" height="24px"/>
+                                @if (@movieEvent.Movie.ImdbRating.HasValue)
                                 {
-                                    <a href="https://www.imdb.com/title/@movieEvent.Movie.ImdbId" target="_blank" rel="noopener" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
-                                        <img src="/images/imdb-50x24.png" loading="lazy" alt="IMDb" height="24px" />
-                                        @if (@movieEvent.Movie.ImdbRating.HasValue)
-                                        {
-                                            @((@movieEvent.Movie.ImdbRating.Value / 10.0).ToString("0.0"))
-                                            <span class="stars">
-                                                <span style="width: @(Math.Round(16.0 * @movieEvent.Movie.ImdbRating.Value / 10, 0))px;">
-                                                </span>
-                                            </span>
-                                        }
-                                    </a>
+                                    @((@movieEvent.Movie.ImdbRating.Value / 10.0).ToString("0.0"))
+                                    <span class="stars">
+                                        <span style="width: @(Math.Round(16.0 * @movieEvent.Movie.ImdbRating.Value / 10, 0))px;">
+                                        </span>
+                                    </span>
                                 }
+                            </a>
+                        }
 
-                                @if (Model.EditImdbLinks)
-                                {
-                                    <small>
-                                        <a href="#manualImdbLink-@movieEvent.Id" data-toggle="collapse">
-                                            <span class="glyphicon glyphicon-film"></span>
-                                        </a>
-                                        <div id="manualImdbLink-@movieEvent.Id" class="collapse">
-                                            MovieEventId: @movieEvent.Id <br/>
-                                            <form action="/UpdateImdbLink" method="POST">
-                                                @Html.AntiForgeryToken()
-                                                Manual input: 
-                                                IMDb search 
-                                                <a href="https://www.imdb.com/find?q=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))&amp;s=all" target="_blank" rel="noopener">all</a>
-                                                <a href="https://www.imdb.com/search/title?release_date=@(movieEvent.Year-1)-07-01,@(movieEvent.Year+1)-07-01&amp;title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_blank" rel="noopener">advanced</a>
-                                                <br/>
-                                                IMDb ID: <input type="edit" name="setimdbid" value="" /> <br/>
-                                                <input type="hidden" name="movieeventid" value="@movieEvent.Id" /> <br/>
-                                                <input type="hidden" name="returnPage" value="@Request.Path@Request.QueryString.Add("m", movieEvent.Id.ToString())" /> <br/>                                                
-                                                <input type="submit" value="Set" /> 
-                                            </form>
-                                        </div>
-                                    </small>
-                                }
+                        @if (Model.EditImdbLinks)
+                        {
+                            <small>
+                                <a href="#manualImdbLink-@movieEvent.Id" data-toggle="collapse">
+                                    <span class="glyphicon glyphicon-film"></span>
+                                </a>
+                                <div id="manualImdbLink-@movieEvent.Id" class="collapse">
+                                    MovieEventId: @movieEvent.Id <br/>
+                                    <form action="/UpdateImdbLink" method="POST">
+                                        @Html.AntiForgeryToken()
+                                        Manual input:
+                                        IMDb search
+                                        <a href="https://www.imdb.com/find?q=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))&amp;s=all" target="_blank" rel="noopener">all</a>
+                                        <a href="https://www.imdb.com/search/title?release_date=@(movieEvent.Year - 1)-07-01,@(movieEvent.Year + 1)-07-01&amp;title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_blank" rel="noopener">advanced</a>
+                                        <br/>
+                                        IMDb ID: <input type="edit" name="setimdbid" value=""/> <br/>
+                                        <input type="hidden" name="movieeventid" value="@movieEvent.Id"/> <br/>
+                                        <input type="hidden" name="returnPage" value="@Request.Path@Request.QueryString.Add("m", movieEvent.Id.ToString())"/> <br/>
+                                        <input type="submit" value="Set"/>
+                                    </form>
+                                </div>
                             </small>
-                        </span>
-                    </h2>
-                    <div class="reverse-collapsible">
-                        @if (@movieEvent.PosterS != null)
-                        {
-                            <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150 />
                         }
-                    </div>
-                    <div style="clear: both;">
-                        <p>
-                            @movieEvent.Genre
-                        </p>
-                        <p>
-                            @Html.Raw(@movieEvent.Content)
-                        </p>
-                        @if (!string.IsNullOrEmpty(movieEvent.Opinion))
-                        {
-                            <p>
-                                <i>
-                                    Humo: &ldquo;@Html.Raw(movieEvent.Opinion)&rdquo;
-                                </i>
-                            </p>
-                        }
-                        @if (record.UserRating != null)
-                        {
-                            <p class="slim"><div class="alert alert-info small-alert">
-                                Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating @(record.UserRating.Rating)
-                            </div></p>
-                        }
-                        @if (record.UserWatchListItem != null)
-                        {
-                            <p class="slim"><div class="alert alert-success small-alert">
-                                Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
-                            </div></p>
-                        }
-                        @if (daysAvailable < 4)
-                        {
-                            <p class="slim"><div class="timing alert alert-warning small-alert">
+                    </small>
+                </span>
+            </h2>
+            <div class="reverse-collapsible">
+                @if (@movieEvent.PosterS != null)
+                {
+                    <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150/>
+                }
+            </div>
+            <div style="clear: both;">
+                <p>
+                    @movieEvent.Genre
+                </p>
+                <p>
+                    @Html.Raw(@movieEvent.Content)
+                </p>
+                @if (!string.IsNullOrEmpty(movieEvent.Opinion))
+                {
+                    <p>
+                        <i>
+                            Humo: &ldquo;@Html.Raw(movieEvent.Opinion)&rdquo;
+                        </i>
+                    </p>
+                }
+                @if (record.UserRating != null)
+                {
+                    <p class="slim">
+                        <div class="alert alert-info small-alert">
+                            Deze film gaf je op @record.UserRating.RatingDate.ToLongDateString() een rating @(record.UserRating.Rating)
+                        </div>
+                    </p>
+                }
+                @if (record.UserWatchListItem != null)
+                {
+                    <p class="slim">
+                        <div class="alert alert-success small-alert">
+                            Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
+                        </div>
+                    </p>
+                }
+                @if (daysAvailable < 4)
+                {
+                    <p class="slim">
+                        <div class="timing alert alert-warning small-alert">
                             @if (daysAvailable < 1 && movieEvent.EndTime.HasValue)
                             {
                                 @: Laatste dag om deze film te bekijken!
@@ -246,13 +252,14 @@
                                 }
                             }
                             (Tot @(endTimeToUse.ToString("dddd")) @(endTimeToUse.ToShortTimeString()))
-                            </div></p>
-                        }
-                    </div>
-                </td>
-            </tr>
-        }
-    </tbody>
+                        </div>
+                    </p>
+                }
+            </div>
+        </td>
+    </tr>
+}
+</tbody>
 </table>
 
 @if (Model.FilterMaxDays > 0 && Model.FilterMaxDays < 10)
@@ -283,11 +290,12 @@
         <div style="text-align: right;">
             <p class="text-muted">
                 <small>
-                    <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path@Request.QueryString"><span class="glyphicon glyphicon-user"></span>
+                    <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path@Request.QueryString">
+                        <span class="glyphicon glyphicon-user"></span>
                         Inloggen
                     </a>
                     om advertenties te verbergen of om meer dagen te tonen.
-                </small> 
+                </small>
             </p>
         </div>
     }

@@ -38,7 +38,8 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
     private readonly IServiceScopeFactory serviceScopeFactory;
     private readonly MovieEvent.FeedType feedType;
 
-    public MovieDbMissingImdbLinkCheck(IOptions<HealthCheckOptions> healthCheckOptions, IServiceScopeFactory serviceScopeFactory, 
+    public MovieDbMissingImdbLinkCheck(IOptions<HealthCheckOptions> healthCheckOptions,
+        IServiceScopeFactory serviceScopeFactory,
         MovieEvent.FeedType feedType)
     {
         this.healthCheckOptions = healthCheckOptions.Value;
@@ -48,7 +49,7 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
 
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         // Health checks are executed simultaneous, but with the same DataContext.
         // Seems a bug to me, workaround is using a separate service scope scope.
@@ -57,10 +58,12 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
         using (var scope = serviceScopeFactory.CreateScope())
         {
             var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
-            
-            int count = await fxMoviesDbContext.MovieEvents
+
+            var count = await fxMoviesDbContext.MovieEvents
                 .Where(me => me.Feed == feedType)
-                .CountAsync(me => (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)) && me.Type == 1);
+                .CountAsync(me =>
+                    (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&
+                    me.Type == 1);
 
             HealthStatus status;
             if (count <= (healthCheckOptions.CheckMissingImdbLinkCount ?? 7))
@@ -68,11 +71,12 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
             else
                 status = HealthStatus.Unhealthy;
 
-            HealthCheckResult result = new HealthCheckResult(status, null, null, 
-                new Dictionary<string, object>() {
+            var result = new HealthCheckResult(status, null, null,
+                new Dictionary<string, object>()
+                {
                     { "MissingImdbLinkCount", count }
                 });
-            
+
             return result;
         }
     }

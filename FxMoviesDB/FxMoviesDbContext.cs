@@ -10,7 +10,8 @@ public class FxMoviesDbContext : DbContext
 {
     public FxMoviesDbContext(DbContextOptions<FxMoviesDbContext> options)
         : base(options)
-    { }
+    {
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

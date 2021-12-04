@@ -28,4 +28,4 @@ public class User
 
     public List<UserRating> UserRatings { get; set; }
     public List<UserWatchListItem> UserWatchListItems { get; set; }
-}   
+}

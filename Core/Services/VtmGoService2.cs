@@ -25,9 +25,9 @@ public class VtmGoService2 : IMovieEventService
         IHttpClientFactory httpClientFactory)
     {
         this.logger = logger;
-        this.httpClient = httpClientFactory.CreateClient("vtmgo");
+        httpClient = httpClientFactory.CreateClient("vtmgo");
 
-        this.channel = new Channel()
+        channel = new Channel()
         {
             Code = "vtmgo",
             Name = "VTM GO",
@@ -53,8 +53,8 @@ public class VtmGoService2 : IMovieEventService
         var response = await httpClient.GetAsync("films");
         response.EnsureSuccessStatusCode();
 
-        using Stream stream = await response.Content.ReadAsStreamAsync();
-        HtmlParser parser = new HtmlParser();
+        using var stream = await response.Content.ReadAsStreamAsync();
+        var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
         return document
             .GetElementsByClassName("swimlane__item")
@@ -70,8 +70,8 @@ public class VtmGoService2 : IMovieEventService
         var response = await httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
-        using Stream stream = await response.Content.ReadAsStreamAsync();
-        HtmlParser parser = new HtmlParser();
+        using var stream = await response.Content.ReadAsStreamAsync();
+        var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
         var title = document.GetElementsByClassName("detail__title")
@@ -87,35 +87,33 @@ public class VtmGoService2 : IMovieEventService
 
         logger.LogInformation($"Using labels {string.Join('/', labels)}");
 
-        int? year = labels
+        var year = labels
             .Select(l => Regex.Match(l, @"^(\d{4})$"))
             .Where(m => m.Success)
             .Select(m => (int?)int.Parse(m.Groups[1].Value))
             .FirstOrDefault();
 
-        int? durationMin = labels
+        var durationMin = labels
             .Select(l => Regex.Match(l, @"^(\d{1,3}) min$"))
             .Where(m => m.Success)
             .Select(m => (int?)int.Parse(m.Groups[1].Value))
             .FirstOrDefault();
 
-        int? availableDays = labels
+        var availableDays = labels
             .Select(l => Regex.Match(l, @"^Nog (\d{1,3}) dagen beschikbaar$"))
             .Where(m => m.Success)
             .Select(m => (int?)int.Parse(m.Groups[1].Value))
             .FirstOrDefault();
 
-        string availableFrom = labels
+        var availableFrom = labels
             .Select(l => Regex.Match(l, @"^Beschikbaar vanaf (.*)$"))
             .Where(m => m.Success)
             .Select(m => m.Groups[1].Value)
             .FirstOrDefault();
-        
+
         if (availableFrom != null)
-        {
             // Not yet available --> ignore
             return null;
-        }
 
         if (!availableDays.HasValue && labels.Any(l => l == "Tot middernacht beschikbaar"))
             availableDays = 0;

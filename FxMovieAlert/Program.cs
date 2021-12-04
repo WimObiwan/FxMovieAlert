@@ -35,16 +35,17 @@ public class Program
         }
     }
 
-    public static IWebHostBuilder CreateHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args)
+    public static IWebHostBuilder CreateHostBuilder(string[] args)
+    {
+        return WebHost.CreateDefaultBuilder(args)
             .UseSerilog()
             .ConfigureAppConfiguration((hostingContext, config) =>
             {
                 config
                     //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
-                    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
+                    .AddJsonFile("appsettings.json", false, false)
+                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, false)
+                    .AddJsonFile("appsettings.Local.json", true, false)
                     .AddEnvironmentVariables();
             })
             .UseSentry(o =>
@@ -57,4 +58,5 @@ public class Program
                 o.TracesSampleRate = 1.0;
             })
             .UseStartup<Startup>();
+    }
 }

@@ -36,9 +36,9 @@ public class VtmGoService : IMovieEventService
     {
         this.logger = logger;
         var options = vtmGoServiceOptions.Value;
-        this.authToken = options.AuthToken;
-        this.username = options.Username;
-        this.password = options.Password;
+        authToken = options.AuthToken;
+        username = options.Username;
+        password = options.Password;
         this.httpClientFactory = httpClientFactory;
     }
 
@@ -71,21 +71,23 @@ public class VtmGoService : IMovieEventService
             }
             else
             {
-                logger.LogInformation("Configured refresh token is no longer valid ({JwtTokenValidTo})", jwtToken.ValidTo);
+                logger.LogInformation("Configured refresh token is no longer valid ({JwtTokenValidTo})",
+                    jwtToken.ValidTo);
                 lfvpToken = await DpgRefreshToken(authToken);
             }
         }
+
         var profileId = await GetProfileId(lfvpToken);
         var movieIds = await GetCatalog(lfvpToken, profileId);
 
-        Channel channel = new Channel()
+        var channel = new Channel()
         {
             Code = "vtmgo",
             Name = "VTM GO",
             LogoS = "https://www.filmoptv.be/images/vtmgo.png"
         };
 
-        List<MovieEvent> movieEvents = new List<MovieEvent>();
+        var movieEvents = new List<MovieEvent>();
         foreach (var movieId in movieIds)
         {
             var movieInfo = await GetMovieInfo(lfvpToken, profileId, movieId);
@@ -95,6 +97,7 @@ public class VtmGoService : IMovieEventService
                     movieInfo.movie.name, movieInfo.movie.durationSeconds);
                 continue;
             }
+
             movieEvents.Add(
                 new MovieEvent
                 {
@@ -115,6 +118,7 @@ public class VtmGoService : IMovieEventService
                 }
             );
         }
+
         return movieEvents;
     }
 
@@ -149,7 +153,7 @@ public class VtmGoService : IMovieEventService
         var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
-        string responseBody = await response.Content.ReadAsStringAsync();
+        var responseBody = await response.Content.ReadAsStringAsync();
         var match = System.Text.RegularExpressions.Regex.Match(responseBody, @"window.location.href\s*=\s*'([^']+)'");
         if (!match.Success)
             throw new Exception("Expected redirect in body");
@@ -159,20 +163,22 @@ public class VtmGoService : IMovieEventService
         response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
-        string fragment = request.RequestUri.Fragment;
-        if (fragment == null || ! fragment.StartsWith('#'))
+        var fragment = request.RequestUri.Fragment;
+        if (fragment == null || !fragment.StartsWith('#'))
             throw new Exception("Expected fragment in redirect URL");
         var fragmentQueryParams = QueryHelpers.ParseQuery(fragment.Substring(1));
         return fragmentQueryParams["id_token"];
     }
 
-    class DpgTokenResponse {
+    private class DpgTokenResponse
+    {
         public string lfvpToken { get; set; }
     };
 
     private async Task<string> DpgLogin(string idToken)
     {
-        var body = new {
+        var body = new
+        {
             idToken = idToken
         };
 
@@ -185,7 +191,8 @@ public class VtmGoService : IMovieEventService
 
     private async Task<string> DpgRefreshToken(string oldToken)
     {
-        var body = new {
+        var body = new
+        {
             lfvpToken = oldToken
         };
 
@@ -196,7 +203,8 @@ public class VtmGoService : IMovieEventService
         return responseObject.lfvpToken;
     }
 
-    class DpgProfileResponse {
+    private class DpgProfileResponse
+    {
         public string id { get; set; }
     };
 
@@ -215,7 +223,8 @@ public class VtmGoService : IMovieEventService
         return responseObject[0].id;
     }
 
-    class DpgCatalogResponse {
+    private class DpgCatalogResponse
+    {
         public class PagedTeasers
         {
             public class Content
@@ -250,7 +259,8 @@ public class VtmGoService : IMovieEventService
         // ==> nq = non-quoted
 
         var responseObject = await response.Content.ReadFromJsonAsync<DpgCatalogResponse>();
-        var movies = responseObject.pagedTeasers.content.Where(c => c.target.type == "MOVIE").Select(c => c.target.id).ToList();
+        var movies = responseObject.pagedTeasers.content.Where(c => c.target.type == "MOVIE").Select(c => c.target.id)
+            .ToList();
         return movies;
     }
 

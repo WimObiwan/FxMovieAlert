@@ -35,7 +35,7 @@ public class PrimeVideoService : IMovieEventService
     {
         this.logger = logger;
         this.primeVideoServiceOptions = primeVideoServiceOptions.Value;
-        this.httpClient = httpClientFactory.CreateClient("primevideo");
+        httpClient = httpClientFactory.CreateClient("primevideo");
     }
 
     public string ProviderName => "PrimeVideo";
@@ -46,7 +46,7 @@ public class PrimeVideoService : IMovieEventService
     {
         // https://www.primevideo.com/storefront/ref=atv_nb_lcl_nl_BE
 
-        Channel channel = new Channel()
+        var channel = new Channel()
         {
             Code = "primevideo",
             Name = "Prime Video",
@@ -60,11 +60,11 @@ public class PrimeVideoService : IMovieEventService
         else
             dateTime = new FileInfo(primeVideoServiceOptions.LocalDownloadOverride).LastWriteTime;
 
-        List<MovieEvent> movieEvents = new List<MovieEvent>();
+        var movieEvents = new List<MovieEvent>();
         foreach (var movie in movies)
         {
             int? year;
-            if (int.TryParse(movie.releaseYear, out int year2))
+            if (int.TryParse(movie.releaseYear, out var year2))
                 year = year2;
             else
                 year = null;
@@ -73,11 +73,8 @@ public class PrimeVideoService : IMovieEventService
             var match = Regex.Match(movie.runtime, @"^(?:(\d+) (?:uur|h) )?(\d+) min$");
             if (match.Success)
             {
-                int duration2 = 0;
-                if (match.Groups[1].Success)
-                {
-                    duration2 = int.Parse(match.Groups[1].Value) * 60;
-                }
+                var duration2 = 0;
+                if (match.Groups[1].Success) duration2 = int.Parse(match.Groups[1].Value) * 60;
                 duration2 += int.Parse(match.Groups[2].Value);
                 duration = duration2;
             }
@@ -110,7 +107,7 @@ public class PrimeVideoService : IMovieEventService
 
     private string GetFullUrl(string url)
     {
-        if (Uri.TryCreate(httpClient.BaseAddress, url, out Uri uri))
+        if (Uri.TryCreate(httpClient.BaseAddress, url, out var uri))
             return uri.ToString();
         else
             return null;
@@ -172,8 +169,8 @@ public class PrimeVideoService : IMovieEventService
 
     private async Task<IList<Json.Props.Collection.Item>> GetMovieInfo()
     {
-        using Stream stream = await GetStream();
-        HtmlParser parser = new HtmlParser();
+        using var stream = await GetStream();
+        var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
         var jsonText = document

@@ -56,7 +56,7 @@ public class MovieDbDataCheck : IHealthCheck
 
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         // Health checks are executed simultaneous, but with the same DataContext.
         // Seems a bug to me, workaround is using a separate service scope scope.
@@ -67,45 +67,51 @@ public class MovieDbDataCheck : IHealthCheck
             var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
 
             var query = fxMoviesDbContext.MovieEvents
-                .Where(me => me.Feed == feedType && me.AddedTime.HasValue && (channelCode == null || me.Channel.Code == channelCode));
-            int count = await query.CountAsync();
+                .Where(me =>
+                    me.Feed == feedType && me.AddedTime.HasValue &&
+                    (channelCode == null || me.Channel.Code == channelCode));
+            var count = await query.CountAsync();
             DateTime? lastMovieAddedTime;
             if (count > 0)
                 lastMovieAddedTime = await query.MaxAsync(me => me.AddedTime);
             else
                 lastMovieAddedTime = null;
             var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime)?.TotalDays;
-            
+
             const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
             double checkLastMovieAddedMoreThanDaysAgo;
             if (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
                 checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
-            else 
-                if (channelCode == null || !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode, out checkLastMovieAddedMoreThanDaysAgo))
-                    if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{feedType}", out checkLastMovieAddedMoreThanDaysAgo))
-                        if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("", out checkLastMovieAddedMoreThanDaysAgo))
-                            checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
+            else if (channelCode == null ||
+                     !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode,
+                         out checkLastMovieAddedMoreThanDaysAgo))
+                if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{feedType}",
+                    out checkLastMovieAddedMoreThanDaysAgo))
+                    if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("",
+                        out checkLastMovieAddedMoreThanDaysAgo))
+                        checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
 
             HealthStatus status;
             if (!lastMovieAddedDaysAgo.HasValue || lastMovieAddedDaysAgo.Value >= checkLastMovieAddedMoreThanDaysAgo)
                 status = HealthStatus.Unhealthy;
             else
-                status = HealthStatus.Healthy;                
+                status = HealthStatus.Healthy;
 
             var values = new Dictionary<string, object>()
             {
                 { "LastMovieAddedAge", lastMovieAddedDaysAgo },
                 { "LastMovieAddedTime", lastMovieAddedTime },
                 { "Count", count },
-                { "AlarmThreshold", checkLastMovieAddedMoreThanDaysAgo },
+                { "AlarmThreshold", checkLastMovieAddedMoreThanDaysAgo }
             };
 
             if (feedType == MovieEvent.FeedType.Broadcast)
             {
-                DateTime lastMovieStartTime = await query.MaxAsync(me => me.StartTime);
+                var lastMovieStartTime = await query.MaxAsync(me => me.StartTime);
                 var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
 
-                if (status == HealthStatus.Healthy && lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
+                if (status == HealthStatus.Healthy &&
+                    lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
                     status = HealthStatus.Unhealthy;
                 else
                     status = HealthStatus.Healthy;
@@ -114,7 +120,7 @@ public class MovieDbDataCheck : IHealthCheck
                 values.Add("LastMovieStartTime", lastMovieStartTime);
             }
 
-            HealthCheckResult result = new HealthCheckResult(status, null, null, values);
+            var result = new HealthCheckResult(status, null, null, values);
 
             return result;
         }

@@ -19,22 +19,22 @@
 }
 
 <style>
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
 
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
+    td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
 
-.disabled {
-    pointer-events: none;
-    opacity: 0.4;
-}
+    .disabled {
+        pointer-events: none;
+        opacity: 0.4;
+    }
 </style>
 
 <h3>Koppeling met IMDb</h3>
@@ -46,23 +46,24 @@ td, th {
     <ul>
         <li>Voor de bekeken films worden je <i>IMDb Ratings</i> gebruikt.</li>
         <li>De <i>IMDb Watchlist</i> wordt gebruikt voor de films die je nog wilt zien.</li>
-    </ul> 
+    </ul>
 </p>
 <p>
-    Hiervoor moet je in IMDb je 
-        <a href="https://help.imdb.com/article/imdb/track-movies-tv/watchlist-faq/G9PA556494DM8YBA" target="_blank" rel="noopener">watchlist</a> en
-        <a href="https://help.imdb.com/article/imdb/track-movies-tv/how-do-i-change-the-privacy-setting-for-my-ratings/G59Z2UQUXC3WS6YL" target="_blank" rel="noopener">ratings</a> "publiek" zetten, en moet je hieronder je IMDb user ID invullen.
+    Hiervoor moet je in IMDb je
+    <a href="https://help.imdb.com/article/imdb/track-movies-tv/watchlist-faq/G9PA556494DM8YBA" target="_blank" rel="noopener">watchlist</a> en
+    <a href="https://help.imdb.com/article/imdb/track-movies-tv/how-do-i-change-the-privacy-setting-for-my-ratings/G59Z2UQUXC3WS6YL" target="_blank" rel="noopener">ratings</a> "publiek" zetten, en moet je hieronder je IMDb user ID invullen.
     Deze heeft het formaat "ur12345678", en vind je in de adresbalk op je <a href="https://www.imdb.com/profile" target="_blank" rel="noopener">profielpagina</a>.
 </p>
 @if (!User.Identity.IsAuthenticated)
 {
-<p>
-    Je dient eerst 
-        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path@Request.QueryString"><span class="glyphicon glyphicon-user"></span>
+    <p>
+        Je dient eerst
+        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Request.Path@Request.QueryString">
+            <span class="glyphicon glyphicon-user"></span>
             Inloggen
         </a>
-    .
-</p>
+        .
+    </p>
 }
 
 <!--
@@ -77,282 +78,282 @@ td, th {
 
 @if (User.Identity.IsAuthenticated)
 {
-<p>
-    <form action="#" method="GET">
-        Vul hier je IMDb Gebruikers ID in:
-        <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" placeholder="ur12345678" pattern="ur[0-9]{7,10}"/>
-        <input type="submit" value="Bewaren" /> 
-    </form>
-</p>
+    <p>
+        <form action="#" method="GET">
+            Vul hier je IMDb Gebruikers ID in:
+            <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" placeholder="ur12345678" pattern="ur[0-9]{7,10}"/>
+            <input type="submit" value="Bewaren"/>
+        </form>
+    </p>
 
-<h3>Informatie gedownload van IMDb</h3>
+    <h3>Informatie gedownload van IMDb</h3>
 
-<div class="table-responsive">  
-<table class="table">
-<tr>
-    <th>
-    </th>
-    <th>
-        Ratings
-    </th>
-    <th>
-        Watchlist
-    </th>
-</tr>
-<tr>
-    <td>
-        Totaal aantal films
-    </td>
-    <td>
-        @Model.UserRatingCount films
-    </td>
-    <td>
-        @Model.UserWatchListCount films
-    </td>
-</tr>
-<tr>
-    <td>
-        Laatste toevoeging
-    </td>
-    <td>
-        @if (Model.RatingLastDate.HasValue && Model.RatingLastMovie != null && Model.RatingLastRating.HasValue)
-        {
-            @Model.RatingLastDate.Value.ToLocalTime().ToLongDateString()
+    <div class="table-responsive">
+    <table class="table">
+    <tr>
+        <th>
+        </th>
+        <th>
+            Ratings
+        </th>
+        <th>
+            Watchlist
+        </th>
+    </tr>
+    <tr>
+        <td>
+            Totaal aantal films
+        </td>
+        <td>
+            @Model.UserRatingCount films
+        </td>
+        <td>
+            @Model.UserWatchListCount films
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Laatste toevoeging
+        </td>
+        <td>
+            @if (Model.RatingLastDate.HasValue && Model.RatingLastMovie != null && Model.RatingLastRating.HasValue)
+            {
+                @Model.RatingLastDate.Value.ToLocalTime().ToLongDateString()
+                <br/>
+                @Model.RatingLastMovie
+                <br/>
+                @: @(Model.RatingLastRating) / 10
+            }
+        </td>
+        <td>
+            @if (Model.WatchListLastDate.HasValue && Model.WatchListLastMovie != null)
+            {
+                @Model.WatchListLastDate.Value.ToLocalTime().ToLongDateString()
+                <br/>
+                @Model.WatchListLastMovie
+            }
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">
+            <strong>Automatische import</strong>
             <br/>
-            @Model.RatingLastMovie
-            <br/>            
-            @: @(Model.RatingLastRating) / 10
-        }
-    </td>
-    <td>
-        @if (Model.WatchListLastDate.HasValue && Model.WatchListLastMovie != null)
-        {
-            @Model.WatchListLastDate.Value.ToLocalTime().ToLongDateString()
-            <br/>
-            @Model.WatchListLastMovie
-        }
-    </td>
-</tr>
-<tr>
-    <td colspan="3">
-        <strong>Automatische import</strong>
-        <br/>
-        <small>
-            Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel wanneer deze lijsten publiek zijn in je IMDb profiel. 
-        </small>
-        @* <small class="disabled">
+            <small>
+                Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel wanneer deze lijsten publiek zijn in je IMDb profiel.
+            </small>
+            @* <small class="disabled">
             Het automatisch ophalen van de laatste IMDb ratings en watchlist werkt enkel voor ongeveer de laatste 250 ratings. 
             Als je ratings of watchlist langer zijn, kan het daarom nuttig zijn om hieronder (éénmalig) de lijst te importeren 
             met een CSV bestand. 
         </small> *@
-    </td>
-</tr>
-<tr>
-    <td>
-        IMDb links
-    </td>
-    <td>
-        <a href="https://www.imdb.com/user/@Model.ImdbUserId/ratings" target="_blank" rel="noopener">https://www.imdb.com/user/@Model.ImdbUserId/ratings</a>
-    </td>
-    <td>
-        <a href="https://www.imdb.com/user/@Model.ImdbUserId/watchlist" target="_blank" rel="noopener">https://www.imdb.com/user/@Model.ImdbUserId/watchlist</a>
-    </td>
-</tr>
-<tr>
-    <td>
-        Laatste download tijdstip
-    </td>
-    <td>
-    @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
-    {
-        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString()<br/>
-        @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            Nog niet opgehaald.
-        </div>
-    }
-    </td>
-    <td>
-    @if (Model.WatchListLastRefreshSuccess.HasValue && Model.WatchListLastRefreshTime.HasValue)
-    {
-        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToLongDateString()<br/>
-        @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToShortTimeString()
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            Nog niet opgehaald.
-        </div>
-    }
-    </td>
-</tr>
-<tr>
-    <td>
-        Resultaat
-    </td>
-    <td>
-    @if (Model.LastRefreshSuccess.HasValue)
-    {
-        @if (Model.LastRefreshSuccess.Value)
-        {
-            <div class="alert alert-success">
-                Gelukt
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-danger">
-                Mislukt
-            </div>
-        }
-    }
-    else
-    {
-        <div>
-            N/A
-        </div>
-    }
-    </td>
-    <td>
-    @if (Model.WatchListLastRefreshSuccess.HasValue)
-    {
-        @if (Model.WatchListLastRefreshSuccess.Value)
-        {
-            <div class="alert alert-success">
-                Gelukt
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-danger">
-                Mislukt
-            </div>
-        }
-    }
-    else
-    {
-        <div>
-            N/A
-        </div>
-    }
-    </td>
-</tr>
-<tr>
-    <td>
-        Extra info
-    </td>
-    <td>
-        @Model.LastRefreshRatingsResult
-    </td>
-    <td>
-        @Model.WatchListLastRefreshRatingsResult
-    </td>
-</tr>
-<tr>
-    <td>
-        Volgende automatische download
-    </td>
-    <td colspan="2">
-        @if (Model.RefreshRequestTime.HasValue)
-        {
-            <div class="alert alert-warning">
-                Gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).<br/>
-                <a href="?">Herlaad</a> deze pagina binnen enkele minuten om de laatste resultaten te zien.
-            </div>
-        }
-        else
-        {
-            <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
-        }
-    </td>
-</tr>
-<tr>
-    <td colspan="3">
-        <strong>Manuele import</strong>
-    </td>
-</tr>
-<tr>
-    <td>
-        IMDb CSV import
-    </td>
-    <td>
-        Exporteer eerst je ratings op de IMDb website met deze link:<br/>
-        <a href="https://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_blank" rel="noopener">IMDb Ratings export</a><br/>
-        En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
-    </td>
-    <td>
-        Exporteer eerst je watchlist op de IMDb website met deze link:<br/>
-        <a href="https://www.imdb.com/user/@(Model.ImdbUserId)/watchlist" target="_blank" rel="noopener">IMDb Watchlist export</a><br/>
-        En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
-    </td>
-</tr>
-<tr>
-    <td>
-        Manuele import
-    </td>
-    <td>
-        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="User">
-            <div class="form-group">
-                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
-                <input type="file" name="files" multiple />
-                <input type="hidden" name="type" value="ratings" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Importeren" />
-            </div>
-        </form>
-    </td>
-    <td>
-        <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="User">
-            <div class="form-group">
-                <p>Kies hier het CSV bestand met je IMDb ratings:</p>
-                <input type="file" name="files" multiple />
-                <input type="hidden" name="type" value="watchlist" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Importeren" />
-            </div>
-        </form>
-    </td>
-</tr>
-@if (Model.LastImportErrors.Any())
-{
-<tr>
-    <td>
-        Laatste import resultaat
-    </td>
-    <td colspan="2">
-        @{
-            int cnt = 0;
-        }
-        @foreach (var item in Model.LastImportErrors.Take(10))
-        {
-            cnt++;
-            <div class="alert alert-@item.Item3">
-                <p>
-                </p>
-                @item.Item1
-                @if (!string.IsNullOrEmpty(item.Item2))
+        </td>
+    </tr>
+    <tr>
+        <td>
+            IMDb links
+        </td>
+        <td>
+            <a href="https://www.imdb.com/user/@Model.ImdbUserId/ratings" target="_blank" rel="noopener">https://www.imdb.com/user/@Model.ImdbUserId/ratings</a>
+        </td>
+        <td>
+            <a href="https://www.imdb.com/user/@Model.ImdbUserId/watchlist" target="_blank" rel="noopener">https://www.imdb.com/user/@Model.ImdbUserId/watchlist</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Laatste download tijdstip
+        </td>
+        <td>
+            @if (Model.LastRefreshSuccess.HasValue && Model.LastRefreshRatingsTime.HasValue)
+            {
+                @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToLongDateString()<br/>
+                @Model.LastRefreshRatingsTime.Value.ToLocalTime().ToShortTimeString()
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    Nog niet opgehaald.
+                </div>
+            }
+        </td>
+        <td>
+            @if (Model.WatchListLastRefreshSuccess.HasValue && Model.WatchListLastRefreshTime.HasValue)
+            {
+                @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToLongDateString()<br/>
+                @Model.WatchListLastRefreshTime.Value.ToLocalTime().ToShortTimeString()
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    Nog niet opgehaald.
+                </div>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Resultaat
+        </td>
+        <td>
+            @if (Model.LastRefreshSuccess.HasValue)
+            {
+                @if (Model.LastRefreshSuccess.Value)
                 {
-                <p>
-                    <small>
-                        <a href="#lastImportError-@cnt" data-toggle="collapse">
-                            Details...
-                        </a>
-                        <div id="lastImportError-@cnt" class="collapse">
-                            @item.Item2
-                        </div>
-                    </small>
-                </p>
+                    <div class="alert alert-success">
+                        Gelukt
+                    </div>
                 }
-            </div>            
-        }
-    </td>
-</tr>
-}
-</table>
-</div>
+                else
+                {
+                    <div class="alert alert-danger">
+                        Mislukt
+                    </div>
+                }
+            }
+            else
+            {
+                <div>
+                    N/A
+                </div>
+            }
+        </td>
+        <td>
+            @if (Model.WatchListLastRefreshSuccess.HasValue)
+            {
+                @if (Model.WatchListLastRefreshSuccess.Value)
+                {
+                    <div class="alert alert-success">
+                        Gelukt
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger">
+                        Mislukt
+                    </div>
+                }
+            }
+            else
+            {
+                <div>
+                    N/A
+                </div>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Extra info
+        </td>
+        <td>
+            @Model.LastRefreshRatingsResult
+        </td>
+        <td>
+            @Model.WatchListLastRefreshRatingsResult
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Volgende automatische download
+        </td>
+        <td colspan="2">
+            @if (Model.RefreshRequestTime.HasValue)
+            {
+                <div class="alert alert-warning">
+                    Gepland (sinds @Model.RefreshRequestTime.Value.ToLocalTime().ToLongDateString() @Model.RefreshRequestTime.Value.ToLocalTime().ToShortTimeString()).<br/>
+                    <a href="?">Herlaad</a> deze pagina binnen enkele minuten om de laatste resultaten te zien.
+                </div>
+            }
+            else
+            {
+                <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">
+            <strong>Manuele import</strong>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            IMDb CSV import
+        </td>
+        <td>
+            Exporteer eerst je ratings op de IMDb website met deze link:<br/>
+            <a href="https://www.imdb.com/list/export?list_id=ratings&author_id=@Model.ImdbUserId" target="_blank" rel="noopener">IMDb Ratings export</a><br/>
+            En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
+        </td>
+        <td>
+            Exporteer eerst je watchlist op de IMDb website met deze link:<br/>
+            <a href="https://www.imdb.com/user/@(Model.ImdbUserId)/watchlist" target="_blank" rel="noopener">IMDb Watchlist export</a><br/>
+            En importeer het bestand daarna met de <i>Manuele import</i> hieronder.
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Manuele import
+        </td>
+        <td>
+            <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="User">
+                <div class="form-group">
+                    <p>Kies hier het CSV bestand met je IMDb ratings:</p>
+                    <input type="file" name="files" multiple/>
+                    <input type="hidden" name="type" value="ratings"/>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Importeren"/>
+                </div>
+            </form>
+        </td>
+        <td>
+            <form method="post" enctype="multipart/form-data" asp-controller="UploadFiles" asp-action="User">
+                <div class="form-group">
+                    <p>Kies hier het CSV bestand met je IMDb ratings:</p>
+                    <input type="file" name="files" multiple/>
+                    <input type="hidden" name="type" value="watchlist"/>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Importeren"/>
+                </div>
+            </form>
+        </td>
+    </tr>
+    @if (Model.LastImportErrors.Any())
+    {
+        <tr>
+            <td>
+                Laatste import resultaat
+            </td>
+            <td colspan="2">
+                @{
+                    var cnt = 0;
+                }
+                @foreach (var item in Model.LastImportErrors.Take(10))
+                {
+                    cnt++;
+                    <div class="alert alert-@item.Item3">
+                        <p>
+                        </p>
+                        @item.Item1
+                        @if (!string.IsNullOrEmpty(item.Item2))
+                        {
+                            <p>
+                                <small>
+                                    <a href="#lastImportError-@cnt" data-toggle="collapse">
+                                        Details...
+                                    </a>
+                                    <div id="lastImportError-@cnt" class="collapse">
+                                        @item.Item2
+                                    </div>
+                                </small>
+                            </p>
+                        }
+                    </div>
+                }
+            </td>
+        </tr>
+    }
+    </table>
+    </div>
 }

@@ -41,78 +41,84 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
         ImdbDbContext imdbDbContext)
     {
         this.logger = logger;
-        int imdbHuntingYearDiff = imdbMatchingQueryOptions.Value.ImdbHuntingYearDiff ?? 2;
+        var imdbHuntingYearDiff = imdbMatchingQueryOptions.Value.ImdbHuntingYearDiff ?? 2;
         this.imdbDbContext = imdbDbContext;
 
         huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>>>();
 
         // Search for PrimaryTitle (Year)
         huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
-        (
-            (title, releaseYear) => {
-                string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
-                return imdbDbContext.MovieAlternatives
-                    .Where(ma =>
-                        ma.AlternativeTitle == null 
-                        && ma.Normalized == normalizedTitle
-                        && (!ma.Movie.Year.HasValue || !releaseYear.HasValue || ma.Movie.Year == releaseYear.Value)
-                    ).Select(ma => ma.Movie);
+            (
+                (title, releaseYear) =>
+                {
+                    var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma =>
+                            ma.AlternativeTitle == null
+                            && ma.Normalized == normalizedTitle
+                            && (!ma.Movie.Year.HasValue || !releaseYear.HasValue || ma.Movie.Year == releaseYear.Value)
+                        ).Select(ma => ma.Movie);
                 }
-        ));
+            ));
 
         // Search for AlternativeTitle (Year)
         huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
-        (
-            (title, releaseYear) => {
-                string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
-                return imdbDbContext.MovieAlternatives
-                    .Where(ma => 
-                        ma.AlternativeTitle != null 
-                        && ma.Normalized == normalizedTitle
-                        && (!ma.Movie.Year.HasValue || !releaseYear.HasValue || ma.Movie.Year == releaseYear.Value)
-                    ).Select(ma => ma.Movie);
+            (
+                (title, releaseYear) =>
+                {
+                    var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma =>
+                            ma.AlternativeTitle != null
+                            && ma.Normalized == normalizedTitle
+                            && (!ma.Movie.Year.HasValue || !releaseYear.HasValue || ma.Movie.Year == releaseYear.Value)
+                        ).Select(ma => ma.Movie);
                 }
-        ));
+            ));
 
         // Search for PrimaryTitle (+/-Year)
         huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
-        (
-            (title, releaseYear) => {
-                string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
-                if (!releaseYear.HasValue)
-                    return null;
-                return imdbDbContext.MovieAlternatives
-                    .Where(ma =>
-                        ma.AlternativeTitle == null 
-                        && ma.Normalized == normalizedTitle
-                        && ma.Movie.Year.HasValue
-                        && (ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff) && (ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff)
-                    ).Select(ma => ma.Movie);
+            (
+                (title, releaseYear) =>
+                {
+                    var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
+                    if (!releaseYear.HasValue)
+                        return null;
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma =>
+                            ma.AlternativeTitle == null
+                            && ma.Normalized == normalizedTitle
+                            && ma.Movie.Year.HasValue
+                            && ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff &&
+                            ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff
+                        ).Select(ma => ma.Movie);
                 }
-        ));
+            ));
 
         // Search for AlternativeTitle (+/-Year)
         huntingProcedure.Add((Func<string, int?, IQueryable<ImdbMovie>>)
-        (
-            (title, releaseYear) => {
-                string normalizedTitle = TitleNormalizer.NormalizeTitle(title);
-                if (!releaseYear.HasValue)
-                    return null;
-                return imdbDbContext.MovieAlternatives
-                    .Where(ma => 
-                        ma.AlternativeTitle != null 
-                        && ma.Normalized == normalizedTitle
-                        && ma.Movie.Year.HasValue
-                        && (ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff) && (ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff)
-                    ).Select(ma => ma.Movie);
+            (
+                (title, releaseYear) =>
+                {
+                    var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
+                    if (!releaseYear.HasValue)
+                        return null;
+                    return imdbDbContext.MovieAlternatives
+                        .Where(ma =>
+                            ma.AlternativeTitle != null
+                            && ma.Normalized == normalizedTitle
+                            && ma.Movie.Year.HasValue
+                            && ma.Movie.Year >= releaseYear.Value - imdbHuntingYearDiff &&
+                            ma.Movie.Year <= releaseYear.Value + imdbHuntingYearDiff
+                        ).Select(ma => ma.Movie);
                 }
-        ));
+            ));
     }
 
     public async Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear)
     {
         ImdbMovie imdbMovie = null;
-        int huntNo = 0;
+        var huntNo = 0;
         foreach (var hunt in huntingProcedure)
         {
             var huntResult = hunt(movieTitle, movieReleaseYear);
@@ -125,7 +131,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
 
             if (imdbMovie != null)
                 break;
-        
+
             huntNo++;
         }
 

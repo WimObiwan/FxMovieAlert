@@ -30,7 +30,7 @@ public class VrtNuService : IMovieEventService
     {
         // https://vrtnu-api.vrt.be/suggest?facets[categories]=films
 
-        Channel channel = new Channel()
+        var channel = new Channel()
         {
             Code = "vrtnu",
             Name = "VRT NU",
@@ -39,11 +39,11 @@ public class VrtNuService : IMovieEventService
 
         var movies = await GetSuggestMovieInfo();
 
-        List<MovieEvent> movieEvents = new List<MovieEvent>();
+        var movieEvents = new List<MovieEvent>();
         foreach (var movie in movies)
         {
             System.Threading.Thread.Sleep(500);
-            
+
             var movieDetails = await GetSearchMovieInfo(movie.programUrl);
             if (movieDetails.duration < 75)
             {
@@ -51,22 +51,19 @@ public class VrtNuService : IMovieEventService
                     movieDetails.program, movieDetails.duration);
                 continue;
             }
-            string seasonName = movieDetails.seasonName;
+
+            var seasonName = movieDetails.seasonName;
 
             // Skip trailers
             if (seasonName.Equals("trailer", StringComparison.CurrentCultureIgnoreCase))
                 continue;
 
             int? year;
-            if (int.TryParse(seasonName, out int year2)
+            if (int.TryParse(seasonName, out var year2)
                 && year2 >= 1930 && year2 <= DateTime.Now.Year)
-            {
                 year = year2;
-            }
             else
-            {
                 year = null;
-            }
 
             movieEvents.Add(new MovieEvent
             {
@@ -129,7 +126,7 @@ public class VrtNuService : IMovieEventService
         public string id { get; set; }
         public string assetOnTime { get; set; }
         public string assetOffTime { get; set; }
-        public int duration {get; set; }
+        public int duration { get; set; }
         public string seasonName { get; set; }
     }
 

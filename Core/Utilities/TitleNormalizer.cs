@@ -19,7 +19,7 @@ public static class TitleNormalizer
         Tuple.Create("^(.*) VII( .*)?$", "$1 7$2"),
         Tuple.Create("^(.*) VIII( .*)?$", "$1 8$2"),
         Tuple.Create("^(.*) IX( .*)?$", "$1 9$2"),
-        Tuple.Create("^(.*) X( .*)?$", "$1 10$2"),
+        Tuple.Create("^(.*) X( .*)?$", "$1 10$2")
     }.AsReadOnly();
 
     public static string NormalizeTitle(string title)
@@ -37,16 +37,13 @@ public static class TitleNormalizer
 
     private static string RemoveDiacritics(string text)
     {
-        string formD = text.Normalize(NormalizationForm.FormD);
-        StringBuilder sb = new StringBuilder();
+        var formD = text.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
 
-        foreach (char ch in formD)
+        foreach (var ch in formD)
         {
-            UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(ch);
-            if (uc != UnicodeCategory.NonSpacingMark)
-            {
-            sb.Append(ch);
-            }
+            var uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+            if (uc != UnicodeCategory.NonSpacingMark) sb.Append(ch);
         }
 
         return sb.ToString().Normalize(NormalizationForm.FormC);

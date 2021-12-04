@@ -18,5 +18,6 @@ public class BroadcastsModel : BroadcastsModelBase
             siteOptions,
             fxMoviesDbContext,
             usersRepository)
-    { }
+    {
+    }
 }

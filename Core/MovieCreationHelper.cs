@@ -17,7 +17,7 @@ public class MovieCreationHelper : IMovieCreationHelper
     private readonly ITheMovieDbService theMovieDbService;
 
     public MovieCreationHelper(
-        FxMovies.FxMoviesDB.FxMoviesDbContext fxMoviesDbContext, 
+        FxMovies.FxMoviesDB.FxMoviesDbContext fxMoviesDbContext,
         FxMovies.ImdbDB.ImdbDbContext imdbDbContext,
         ITheMovieDbService theMovieDbService)
     {
@@ -30,7 +30,7 @@ public class MovieCreationHelper : IMovieCreationHelper
     {
         var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
-        bool newMovie = (movie == null);
+        bool newMovie = movie == null;
 
         if (newMovie)
         {
@@ -49,10 +49,7 @@ public class MovieCreationHelper : IMovieCreationHelper
 
     public async Task<bool> RefreshIfNeeded(Movie movie)
     {
-        if (string.IsNullOrEmpty(movie.OriginalTitle))
-        {
-            return await Refresh(movie);
-        }
+        if (string.IsNullOrEmpty(movie.OriginalTitle)) return await Refresh(movie);
         return false;
     }
 

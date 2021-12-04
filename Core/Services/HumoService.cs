@@ -35,11 +35,16 @@ public class HumoService : IHumoService
         public int? rating { get; set; }
 
 
-        public bool IsMovie() => playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
+        public bool IsMovie()
+        {
+            return playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
+        }
         //public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
 
-        public bool IsShort() => duration < 3600;
-
+        public bool IsShort()
+        {
+            return duration < 3600;
+        }
     }
 
     [DebuggerDisplay("name = {name}")]
@@ -55,6 +60,7 @@ public class HumoService : IHumoService
     {
         public List<HumoChannel> channels { get; set; }
     }
+
     #endregion
 
     private readonly ILogger<HumoService> logger;
@@ -70,11 +76,11 @@ public class HumoService : IHumoService
 
     private async Task<Humo> GetHumoData(DateTime date)
     {
-        string dateYMD = date.ToString("yyyy-MM-dd");
-        string url = $"/tv-gids/api/v2/broadcasts/{dateYMD}";
+        var dateYMD = date.ToString("yyyy-MM-dd");
+        var url = $"/tv-gids/api/v2/broadcasts/{dateYMD}";
 
         logger.LogInformation("Retrieving from Humo: {Url}", url);
-        
+
         var client = httpClientFactory.CreateClient("humo");
         var response = await client.GetAsync(url);
         response.EnsureSuccessStatusCode();
@@ -86,7 +92,7 @@ public class HumoService : IHumoService
 
     private async Task<Humo> GetHumoDataWithRetry(DateTime date)
     {
-        try 
+        try
         {
             return await GetHumoData(date);
         }
@@ -97,7 +103,7 @@ public class HumoService : IHumoService
 
         await Task.Delay(5000);
 
-        try 
+        try
         {
             return await GetHumoData(date);
         }
@@ -111,18 +117,18 @@ public class HumoService : IHumoService
 
     public async Task<IList<MovieEvent>> GetGuide(DateTime date)
     {
-        Humo humo = await GetHumoDataWithRetry(date);
+        var humo = await GetHumoDataWithRetry(date);
 
         FilterBroadcasters(date, humo);
 
         FilterMovies(humo);
 
-        List<MovieEvent> movieEvents = new List<MovieEvent>();
+        var movieEvents = new List<MovieEvent>();
         movieEvents.AddRange(MovieAdapter(humo));
         return movieEvents;
     }
 
-    static string[] channels =
+    private static string[] channels =
     {
         "een",
         "canvas",
@@ -144,49 +150,34 @@ public class HumoService : IHumoService
         "studio-100-tv",
         "disney-channel",
         "nickelodeon-spike",
-        "cartoon24",
+        "cartoon24"
     };
 
     private void FilterBroadcasters(DateTime date, Humo humo)
     {
-        if (humo == null || humo.channels == null)
-        {
-            return;
-        }
-        foreach (string channel in channels)
-        {
+        if (humo == null || humo.channels == null) return;
+        foreach (var channel in channels)
             if (!humo.channels.Any(b => b != null && b.seoKey == channel))
-            {
                 logger.LogWarning("No broadcasts found for Channel {channel} on {Date}",
                     channel, date.ToShortDateString());
-            }
-        }
 
         humo.channels.RemoveAll(b => b == null || !channels.Contains(b.seoKey));
     }
 
     private void FilterMovies(Humo humo)
     {
-        if (humo == null || humo.channels == null)
-        {
-            return;
-        }
+        if (humo == null || humo.channels == null) return;
 
         foreach (var channel in humo.channels)
-        {
             //channel.broadcasts.RemoveAll(b => !b.IsMovie() && ! b.IsFirstOfSerieSeason());
             channel.broadcasts.RemoveAll(b => !b.IsMovie());
-        }
 
-        humo.channels.RemoveAll(c => (c.broadcasts == null) || (c.broadcasts.Count == 0));
+        humo.channels.RemoveAll(c => c.broadcasts == null || c.broadcasts.Count == 0);
     }
 
     private IList<MovieEvent> MovieAdapter(Humo humo)
     {
-        if (humo == null || humo.channels == null)
-        {
-            return new List<MovieEvent>();
-        }
+        if (humo == null || humo.channels == null) return new List<MovieEvent>();
 
         var movies = new List<MovieEvent>();
         foreach (var humoChannel in humo.channels)
@@ -195,12 +186,12 @@ public class HumoService : IHumoService
             {
                 Code = humoChannel.seoKey,
                 Name = humoChannel.name,
-                LogoS = humoChannel.channelLogoUrl,
+                LogoS = humoChannel.channelLogoUrl
             };
 
             foreach (var broadcast in humoChannel.broadcasts)
             {
-                string description = broadcast.synopsis;
+                var description = broadcast.synopsis;
                 int? year = null;
                 // int year = broadcast.program.year;
 
@@ -211,7 +202,7 @@ public class HumoService : IHumoService
                 //     description += $" (SERIE: begin van seizoen {broadcast.program.episodeseason})";
                 // }
 
-                string genre = broadcast.genre?.Trim() ?? "";
+                var genre = broadcast.genre?.Trim() ?? "";
                 if (genre != "")
                     genre += " - ";
                 genre += string.Join(' ', broadcast.subGenres);
@@ -245,10 +236,10 @@ public class HumoService : IHumoService
                 // }
                 if (broadcast.rating.HasValue)
                 {
-                    int rating = broadcast.rating.Value;
+                    var rating = broadcast.rating.Value;
                     if (rating > 0 && rating <= 100)
                     {
-                        string stars = new string('★', rating / 20);
+                        var stars = new string('★', rating / 20);
                         if (rating % 20 > 0)
                             stars += '½';
                         opinion = stars;
@@ -263,15 +254,17 @@ public class HumoService : IHumoService
                     Year = year,
                     Vod = false,
                     Feed = MovieEvent.FeedType.Broadcast,
-                    StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000).ToLocalTime(),
-                    EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000).ToLocalTime(),
+                    StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000)
+                        .ToLocalTime(),
+                    EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000)
+                        .ToLocalTime(),
                     Duration = broadcast.duration.HasValue ? broadcast.duration.Value / 60 : null,
                     PosterS = broadcast.imageUrl,
                     PosterM = broadcast.imageUrl,
                     Content = broadcast.synopsis,
                     Opinion = opinion,
                     Genre = genre,
-                    Type = type,
+                    Type = type
                 };
 
                 movies.Add(movie);

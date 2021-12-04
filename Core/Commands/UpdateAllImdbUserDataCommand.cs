@@ -21,14 +21,13 @@ public class UpdateAllImdbUsersDataCommand : IUpdateAllImdbUsersDataCommand
         IUsersRepository usersRepository)
     {
         this.logger = logger;
-        this.updateImdbUserDataCommand = UpdateImdbUserDataCommand;
+        updateImdbUserDataCommand = UpdateImdbUserDataCommand;
         this.usersRepository = usersRepository;
     }
 
     public async Task<int> Execute()
     {
         await foreach (var imdbUserId in usersRepository.GetAllImdbUserIds())
-        {
             try
             {
                 await updateImdbUserDataCommand.Execute(imdbUserId, false);
@@ -37,7 +36,7 @@ public class UpdateAllImdbUsersDataCommand : IUpdateAllImdbUsersDataCommand
             {
                 logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", imdbUserId);
             }
-        }
+
         return 0;
     }
 }

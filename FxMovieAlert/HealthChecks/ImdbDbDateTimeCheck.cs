@@ -20,13 +20,13 @@ public class ImdbDbDateTimeCheck : IHealthCheck
 
     public Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         var connectionString = configuration.GetConnectionString("ImdbDb");
 
-        var connectionStringBuilder = new DbConnectionStringBuilder(); 
+        var connectionStringBuilder = new DbConnectionStringBuilder();
         connectionStringBuilder.ConnectionString = connectionString;
-        string filePath = connectionStringBuilder["Data Source"].ToString();
+        var filePath = connectionStringBuilder["Data Source"].ToString();
         var fileInfo = new System.IO.FileInfo(filePath);
         var lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
         var ageDays = (DateTime.UtcNow - lastWriteTimeUtc).TotalDays;
@@ -37,12 +37,13 @@ public class ImdbDbDateTimeCheck : IHealthCheck
         else
             status = HealthStatus.Healthy;
 
-        HealthCheckResult result = new HealthCheckResult(status, null, null, 
-                new Dictionary<string, object>() {
-                    { "ImdbDbLastWriteTimeUtc", lastWriteTimeUtc },
-                    { "ImdbDbAgeDays", ageDays }
-                });
-            
+        var result = new HealthCheckResult(status, null, null,
+            new Dictionary<string, object>()
+            {
+                { "ImdbDbLastWriteTimeUtc", lastWriteTimeUtc },
+                { "ImdbDbAgeDays", ageDays }
+            });
+
         return Task.FromResult(result);
     }
 }

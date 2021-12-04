@@ -42,9 +42,9 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private readonly GenerateImdbDatabaseCommandOptions generateImdbDatabaseCommandOptions;
     private readonly ITheMovieDbService theMovieDbService;
 
-    const int batchSize = 10000;
+    private const int batchSize = 10000;
 
-    public GenerateImdbDatabaseCommand(ILogger<UpdateEpgCommand> logger, 
+    public GenerateImdbDatabaseCommand(ILogger<UpdateEpgCommand> logger,
         IServiceScopeFactory serviceScopeFactory,
         IOptionsSnapshot<GenerateImdbDatabaseCommandOptions> generateImdbDatabaseCommandOptions,
         ITheMovieDbService theMovieDbService)
@@ -69,7 +69,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private async Task ImportImdbData_Remove()
     {
         logger.LogInformation("Removing MovieAlternatives");
-        do {
+        do
+        {
             using (var scope = serviceScopeFactory.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
@@ -82,7 +83,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         } while (true);
 
         logger.LogInformation("Removing Movies");
-        do {
+        do
+        {
             using (var scope = serviceScopeFactory.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
@@ -97,7 +99,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
     private async Task ImportImdbData_Movies()
     {
-        int debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
 
         var fileToDecompress = new FileInfo(generateImdbDatabaseCommandOptions.ImdbMoviesList);
         using (var originalFileStream = fileToDecompress.OpenRead())
@@ -125,14 +127,15 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 "short",
                 "tvMovie",
                 "tvMiniSeries",
-                "tvSeries",
+                "tvSeries"
             };
 
-            do {
+            do
+            {
                 using (var scope = serviceScopeFactory.CreateScope())
                 using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
-                    int batchCount = 0;
+                    var batchCount = 0;
                     while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
                     {
                         batchCount++;
@@ -146,7 +149,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                                 count, originalFileStream.Position * 100 / originalFileStream.Length,
                                 countAlternatives, skipped, skipped * 100 / count,
                                 stopwatch.ElapsedMilliseconds);
-                            stopwatch.Restart();                            
+                            stopwatch.Restart();
 
                             // For debugging
                             if (debugMaxImdbRowCount > 0 && count >= debugMaxImdbRowCount)
@@ -167,30 +170,30 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                             continue;
                         }
 
-                        string movieId = match.Groups[1].Value;
+                        var movieId = match.Groups[1].Value;
 
                         var movie = new ImdbMovie();
                         movie.ImdbId = movieId;
                         movie.PrimaryTitle = match.Groups[3].Value;
-                        string originalTitle = match.Groups[4].Value;
+                        var originalTitle = match.Groups[4].Value;
 
-                        if (int.TryParse(match.Groups[5].Value, out int startYear))
+                        if (int.TryParse(match.Groups[5].Value, out var startYear))
                             movie.Year = startYear;
 
-                        string primaryTitleNormalized = TitleNormalizer.NormalizeTitle(movie.PrimaryTitle);
+                        var primaryTitleNormalized = TitleNormalizer.NormalizeTitle(movie.PrimaryTitle);
 
                         countAlternatives++;
                         movie.MovieAlternatives = new List<ImdbMovieAlternative>
                         {
-                            new ImdbMovieAlternative()
+                            new()
                             {
                                 Movie = movie,
                                 AlternativeTitle = null,
                                 Normalized = primaryTitleNormalized
                             }
                         };
-                        
-                        string originalTitleNormalized = TitleNormalizer.NormalizeTitle(originalTitle);
+
+                        var originalTitleNormalized = TitleNormalizer.NormalizeTitle(originalTitle);
                         if (primaryTitleNormalized != originalTitleNormalized)
                         {
                             countAlternatives++;
@@ -209,16 +212,16 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                     await db.SaveChangesAsync();
                 }
             } while (text != null);
-            
+
             logger.LogInformation("IMDb movies scanned: {Count}", count);
         }
-    }        
+    }
 
     private async Task ImportImdbData_AlsoKnownAs()
     {
-        int debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
-        string[] akaFilterRegion = generateImdbDatabaseCommandOptions.AkaFilterRegion;
-        string[] akaFilterLanguage = generateImdbDatabaseCommandOptions.AkaFilterLanguage;
+        var debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var akaFilterRegion = generateImdbDatabaseCommandOptions.AkaFilterRegion;
+        var akaFilterLanguage = generateImdbDatabaseCommandOptions.AkaFilterLanguage;
 
         var fileToDecompress = new FileInfo(generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList);
         using (var originalFileStream = fileToDecompress.OpenRead())
@@ -242,12 +245,12 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
             // Skip header
             textReader.ReadLine();
 
-            do {
-
+            do
+            {
                 using (var scope = serviceScopeFactory.CreateScope())
                 using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
-                    int batchCount = 0;
+                    var batchCount = 0;
                     while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
                     {
                         batchCount++;
@@ -262,7 +265,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                                 count, originalFileStream.Position * 100 / originalFileStream.Length,
                                 countAlternatives, skipped, skipped * 100 / count,
                                 stopwatch.ElapsedMilliseconds);
-                            stopwatch.Restart();                            
+                            stopwatch.Restart();
 
                             // For debugging
                             if (debugMaxImdbRowCount > 0 && count >= debugMaxImdbRowCount)
@@ -277,25 +280,26 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                         }
 
                         if (!(
-                            akaFilterRegion.Contains(match.Groups[3].Value) 
+                            akaFilterRegion.Contains(match.Groups[3].Value)
                             || akaFilterLanguage.Contains(match.Groups[4].Value)
-                            ))
+                        ))
                         {
                             skipped++;
                             continue;
                         }
 
-                        string movieId = match.Groups[1].Value;
-                        ImdbMovie movie = await db.Movies.Include(m => m.MovieAlternatives).SingleOrDefaultAsync(m => m.ImdbId == movieId);
+                        var movieId = match.Groups[1].Value;
+                        var movie = await db.Movies.Include(m => m.MovieAlternatives)
+                            .SingleOrDefaultAsync(m => m.ImdbId == movieId);
                         if (movie == null)
                         {
                             skipped++;
                             continue;
                         }
 
-                        string alternativeTitle = match.Groups[2].Value;
+                        var alternativeTitle = match.Groups[2].Value;
 
-                        string normalized = TitleNormalizer.NormalizeTitle(alternativeTitle);
+                        var normalized = TitleNormalizer.NormalizeTitle(alternativeTitle);
                         // Not in DB
                         if (movie.MovieAlternatives.Any(ma => ma.Normalized == normalized))
                         {
@@ -313,7 +317,6 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
                     await db.SaveChangesAsync();
                 }
-
             } while (text != null);
 
             logger.LogInformation("IMDb movies scanned: {Count}", count);
@@ -322,7 +325,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
     private async Task ImportImdbData_Ratings()
     {
-        int debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
 
         var fileToDecompress = new FileInfo(generateImdbDatabaseCommandOptions.ImdbRatingsList);
         using (var originalFileStream = fileToDecompress.OpenRead())
@@ -343,13 +346,12 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
             // Skip header
             textReader.ReadLine();
 
-            do {
-
+            do
+            {
                 using (var scope = serviceScopeFactory.CreateScope())
                 using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
-
-                    int batchCount = 0;
+                    var batchCount = 0;
                     while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
                     {
                         batchCount++;
@@ -364,12 +366,11 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                                 count, originalFileStream.Position * 100 / originalFileStream.Length,
                                 skipped, skipped * 100 / count,
                                 stopwatch.ElapsedMilliseconds);
-                            stopwatch.Restart();                            
+                            stopwatch.Restart();
 
                             // For debugging
                             if (debugMaxImdbRowCount > 0 && count >= debugMaxImdbRowCount)
                                 break;
-
                         }
 
                         var match = regex.Match(text);
@@ -379,7 +380,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                             continue;
                         }
 
-                        string tconst = match.Groups[1].Value;
+                        var tconst = match.Groups[1].Value;
 
                         var movie = await db.Movies.SingleOrDefaultAsync(m => m.ImdbId == tconst);
                         if (movie == null)
@@ -395,13 +396,13 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                             movie.Votes = votes;
 
                         decimal rating;
-                        if (decimal.TryParse(match.Groups[2].Value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat, out rating))
+                        if (decimal.TryParse(match.Groups[2].Value, NumberStyles.AllowDecimalPoint,
+                            CultureInfo.InvariantCulture.NumberFormat, out rating))
                             movie.Rating = (int)(rating * 10);
                     }
 
                     await db.SaveChangesAsync();
                 }
-
             } while (text != null);
 
             logger.LogInformation("IMDb ratings scanned: {Count}", count);
@@ -410,7 +411,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
     private async Task ImportImdbData_CleanupMoviesWithoutRatings()
     {
-        int year = DateTime.Now.Year - 2;
+        var year = DateTime.Now.Year - 2;
 
         logger.LogInformation("Removing Movies without Rating");
 
@@ -420,10 +421,11 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         {
             total = db.Movies.Where((m) => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Count();
         }
-        
+
         logger.LogInformation("Removing {Count} Movies without Rating", total);
         long count = 0;
-        do {
+        do
+        {
             using (var scope = serviceScopeFactory.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
@@ -439,7 +441,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 // This also removes Alternatives
                 db.Movies.RemoveRange(batch);
                 await db.SaveChangesAsync();
-                logger.LogInformation("Removing {TotalCount} Movies without Rating, {PercentDone}%", total, count * 100 / total);
+                logger.LogInformation("Removing {TotalCount} Movies without Rating, {PercentDone}%", total,
+                    count * 100 / total);
             }
         } while (true);
     }
@@ -451,6 +454,6 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         {
             logger.LogInformation("Doing 'VACUUM'...");
             await db.Database.ExecuteSqlRawAsync("VACUUM;");
-        }            
+        }
     }
 }

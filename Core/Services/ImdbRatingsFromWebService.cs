@@ -41,7 +41,7 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
     public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, DateTime? fromDateTime)
     {
         IList<ImdbRating> ratings = new List<ImdbRating>();
-        string url = $"/user/{imdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
+        var url = $"/user/{imdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
         do
         {
             using (var htmlDocument = await FetchHtmlDocument(url))
@@ -49,6 +49,7 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
                 url = GetRatingsSinglePageAsync(htmlDocument, ratings);
             }
         } while (url != null && fromDateTime.HasValue && fromDateTime.Value < ratings.Min(r => r.Date));
+
         return ratings;
     }
 
@@ -61,8 +62,8 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
         //   response.Content.ReadAsStringAsync().Result,nq 
         // ==> nq = non-quoted
 
-        using Stream stream = await response.Content.ReadAsStreamAsync();
-        HtmlParser parser = new HtmlParser();
+        using var stream = await response.Content.ReadAsStreamAsync();
+        var parser = new HtmlParser();
         return await parser.ParseDocumentAsync(stream);
     }
 
@@ -72,7 +73,7 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
         if (ratingsContainer == null)
             return null;
         var elements = ratingsContainer.GetElementsByClassName("lister-item");
-        foreach(var element in elements)
+        foreach (var element in elements)
         {
             var child = element.QuerySelector("div:nth-child(1)");
             var tt = child.Attributes["data-tconst"].Value;
@@ -84,11 +85,12 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
             var date = DateTime.ParseExact(dateString, "dd MMM yyyy", CultureInfo.InvariantCulture);
             child = element.QuerySelector("div:nth-child(2) > div:nth-child(4) > div:nth-child(2) > span:nth-child(2)");
 
-            string title = WebUtility.UrlDecode(
+            var title = WebUtility.UrlDecode(
                 element.QuerySelector("div:nth-child(2) > h3:nth-child(2) > a:nth-child(3)").InnerHtml.Trim());
 
             var rating = int.Parse(child.InnerHtml);
-            ratings.Add(new ImdbRating() {
+            ratings.Add(new ImdbRating()
+            {
                 ImdbId = tt,
                 Rating = rating,
                 Date = date,
@@ -96,7 +98,7 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
             });
         }
 
-        string nextUrl = document.QuerySelector("a.flat-button:nth-child(3)").Attributes["href"].Value;
+        var nextUrl = document.QuerySelector("a.flat-button:nth-child(3)").Attributes["href"].Value;
 
         return nextUrl;
     }

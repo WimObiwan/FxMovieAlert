@@ -33,7 +33,7 @@ public class Startup
     private readonly IWebHostEnvironment environment;
 
     public Startup(
-        IConfiguration configuration, 
+        IConfiguration configuration,
         IWebHostEnvironment environment)
     {
         this.configuration = configuration;
@@ -46,155 +46,163 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        string pathToCryptoKeys = Path.Join(environment.ContentRootPath, "dp_keys");
+        var pathToCryptoKeys = Path.Join(environment.ContentRootPath, "dp_keys");
         Directory.CreateDirectory(pathToCryptoKeys);
         services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(pathToCryptoKeys));
 
         // Add authentication services
-        services.Configure<CookiePolicyOptions>(options => {
+        services.Configure<CookiePolicyOptions>(options =>
+        {
             // This lambda determines whether user consent for non-essential cookies is needed for a given request.
             options.CheckConsentNeeded = context => true;
             options.Secure = CookieSecurePolicy.Always;
             options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.None;
         });
 
-        services.AddAuthentication(options => {
-            options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        })
-        .AddCookie(options =>
-        {
-            // add an instance of the patched manager to the options:
-            options.CookieManager = new ChunkingCookieManager();
-            options.ExpireTimeSpan = TimeSpan.FromDays(31);
-            options.SlidingExpiration = true;
-
-            options.Cookie.HttpOnly = true;
-            options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        })
-        .AddOpenIdConnect("Auth0", options => {
-            // Set the authority to your Auth0 domain
-            options.Authority = $"https://{configuration["Auth0:Domain"]}";
-
-            // Configure the Auth0 Client ID and Client Secret
-            options.ClientId = configuration["Auth0:ClientId"];
-            options.ClientSecret = configuration["Auth0:ClientSecret"];
-
-            // Set response type to code
-            options.ResponseType = "code";
-
-            options.SaveTokens = true;
-
-            // Configure the scope
-            options.Scope.Clear();
-            options.Scope.Add("openid");
-            options.Scope.Add("profile");
-
-            // Set the callback path, so Auth0 will call back to http://localhost:5000/signin-auth0 
-            // Also ensure that you have added the URL as an Allowed Callback URL in your Auth0 dashboard 
-            options.CallbackPath = new PathString("/signin-auth0");
-
-            // Configure the Claims Issuer to be Auth0
-            options.ClaimsIssuer = "Auth0";
-
-            options.Events = new OpenIdConnectEvents
+        services.AddAuthentication(options =>
             {
-                OnTicketReceived = context =>
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+            .AddCookie(options =>
+            {
+                // add an instance of the patched manager to the options:
+                options.CookieManager = new ChunkingCookieManager();
+                options.ExpireTimeSpan = TimeSpan.FromDays(31);
+                options.SlidingExpiration = true;
+
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            })
+            .AddOpenIdConnect("Auth0", options =>
+            {
+                // Set the authority to your Auth0 domain
+                options.Authority = $"https://{configuration["Auth0:Domain"]}";
+
+                // Configure the Auth0 Client ID and Client Secret
+                options.ClientId = configuration["Auth0:ClientId"];
+                options.ClientSecret = configuration["Auth0:ClientSecret"];
+
+                // Set response type to code
+                options.ResponseType = "code";
+
+                options.SaveTokens = true;
+
+                // Configure the scope
+                options.Scope.Clear();
+                options.Scope.Add("openid");
+                options.Scope.Add("profile");
+
+                // Set the callback path, so Auth0 will call back to http://localhost:5000/signin-auth0 
+                // Also ensure that you have added the URL as an Allowed Callback URL in your Auth0 dashboard 
+                options.CallbackPath = new PathString("/signin-auth0");
+
+                // Configure the Claims Issuer to be Auth0
+                options.ClaimsIssuer = "Auth0";
+
+                options.Events = new OpenIdConnectEvents
                 {
-                    // Get the ClaimsIdentity
-                    var identity = context.Principal.Identity as ClaimsIdentity;
-                    if (identity != null)
+                    OnTicketReceived = context =>
                     {
+                        // Get the ClaimsIdentity
+                        var identity = context.Principal.Identity as ClaimsIdentity;
+                        if (identity != null)
+                        {
                             // Add the Name ClaimType. This is required if we want User.Identity.Name to actually return something!
                             if (!context.Principal.HasClaim(c => c.Type == ClaimTypes.Name) &&
                                 identity.HasClaim(c => c.Type == "name"))
-                            identity.AddClaim(new Claim(ClaimTypes.Name, identity.FindFirst("name").Value));
+                                identity.AddClaim(new Claim(ClaimTypes.Name, identity.FindFirst("name").Value));
 
                             // Check if token names are stored in Properties
                             if (context.Properties.Items.ContainsKey(".TokenNames"))
-                            {   
+                            {
                                 // Token names a semicolon separated
-                                string[] tokenNames = context.Properties.Items[".TokenNames"].Split(';');
+                                var tokenNames = context.Properties.Items[".TokenNames"].Split(';');
 
                                 // Add each token value as Claim
                                 foreach (var tokenName in tokenNames)
                                 {
                                     // Tokens are stored in a Dictionary with the Key ".Token.<token name>"
-                                    string tokenValue = context.Properties.Items[$".Token.{tokenName}"];
+                                    var tokenValue = context.Properties.Items[$".Token.{tokenName}"];
                                     identity.AddClaim(new Claim(tokenName, tokenValue));
                                 }
                             }
-                    }
-
-                    return Task.CompletedTask;
-                },
-
-                // handle the logout redirection 
-                OnRedirectToIdentityProviderForSignOut = (context) =>
-                {
-                    var logoutUri = $"https://{configuration["Auth0:Domain"]}/v2/logout?client_id={configuration["Auth0:ClientId"]}";
-
-                    var postLogoutUri = context.Properties.RedirectUri;
-                    if (!string.IsNullOrEmpty(postLogoutUri))
-                    {
-                        if (postLogoutUri.StartsWith("/"))
-                        {
-                            // transform to absolute
-                            var request = context.Request;
-                            postLogoutUri = request.Scheme + "://" + request.Host + request.PathBase + postLogoutUri;
                         }
-                        logoutUri += $"&returnTo={ Uri.EscapeDataString(postLogoutUri)}";
+
+                        return Task.CompletedTask;
+                    },
+
+                    // handle the logout redirection 
+                    OnRedirectToIdentityProviderForSignOut = (context) =>
+                    {
+                        var logoutUri =
+                            $"https://{configuration["Auth0:Domain"]}/v2/logout?client_id={configuration["Auth0:ClientId"]}";
+
+                        var postLogoutUri = context.Properties.RedirectUri;
+                        if (!string.IsNullOrEmpty(postLogoutUri))
+                        {
+                            if (postLogoutUri.StartsWith("/"))
+                            {
+                                // transform to absolute
+                                var request = context.Request;
+                                postLogoutUri = request.Scheme + "://" + request.Host + request.PathBase +
+                                                postLogoutUri;
+                            }
+
+                            logoutUri += $"&returnTo={Uri.EscapeDataString(postLogoutUri)}";
+                        }
+
+                        context.Response.Redirect(logoutUri);
+                        context.HandleResponse();
+
+                        return Task.CompletedTask;
                     }
-
-                    context.Response.Redirect(logoutUri);
-                    context.HandleResponse();
-
-                    return Task.CompletedTask;
-                }
-            };   
-        });
+                };
+            });
 
 
         services.Configure<ForwardedHeadersOptions>(options =>
         {
-            options.ForwardedHeaders = 
+            options.ForwardedHeaders =
                 ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
         });
 
         if (healthCheckOptions.Uri != null)
-        {
             services.AddHealthChecks()
                 .AddSqlite(
-                    sqliteConnectionString: configuration.GetConnectionString("FxMoviesDB"), 
+                    configuration.GetConnectionString("FxMoviesDB"),
                     name: "sqlite-FxMoviesDB")
                 // .AddSqlite(
                 //     sqliteConnectionString: _configuration.GetConnectionString("FxMoviesHistoryDb"), 
                 //     name: "sqlite-FxMoviesHistoryDb")
                 .AddSqlite(
-                    sqliteConnectionString: configuration.GetConnectionString("ImdbDb"),
+                    configuration.GetConnectionString("ImdbDb"),
                     name: "sqlite-ImdbDb")
                 .AddIdentityServer(
-                    idSvrUri: new Uri($"https://{configuration["Auth0:Domain"]}"),
-                    name: "idsvr-Auth0")
+                    new Uri($"https://{configuration["Auth0:Domain"]}"),
+                    "idsvr-Auth0")
                 .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", healthCheckOptions, MovieEvent.FeedType.Broadcast)
                 .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", healthCheckOptions, MovieEvent.FeedType.FreeVod)
                 .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", healthCheckOptions, MovieEvent.FeedType.PaidVod)
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", healthCheckOptions, MovieEvent.FeedType.FreeVod, "vtmgo")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions, MovieEvent.FeedType.FreeVod, "vrtnu")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", healthCheckOptions, MovieEvent.FeedType.FreeVod, "goplay")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", healthCheckOptions, MovieEvent.FeedType.PaidVod, "primevideo")
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", healthCheckOptions, MovieEvent.FeedType.FreeVod,
+                    "vtmgo")
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions, MovieEvent.FeedType.FreeVod,
+                    "vrtnu")
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", healthCheckOptions,
+                    MovieEvent.FeedType.FreeVod, "goplay")
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", healthCheckOptions,
+                    MovieEvent.FeedType.PaidVod, "primevideo")
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-FreeStreaming-missingImdbLink", MovieEvent.FeedType.FreeVod)
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)
                 .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime")
                 .AddCheck<SystemInfoCheck>("SystemInfo");
-        }
 
         //services.AddHealthChecksUI();
-        
+
         // Add framework services.
         services.AddRazorPages();
 
@@ -220,7 +228,7 @@ public class Startup
         var supportedCultures = new[]
         {
             new CultureInfo("nl-BE"),
-            new CultureInfo("nl"),
+            new CultureInfo("nl")
         };
 
         app.UseRequestLocalization(new RequestLocalizationOptions
@@ -233,14 +241,10 @@ public class Startup
         });
 
         if (environment.IsDevelopment())
-        {
             app.UseDeveloperExceptionPage();
-        }
         else
-        {
             app.UseExceptionHandler("/Error");
-            //app.UseHsts(); // handles by nginx
-        }
+        //app.UseHsts(); // handles by nginx
 
         // //forward headers from the LB
         // var forwardOpts = new ForwardedHeadersOptions
@@ -268,14 +272,13 @@ public class Startup
         app.UseAuthentication();
 
         if (healthCheckOptions.Uri != null)
-        {
-            app.UseHealthChecks(healthCheckOptions.Uri, new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions()
-            {
-                Predicate = _ => true,
-                //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                ResponseWriter = WriteZabbixResponse
-            });
-        }
+            app.UseHealthChecks(healthCheckOptions.Uri,
+                new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions()
+                {
+                    Predicate = _ => true,
+                    //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                    ResponseWriter = WriteZabbixResponse
+                });
         // app.UseHealthChecksUI(o => 
         // {
         //     o.UIPath = "/hc-ui";
@@ -290,7 +293,7 @@ public class Startup
         {
             endpoints.MapRazorPages();
             endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
-            endpoints.MapGet("/Streaming", ctx => 
+            endpoints.MapGet("/Streaming", ctx =>
             {
                 ctx.Response.Redirect("/FreeStreaming" + ctx.Request.QueryString, true);
                 return Task.CompletedTask;
@@ -311,7 +314,7 @@ public class Startup
 
         public int status { get; set; }
         public string statusText { get; set; }
-        public List<ResultItem> results { get; set; }            
+        public List<ResultItem> results { get; set; }
     }
 
     private static async Task WriteZabbixResponse(HttpContext httpContext, HealthReport result)
@@ -322,7 +325,7 @@ public class Startup
         {
             status = (int)result.Status,
             statusText = result.Status.ToString(),
-            results = result.Entries.Select(pair => 
+            results = result.Entries.Select(pair =>
                 new ZabbixResponse.ResultItem()
                 {
                     name = pair.Key,

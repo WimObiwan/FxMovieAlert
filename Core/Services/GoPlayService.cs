@@ -31,7 +31,7 @@ public class GoPlayService : IMovieEventService
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {
-        Channel channel = new Channel()
+        var channel = new Channel()
         {
             Code = "goplay",
             Name = "GoPlay",
@@ -40,9 +40,9 @@ public class GoPlayService : IMovieEventService
 
         var list = await GetDataProgramList();
         return list
-            .Select(async dataProgram => 
+            .Select(async dataProgram =>
             {
-                string link = dataProgram.link;
+                var link = dataProgram.link;
                 string image = image = dataProgram.images.teaser;
 
                 if (link != null && link.StartsWith('/'))
@@ -53,20 +53,20 @@ public class GoPlayService : IMovieEventService
                 return new MovieEvent()
                 {
                     ExternalId = dataProgram.id,
-                    Type = 1,  // 1 = movie, 2 = short movie, 3 = serie
-                    Title = dataProgram.title.Trim(), 
-                    Year = null, 
+                    Type = 1, // 1 = movie, 2 = short movie, 3 = serie
+                    Title = dataProgram.title.Trim(),
+                    Year = null,
                     Vod = true,
                     Feed = MovieEvent.FeedType.FreeVod,
                     StartTime = GetDateTime(dataProgramDetails.pageInfo.publishDate) ?? DateTime.UtcNow,
-                    EndTime = GetDateTime(dataProgramDetails.pageInfo.unpublishDate), 
+                    EndTime = GetDateTime(dataProgramDetails.pageInfo.unpublishDate),
                     Channel = channel,
-                    PosterS = image, 
+                    PosterS = image,
                     PosterM = image,
                     Duration = null,
                     Content = dataProgramDetails.pageInfo.description,
                     VodLink = link,
-                    AddedTime = DateTime.UtcNow,
+                    AddedTime = DateTime.UtcNow
                 };
             })
             .Select(t => t.Result)
@@ -89,23 +89,24 @@ public class GoPlayService : IMovieEventService
         var response = await client.GetAsync("/programmas/");
         response.EnsureSuccessStatusCode();
 
-        using Stream stream = await response.Content.ReadAsStreamAsync();
-        HtmlParser parser = new HtmlParser();
+        using var stream = await response.Content.ReadAsStreamAsync();
+        var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
         return document
             .QuerySelectorAll(".poster-teaser")
             .Where(e => e.GetAttribute("data-category") == "5286") // 5286 = Film
-            .Select(e => 
+            .Select(e =>
             {
-                string dataProgramText = e.GetAttribute("data-program");
+                var dataProgramText = e.GetAttribute("data-program");
                 try
                 {
                     return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
                 }
                 catch (Exception x)
                 {
-                    logger.LogWarning(x, "Skipping line with parsing exception, Text={dataProgramText}", dataProgramText);
+                    logger.LogWarning(x, "Skipping line with parsing exception, Text={dataProgramText}",
+                        dataProgramText);
                     return null;
                 }
             })
@@ -119,8 +120,8 @@ public class GoPlayService : IMovieEventService
         var response = await client.GetAsync(link);
         response.EnsureSuccessStatusCode();
 
-        using Stream stream = await response.Content.ReadAsStreamAsync();
-        HtmlParser parser = new HtmlParser();
+        using var stream = await response.Content.ReadAsStreamAsync();
+        var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
         var dataProgramText = document
@@ -131,11 +132,11 @@ public class GoPlayService : IMovieEventService
             .OrderByDescending(s => s.Length)
             .FirstOrDefault();
 
-        var dataProgramDetails =  JsonSerializer.Deserialize<DataProgram>(dataProgramText);
+        var dataProgramDetails = JsonSerializer.Deserialize<DataProgram>(dataProgramText);
         return dataProgramDetails;
     }
 
-    class DataProgram
+    private class DataProgram
     {
         public string id { get; set; }
         public string title { get; set; }

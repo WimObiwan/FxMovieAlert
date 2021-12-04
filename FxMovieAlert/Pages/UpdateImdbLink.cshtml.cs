@@ -44,8 +44,8 @@ public class UpdateImdbLinkModel : PageModel
 
         if (editImdbLinks && movieeventid.HasValue && !string.IsNullOrEmpty(setimdbid))
         {
-            bool overwrite = false;
-            bool setIgnore = false;
+            var overwrite = false;
+            var setIgnore = false;
             var match = Regex.Match(setimdbid, @"(tt\d+)");
             if (match.Success)
             {
@@ -63,13 +63,10 @@ public class UpdateImdbLinkModel : PageModel
                 setimdbid = null;
                 overwrite = true;
             }
-            
-            if (overwrite)
-            {
-                await updateImdbLinkCommand.Execute(movieeventid.Value, setimdbid, setIgnore);
-            }
+
+            if (overwrite) await updateImdbLinkCommand.Execute(movieeventid.Value, setimdbid, setIgnore);
         }
-        
+
         return Redirect(returnPage);
     }
 }

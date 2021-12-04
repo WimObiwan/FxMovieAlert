@@ -18,5 +18,6 @@ public class FreeStreamingModel : BroadcastsModelBase
             siteOptions,
             fxMoviesDbContext,
             usersRepository)
-    {}
+    {
+    }
 }

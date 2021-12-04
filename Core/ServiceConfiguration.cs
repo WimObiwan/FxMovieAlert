@@ -11,24 +11,17 @@ namespace FxMovies.Core;
 
 public static class ServiceConfiguration
 {
-    public static IServiceCollection AddFxMoviesCore(this IServiceCollection services, IConfiguration configuration, Assembly assembly)
+    public static IServiceCollection AddFxMoviesCore(this IServiceCollection services, IConfiguration configuration,
+        Assembly assembly)
     {
-        services.AddHttpClient("humo", c =>
-        {
-            c.BaseAddress = new Uri("https://www.humo.be");
-        });
-        services.AddHttpClient("goplay", c =>
-        {
-            c.BaseAddress = new Uri("https://www.goplay.be");
-        });
-        services.AddHttpClient("vtmgo", c =>
-        {
-            c.BaseAddress = new Uri("https://vtm.be/vtmgo/");
-        });
+        services.AddHttpClient("humo", c => { c.BaseAddress = new Uri("https://www.humo.be"); });
+        services.AddHttpClient("goplay", c => { c.BaseAddress = new Uri("https://www.goplay.be"); });
+        services.AddHttpClient("vtmgo", c => { c.BaseAddress = new Uri("https://vtm.be/vtmgo/"); });
         services.AddHttpClient("vtmgo_login", c =>
         {
             c.BaseAddress = new Uri("https://login2.vtm.be");
-            c.DefaultRequestHeaders.Add("User-Agent", "VTMGO/10.3 (be.vmma.vtm.zenderapp; build:13259; Android 25) okhttp/4.9.0");
+            c.DefaultRequestHeaders.Add("User-Agent",
+                "VTMGO/10.3 (be.vmma.vtm.zenderapp; build:13259; Android 25) okhttp/4.9.0");
             c.DefaultRequestHeaders.Add("x-app-version", "10");
             c.DefaultRequestHeaders.Add("x-persgroep-mobile-app", "true");
             c.DefaultRequestHeaders.Add("x-persgroep-os", "android");
@@ -37,29 +30,18 @@ public static class ServiceConfiguration
         services.AddHttpClient("vtmgo_dpg", c =>
         {
             c.BaseAddress = new Uri("https://lfvp-api.dpgmedia.net");
-            c.DefaultRequestHeaders.Add("User-Agent", "VTMGO/10.3 (be.vmma.vtm.zenderapp; build:13259; Android 25) okhttp/4.9.0");
+            c.DefaultRequestHeaders.Add("User-Agent",
+                "VTMGO/10.3 (be.vmma.vtm.zenderapp; build:13259; Android 25) okhttp/4.9.0");
             c.DefaultRequestHeaders.Add("x-app-version", "10");
             c.DefaultRequestHeaders.Add("x-persgroep-mobile-app", "true");
             c.DefaultRequestHeaders.Add("x-persgroep-os", "android");
             c.DefaultRequestHeaders.Add("x-persgroep-os-version", "25");
         });
-        services.AddHttpClient("vrtnu", c =>
-        {
-            c.BaseAddress = new Uri("https://search.vrt.be");
-        });
-        services.AddHttpClient("tmdb", c => 
-        {
-            c.BaseAddress = new Uri("https://api.themoviedb.org");
-        });
+        services.AddHttpClient("vrtnu", c => { c.BaseAddress = new Uri("https://search.vrt.be"); });
+        services.AddHttpClient("tmdb", c => { c.BaseAddress = new Uri("https://api.themoviedb.org"); });
         services.AddHttpClient("images");
-        services.AddHttpClient("imdb", c => 
-        {
-            c.BaseAddress = new Uri("https://www.imdb.com");
-        });
-        services.AddHttpClient("primevideo", c =>
-        {
-            c.BaseAddress = new Uri("https://www.primevideo.com");
-        });
+        services.AddHttpClient("imdb", c => { c.BaseAddress = new Uri("https://www.imdb.com"); });
+        services.AddHttpClient("primevideo", c => { c.BaseAddress = new Uri("https://www.primevideo.com"); });
 
         services.AddSingleton<IVersionInfo, VersionInfo>((_) => new VersionInfo(assembly));
 
@@ -79,8 +61,10 @@ public static class ServiceConfiguration
         services.Configure<VtmGoServiceOptions>(configuration.GetSection(VtmGoServiceOptions.Position));
         services.Configure<PrimeVideoServiceOptions>(configuration.GetSection(PrimeVideoServiceOptions.Position));
         services.Configure<UpdateEpgCommandOptions>(configuration.GetSection(UpdateEpgCommandOptions.Position));
-        services.Configure<GenerateImdbDatabaseCommandOptions>(configuration.GetSection(GenerateImdbDatabaseCommandOptions.Position));
-        services.Configure<AutoUpdateImdbUserDataCommandOptions>(configuration.GetSection(AutoUpdateImdbUserDataCommandOptions.Position));
+        services.Configure<GenerateImdbDatabaseCommandOptions>(
+            configuration.GetSection(GenerateImdbDatabaseCommandOptions.Position));
+        services.Configure<AutoUpdateImdbUserDataCommandOptions>(
+            configuration.GetSection(AutoUpdateImdbUserDataCommandOptions.Position));
         services.Configure<ImdbMatchingQueryOptions>(configuration.GetSection(ImdbMatchingQueryOptions.Position));
 
         services.AddScoped<IMovieCreationHelper, MovieCreationHelper>();

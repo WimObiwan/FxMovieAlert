@@ -4,34 +4,34 @@ body {
 }
 
 /* Wrapping element */
+
 /* Set some basic padding to keep content from hitting the edges */
+
 .body-content {
     padding-left: 15px;
     padding-right: 15px;
 }
 
 /* Carousel */
+
 .carousel-caption p {
     font-size: 20px;
     line-height: 1.4;
 }
 
 /* Make .svg files in the carousel display properly in older browsers */
-.carousel-inner .item img[src$=".svg"] {
-    width: 100%;
-}
+
+.carousel-inner .item img[src$=".svg"] { width: 100%; }
 
 /* QR code generator */
-#qrCode {
-    margin: 15px;
-}
+
+#qrCode { margin: 15px; }
 
 /* Hide/rearrange for smaller screens */
+
 @media screen and (max-width: 767px) {
     /* Hide captions */
-    .carousel-caption {
-        display: none;
-    }
+    .carousel-caption { display: none; }
 }
 
 .sideBar {
@@ -41,16 +41,18 @@ body {
     /*visibility: hidden;*/
     /*display: none;*/
 }
+
 /*.sideBar.is-visible {
     visibility: visible;
 }*/
+
 .sideBar.boxLeft {
     top: 100px;
     height: 0px;
     width: 0px;
-    float:right;
+    float: right;
     padding: 0px 0px 0px 0px;
-    right:0px;
+    right: 0px;
 }
 
 @media only screen and (min-width: 1500px) {
@@ -60,6 +62,7 @@ body {
         /*visibility: hidden;*/
         /*display: none;*/
     }
+
     /*.sideBar.is-visible {
         visibility: visible;
     }*/
@@ -67,9 +70,9 @@ body {
         top: 100px;
         height: 800px;
         width: 200px;
-        float:right;
+        float: right;
         padding: 0px 0px 0px 0px;
-        right:0px;
+        right: 0px;
     }
 }
 
@@ -93,5 +96,7 @@ body {
     width: 60px;
     height: 60px;
 
-    z-index:2; position:absolute; /*left:0;*/ top:0;
+    z-index: 2;
+    position: absolute; /*left:0;*/
+    top: 0;
 }

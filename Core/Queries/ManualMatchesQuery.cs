@@ -27,7 +27,7 @@ public class ManualMatchesQuery : IManualMatchesQuery
 
     public async Task<ManualMatch> Execute(string movieTitle)
     {
-        string movieTitleNormalized = TitleNormalizer.NormalizeTitle(movieTitle);
+        var movieTitleNormalized = TitleNormalizer.NormalizeTitle(movieTitle);
         var manualMatch = await fxMoviesDbContext.ManualMatches
             .Include(mm => mm.Movie)
             .FirstOrDefaultAsync(mm => mm.NormalizedTitle == movieTitleNormalized);

@@ -14,4 +14,4 @@ public class Channel
     public string Name { get; set; }
     public string LogoS { get; set; }
     public string LogoS_Local { get; set; }
-}   
+}

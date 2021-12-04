@@ -28,8 +28,8 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
     {
         List<Tuple<string, string, string>> lastImportErrors2 = null;
         var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
-        
-        int moreErrors = 0;
+
+        var moreErrors = 0;
         using (var reader = new StreamReader(stream))
         using (engine.BeginReadStream(reader))
         {
@@ -38,15 +38,15 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
                 {
                     try
                     {
-                        string _const = record.Const;
+                        var _const = record.Const;
 
-                        DateTime date = DateTime.ParseExact(record.DateAdded, 
-                            new string[] {"yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy"},
+                        var date = DateTime.ParseExact(record.DateAdded,
+                            new string[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
                             CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
 
                         // Ratings
                         // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-                        int rating = int.Parse(record.YourRating);
+                        var rating = int.Parse(record.YourRating);
 
                         return new ImdbRating()
                         {
@@ -73,7 +73,7 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
                         return null;
                     }
                 }).Where(i => i != null).ToList();
-                
+
             if (moreErrors > 0)
                 lastImportErrors2.Add(
                     Tuple.Create(
@@ -89,38 +89,30 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
 #pragma warning disable CS0649
     [IgnoreFirst]
     [DelimitedRecord(",")]
-    class ImdbUserRatingRecord
+    private class ImdbUserRatingRecord
     {
         // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-        [FieldQuoted]
-        public string Const;
-        [FieldQuoted]
-        public string YourRating;
+        [FieldQuoted] public string Const;
+        [FieldQuoted] public string YourRating;
+
         [FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'
         public string DateAdded;
-        [FieldQuoted]
-        public string Title;
-        [FieldQuoted]
-        public string Url;
-        [FieldQuoted]
-        public string TitleType;
-        [FieldQuoted]
-        public string IMDbRating;
-        [FieldQuoted]
-        public string Runtime;
-        [FieldQuoted]
-        public string Year;
-        [FieldQuoted]
-        public string Genres;
-        [FieldQuoted]
-        public string NumVotes;
+
+        [FieldQuoted] public string Title;
+        [FieldQuoted] public string Url;
+        [FieldQuoted] public string TitleType;
+        [FieldQuoted] public string IMDbRating;
+        [FieldQuoted] public string Runtime;
+        [FieldQuoted] public string Year;
+        [FieldQuoted] public string Genres;
+        [FieldQuoted] public string NumVotes;
+
         [FieldQuoted]
         //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
         public string ReleaseDate;
-        [FieldQuoted]
-        public string Directors;
 
+        [FieldQuoted] public string Directors;
     }
 }

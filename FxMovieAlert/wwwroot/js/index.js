@@ -4,51 +4,52 @@ function eachMinute() {
     var now = new Date().getTime();
 
     var timingElements = document.getElementsByClassName("timing");
-    [].forEach.call(timingElements, function (timingElement) {
-        var startTime = new Date(timingElement.getAttribute("data-timing"));
+    [].forEach.call(timingElements,
+        function(timingElement) {
+            var startTime = new Date(timingElement.getAttribute("data-timing"));
 
-        var minutes = Math.ceil((startTime - now) / 60000);
+            var minutes = Math.ceil((startTime - now) / 60000);
 
-        if (minutes > 60) {
-            timingElement.innerHTML = "";
-            timingElement.classList.remove("alert-warning");
-            timingElement.classList.remove("alert-danger");
-            timingElement.style.display = "none";
-        } else if (minutes >= 2) {
-            timingElement.classList.add("alert-warning");
-            timingElement.classList.remove("alert-danger");
-            timingElement.innerHTML = `Deze film begint over ${minutes} minuten.`;
-            timingElement.style.display = null;
-        } else if (minutes >= -1) {
-            timingElement.classList.add("alert-warning");
-            timingElement.classList.remove("alert-danger");
-            timingElement.innerHTML = `Deze film begint nu.`;
-            timingElement.style.display = null;
-        } else {
-            timingElement.classList.remove("alert-warning");
-            timingElement.classList.add("alert-danger");
-            timingElement.innerHTML = `Deze film is al ${-minutes} minuten bezig.`;
-            timingElement.style.display = null;
+            if (minutes > 60) {
+                timingElement.innerHTML = "";
+                timingElement.classList.remove("alert-warning");
+                timingElement.classList.remove("alert-danger");
+                timingElement.style.display = "none";
+            } else if (minutes >= 2) {
+                timingElement.classList.add("alert-warning");
+                timingElement.classList.remove("alert-danger");
+                timingElement.innerHTML = `Deze film begint over ${minutes} minuten.`;
+                timingElement.style.display = null;
+            } else if (minutes >= -1) {
+                timingElement.classList.add("alert-warning");
+                timingElement.classList.remove("alert-danger");
+                timingElement.innerHTML = `Deze film begint nu.`;
+                timingElement.style.display = null;
+            } else {
+                timingElement.classList.remove("alert-warning");
+                timingElement.classList.add("alert-danger");
+                timingElement.innerHTML = `Deze film is al ${-minutes} minuten bezig.`;
+                timingElement.style.display = null;
 
-            if (minutes < -30)
-            {
-                var current = timingElement.closest("tr");
-                var previous = current.previousElementSibling;
-                var next = current.nextElementSibling;
-                if (next != null && typeof next.classList !== 'undefined' && next.classList.contains("ad"))
-                {
-                    next = next.nextSibling;
-                }
-                current.remove();
-                if (previous != null && next != null
-                    && typeof previous.classList !== 'undefined' && previous.classList.contains("date-header")
-                    && typeof next.classList !== 'undefined' && next.classList.contains("date-header"))
-                {
-                    previous.remove();
+                if (minutes < -30) {
+                    var current = timingElement.closest("tr");
+                    var previous = current.previousElementSibling;
+                    var next = current.nextElementSibling;
+                    if (next != null && typeof next.classList !== "undefined" && next.classList.contains("ad")) {
+                        next = next.nextSibling;
+                    }
+                    current.remove();
+                    if (previous != null &&
+                        next != null &&
+                        typeof previous.classList !== "undefined" &&
+                        previous.classList.contains("date-header") &&
+                        typeof next.classList !== "undefined" &&
+                        next.classList.contains("date-header")) {
+                        previous.remove();
+                    }
                 }
             }
-        }
-    });
+        });
 }
 
 var time = new Date(),
@@ -56,10 +57,12 @@ var time = new Date(),
 
 
 setTimeout(function() {
-    setInterval(eachMinute, 60000);
-    eachMinute();
-}, secondsRemaining);
+        setInterval(eachMinute, 60000);
+        eachMinute();
+    },
+    secondsRemaining);
 
-window.addEventListener('load', function (event) {
-    eachMinute();
-});
+window.addEventListener("load",
+    function(event) {
+        eachMinute();
+    });
