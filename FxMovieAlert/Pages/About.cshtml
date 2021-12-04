@@ -1,7 +1,7 @@
 ﻿@page
-@model AboutModel
 @using FxMovieAlert.Options
 @using Microsoft.Extensions.Options
+@model AboutModel
 @inject IOptions<SiteOptions> SiteOptions
 @{
     ViewData["Title"] = "Over FilmOpTV.be";
@@ -26,22 +26,22 @@
     Op de onderstaande schermafbeelding wordt getoond hoe de integratie met IMDb werkt.
     <ul>
         <li>
-            <span class="label label-success label-as-badge" style="word-wrap: break-word; white-space: normal;">
+            <span class="label label-success label-as-badge" style="white-space: normal; word-wrap: break-word;">
                 In het groen worden de films aangeduid die op je &ldquo;watchlist&rdquo; staan.
             </span>
         </li>
         <li>
-            <span class="label label-info label-as-badge" style="word-wrap: break-word; white-space: normal;">
+            <span class="label label-info label-as-badge" style="white-space: normal; word-wrap: break-word;">
                 In het blauw de films die in je reeds bekeken hebt.
             </span>
         </li>
         <li>
-            <span class="label label-warning label-as-badge" style="word-wrap: break-word; white-space: normal;">
+            <span class="label label-warning label-as-badge" style="white-space: normal; word-wrap: break-word;">
                 Films die binnenkort beginnen worden met oranje aangeduid.
             </span>
         </li>
         <li>
-            <span class="label label-danger label-as-badge" style="word-wrap: break-word; white-space: normal;">
+            <span class="label label-danger label-as-badge" style="white-space: normal; word-wrap: break-word;">
                 In het rood worden films getoond die pas begonnen zijn.
             </span>
         </li>
@@ -65,7 +65,7 @@
             </p>
         </li>
     </ul>
-    <img src="/images/About_ImdbIntegration.png" width="80%" style="display: block; margin-left: auto; margin-right: auto; border: 1px solid lightgray;"/>
+    <img src="/images/About_ImdbIntegration.png" width="80%" style="border: 1px solid lightgray; display: block; margin-left: auto; margin-right: auto;"/>
 </p>
 <p>
     Als je ook gebruik wilt maken van de (handige, maar optionele) IMDb intagratie, zijn dit de stappen die je moet doorlopen:

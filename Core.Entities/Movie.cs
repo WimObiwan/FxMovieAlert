@@ -3,14 +3,10 @@ using System.Collections.Generic;
 namespace FxMovies.Core.Entities;
 
 /// <summary>
-/// A simple class representing a User
+///     A simple class representing a User
 /// </summary>
 public class Movie
 {
-    public Movie()
-    {
-    }
-
     public int Id { get; set; }
     public string ImdbId { get; set; }
     public int? ImdbRating { get; set; }

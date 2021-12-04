@@ -3,14 +3,10 @@ using System;
 namespace FxMovies.Core.Entities;
 
 /// <summary>
-/// A simple class representing a UserWatchListItem
+///     A simple class representing a UserWatchListItem
 /// </summary>
 public class UserWatchListItem
 {
-    public UserWatchListItem()
-    {
-    }
-
     public int Id { get; set; }
     public User User { get; set; }
     public Movie Movie { get; set; }

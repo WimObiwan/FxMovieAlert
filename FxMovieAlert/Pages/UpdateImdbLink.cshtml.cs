@@ -13,9 +13,9 @@ namespace FxMovieAlert.Pages;
 
 public class UpdateImdbLinkModel : PageModel
 {
-    private readonly ILogger<UpdateImdbLinkModel> logger;
     private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly ImdbDbContext imdbDbContext;
+    private readonly ILogger<UpdateImdbLinkModel> logger;
     private readonly IMovieCreationHelper movieCreationHelper;
     private readonly IUpdateImdbLinkCommand updateImdbLinkCommand;
 

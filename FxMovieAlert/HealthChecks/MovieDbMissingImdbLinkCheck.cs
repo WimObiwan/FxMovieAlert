@@ -34,9 +34,9 @@ public static class MovieDbMissingImdbLinkCheckBuilderExtensions
 
 public class MovieDbMissingImdbLinkCheck : IHealthCheck
 {
+    private readonly MovieEvent.FeedType feedType;
     private readonly HealthCheckOptions healthCheckOptions;
     private readonly IServiceScopeFactory serviceScopeFactory;
-    private readonly MovieEvent.FeedType feedType;
 
     public MovieDbMissingImdbLinkCheck(IOptions<HealthCheckOptions> healthCheckOptions,
         IServiceScopeFactory serviceScopeFactory,
@@ -72,7 +72,7 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
                 status = HealthStatus.Unhealthy;
 
             var result = new HealthCheckResult(status, null, null,
-                new Dictionary<string, object>()
+                new Dictionary<string, object>
                 {
                     { "MissingImdbLinkCount", count }
                 });

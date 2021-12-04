@@ -16,9 +16,9 @@ public interface IUpdateImdbLinkCommand
 
 public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
 {
-    private readonly ILogger<UpdateImdbUserDataCommand> logger;
     private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly ImdbDbContext imdbDbContext;
+    private readonly ILogger<UpdateImdbUserDataCommand> logger;
     private readonly IMovieCreationHelper movieCreationHelper;
 
     public UpdateImdbLinkCommand(
@@ -71,7 +71,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                 }
 
                 fxMoviesDbContext.ManualMatches.Add(
-                    new ManualMatch()
+                    new ManualMatch
                     {
                         AddedDateTime = DateTime.UtcNow,
                         Movie = movie,

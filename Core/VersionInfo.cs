@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace FxMovies.Core;
 
@@ -10,16 +11,14 @@ public interface IVersionInfo
 
 public class VersionInfo : IVersionInfo
 {
-    private string assemblyVersion;
-
     public VersionInfo(Assembly assemblyForVersion)
     {
-        assemblyVersion = assemblyForVersion
+        Version = assemblyForVersion
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
             .InformationalVersion;
     }
 
-    public string Version => assemblyVersion;
+    public string Version { get; }
 
-    public string DotNetCoreVersion => System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+    public string DotNetCoreVersion => RuntimeInformation.FrameworkDescription;
 }

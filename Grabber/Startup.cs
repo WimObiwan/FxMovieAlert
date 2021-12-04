@@ -1,4 +1,6 @@
 using FxMovies.Core;
+using FxMovies.FxMoviesDB;
+using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,10 +18,10 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
+        services.AddDbContext<FxMoviesDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("FxMoviesDB")));
 
-        services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
+        services.AddDbContext<ImdbDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
 
         services.AddFxMoviesCore(configuration, typeof(Program).Assembly);

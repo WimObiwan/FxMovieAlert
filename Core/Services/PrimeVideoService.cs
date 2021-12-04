@@ -7,8 +7,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using AngleSharp.Html.Parser;
 using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,9 +24,9 @@ public class PrimeVideoServiceOptions
 
 public class PrimeVideoService : IMovieEventService
 {
+    private readonly HttpClient httpClient;
     private readonly ILogger<PrimeVideoService> logger;
     private readonly PrimeVideoServiceOptions primeVideoServiceOptions;
-    private readonly HttpClient httpClient;
 
     public PrimeVideoService(
         ILogger<PrimeVideoService> logger,
@@ -46,7 +46,7 @@ public class PrimeVideoService : IMovieEventService
     {
         // https://www.primevideo.com/storefront/ref=atv_nb_lcl_nl_BE
 
-        var channel = new Channel()
+        var channel = new Channel
         {
             Code = "primevideo",
             Name = "Prime Video",
@@ -109,45 +109,7 @@ public class PrimeVideoService : IMovieEventService
     {
         if (Uri.TryCreate(httpClient.BaseAddress, url, out var uri))
             return uri.ToString();
-        else
-            return null;
-    }
-
-    private class Json
-    {
-        public class Props
-        {
-            public class Collection
-            {
-                public class Item
-                {
-                    public class Url
-                    {
-                        public string url { get; set; }
-                    }
-
-                    public class WatchlistAction
-                    {
-                        public string formatCode { get; set; }
-                    }
-
-                    public Url image { get; set; }
-                    public Url link { get; set; }
-                    public string title { get; set; }
-                    public string titleID { get; set; }
-                    public string releaseYear { get; set; }
-                    public string runtime { get; set; }
-                    public string synopsis { get; set; }
-                    public WatchlistAction watchlistAction { get; set; }
-                }
-
-                public List<Item> items { get; set; }
-            }
-
-            public List<Collection> collections { get; set; }
-        }
-
-        public Props props { get; set; }
+        return null;
     }
 
     private async Task<Stream> GetStream()
@@ -158,13 +120,11 @@ public class PrimeVideoService : IMovieEventService
         {
             return File.OpenRead(localDownloadOverride);
         }
-        else
-        {
-            var response = await httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE?ie=UTF8");
-            response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadAsStreamAsync();
-        }
+        var response = await httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE?ie=UTF8");
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsStreamAsync();
     }
 
     private async Task<IList<Json.Props.Collection.Item>> GetMovieInfo()
@@ -187,5 +147,42 @@ public class PrimeVideoService : IMovieEventService
             .Where(i => i.watchlistAction?.formatCode == "mv");
 
         return items.ToList();
+    }
+
+    private class Json
+    {
+        public Props props { get; set; }
+
+        public class Props
+        {
+            public List<Collection> collections { get; set; }
+
+            public class Collection
+            {
+                public List<Item> items { get; set; }
+
+                public class Item
+                {
+                    public Url image { get; set; }
+                    public Url link { get; set; }
+                    public string title { get; set; }
+                    public string titleID { get; set; }
+                    public string releaseYear { get; set; }
+                    public string runtime { get; set; }
+                    public string synopsis { get; set; }
+                    public WatchlistAction watchlistAction { get; set; }
+
+                    public class Url
+                    {
+                        public string url { get; set; }
+                    }
+
+                    public class WatchlistAction
+                    {
+                        public string formatCode { get; set; }
+                    }
+                }
+            }
+        }
     }
 }

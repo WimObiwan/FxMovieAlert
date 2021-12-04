@@ -20,118 +20,6 @@ namespace FxMovies.Grabber;
 
 internal class Program
 {
-    public class TemporaryFxMoviesDbContextFactory : IDesignTimeDbContextFactory<FxMoviesDbContext>
-    {
-        public FxMoviesDbContext CreateDbContext(string[] args)
-        {
-            var builder = new DbContextOptionsBuilder<FxMoviesDbContext>();
-
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", false, false)
-                .AddEnvironmentVariables()
-                .Build();
-
-            // Get the connection string
-            var connectionString = configuration.GetConnectionString("FxMoviesDb");
-
-            builder.UseSqlite(connectionString);
-            return new FxMoviesDbContext(builder.Options);
-        }
-    }
-
-    public class TemporaryImdbDbContextFactory : IDesignTimeDbContextFactory<ImdbDbContext>
-    {
-        public ImdbDbContext CreateDbContext(string[] args)
-        {
-            var builder = new DbContextOptionsBuilder<ImdbDbContext>();
-
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", false, false)
-                .AddEnvironmentVariables()
-                .Build();
-
-            // Get the connection string
-            var connectionString = configuration.GetConnectionString("ImdbDb");
-
-            builder.UseSqlite(connectionString);
-            return new ImdbDbContext(builder.Options);
-        }
-    }
-
-    [Verb("Help", HelpText = "Shows help about Grabber.")]
-    private class HelpOptions
-    {
-    }
-
-    [Verb("GenerateImdbDatabase", HelpText = "Generate IMDb database.")]
-    private class GenerateImdbDatabaseOptions
-    {
-    }
-
-    [Verb("UpdateImdbUserData", HelpText = "Update IMDb user ratings & watchlist.")]
-    private class UpdateImdbUserDataOptions
-    {
-        [Option("imdbuserid", Required = true, HelpText = "IMDb user ID")]
-        public string ImdbUserId { get; set; }
-
-        [Option("updateAllRatings", HelpText = "Update all ratings instead of the last 100")]
-        public bool UpdateAllRatings { get; set; }
-    }
-
-    [Verb("UpdateAllImdbUsersData", HelpText = "Update all IMDb users ratings & watchlist.")]
-    private class UpdateAllImdbUsersDataOptions
-    {
-    }
-
-    [Verb("AutoUpdateImdbUserData", HelpText = "Auto update IMDb users ratings & watchlist.")]
-    private class AutoUpdateImdbUserDataOptions
-    {
-    }
-
-    [Verb("UpdateEPG", HelpText = "Update EPG.")]
-    private class UpdateEpgOptions
-    {
-    }
-
-    [Verb("ListManualMatches", HelpText = "List manual matches.")]
-    private class ListManualMatchesOptions
-    {
-    }
-
-    [Verb("Stats", HelpText = "Show statistics.")]
-    private class StatsOptions
-    {
-    }
-
-    // [Verb("TwitterBot", HelpText = "Twitter Bot.")]
-    // class TwitterBotOptions
-    // {
-    // }
-
-    // [Verb("Manual", HelpText = "Manual.")]
-    // class ManualOptions
-    // {
-    //     [Option("movieeventid", Required = true, HelpText = "Movie event ID")]
-    //     public int MovieEventId { get; set; }
-    //     [Option("imdbid", Required = true, HelpText = "IMDb ID")]
-    //     public string ImdbId { get; set; }
-    // }
-
-    [Verb("TestImdbMatching", HelpText = "Test IMDb matching.")]
-    private class TestImdbMatchingOptions
-    {
-        [Option("title", Required = true, HelpText = "Movie title")]
-        public string Title { get; set; }
-
-        [Option("year", Required = false, HelpText = "Movie release year")]
-        public int? Year { get; set; }
-    }
-
-    [Verb("TestSentry", HelpText = "Test Sentry.")]
-    private class TestSentryOptions
-    {
-    }
-
     private static async Task<int> Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
@@ -165,14 +53,14 @@ internal class Program
                 }
 
                 using (SentrySdk.Init(o =>
-                {
-                    o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
-                    // When configuring for the first time, to see what the SDK is doing:
-                    //o.Debug = true;
-                    // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-                    // We recommend adjusting this value in production.
-                    o.TracesSampleRate = 1.0;
-                }))
+                       {
+                           o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
+                           // When configuring for the first time, to see what the SDK is doing:
+                           //o.Debug = true;
+                           // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+                           // We recommend adjusting this value in production.
+                           o.TracesSampleRate = 1.0;
+                       }))
                 {
                     try
                     {
@@ -313,15 +201,125 @@ internal class Program
                 $"Movie '{movieTitle}' ({movieReleaseYear}) found (#{result.HuntNo}): {imdbMovie.ImdbId} - '{imdbMovie.PrimaryTitle}' ({imdbMovie.Year})");
             return 0;
         }
-        else
-        {
-            logger.LogError($"Movie '{movieTitle}' ({movieReleaseYear}) not found");
-            return 1;
-        }
+
+        logger.LogError($"Movie '{movieTitle}' ({movieReleaseYear}) not found");
+        return 1;
     }
 
     private static Task<int> Run(TestSentryOptions options)
     {
         throw new Exception("Test Sentry");
+    }
+
+    public class TemporaryFxMoviesDbContextFactory : IDesignTimeDbContextFactory<FxMoviesDbContext>
+    {
+        public FxMoviesDbContext CreateDbContext(string[] args)
+        {
+            var builder = new DbContextOptionsBuilder<FxMoviesDbContext>();
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", false, false)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            var connectionString = configuration.GetConnectionString("FxMoviesDb");
+
+            builder.UseSqlite(connectionString);
+            return new FxMoviesDbContext(builder.Options);
+        }
+    }
+
+    public class TemporaryImdbDbContextFactory : IDesignTimeDbContextFactory<ImdbDbContext>
+    {
+        public ImdbDbContext CreateDbContext(string[] args)
+        {
+            var builder = new DbContextOptionsBuilder<ImdbDbContext>();
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", false, false)
+                .AddEnvironmentVariables()
+                .Build();
+
+            // Get the connection string
+            var connectionString = configuration.GetConnectionString("ImdbDb");
+
+            builder.UseSqlite(connectionString);
+            return new ImdbDbContext(builder.Options);
+        }
+    }
+
+    [Verb("Help", HelpText = "Shows help about Grabber.")]
+    private class HelpOptions
+    {
+    }
+
+    [Verb("GenerateImdbDatabase", HelpText = "Generate IMDb database.")]
+    private class GenerateImdbDatabaseOptions
+    {
+    }
+
+    [Verb("UpdateImdbUserData", HelpText = "Update IMDb user ratings & watchlist.")]
+    private class UpdateImdbUserDataOptions
+    {
+        [Option("imdbuserid", Required = true, HelpText = "IMDb user ID")]
+        public string ImdbUserId { get; set; }
+
+        [Option("updateAllRatings", HelpText = "Update all ratings instead of the last 100")]
+        public bool UpdateAllRatings { get; set; }
+    }
+
+    [Verb("UpdateAllImdbUsersData", HelpText = "Update all IMDb users ratings & watchlist.")]
+    private class UpdateAllImdbUsersDataOptions
+    {
+    }
+
+    [Verb("AutoUpdateImdbUserData", HelpText = "Auto update IMDb users ratings & watchlist.")]
+    private class AutoUpdateImdbUserDataOptions
+    {
+    }
+
+    [Verb("UpdateEPG", HelpText = "Update EPG.")]
+    private class UpdateEpgOptions
+    {
+    }
+
+    [Verb("ListManualMatches", HelpText = "List manual matches.")]
+    private class ListManualMatchesOptions
+    {
+    }
+
+    [Verb("Stats", HelpText = "Show statistics.")]
+    private class StatsOptions
+    {
+    }
+
+    // [Verb("TwitterBot", HelpText = "Twitter Bot.")]
+    // class TwitterBotOptions
+    // {
+    // }
+
+    // [Verb("Manual", HelpText = "Manual.")]
+    // class ManualOptions
+    // {
+    //     [Option("movieeventid", Required = true, HelpText = "Movie event ID")]
+    //     public int MovieEventId { get; set; }
+    //     [Option("imdbid", Required = true, HelpText = "IMDb ID")]
+    //     public string ImdbId { get; set; }
+    // }
+
+    [Verb("TestImdbMatching", HelpText = "Test IMDb matching.")]
+    private class TestImdbMatchingOptions
+    {
+        [Option("title", Required = true, HelpText = "Movie title")]
+        public string Title { get; set; }
+
+        [Option("year", Required = false, HelpText = "Movie release year")]
+        public int? Year { get; set; }
+    }
+
+    [Verb("TestSentry", HelpText = "Test Sentry.")]
+    private class TestSentryOptions
+    {
     }
 }

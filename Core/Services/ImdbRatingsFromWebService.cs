@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -22,8 +21,8 @@ public interface IImdbRatingsFromWebService
 
 public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
 {
-    private readonly ILogger<ImdbRatingsFromWebService> logger;
     private readonly IHttpClientFactory httpClientFactory;
+    private readonly ILogger<ImdbRatingsFromWebService> logger;
 
     public ImdbRatingsFromWebService(
         ILogger<ImdbRatingsFromWebService> logger,
@@ -89,7 +88,7 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
                 element.QuerySelector("div:nth-child(2) > h3:nth-child(2) > a:nth-child(3)").InnerHtml.Trim());
 
             var rating = int.Parse(child.InnerHtml);
-            ratings.Add(new ImdbRating()
+            ratings.Add(new ImdbRating
             {
                 ImdbId = tt,
                 Rating = rating,

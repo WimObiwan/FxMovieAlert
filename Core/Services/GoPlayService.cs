@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -14,8 +13,8 @@ namespace FxMovies.Core.Services;
 
 public class GoPlayService : IMovieEventService
 {
-    private readonly ILogger<GoPlayService> logger;
     private readonly IHttpClientFactory httpClientFactory;
+    private readonly ILogger<GoPlayService> logger;
 
     public GoPlayService(
         ILogger<GoPlayService> logger,
@@ -31,7 +30,7 @@ public class GoPlayService : IMovieEventService
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {
-        var channel = new Channel()
+        var channel = new Channel
         {
             Code = "goplay",
             Name = "GoPlay",
@@ -50,7 +49,7 @@ public class GoPlayService : IMovieEventService
 
                 var dataProgramDetails = await GetDataProgramDetails(link);
 
-                return new MovieEvent()
+                return new MovieEvent
                 {
                     ExternalId = dataProgram.id,
                     Type = 1, // 1 = movie, 2 = short movie, 3 = serie
@@ -77,8 +76,7 @@ public class GoPlayService : IMovieEventService
     {
         if (date.HasValue)
             return new DateTime(1970, 1, 1).AddSeconds(date.Value).ToLocalTime();
-        else
-            return null;
+        return null;
     }
 
     private async Task<IList<DataProgram>> GetDataProgramList()
@@ -136,6 +134,11 @@ public class GoPlayService : IMovieEventService
         return dataProgramDetails;
     }
 
+    private MovieEvent TransformDataProgram(string json)
+    {
+        return null;
+    }
+
     private class DataProgram
     {
         public string id { get; set; }
@@ -158,10 +161,5 @@ public class GoPlayService : IMovieEventService
             public string poster { get; set; }
             public string teaser { get; set; }
         }
-    }
-
-    private MovieEvent TransformDataProgram(string json)
-    {
-        return null;
     }
 }

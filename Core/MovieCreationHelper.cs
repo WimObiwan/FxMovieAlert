@@ -1,6 +1,8 @@
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Services;
+using FxMovies.FxMoviesDB;
+using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.Core;
@@ -12,13 +14,13 @@ public interface IMovieCreationHelper
 
 public class MovieCreationHelper : IMovieCreationHelper
 {
-    private readonly FxMovies.FxMoviesDB.FxMoviesDbContext fxMoviesDbContext;
-    private readonly FxMovies.ImdbDB.ImdbDbContext imdbDbContext;
+    private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ImdbDbContext imdbDbContext;
     private readonly ITheMovieDbService theMovieDbService;
 
     public MovieCreationHelper(
-        FxMovies.FxMoviesDB.FxMoviesDbContext fxMoviesDbContext,
-        FxMovies.ImdbDB.ImdbDbContext imdbDbContext,
+        FxMoviesDbContext fxMoviesDbContext,
+        ImdbDbContext imdbDbContext,
         ITheMovieDbService theMovieDbService)
     {
         this.fxMoviesDbContext = fxMoviesDbContext;
@@ -30,11 +32,11 @@ public class MovieCreationHelper : IMovieCreationHelper
     {
         var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
-        bool newMovie = movie == null;
+        var newMovie = movie == null;
 
         if (newMovie)
         {
-            movie = new Movie()
+            movie = new Movie
             {
                 ImdbId = imdbId
             };

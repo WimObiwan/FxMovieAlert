@@ -15,7 +15,7 @@ public class AccountModel : PageModel
 
     public async Task OnGetLogin(string returnUrl = "/")
     {
-        await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties()
+        await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties
         {
             RedirectUri = returnUrl,
             IsPersistent = true,

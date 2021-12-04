@@ -41,10 +41,10 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
                         var _const = record.Const;
 
                         var date = DateTime.ParseExact(record.Created,
-                            new string[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
+                            new[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
                             CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
 
-                        return new ImdbWatchlist()
+                        return new ImdbWatchlist
                         {
                             ImdbId = _const,
                             Title = record.Title,
@@ -80,15 +80,11 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
             return result;
         }
     }
-
 #pragma warning disable CS0649
     [IgnoreFirst]
     [DelimitedRecord(",")]
     private class ImdbUserWatchlistRecord
     {
-        // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-
-        [FieldQuoted] public string Position;
         [FieldQuoted] public string Const;
 
         [FieldQuoted]
@@ -96,26 +92,32 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
         // 'Wed Sep 20 00:00:00 2017'
         public string Created;
 
+        [FieldQuoted] public string description;
+
+        [FieldQuoted] public string Directors;
+        [FieldQuoted] public string Genres;
+        [FieldQuoted] public string IMDbRating;
+
         //[FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'?
         public string Modified;
-        [FieldQuoted] public string description;
-        [FieldQuoted] public string Title;
-        [FieldQuoted] public string Url;
-        [FieldQuoted] public string TitleType;
-        [FieldQuoted] public string IMDbRating;
-        [FieldQuoted] public string Runtime;
-        [FieldQuoted] public string Year;
-        [FieldQuoted] public string Genres;
+
         [FieldQuoted] public string NumVotes;
+        // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
+
+        [FieldQuoted] public string Position;
+        [FieldQuoted] public string Rated;
 
         [FieldQuoted]
         //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
         public string ReleaseDate;
 
-        [FieldQuoted] public string Directors;
+        [FieldQuoted] public string Runtime;
+        [FieldQuoted] public string Title;
+        [FieldQuoted] public string TitleType;
+        [FieldQuoted] public string Url;
+        [FieldQuoted] public string Year;
         [FieldQuoted] public string YourRating;
-        [FieldQuoted] public string Rated;
     }
 }

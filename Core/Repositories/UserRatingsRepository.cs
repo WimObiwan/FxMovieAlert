@@ -22,8 +22,8 @@ public interface IUserRatingsRepository
 
 public class UserRatingsRepository : IUserRatingsRepository
 {
-    private readonly ILogger<UserRatingsRepository> logger;
     private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ILogger<UserRatingsRepository> logger;
     private readonly IMovieCreationHelper movieCreationHelper;
 
     public UserRatingsRepository(
@@ -105,7 +105,7 @@ public class UserRatingsRepository : IUserRatingsRepository
 
         await fxMoviesDbContext.SaveChangesAsync();
 
-        return new UserListRepositoryStoreResult()
+        return new UserListRepositoryStoreResult
         {
             ExistingCount = existingCount,
             NewCount = newCount,

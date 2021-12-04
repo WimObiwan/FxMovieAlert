@@ -1,14 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FxMovieAlert.Options;
 using FxMovies.Core.Entities;
 using FxMovies.FxMoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace FxMovieAlert.HealthChecks;
 
@@ -37,10 +37,10 @@ public static class MovieDbDataCheckBuilderExtensions
 
 public class MovieDbDataCheck : IHealthCheck
 {
+    private readonly string channelCode;
+    private readonly MovieEvent.FeedType feedType;
     private readonly HealthCheckOptions healthCheckOptions;
     private readonly IServiceScopeFactory serviceScopeFactory;
-    private readonly MovieEvent.FeedType feedType;
-    private readonly string channelCode;
 
     public MovieDbDataCheck(
         IServiceScopeFactory serviceScopeFactory,
@@ -86,9 +86,9 @@ public class MovieDbDataCheck : IHealthCheck
                      !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode,
                          out checkLastMovieAddedMoreThanDaysAgo))
                 if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{feedType}",
-                    out checkLastMovieAddedMoreThanDaysAgo))
-                    if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("",
                         out checkLastMovieAddedMoreThanDaysAgo))
+                    if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("",
+                            out checkLastMovieAddedMoreThanDaysAgo))
                         checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
 
             HealthStatus status;
@@ -97,7 +97,7 @@ public class MovieDbDataCheck : IHealthCheck
             else
                 status = HealthStatus.Healthy;
 
-            var values = new Dictionary<string, object>()
+            var values = new Dictionary<string, object>
             {
                 { "LastMovieAddedAge", lastMovieAddedDaysAgo },
                 { "LastMovieAddedTime", lastMovieAddedTime },

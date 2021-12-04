@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -16,9 +14,9 @@ namespace FxMovies.Core.Services;
 
 public class VtmGoService2 : IMovieEventService
 {
-    private readonly ILogger<VtmGoService2> logger;
-    private readonly HttpClient httpClient;
     private readonly Channel channel;
+    private readonly HttpClient httpClient;
+    private readonly ILogger<VtmGoService2> logger;
 
     public VtmGoService2(
         ILogger<VtmGoService2> logger,
@@ -27,7 +25,7 @@ public class VtmGoService2 : IMovieEventService
         this.logger = logger;
         httpClient = httpClientFactory.CreateClient("vtmgo");
 
-        channel = new Channel()
+        channel = new Channel
         {
             Code = "vtmgo",
             Name = "VTM GO",
@@ -136,7 +134,7 @@ public class VtmGoService2 : IMovieEventService
             .Select(m => m.Content)
             .FirstOrDefault();
 
-        return new MovieEvent()
+        return new MovieEvent
         {
             ExternalId = url,
             Title = title,

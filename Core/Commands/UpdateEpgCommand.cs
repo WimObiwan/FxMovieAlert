@@ -26,6 +26,13 @@ public interface IUpdateEpgCommand
 
 public class UpdateEpgCommandOptions
 {
+    public enum DownloadImagesOption
+    {
+        Active,
+        Disabled,
+        IfNotPresent
+    }
+
     public static string Position => "UpdateEpg";
 
     public string[] MovieTitlesToIgnore { get; set; }
@@ -36,31 +43,21 @@ public class UpdateEpgCommandOptions
     public Dictionary<string, string> ImageOverrideMap { get; set; }
     public string[] ActivateProviders { get; set; }
 
-    public enum DownloadImagesOption
-    {
-        Active,
-        Disabled,
-        IfNotPresent
-    }
-
     public DownloadImagesOption? DownloadImages { get; set; }
 }
 
 public class UpdateEpgCommand : IUpdateEpgCommand
 {
-    private readonly ILogger<UpdateEpgCommand> logger;
-    private readonly FxMoviesDbContext fxMoviesDbContext;
-    private readonly ImdbDbContext imdbDbContext;
-    private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
-    private readonly ITheMovieDbService theMovieDbService;
-    private readonly IEnumerable<IMovieEventService> movieEventServices;
-    private readonly IHumoService humoService;
-    private readonly IImdbMatchingQuery imdbMatchingQuery;
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly IManualMatchesQuery manualMatchesQuery;
     private readonly UpdateEpgCommandOptions.DownloadImagesOption downloadImagesOption;
-
-    public IManualMatchesQuery ManualMatchesQuery => manualMatchesQuery;
+    private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly IHttpClientFactory httpClientFactory;
+    private readonly IHumoService humoService;
+    private readonly ImdbDbContext imdbDbContext;
+    private readonly IImdbMatchingQuery imdbMatchingQuery;
+    private readonly ILogger<UpdateEpgCommand> logger;
+    private readonly IEnumerable<IMovieEventService> movieEventServices;
+    private readonly ITheMovieDbService theMovieDbService;
+    private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
 
     public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger,
         FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
@@ -81,11 +78,13 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         this.humoService = humoService;
         this.imdbMatchingQuery = imdbMatchingQuery;
         this.httpClientFactory = httpClientFactory;
-        this.manualMatchesQuery = manualMatchesQuery;
+        ManualMatchesQuery = manualMatchesQuery;
 
         downloadImagesOption = this.updateEpgCommandOptions.DownloadImages ??
                                UpdateEpgCommandOptions.DownloadImagesOption.Active;
     }
+
+    public IManualMatchesQuery ManualMatchesQuery { get; }
 
     public async Task<int> Execute()
     {
@@ -178,7 +177,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 try
                 {
                     var movieEvents = await service.GetMovieEvents();
-                    await UpdateMovieEvents(movieEvents, (MovieEvent me) => me.Vod && me.Channel.Code == channelCode);
+                    await UpdateMovieEvents(movieEvents, me => me.Vod && me.Channel.Code == channelCode);
                 }
                 catch (Exception x)
                 {
@@ -222,7 +221,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             var date = now.Date.AddDays(days);
             var movieEvents = await humoService.GetGuide(date);
 
-            await UpdateMovieEvents(movieEvents, (MovieEvent me) => !me.Vod && me.StartTime.Date == date);
+            await UpdateMovieEvents(movieEvents, me => !me.Vod && me.StartTime.Date == date);
         }
     }
 
@@ -230,7 +229,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         Expression<Func<MovieEvent, bool>> movieEventsSubset)
     {
         // Remove movies that should be ignored
-        Func<MovieEvent, bool> isMovieIgnored = delegate(MovieEvent movieEvent)
+        var isMovieIgnored = delegate(MovieEvent movieEvent)
         {
             foreach (var item in updateEpgCommandOptions.MovieTitlesToIgnore)
                 if (Regex.IsMatch(movieEvent.Title, item))
@@ -443,7 +442,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                     continue;
                 }
 
-                var name = "movie-" + movieEvent.Id.ToString() + "-S";
+                var name = "movie-" + movieEvent.Id + "-S";
 
                 movieEvent.PosterS_Local = await DownloadFile(url, basePath, name, 150);
             }
@@ -466,7 +465,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                     continue;
                 }
 
-                var name = "movie-" + movieEvent.Id.ToString() + "-M";
+                var name = "movie-" + movieEvent.Id + "-M";
 
                 movieEvent.PosterM_Local = await DownloadFile(url, basePath, name, 0);
             }
@@ -549,7 +548,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
     private async Task UpdateEpgDataWithImdb()
     {
-        await UpdateGenericDataWithImdb<MovieEvent>((dbMovies) => dbMovies.MovieEvents.Include(me => me.Movie));
+        await UpdateGenericDataWithImdb<MovieEvent>(dbMovies => dbMovies.MovieEvents.Include(me => me.Movie));
     }
 
     private async Task UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies)

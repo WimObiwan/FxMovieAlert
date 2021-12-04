@@ -23,10 +23,9 @@ public enum Cert
 
 public partial class FilterBar
 {
-    [Parameter] public IFilterBarParentModel ParentModel { get; set; }
-
     public const decimal NO_IMDB_ID = -1.0m;
     public const decimal NO_IMDB_RATING = -2.0m;
+    [Parameter] public IFilterBarParentModel ParentModel { get; set; }
 
     protected bool? FilterOnlyHighlights => ParentModel.FilterOnlyHighlights;
     protected bool FilterOnlyHighlightsDefault => ParentModel.FilterOnlyHighlightsDefault;
@@ -99,8 +98,7 @@ public partial class FilterBar
 
         if (items.Any())
             return string.Join('&', items.Select(i => $"{i.Item1}={i.Item2}"));
-        else
-            return "";
+        return "";
     }
 
     public string FormatQueryString(bool? onlyHighlights, int typeMask, decimal? minrating, bool? notyetrated,
@@ -109,10 +107,10 @@ public partial class FilterBar
         if (onlyHighlights.HasValue && onlyHighlights.Value == FilterOnlyHighlightsDefault)
             onlyHighlights = null;
         return FormatQueryString(onlyHighlights,
-            typeMask == FilterTypeMaskDefault ? (int?)null : typeMask,
+            typeMask == FilterTypeMaskDefault ? null : typeMask,
             minrating, notyetrated,
-            cert == Cert.all ? (Cert?)null : cert,
-            maxdays == FilterMaxDaysDefault ? (int?)null : maxdays);
+            cert == Cert.all ? null : cert,
+            maxdays == FilterMaxDaysDefault ? null : maxdays);
     }
 
     public string FormatQueryStringWithOnlyHighlights(bool onlyHighlights)
@@ -161,8 +159,7 @@ public partial class FilterBar
     {
         if (hasValue)
             return "primary";
-        else
-            return "default";
+        return "default";
     }
 
     public string FormatCert(Cert cert)

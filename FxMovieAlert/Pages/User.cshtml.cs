@@ -18,32 +18,32 @@ namespace FxMovieAlert.Pages;
 
 public class UserModel : PageModel
 {
+    private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ImdbDbContext imdbDbContext;
+    private readonly IImdbRatingsFromFileService imdbRatingsFromFileService;
+    private readonly IImdbWatchlistFromFileService imdbWatchlistFromFileService;
+
+    public readonly List<Tuple<string, string, string>> LastImportErrors = new();
     private readonly IMovieCreationHelper movieCreationHelper;
     private readonly IUserRatingsRepository userRatingsRepository;
     private readonly IUserWatchlistRepository userWatchlistRepository;
-    private readonly IImdbRatingsFromFileService imdbRatingsFromFileService;
-    private readonly IImdbWatchlistFromFileService imdbWatchlistFromFileService;
-    private readonly FxMoviesDbContext fxMoviesDbContext;
-    private readonly ImdbDbContext imdbDbContext;
+    public string ErrorMessage;
+    public string ImdbUserId;
+    public string LastRefreshRatingsResult;
+    public DateTime? LastRefreshRatingsTime;
+    public bool? LastRefreshSuccess;
+    public DateTime? RatingLastDate;
+    public string RatingLastMovie;
+    public int? RatingLastRating;
+    public DateTime? RefreshRequestTime;
+    public int UserRatingCount;
+    public int UserWatchListCount;
     public string WarningMessage = null;
-    public string ErrorMessage = null;
-    public string ImdbUserId = null;
-    public DateTime? RefreshRequestTime = null;
-    public DateTime? LastRefreshRatingsTime = null;
-    public string LastRefreshRatingsResult = null;
-    public bool? LastRefreshSuccess = null;
-    public DateTime? WatchListLastRefreshTime = null;
-    public string WatchListLastRefreshRatingsResult = null;
-    public bool? WatchListLastRefreshSuccess = null;
-    public int UserRatingCount = 0;
-    public int UserWatchListCount = 0;
-    public DateTime? RatingLastDate = null;
-    public string RatingLastMovie = null;
-    public int? RatingLastRating = null;
-    public DateTime? WatchListLastDate = null;
-    public string WatchListLastMovie = null;
-
-    public readonly List<Tuple<string, string, string>> LastImportErrors = new();
+    public DateTime? WatchListLastDate;
+    public string WatchListLastMovie;
+    public string WatchListLastRefreshRatingsResult;
+    public bool? WatchListLastRefreshSuccess;
+    public DateTime? WatchListLastRefreshTime;
 
     public UserModel(
         IMovieCreationHelper movieCreationHelper,

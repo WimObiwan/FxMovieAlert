@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FxMovies.ImdbDB;
 
 /// <summary>
-/// The entity framework context with a Students DbSet 
+///     The entity framework context with a Students DbSet
 /// </summary>
 public class ImdbDbContext : DbContext
 {
@@ -12,6 +12,10 @@ public class ImdbDbContext : DbContext
         : base(options)
     {
     }
+
+    public DbSet<ImdbMovie> Movies { get; set; }
+
+    public DbSet<ImdbMovieAlternative> MovieAlternatives { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,10 +36,6 @@ public class ImdbDbContext : DbContext
             .WithMany(m => m.MovieAlternatives)
             .HasForeignKey(ma => ma.MovieId);
     }
-
-    public DbSet<ImdbMovie> Movies { get; set; }
-
-    public DbSet<ImdbMovieAlternative> MovieAlternatives { get; set; }
 }
 
 // /// <summary>

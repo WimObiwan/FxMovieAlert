@@ -15,12 +15,12 @@ public interface IUpdateImdbUserDataCommand
 
 public class UpdateImdbUserDataCommand : IUpdateImdbUserDataCommand
 {
-    private readonly ILogger<UpdateImdbUserDataCommand> logger;
     private readonly IImdbRatingsFromWebService imdbRatingsService;
     private readonly IImdbWatchlistFromWebService imdbWatchlistService;
+    private readonly ILogger<UpdateImdbUserDataCommand> logger;
     private readonly IUserRatingsRepository userRatingsRepository;
-    private readonly IUserWatchlistRepository userWatchlistRepository;
     private readonly IUsersRepository usersRepository;
+    private readonly IUserWatchlistRepository userWatchlistRepository;
 
     public UpdateImdbUserDataCommand(ILogger<UpdateImdbUserDataCommand> logger,
         IImdbRatingsFromWebService imdbRatingsService,

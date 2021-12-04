@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace FxMovieAlert.HealthChecks;
 
@@ -27,7 +27,7 @@ public class ImdbDbDateTimeCheck : IHealthCheck
         var connectionStringBuilder = new DbConnectionStringBuilder();
         connectionStringBuilder.ConnectionString = connectionString;
         var filePath = connectionStringBuilder["Data Source"].ToString();
-        var fileInfo = new System.IO.FileInfo(filePath);
+        var fileInfo = new FileInfo(filePath);
         var lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
         var ageDays = (DateTime.UtcNow - lastWriteTimeUtc).TotalDays;
 
@@ -38,7 +38,7 @@ public class ImdbDbDateTimeCheck : IHealthCheck
             status = HealthStatus.Healthy;
 
         var result = new HealthCheckResult(status, null, null,
-            new Dictionary<string, object>()
+            new Dictionary<string, object>
             {
                 { "ImdbDbLastWriteTimeUtc", lastWriteTimeUtc },
                 { "ImdbDbAgeDays", ageDays }

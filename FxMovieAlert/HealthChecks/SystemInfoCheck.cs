@@ -1,8 +1,9 @@
-using FxMovies.Core;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using FxMovies.Core;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace FxMovieAlert.HealthChecks;
 
@@ -20,11 +21,11 @@ public class SystemInfoCheck : IHealthCheck
         CancellationToken cancellationToken = default)
     {
         var result = new HealthCheckResult(HealthStatus.Healthy, null, null,
-            new Dictionary<string, object>()
+            new Dictionary<string, object>
             {
                 { "Version", versionInfo.Version },
                 { "DotNetCoreVersion", versionInfo.DotNetCoreVersion },
-                { "MachineName", System.Environment.MachineName }
+                { "MachineName", Environment.MachineName }
             });
 
         return Task.FromResult(result);

@@ -17,54 +17,34 @@ public interface IHumoService
 
 public class HumoService : IHumoService
 {
-    #region JSonModel
-
-    [DebuggerDisplay("title = {title}")]
-    private class HumoBroadcast
+    private static readonly string[] channels =
     {
-        public Guid uuid { get; set; }
-        public long from { get; set; }
-        public long to { get; set; }
-        public int? duration { get; set; }
-        public string playableType { get; set; }
-        public string title { get; set; }
-        public string genre { get; set; }
-        public string[] subGenres { get; set; }
-        public string synopsis { get; set; }
-        public string imageUrl { get; set; }
-        public int? rating { get; set; }
+        "een",
+        "canvas",
+        "vtm",
+        "play4",
+        "vtm2",
+        "play5",
+        "play6",
+        "play7",
+        "vtm3",
+        "vtm4",
+        "npo-1",
+        "npo-2",
+        "npo-3",
+        "mtv-vlaanderen",
+        "viceland",
+        "ketnet",
+        "vtm-kids",
+        "studio-100-tv",
+        "disney-channel",
+        "nickelodeon-spike",
+        "cartoon24"
+    };
 
-
-        public bool IsMovie()
-        {
-            return playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
-        }
-        //public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
-
-        public bool IsShort()
-        {
-            return duration < 3600;
-        }
-    }
-
-    [DebuggerDisplay("name = {name}")]
-    private class HumoChannel
-    {
-        public string seoKey { get; set; }
-        public string name { get; set; }
-        public string channelLogoUrl { get; set; }
-        public List<HumoBroadcast> broadcasts { get; set; }
-    }
-
-    private class Humo
-    {
-        public List<HumoChannel> channels { get; set; }
-    }
-
-    #endregion
+    private readonly IHttpClientFactory httpClientFactory;
 
     private readonly ILogger<HumoService> logger;
-    private readonly IHttpClientFactory httpClientFactory;
 
     public HumoService(
         ILogger<HumoService> logger,
@@ -72,6 +52,19 @@ public class HumoService : IHumoService
     {
         this.logger = logger;
         this.httpClientFactory = httpClientFactory;
+    }
+
+    public async Task<IList<MovieEvent>> GetGuide(DateTime date)
+    {
+        var humo = await GetHumoDataWithRetry(date);
+
+        FilterBroadcasters(date, humo);
+
+        FilterMovies(humo);
+
+        var movieEvents = new List<MovieEvent>();
+        movieEvents.AddRange(MovieAdapter(humo));
+        return movieEvents;
     }
 
     private async Task<Humo> GetHumoData(DateTime date)
@@ -115,44 +108,6 @@ public class HumoService : IHumoService
         }
     }
 
-    public async Task<IList<MovieEvent>> GetGuide(DateTime date)
-    {
-        var humo = await GetHumoDataWithRetry(date);
-
-        FilterBroadcasters(date, humo);
-
-        FilterMovies(humo);
-
-        var movieEvents = new List<MovieEvent>();
-        movieEvents.AddRange(MovieAdapter(humo));
-        return movieEvents;
-    }
-
-    private static string[] channels =
-    {
-        "een",
-        "canvas",
-        "vtm",
-        "play4",
-        "vtm2",
-        "play5",
-        "play6",
-        "play7",
-        "vtm3",
-        "vtm4",
-        "npo-1",
-        "npo-2",
-        "npo-3",
-        "mtv-vlaanderen",
-        "viceland",
-        "ketnet",
-        "vtm-kids",
-        "studio-100-tv",
-        "disney-channel",
-        "nickelodeon-spike",
-        "cartoon24"
-    };
-
     private void FilterBroadcasters(DateTime date, Humo humo)
     {
         if (humo == null || humo.channels == null) return;
@@ -182,7 +137,7 @@ public class HumoService : IHumoService
         var movies = new List<MovieEvent>();
         foreach (var humoChannel in humo.channels)
         {
-            var channel = new Channel()
+            var channel = new Channel
             {
                 Code = humoChannel.seoKey,
                 Name = humoChannel.name,
@@ -246,7 +201,7 @@ public class HumoService : IHumoService
                     }
                 }
 
-                var movie = new MovieEvent()
+                var movie = new MovieEvent
                 {
                     ExternalId = broadcast.uuid.ToString(),
                     Channel = channel,
@@ -273,4 +228,50 @@ public class HumoService : IHumoService
 
         return movies;
     }
+
+    #region JSonModel
+
+    [DebuggerDisplay("title = {title}")]
+    private class HumoBroadcast
+    {
+        public Guid uuid { get; set; }
+        public long from { get; set; }
+        public long to { get; set; }
+        public int? duration { get; set; }
+        public string playableType { get; set; }
+        public string title { get; set; }
+        public string genre { get; set; }
+        public string[] subGenres { get; set; }
+        public string synopsis { get; set; }
+        public string imageUrl { get; set; }
+        public int? rating { get; set; }
+
+
+        public bool IsMovie()
+        {
+            return playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
+        }
+        //public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
+
+        public bool IsShort()
+        {
+            return duration < 3600;
+        }
+    }
+
+    [DebuggerDisplay("name = {name}")]
+    private class HumoChannel
+    {
+        public string seoKey { get; set; }
+        public string name { get; set; }
+        public string channelLogoUrl { get; set; }
+        public List<HumoBroadcast> broadcasts { get; set; }
+    }
+
+    private class Humo
+    {
+        public List<HumoChannel> channels { get; set; }
+    }
+
+    #endregion
 }

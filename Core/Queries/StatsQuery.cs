@@ -10,6 +10,8 @@ namespace FxMovies.Core.Queries;
 
 public class StatsResult
 {
+    public List<User> Users { get; set; }
+
     public class User
     {
         public string UserId { get; set; }
@@ -19,8 +21,6 @@ public class StatsResult
         public int RatingCount { get; set; }
         public int WatchListItemsCount { get; set; }
     }
-
-    public List<User> Users { get; set; }
 }
 
 public interface IStatsQuery
@@ -30,8 +30,8 @@ public interface IStatsQuery
 
 public class StatsQuery : IStatsQuery
 {
-    private readonly ILogger<ManualMatchesQuery> logger;
     private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ILogger<ManualMatchesQuery> logger;
 
     public StatsQuery(
         ILogger<ManualMatchesQuery> logger,
@@ -46,7 +46,7 @@ public class StatsQuery : IStatsQuery
         var statsResult = new StatsResult();
         statsResult.Users =
             await fxMoviesDbContext.Users
-                .Select(u => new StatsResult.User()
+                .Select(u => new StatsResult.User
                 {
                     UserId = u.UserId,
                     ImdbUserId = u.ImdbUserId,

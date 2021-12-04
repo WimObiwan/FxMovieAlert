@@ -43,7 +43,7 @@ public static class ServiceConfiguration
         services.AddHttpClient("imdb", c => { c.BaseAddress = new Uri("https://www.imdb.com"); });
         services.AddHttpClient("primevideo", c => { c.BaseAddress = new Uri("https://www.primevideo.com"); });
 
-        services.AddSingleton<IVersionInfo, VersionInfo>((_) => new VersionInfo(assembly));
+        services.AddSingleton<IVersionInfo, VersionInfo>(_ => new VersionInfo(assembly));
 
         services.AddScoped<IUpdateEpgCommand, UpdateEpgCommand>();
         services.AddScoped<IGenerateImdbDatabaseCommand, GenerateImdbDatabaseCommand>();

@@ -14,8 +14,8 @@ public interface IManualMatchesQuery
 
 public class ManualMatchesQuery : IManualMatchesQuery
 {
-    private readonly ILogger<ManualMatchesQuery> logger;
     private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ILogger<ManualMatchesQuery> logger;
 
     public ManualMatchesQuery(
         ILogger<ManualMatchesQuery> logger,

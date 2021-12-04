@@ -5,8 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using FxMovies.Core;
 using FxMovieAlert.HealthChecks;
+using FxMovieAlert.Options;
+using FxMovies.Core;
+using FxMovies.Core.Entities;
+using FxMovies.FxMoviesDB;
+using FxMovies.ImdbDB;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
@@ -21,16 +25,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using FxMovieAlert.Options;
-using FxMovies.Core.Entities;
+using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace FxMovieAlert;
 
 public class Startup
 {
     private readonly IConfiguration configuration;
-    private readonly Options.HealthCheckOptions healthCheckOptions;
     private readonly IWebHostEnvironment environment;
+    private readonly HealthCheckOptions healthCheckOptions;
 
     public Startup(
         IConfiguration configuration,
@@ -39,8 +42,8 @@ public class Startup
         this.configuration = configuration;
         this.environment = environment;
 
-        healthCheckOptions = new Options.HealthCheckOptions();
-        configuration.GetSection(Options.HealthCheckOptions.Position).Bind(healthCheckOptions);
+        healthCheckOptions = new HealthCheckOptions();
+        configuration.GetSection(HealthCheckOptions.Position).Bind(healthCheckOptions);
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
@@ -57,7 +60,7 @@ public class Startup
             // This lambda determines whether user consent for non-essential cookies is needed for a given request.
             options.CheckConsentNeeded = context => true;
             options.Secure = CookieSecurePolicy.Always;
-            options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.None;
+            options.MinimumSameSitePolicy = SameSiteMode.None;
         });
 
         services.AddAuthentication(options =>
@@ -74,7 +77,7 @@ public class Startup
                 options.SlidingExpiration = true;
 
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+                options.Cookie.SameSite = SameSiteMode.None;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             })
             .AddOpenIdConnect("Auth0", options =>
@@ -136,7 +139,7 @@ public class Startup
                     },
 
                     // handle the logout redirection 
-                    OnRedirectToIdentityProviderForSignOut = (context) =>
+                    OnRedirectToIdentityProviderForSignOut = context =>
                     {
                         var logoutUri =
                             $"https://{configuration["Auth0:Domain"]}/v2/logout?client_id={configuration["Auth0:ClientId"]}";
@@ -208,10 +211,10 @@ public class Startup
 
         services.AddWebOptimizer();
 
-        services.AddDbContext<FxMovies.FxMoviesDB.FxMoviesDbContext>(options =>
+        services.AddDbContext<FxMoviesDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("FxMoviesDB")));
 
-        services.AddDbContext<FxMovies.ImdbDB.ImdbDbContext>(options =>
+        services.AddDbContext<ImdbDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
 
         services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
@@ -273,7 +276,7 @@ public class Startup
 
         if (healthCheckOptions.Uri != null)
             app.UseHealthChecks(healthCheckOptions.Uri,
-                new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions()
+                new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
                 {
                     Predicate = _ => true,
                     //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
@@ -301,8 +304,34 @@ public class Startup
         });
     }
 
+    private static async Task WriteZabbixResponse(HttpContext httpContext, HealthReport result)
+    {
+        httpContext.Response.ContentType = "application/json";
+
+        var zabbixResponse = new ZabbixResponse
+        {
+            status = (int)result.Status,
+            statusText = result.Status.ToString(),
+            results = result.Entries.Select(pair =>
+                new ZabbixResponse.ResultItem
+                {
+                    name = pair.Key,
+                    status = (int)pair.Value.Status,
+                    statusText = pair.Value.Status.ToString(),
+                    description = pair.Value.Description,
+                    data = pair.Value.Data.ToDictionary(s => s.Key, s => s.Value)
+                }).ToList()
+        };
+
+        await httpContext.Response.WriteAsJsonAsync(zabbixResponse);
+    }
+
     private class ZabbixResponse
     {
+        public int status { get; set; }
+        public string statusText { get; set; }
+        public List<ResultItem> results { get; set; }
+
         public class ResultItem
         {
             public string name { get; set; }
@@ -311,31 +340,5 @@ public class Startup
             public string description { get; set; }
             public IDictionary<string, object> data { get; set; }
         }
-
-        public int status { get; set; }
-        public string statusText { get; set; }
-        public List<ResultItem> results { get; set; }
-    }
-
-    private static async Task WriteZabbixResponse(HttpContext httpContext, HealthReport result)
-    {
-        httpContext.Response.ContentType = "application/json";
-
-        var zabbixResponse = new ZabbixResponse()
-        {
-            status = (int)result.Status,
-            statusText = result.Status.ToString(),
-            results = result.Entries.Select(pair =>
-                new ZabbixResponse.ResultItem()
-                {
-                    name = pair.Key,
-                    status = (int)pair.Value.Status,
-                    statusText = pair.Value.Status.ToString(),
-                    description = pair.Value.Description,
-                    data = pair.Value.Data.ToDictionary((s) => s.Key, (s) => s.Value)
-                }).ToList()
-        };
-
-        await httpContext.Response.WriteAsJsonAsync(zabbixResponse);
     }
 }

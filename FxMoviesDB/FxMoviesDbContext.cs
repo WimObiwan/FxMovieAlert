@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FxMovies.FxMoviesDB;
 
 /// <summary>
-/// The entity framework context with a Students DbSet 
+///     The entity framework context with a Students DbSet
 /// </summary>
 public class FxMoviesDbContext : DbContext
 {
@@ -12,6 +12,14 @@ public class FxMoviesDbContext : DbContext
         : base(options)
     {
     }
+
+    public DbSet<Channel> Channels { get; set; }
+    public DbSet<Movie> Movies { get; set; }
+    public DbSet<MovieEvent> MovieEvents { get; set; }
+    public DbSet<UserRating> UserRatings { get; set; }
+    public DbSet<UserWatchListItem> UserWatchLists { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<ManualMatch> ManualMatches { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -60,14 +68,6 @@ public class FxMoviesDbContext : DbContext
             .WithOne(mm => mm.Movie)
             .HasForeignKey(mm => mm.MovieId);
     }
-
-    public DbSet<Channel> Channels { get; set; }
-    public DbSet<Movie> Movies { get; set; }
-    public DbSet<MovieEvent> MovieEvents { get; set; }
-    public DbSet<UserRating> UserRatings { get; set; }
-    public DbSet<UserWatchListItem> UserWatchLists { get; set; }
-    public DbSet<User> Users { get; set; }
-    public DbSet<ManualMatch> ManualMatches { get; set; }
 }
 
 // /// <summary>

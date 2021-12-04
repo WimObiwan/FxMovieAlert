@@ -24,56 +24,15 @@ public class Record
 
 public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 {
-    public bool EditImdbLinks = false;
-    public MovieEvent MovieEvent = null;
-    public IList<Record> Records = new List<Record>();
-    public string ImdbUserId { get; private set; } = null;
-    public DateTime? RefreshRequestTime { get; private set; } = null;
-    public DateTime? LastRefreshRatingsTime { get; private set; } = null;
-    public bool? LastRefreshSuccess = null;
-
-    public bool? FilterOnlyHighlights { get; private set; } = null;
-    public bool FilterOnlyHighlightsDefault { get; private set; } = true;
-    public int FilterTypeMask { get; private set; } = 1;
-    public int FilterTypeMaskDefault { get; private set; } = 1;
-    public decimal? FilterMinRating { get; private set; } = null;
-    public bool? FilterNotYetRated { get; private set; } = null;
-    public Cert FilterCert { get; private set; } = Cert.all;
-    public int FilterMaxDaysDefault { get; private set; } = 8;
-    public int FilterMaxDays { get; private set; } = 8;
-
-    public int Count { get; private set; } = 0;
-    public int CountTypeFilm { get; private set; } = 0;
-    public int CountTypeShort { get; private set; } = 0;
-    public int CountTypeSerie { get; private set; } = 0;
-    public int CountMinRating5 { get; private set; } = 0;
-    public int CountMinRating6 { get; private set; } = 0;
-    public int CountMinRating65 { get; private set; } = 0;
-    public int CountMinRating7 { get; private set; } = 0;
-    public int CountMinRating8 { get; private set; } = 0;
-    public int CountMinRating9 { get; private set; } = 0;
-    public int CountNotOnImdb { get; private set; } = 0;
-    public int CountNotRatedOnImdb { get; private set; } = 0;
-    public int CountNotYetRated { get; private set; } = 0;
-    public int CountRated { get; private set; } = 0;
-    public int CountCertNone { get; private set; } = 0;
-    public int CountCertG { get; private set; } = 0;
-    public int CountCertPG { get; private set; } = 0;
-    public int CountCertPG13 { get; private set; } = 0;
-    public int CountCertR { get; private set; } = 0;
-    public int CountCertNC17 { get; private set; } = 0;
-    public int CountCertOther { get; private set; } = 0;
-    public int Count3days { get; private set; } = 0;
-    public int Count5days { get; private set; } = 0;
-    public int Count8days { get; private set; } = 0;
-    public int HighlightedFilterMonthsThreshold { get; private set; } = 36;
-    public int HighlightedFilterRatingThreshold { get; private set; } = 8;
-    public int AdsInterval = 5;
-
     private readonly MovieEvent.FeedType feed;
-    private readonly SiteOptions siteOptions;
     private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly SiteOptions siteOptions;
     private readonly IUsersRepository usersRepository;
+    public int AdsInterval = 5;
+    public bool EditImdbLinks;
+    public bool? LastRefreshSuccess;
+    public MovieEvent MovieEvent;
+    public IList<Record> Records = new List<Record>();
 
     public BroadcastsModelBase(
         MovieEvent.FeedType feed,
@@ -86,6 +45,47 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         this.fxMoviesDbContext = fxMoviesDbContext;
         this.usersRepository = usersRepository;
     }
+
+    public int HighlightedFilterMonthsThreshold { get; } = 36;
+    public int HighlightedFilterRatingThreshold { get; } = 8;
+    public string ImdbUserId { get; private set; }
+    public DateTime? RefreshRequestTime { get; private set; }
+    public DateTime? LastRefreshRatingsTime { get; private set; }
+
+    public bool? FilterOnlyHighlights { get; private set; }
+    public bool FilterOnlyHighlightsDefault { get; } = true;
+    public int FilterTypeMask { get; private set; } = 1;
+    public int FilterTypeMaskDefault { get; } = 1;
+    public decimal? FilterMinRating { get; private set; }
+    public bool? FilterNotYetRated { get; private set; }
+    public Cert FilterCert { get; private set; } = Cert.all;
+    public int FilterMaxDaysDefault { get; private set; } = 8;
+    public int FilterMaxDays { get; private set; } = 8;
+
+    public int Count { get; private set; }
+    public int CountTypeFilm { get; private set; }
+    public int CountTypeShort { get; private set; }
+    public int CountTypeSerie { get; private set; }
+    public int CountMinRating5 { get; private set; }
+    public int CountMinRating6 { get; private set; }
+    public int CountMinRating65 { get; private set; }
+    public int CountMinRating7 { get; private set; }
+    public int CountMinRating8 { get; private set; }
+    public int CountMinRating9 { get; private set; }
+    public int CountNotOnImdb { get; private set; }
+    public int CountNotRatedOnImdb { get; private set; }
+    public int CountNotYetRated { get; private set; }
+    public int CountRated { get; private set; }
+    public int CountCertNone { get; private set; }
+    public int CountCertG { get; private set; }
+    public int CountCertPG { get; private set; }
+    public int CountCertPG13 { get; private set; }
+    public int CountCertR { get; private set; }
+    public int CountCertNC17 { get; private set; }
+    public int CountCertOther { get; private set; }
+    public int Count3days { get; private set; }
+    public int Count5days { get; private set; }
+    public int Count8days { get; private set; }
 
     public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null,
         bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null)
@@ -160,18 +160,16 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
             {
                 throw new Exception("Sentry test exception");
             }
-            else
+
+            MovieEvent = dbMovieEvents
+                .Include(me => me.Movie)
+                .Include(me => me.Channel)
+                .SingleOrDefault(me => me.Id == m.Value);
+            if (MovieEvent != null)
             {
-                MovieEvent = dbMovieEvents
-                    .Include(me => me.Movie)
-                    .Include(me => me.Channel)
-                    .SingleOrDefault(me => me.Id == m.Value);
-                if (MovieEvent != null)
-                {
-                    var days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
-                    if (FilterMaxDays != 0 && FilterMaxDays < days)
-                        FilterMaxDays = days;
-                }
+                var days = (int)(MovieEvent.StartTime.Date - DateTime.Now.Date).TotalDays;
+                if (FilterMaxDays != 0 && FilterMaxDays < days)
+                    FilterMaxDays = days;
             }
         }
 
@@ -211,9 +209,10 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
                     )
                     &&
                     (!FilterMinRating.HasValue
-                     || FilterMinRating.Value == Components.FilterBar.NO_IMDB_ID && (me.Movie == null ||
-                         string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)
-                     || FilterMinRating.Value == Components.FilterBar.NO_IMDB_RATING && me.Movie.ImdbRating == null
+                     || FilterMinRating.Value == FilterBar.NO_IMDB_ID && (me.Movie == null ||
+                                                                          string.IsNullOrEmpty(me.Movie.ImdbId) &&
+                                                                          !me.Movie.ImdbIgnore)
+                     || FilterMinRating.Value == FilterBar.NO_IMDB_RATING && me.Movie.ImdbRating == null
                      || FilterMinRating.Value >= 0.0m && me.Movie.ImdbRating >= FilterMinRating.Value * 10)
                 // && 
                 // (FilterCert == Cert.all || (ParseCertification(me.Movie.Certification) & FilterCert) != 0)
@@ -227,7 +226,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
                 UserRating = me.Movie.UserRatings.FirstOrDefault(ur => ur.User.UserId == userId),
                 UserWatchListItem = me.Movie.UserWatchListItems.FirstOrDefault(ur => ur.User.UserId == userId)
             })
-            .Select(r => new Record()
+            .Select(r => new Record
                 {
                     MovieEvent = r.MovieEvent,
                     UserRating = r.UserRating,
@@ -275,7 +274,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
     public async Task OnGetLogin(string returnUrl = "/")
     {
-        await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties() { RedirectUri = returnUrl });
+        await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties { RedirectUri = returnUrl });
     }
 
     #region Filter helper functions

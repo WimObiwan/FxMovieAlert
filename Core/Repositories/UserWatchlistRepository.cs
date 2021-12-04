@@ -19,8 +19,8 @@ public interface IUserWatchlistRepository
 
 public class UserWatchlistRepository : IUserWatchlistRepository
 {
-    private readonly ILogger<UserWatchlistRepository> logger;
     private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ILogger<UserWatchlistRepository> logger;
     private readonly IMovieCreationHelper movieCreationHelper;
 
     public UserWatchlistRepository(
@@ -96,7 +96,7 @@ public class UserWatchlistRepository : IUserWatchlistRepository
 
         await fxMoviesDbContext.SaveChangesAsync();
 
-        return new UserListRepositoryStoreResult()
+        return new UserListRepositoryStoreResult
         {
             ExistingCount = existingCount,
             NewCount = newCount,

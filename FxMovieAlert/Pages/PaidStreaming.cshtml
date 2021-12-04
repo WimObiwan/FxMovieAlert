@@ -1,6 +1,6 @@
 ﻿@page
+@using System.Text.Encodings.Web
 @model PaidStreamingModel
-@using System.Globalization;
 
 @{
     ViewData["Title"] = "Betalende Streaming";
@@ -19,7 +19,7 @@
         if (Model.MovieEvent.Movie != null && Model.MovieEvent.Movie.ImdbRating.HasValue)
             description += $" - {Model.MovieEvent.Movie.ImdbRating.Value / 10.0}/10 op IMDb";
         ViewData["og:description"] = description;
-        ViewData["og:url"] = $"/PaidStreaming/?m={@Model.MovieEvent.Id}";
+        ViewData["og:url"] = $"/PaidStreaming/?m={Model.MovieEvent.Id}";
         ViewData["og:image"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
         ViewData["og:image:secure_url"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
     }
@@ -65,17 +65,17 @@
         <td class="collapsible">
             <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50/>
             <br/>
-            <del>@(@endDate?.ToString("dddd"))</del>
+            <del>@(endDate?.ToString("dddd"))</del>
             <br/>
-            <del>@(@endDate?.ToShortDateString())</del>
+            <del>@(endDate?.ToShortDateString())</del>
             <br/>
             @if (movieEvent.Duration.HasValue)
             {
-                @: @(new TimeSpan((long)@movieEvent.Duration * 600000000).ToString(@"h\:mm"))
+                @: @(new TimeSpan((long)movieEvent.Duration * 600000000).ToString(@"h\:mm"))
             }
         </td>
         <td class="collapsible">
-            @if (@movieEvent.PosterS != null)
+            @if (movieEvent.PosterS != null)
             {
                 <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150/>
             }
@@ -85,10 +85,10 @@
             <div class="reverse-collapsible">
                 <img src="@(Model.GetImageUrl(movieEvent.Channel.LogoS_Local, movieEvent.Channel.LogoS))" loading="lazy" alt="@movieEvent.Channel.Name" title="@movieEvent.Channel.Name" width=50/>
                 &nbsp;
-                <del>@(@endDate?.ToString("dddd")) @(@endDate?.ToShortDateString())</del>
+                <del>@(endDate?.ToString("dddd")) @(endDate?.ToShortDateString())</del>
                 @if (movieEvent.Duration.HasValue)
                 {
-                    @: &nbsp; (@(new TimeSpan((long)@movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
+                    @: &nbsp; (@(new TimeSpan((long)movieEvent.Duration.Value * 600000000).ToString(@"h\:mm")))
                 }
             </div>
             <h2>
@@ -98,9 +98,9 @@
                     <small>@movieEvent.Year</small>
                 }
                 <small>
-                    @if (!string.IsNullOrEmpty(@movieEvent.Movie?.Certification))
+                    @if (!string.IsNullOrEmpty(movieEvent.Movie?.Certification))
                     {
-                        @if (@movieEvent.Movie.Certification.Substring(0, 3) == "US:")
+                        @if (movieEvent.Movie.Certification.Substring(0, 3) == "US:")
                         {
                             @movieEvent.Movie.Certification.Substring(3)
                         }
@@ -121,7 +121,7 @@
                         </small>
                     }
                 </small>
-                <span style="white-space: nowrap; float: right;">
+                <span style="float: right; white-space: nowrap;">
                     <small>
                         @if (!string.IsNullOrEmpty(movieEvent.VodLink))
                         {
@@ -150,15 +150,15 @@
                                     <img src="/images/facebook-36x36.png" loading="lazy" alt="Facebook" height="36px" />
                                 </a> *@
                         &nbsp;
-                        @if (!string.IsNullOrEmpty(@movieEvent.Movie?.ImdbId))
+                        @if (!string.IsNullOrEmpty(movieEvent.Movie?.ImdbId))
                         {
                             <a href="https://www.imdb.com/title/@movieEvent.Movie.ImdbId" target="_blank" rel="noopener" title="Raadpleeg @movieEvent.Title op IMDb..." style="text-decoration: none">
                                 <img src="/images/imdb-50x24.png" loading="lazy" alt="IMDb" height="24px"/>
-                                @if (@movieEvent.Movie.ImdbRating.HasValue)
+                                @if (movieEvent.Movie.ImdbRating.HasValue)
                                 {
-                                    @((@movieEvent.Movie.ImdbRating.Value / 10.0).ToString("0.0"))
+                                    @((movieEvent.Movie.ImdbRating.Value / 10.0).ToString("0.0"))
                                     <span class="stars">
-                                        <span style="width: @(Math.Round(16.0 * @movieEvent.Movie.ImdbRating.Value / 10, 0))px;">
+                                        <span style="width: @(Math.Round(16.0 * movieEvent.Movie.ImdbRating.Value / 10, 0))px;">
                                         </span>
                                     </span>
                                 }
@@ -177,8 +177,8 @@
                                         @Html.AntiForgeryToken()
                                         Manual input:
                                         IMDb search
-                                        <a href="https://www.imdb.com/find?q=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))&amp;s=all" target="_blank" rel="noopener">all</a>
-                                        <a href="https://www.imdb.com/search/title?release_date=@(movieEvent.Year - 1)-07-01,@(movieEvent.Year + 1)-07-01&amp;title=@(System.Text.Encodings.Web.UrlEncoder.Default.Encode(movieEvent.Title))" target="_blank" rel="noopener">advanced</a>
+                                        <a href="https://www.imdb.com/find?q=@(UrlEncoder.Default.Encode(movieEvent.Title))&amp;s=all" target="_blank" rel="noopener">all</a>
+                                        <a href="https://www.imdb.com/search/title?release_date=@(movieEvent.Year - 1)-07-01,@(movieEvent.Year + 1)-07-01&amp;title=@(UrlEncoder.Default.Encode(movieEvent.Title))" target="_blank" rel="noopener">advanced</a>
                                         <br/>
                                         IMDb ID: <input type="edit" name="setimdbid" value=""/> <br/>
                                         <input type="hidden" name="movieeventid" value="@movieEvent.Id"/> <br/>
@@ -192,7 +192,7 @@
                 </span>
             </h2>
             <div class="reverse-collapsible">
-                @if (@movieEvent.PosterS != null)
+                @if (movieEvent.PosterS != null)
                 {
                     <img src="@(Model.GetImageUrl(movieEvent.PosterS_Local, movieEvent.PosterS))" loading="lazy" alt="@movieEvent.Title" width=150/>
                 }
@@ -202,7 +202,7 @@
                     @movieEvent.Genre
                 </p>
                 <p>
-                    @Html.Raw(@movieEvent.Content)
+                    @Html.Raw(movieEvent.Content)
                 </p>
                 @if (!string.IsNullOrEmpty(movieEvent.Opinion))
                 {

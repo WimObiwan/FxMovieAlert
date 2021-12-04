@@ -37,12 +37,11 @@ public class GenerateImdbDatabaseCommandOptions
 
 public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 {
+    private const int batchSize = 10000;
+    private readonly GenerateImdbDatabaseCommandOptions generateImdbDatabaseCommandOptions;
     private readonly ILogger<UpdateEpgCommand> logger;
     private readonly IServiceScopeFactory serviceScopeFactory;
-    private readonly GenerateImdbDatabaseCommandOptions generateImdbDatabaseCommandOptions;
     private readonly ITheMovieDbService theMovieDbService;
-
-    private const int batchSize = 10000;
 
     public GenerateImdbDatabaseCommand(ILogger<UpdateEpgCommand> logger,
         IServiceScopeFactory serviceScopeFactory,
@@ -120,7 +119,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
             // Skip header
             textReader.ReadLine();
 
-            var FilterTypes = new string[]
+            var FilterTypes = new[]
             {
                 "movie",
                 "video",
@@ -198,7 +197,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                         {
                             countAlternatives++;
                             movie.MovieAlternatives.Add(
-                                new ImdbMovieAlternative()
+                                new ImdbMovieAlternative
                                 {
                                     Movie = movie,
                                     AlternativeTitle = originalTitle,
@@ -280,9 +279,9 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                         }
 
                         if (!(
-                            akaFilterRegion.Contains(match.Groups[3].Value)
-                            || akaFilterLanguage.Contains(match.Groups[4].Value)
-                        ))
+                                akaFilterRegion.Contains(match.Groups[3].Value)
+                                || akaFilterLanguage.Contains(match.Groups[4].Value)
+                            ))
                         {
                             skipped++;
                             continue;
@@ -397,7 +396,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
                         decimal rating;
                         if (decimal.TryParse(match.Groups[2].Value, NumberStyles.AllowDecimalPoint,
-                            CultureInfo.InvariantCulture.NumberFormat, out rating))
+                                CultureInfo.InvariantCulture.NumberFormat, out rating))
                             movie.Rating = (int)(rating * 10);
                     }
 
@@ -419,7 +418,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         using (var scope = serviceScopeFactory.CreateScope())
         using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
         {
-            total = db.Movies.Where((m) => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Count();
+            total = db.Movies.Where(m => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Count();
         }
 
         logger.LogInformation("Removing {Count} Movies without Rating", total);
@@ -431,7 +430,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
             {
                 var batch = db.Movies
                     .AsNoTracking()
-                    .Where((m) => !m.Rating.HasValue && m.Year <= year)
+                    .Where(m => !m.Rating.HasValue && m.Year <= year)
                     .OrderBy(m => m.Id)
                     .Take(batchSize)
                     .Include(m => m.MovieAlternatives);

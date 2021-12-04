@@ -1,7 +1,7 @@
-@using Microsoft.Extensions.Options
 @using FxMovieAlert.Utilities
-@using FxMovieAlert.Options
 @using FxMovies.Core
+@using Microsoft.Extensions.Options
+@using FxMovieAlert.Options
 @inject IOptions<SiteOptions> SiteOptions
 @inject IVersionInfo VersionInfo
 
@@ -98,7 +98,7 @@
 
     <title>@ViewData["Title"] - FilmOpTV.be</title>
 
-    @if (!string.IsNullOrEmpty(@ViewData["Canonical"] as string))
+    @if (!string.IsNullOrEmpty(ViewData["Canonical"] as string))
     {
         <link rel="canonical" href="https://www.filmoptv.be@(ViewData["Canonical"])"/>
     }
@@ -124,7 +124,7 @@
         <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
         <!-- FilmOpTV - vertical -->
         <ins class="adsbygoogle"
-             style="display: inline-block; width: 120px; height: 600px"
+             style="display: inline-block; height: 600px; width: 120px;"
              data-ad-client="@SiteOptions.Value.GoogleAdsensePublishId"
              data-ad-slot="@SiteOptions.Value.GoogleAdsenseVerticleAdSlot">
         </ins>
@@ -260,7 +260,7 @@
             - Fox Innovations / Wim Devos
             @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
             {
-                <a href="#" title="Client-side javascript Sentry test" onclick="throw &;quot;Sentry;test;exception;! & quot;">&pi;</a>
+                <a href="#" title="Client-side javascript Sentry test" onclick="throw &;;quot;Sentry;test;exception;! & quot;">&pi;</a>
                 <a href="/?m=-2" title="Server-side dotnet Core Sentry test">&pi;</a>
             }
         </p>

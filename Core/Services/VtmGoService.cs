@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using Microsoft.AspNetCore.WebUtilities;
@@ -23,11 +25,11 @@ public class VtmGoServiceOptions
 
 public class VtmGoService : IMovieEventService
 {
-    private readonly ILogger<VtmGoService> logger;
     private readonly string authToken;
-    private readonly string username;
-    private readonly string password;
     private readonly IHttpClientFactory httpClientFactory;
+    private readonly ILogger<VtmGoService> logger;
+    private readonly string password;
+    private readonly string username;
 
     public VtmGoService(
         ILogger<VtmGoService> logger,
@@ -63,7 +65,7 @@ public class VtmGoService : IMovieEventService
         }
         else
         {
-            var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(authToken);
+            var jwtToken = new JwtSecurityToken(authToken);
             if (DateTime.UtcNow < jwtToken.ValidTo)
             {
                 logger.LogInformation("Configured refresh token is still valid ({JwtTokenValidTo})", jwtToken.ValidTo);
@@ -80,7 +82,7 @@ public class VtmGoService : IMovieEventService
         var profileId = await GetProfileId(lfvpToken);
         var movieIds = await GetCatalog(lfvpToken, profileId);
 
-        var channel = new Channel()
+        var channel = new Channel
         {
             Code = "vtmgo",
             Name = "VTM GO",
@@ -154,7 +156,7 @@ public class VtmGoService : IMovieEventService
         response.EnsureSuccessStatusCode();
 
         var responseBody = await response.Content.ReadAsStringAsync();
-        var match = System.Text.RegularExpressions.Regex.Match(responseBody, @"window.location.href\s*=\s*'([^']+)'");
+        var match = Regex.Match(responseBody, @"window.location.href\s*=\s*'([^']+)'");
         if (!match.Success)
             throw new Exception("Expected redirect in body");
 
@@ -170,16 +172,11 @@ public class VtmGoService : IMovieEventService
         return fragmentQueryParams["id_token"];
     }
 
-    private class DpgTokenResponse
-    {
-        public string lfvpToken { get; set; }
-    };
-
     private async Task<string> DpgLogin(string idToken)
     {
         var body = new
         {
-            idToken = idToken
+            idToken
         };
 
         var client = httpClientFactory.CreateClient("vtmgo_dpg");
@@ -203,11 +200,6 @@ public class VtmGoService : IMovieEventService
         return responseObject.lfvpToken;
     }
 
-    private class DpgProfileResponse
-    {
-        public string id { get; set; }
-    };
-
     private async Task<string> GetProfileId(string lfvpToken)
     {
         var client = httpClientFactory.CreateClient("vtmgo_dpg");
@@ -222,29 +214,6 @@ public class VtmGoService : IMovieEventService
         var responseObject = await response.Content.ReadFromJsonAsync<DpgProfileResponse[]>();
         return responseObject[0].id;
     }
-
-    private class DpgCatalogResponse
-    {
-        public class PagedTeasers
-        {
-            public class Content
-            {
-                public class Target
-                {
-                    public string type { get; set; }
-                    public string id { get; set; }
-                }
-
-                public string title { get; set; }
-                public string imageUrl { get; set; }
-                public Target target { get; set; }
-            }
-
-            public Content[] content { get; set; }
-        }
-
-        public PagedTeasers pagedTeasers { get; set; }
-    };
 
     private async Task<List<string>> GetCatalog(string lfvpToken, string profileId)
     {
@@ -264,22 +233,6 @@ public class VtmGoService : IMovieEventService
         return movies;
     }
 
-    private class DpgMovieResponse
-    {
-        public class Movie
-        {
-            public string id { get; set; }
-            public string name { get; set; }
-            public string description { get; set; }
-            public string smallPhotoUrl { get; set; }
-            public int remainingDaysAvailable { get; set; }
-            public int durationSeconds { get; set; }
-            public int productionYear { get; set; }
-        }
-
-        public Movie movie { get; set; }
-    }
-
     private async Task<DpgMovieResponse> GetMovieInfo(string lfvpToken, string profileId, string movieId)
     {
         var client = httpClientFactory.CreateClient("vtmgo_dpg");
@@ -293,5 +246,54 @@ public class VtmGoService : IMovieEventService
 
         var responseObject = await response.Content.ReadFromJsonAsync<DpgMovieResponse>();
         return responseObject;
+    }
+
+    private class DpgTokenResponse
+    {
+        public string lfvpToken { get; set; }
+    }
+
+    private class DpgProfileResponse
+    {
+        public string id { get; set; }
+    }
+
+    private class DpgCatalogResponse
+    {
+        public PagedTeasers pagedTeasers { get; set; }
+
+        public class PagedTeasers
+        {
+            public Content[] content { get; set; }
+
+            public class Content
+            {
+                public string title { get; set; }
+                public string imageUrl { get; set; }
+                public Target target { get; set; }
+
+                public class Target
+                {
+                    public string type { get; set; }
+                    public string id { get; set; }
+                }
+            }
+        }
+    }
+
+    private class DpgMovieResponse
+    {
+        public Movie movie { get; set; }
+
+        public class Movie
+        {
+            public string id { get; set; }
+            public string name { get; set; }
+            public string description { get; set; }
+            public string smallPhotoUrl { get; set; }
+            public int remainingDaysAvailable { get; set; }
+            public int durationSeconds { get; set; }
+            public int productionYear { get; set; }
+        }
     }
 }

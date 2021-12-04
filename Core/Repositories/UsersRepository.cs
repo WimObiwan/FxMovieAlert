@@ -32,8 +32,8 @@ public interface IUsersRepository
 
 public class UsersRepository : IUsersRepository
 {
-    private readonly ILogger<UsersRepository> logger;
     private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly ILogger<UsersRepository> logger;
 
     public UsersRepository(
         ILogger<UsersRepository> logger,
@@ -111,7 +111,7 @@ public class UsersRepository : IUsersRepository
         // "SQLite Error 8: 'attempt to write a readonly database'."... 
         await fxMoviesDbContext.SaveChangesAsync();
 
-        return new UserDataResult()
+        return new UserDataResult
         {
             RefreshRequestTime = user.RefreshRequestTime,
             LastRefreshRatingsTime = user.LastRefreshRatingsTime,

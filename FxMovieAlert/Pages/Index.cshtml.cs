@@ -5,10 +5,6 @@ namespace FxMovieAlert.Pages;
 
 public class IndexModel : PageModel
 {
-    public IndexModel()
-    {
-    }
-
     public IActionResult OnGet()
     {
         return RedirectToPage("/Broadcasts");

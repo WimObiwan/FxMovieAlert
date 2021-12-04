@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,12 +24,12 @@ public class AutoUpdateImdbUserDataCommandOptions
 
 public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
 {
-    private readonly ILogger<AutoUpdateImdbUserDataCommand> logger;
-    private readonly IUpdateImdbUserDataCommand updateImdbUserDataCommand;
-    private readonly IUsersRepository usersRepository;
     private readonly TimeSpan autoUpdateInterval;
     private readonly TimeSpan autoUpdateIntervalActiveUser;
+    private readonly ILogger<AutoUpdateImdbUserDataCommand> logger;
     private readonly bool updateAllRatings;
+    private readonly IUpdateImdbUserDataCommand updateImdbUserDataCommand;
+    private readonly IUsersRepository usersRepository;
 
     public AutoUpdateImdbUserDataCommand(ILogger<AutoUpdateImdbUserDataCommand> logger,
         IOptionsSnapshot<AutoUpdateImdbUserDataCommandOptions> autoUpdateImdbUserDataCommandOptions,
@@ -55,9 +56,9 @@ public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
             lastUpdateThreshold, lastUpdateThresholdActiveUser);
 
         // ToList, to prevent locking errors when updating while iterating:
-        var usersToUpdate = new List<Entities.User>();
+        var usersToUpdate = new List<User>();
         await foreach (var item in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold,
-            lastUpdateThresholdActiveUser))
+                           lastUpdateThresholdActiveUser))
             usersToUpdate.Add(item);
 
         foreach (var user in usersToUpdate)

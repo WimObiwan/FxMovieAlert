@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
@@ -11,8 +12,8 @@ namespace FxMovies.Core.Services;
 
 public class VrtNuService : IMovieEventService
 {
-    private readonly ILogger<VrtNuService> logger;
     private readonly IHttpClientFactory httpClientFactory;
+    private readonly ILogger<VrtNuService> logger;
 
     public VrtNuService(
         ILogger<VrtNuService> logger,
@@ -30,7 +31,7 @@ public class VrtNuService : IMovieEventService
     {
         // https://vrtnu-api.vrt.be/suggest?facets[categories]=films
 
-        var channel = new Channel()
+        var channel = new Channel
         {
             Code = "vrtnu",
             Name = "VRT NU",
@@ -42,7 +43,7 @@ public class VrtNuService : IMovieEventService
         var movieEvents = new List<MovieEvent>();
         foreach (var movie in movies)
         {
-            System.Threading.Thread.Sleep(500);
+            Thread.Sleep(500);
 
             var movieDetails = await GetSearchMovieInfo(movie.programUrl);
             if (movieDetails.duration < 75)
@@ -92,11 +93,6 @@ public class VrtNuService : IMovieEventService
         return $"https:{url}";
     }
 
-    private class SuggestMovieInfo
-    {
-        public string programUrl { get; set; }
-    }
-
     private async Task<IList<SuggestMovieInfo>> GetSuggestMovieInfo()
     {
         var client = httpClientFactory.CreateClient("vrtnu");
@@ -109,6 +105,27 @@ public class VrtNuService : IMovieEventService
 
         var responseObject = await response.Content.ReadFromJsonAsync<List<SuggestMovieInfo>>();
         return responseObject;
+    }
+
+    private async Task<SearchMovieInfo> GetSearchMovieInfo(string programUrl)
+    {
+        // https://vrtnu-api.vrt.be/search?facets[programUrl]=//www.vrt.be/vrtnu/a-z/everybody-knows/
+
+        var client = httpClientFactory.CreateClient("vrtnu");
+        //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
+        var response = await client.GetAsync($"/search?facets[programUrl]={programUrl}");
+        response.EnsureSuccessStatusCode();
+        // Troubleshoot: Debug console: 
+        //   response.Content.ReadAsStringAsync().Result,nq 
+        // ==> nq = non-quoted
+
+        var responseObject = await response.Content.ReadFromJsonAsync<SearchResult>();
+        return responseObject.results?.FirstOrDefault();
+    }
+
+    private class SuggestMovieInfo
+    {
+        public string programUrl { get; set; }
     }
 
     private class SearchResult
@@ -128,21 +145,5 @@ public class VrtNuService : IMovieEventService
         public string assetOffTime { get; set; }
         public int duration { get; set; }
         public string seasonName { get; set; }
-    }
-
-    private async Task<SearchMovieInfo> GetSearchMovieInfo(string programUrl)
-    {
-        // https://vrtnu-api.vrt.be/search?facets[programUrl]=//www.vrt.be/vrtnu/a-z/everybody-knows/
-
-        var client = httpClientFactory.CreateClient("vrtnu");
-        //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
-        var response = await client.GetAsync($"/search?facets[programUrl]={programUrl}");
-        response.EnsureSuccessStatusCode();
-        // Troubleshoot: Debug console: 
-        //   response.Content.ReadAsStringAsync().Result,nq 
-        // ==> nq = non-quoted
-
-        var responseObject = await response.Content.ReadFromJsonAsync<SearchResult>();
-        return responseObject.results?.FirstOrDefault();
     }
 }

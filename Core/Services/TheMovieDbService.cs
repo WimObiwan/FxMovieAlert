@@ -33,33 +33,11 @@ public class TheMovieDbServiceOptions
 
 public class TheMovieDbService : ITheMovieDbService
 {
-    #region JSonModel
-
-    [DebuggerDisplay("iso_3166_1 = {iso_3166_1}")]
-    private class Country
-    {
-        public string certification { get; set; }
-        public string iso_3166_1 { get; set; }
-    }
-
-    private class Releases
-    {
-        public List<Country> countries { get; set; }
-    }
-
-    private class Movie
-    {
-        public string backdrop_path { get; set; }
-        public string poster_path { get; set; }
-        public string original_title { get; set; }
-    }
-
-    #endregion
-
-    private readonly ILogger<TheMovieDbServiceOptions> logger;
-    private readonly IHttpClientFactory httpClientFactory;
     private readonly string apiKey;
     private readonly string[] certificationCountryPreference;
+    private readonly IHttpClientFactory httpClientFactory;
+
+    private readonly ILogger<TheMovieDbServiceOptions> logger;
 
     public TheMovieDbService(ILogger<TheMovieDbServiceOptions> logger,
         IOptionsSnapshot<TheMovieDbServiceOptions> options,
@@ -166,4 +144,27 @@ public class TheMovieDbService : ITheMovieDbService
             throw new Exception($"Failed to retrieve images for {imdbId}", e);
         }
     }
+
+    #region JSonModel
+
+    [DebuggerDisplay("iso_3166_1 = {iso_3166_1}")]
+    private class Country
+    {
+        public string certification { get; set; }
+        public string iso_3166_1 { get; set; }
+    }
+
+    private class Releases
+    {
+        public List<Country> countries { get; set; }
+    }
+
+    private class Movie
+    {
+        public string backdrop_path { get; set; }
+        public string poster_path { get; set; }
+        public string original_title { get; set; }
+    }
+
+    #endregion
 }
