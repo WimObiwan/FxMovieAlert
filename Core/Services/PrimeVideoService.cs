@@ -116,10 +116,7 @@ public class PrimeVideoService : IMovieEventService
     {
         var localDownloadOverride = primeVideoServiceOptions.LocalDownloadOverride;
         logger.LogInformation("Using LocalDownloadOverride {LocalDownloadOverride}", localDownloadOverride);
-        if (localDownloadOverride != null)
-        {
-            return File.OpenRead(localDownloadOverride);
-        }
+        if (localDownloadOverride != null) return File.OpenRead(localDownloadOverride);
 
         var response = await httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE?ie=UTF8");
         response.EnsureSuccessStatusCode();

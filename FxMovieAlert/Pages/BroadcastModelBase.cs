@@ -156,10 +156,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         if (m.HasValue)
         {
-            if (m.Value == -2)
-            {
-                throw new Exception("Sentry test exception");
-            }
+            if (m.Value == -2) throw new Exception("Sentry test exception");
 
             MovieEvent = dbMovieEvents
                 .Include(me => me.Movie)

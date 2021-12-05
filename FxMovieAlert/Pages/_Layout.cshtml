@@ -149,6 +149,10 @@
 <script>
     // Detect JS support
     document.body.className = document.body.className + " js_enabled";
+
+    function TestSentry() {
+        throw "Sentry test exception!";
+    }
 </script>
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
@@ -260,7 +264,7 @@
             - Fox Innovations / Wim Devos
             @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
             {
-                <a href="#" title="Client-side javascript Sentry test" onclick="throw &;;quot;Sentry;test;exception;! & quot;">&pi;</a>
+                <a href="#" title="Client-side javascript Sentry test" onclick="TestSentry()">&pi;</a>
                 <a href="/?m=-2" title="Server-side dotnet Core Sentry test">&pi;</a>
             }
         </p>
