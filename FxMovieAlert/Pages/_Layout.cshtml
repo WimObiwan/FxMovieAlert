@@ -207,7 +207,7 @@
                             <a href="#">Admin</a>
                         </li>
                     }
-                    var picture = User.FindFirst("picture")?.Value;
+                    var picture = Url.Page("Account", "Avatar");
                     <li>
                         <a asp-page="/Account" asp-page-handler="logout" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">
                             <!--p title="Afloggen (@User.Identity.Name)"-->
