@@ -5,12 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using FxMovieAlert.HealthChecks;
-using FxMovieAlert.Options;
 using FxMovies.Core;
 using FxMovies.Core.Entities;
-using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using FxMovies.MoviesDB;
+using FxMovies.Site.HealthChecks;
+using FxMovies.Site.Options;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
@@ -27,7 +27,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
-namespace FxMovieAlert;
+namespace FxMovies.Site;
 
 public class Startup
 {

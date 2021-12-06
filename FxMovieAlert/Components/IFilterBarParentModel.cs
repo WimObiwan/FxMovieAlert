@@ -1,6 +1,6 @@
 using System;
 
-namespace FxMovieAlert.Components;
+namespace FxMovies.Site.Components;
 
 public interface IFilterBarParentModel
 {

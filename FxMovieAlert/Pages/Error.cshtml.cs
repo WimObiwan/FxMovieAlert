@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace FxMovieAlert.Pages;
+namespace FxMovies.Site.Pages;
 
 public class ErrorModel : PageModel
 {

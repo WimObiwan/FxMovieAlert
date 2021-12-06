@@ -1,7 +1,7 @@
 ﻿using FxMovies.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace FxMovies.FxMoviesDB;
+namespace FxMovies.MoviesDB;
 
 /// <summary>
 ///     The entity framework context with a Students DbSet

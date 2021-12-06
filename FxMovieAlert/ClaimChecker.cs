@@ -2,7 +2,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 
-namespace FxMovieAlert;
+namespace FxMovies.Site;
 
 public static class ClaimChecker
 {

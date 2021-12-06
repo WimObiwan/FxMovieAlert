@@ -1,6 +1,6 @@
 using FxMovies.Core;
-using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

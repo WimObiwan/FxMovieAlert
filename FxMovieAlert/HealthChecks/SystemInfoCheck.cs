@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using FxMovies.Core;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace FxMovieAlert.HealthChecks;
+namespace FxMovies.Site.HealthChecks;
 
 public class SystemInfoCheck : IHealthCheck
 {

@@ -3,13 +3,13 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core;
 using FxMovies.Core.Commands;
-using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using FxMovies.MoviesDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 
-namespace FxMovieAlert.Pages;
+namespace FxMovies.Site.Pages;
 
 public class UpdateImdbLinkModel : PageModel
 {

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
 
-namespace FxMovieAlert;
+namespace FxMovies.Site;
 
 public class Program
 {

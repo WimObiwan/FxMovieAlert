@@ -2,17 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FxMovieAlert.Components;
-using FxMovieAlert.Options;
+using FxMovies.Core;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
-using FxMovies.FxMoviesDB;
+using FxMovies.MoviesDB;
+using FxMovies.Site.Components;
+using FxMovies.Site.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace FxMovieAlert.Pages;
+namespace FxMovies.Site.Pages;
 
 public class Record
 {

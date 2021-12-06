@@ -1,7 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace FxMovieAlert.Utilities;
+namespace FxMovies.Site.Utilities;
 
 public static class HtmlHelperExtensions
 {

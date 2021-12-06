@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace FxMovieAlert.HealthChecks;
+namespace FxMovies.Site.HealthChecks;
 
 public class ImdbDbDateTimeCheck : IHealthCheck
 {

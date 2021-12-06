@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace FxMovieAlert.Options;
+namespace FxMovies.Site.Options;
 
 public class HealthCheckOptions
 {

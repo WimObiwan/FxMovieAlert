@@ -2,15 +2,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FxMovieAlert.Options;
 using FxMovies.Core.Entities;
-using FxMovies.FxMoviesDB;
+using FxMovies.MoviesDB;
+using FxMovies.Site.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
-namespace FxMovieAlert.HealthChecks;
+namespace FxMovies.Site.HealthChecks;
 
 public static class MovieDbMissingImdbLinkCheckBuilderExtensions
 {

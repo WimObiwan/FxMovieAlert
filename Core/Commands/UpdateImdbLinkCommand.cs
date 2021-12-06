@@ -2,8 +2,8 @@ using System;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Utilities;
-using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

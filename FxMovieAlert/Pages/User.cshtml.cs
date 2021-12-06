@@ -7,14 +7,14 @@ using FxMovies.Core;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
 using FxMovies.Core.Services;
-using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using FxMovies.MoviesDB;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace FxMovieAlert.Pages;
+namespace FxMovies.Site.Pages;
 
 public class UserModel : PageModel
 {

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>FxMovies.Site</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <!-- https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks -->

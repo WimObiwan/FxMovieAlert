@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace FxMovieAlert.Pages;
+namespace FxMovies.Site.Pages;
 
 public class IndexModel : PageModel
 {

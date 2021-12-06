@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Components;
 
-namespace FxMovieAlert.Components;
+namespace FxMovies.Site.Components;
 
 [Flags]
 public enum Cert

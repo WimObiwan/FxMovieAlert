@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Services;
-using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.Core;
