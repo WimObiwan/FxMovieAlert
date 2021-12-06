@@ -32,27 +32,27 @@ public interface IUsersRepository
 
 public class UsersRepository : IUsersRepository
 {
-    private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly ILogger<UsersRepository> logger;
+    private readonly MoviesDbContext moviesDbContext;
 
     public UsersRepository(
         ILogger<UsersRepository> logger,
-        FxMoviesDbContext fxMoviesDbContext)
+        MoviesDbContext moviesDbContext)
     {
         this.logger = logger;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.moviesDbContext = moviesDbContext;
     }
 
     public IAsyncEnumerable<string> GetAllImdbUserIds()
     {
-        return fxMoviesDbContext.Users
+        return moviesDbContext.Users
             .Select(u => u.ImdbUserId).AsAsyncEnumerable();
     }
 
     public IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold,
         DateTime lastUpdateThresholdActiveUser)
     {
-        return fxMoviesDbContext.Users
+        return moviesDbContext.Users
             .Where(u =>
                 u.RefreshRequestTime.HasValue // requested to be refreshed, OR
                 || !u.LastRefreshRatingsTime.HasValue // never refreshed before, OR
@@ -67,41 +67,41 @@ public class UsersRepository : IUsersRepository
 
     public async Task SetRatingRefreshResult(string imdbUserId, bool succeeded, string result)
     {
-        var user = await fxMoviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await moviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
         if (user != null)
         {
             user.LastRefreshSuccess = succeeded;
             user.LastRefreshRatingsTime = DateTime.UtcNow;
             user.LastRefreshRatingsResult = result;
-            await fxMoviesDbContext.SaveChangesAsync();
+            await moviesDbContext.SaveChangesAsync();
         }
     }
 
     public async Task SetWatchlistRefreshResult(string imdbUserId, bool succeeded, string result)
     {
-        var user = await fxMoviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await moviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
         if (user != null)
         {
             user.WatchListLastRefreshSuccess = succeeded;
             user.WatchListLastRefreshTime = DateTime.UtcNow;
             user.WatchListLastRefreshResult = result;
-            await fxMoviesDbContext.SaveChangesAsync();
+            await moviesDbContext.SaveChangesAsync();
         }
     }
 
     public async Task UnsetRefreshRequestTime(string imdbUserId)
     {
-        var user = await fxMoviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await moviesDbContext.Users.SingleOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
         if (user != null)
         {
             user.RefreshRequestTime = null;
-            await fxMoviesDbContext.SaveChangesAsync();
+            await moviesDbContext.SaveChangesAsync();
         }
     }
 
     public async Task<UserDataResult> UpdateUserLastUsedAndGetData(string userId)
     {
-        var user = await fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+        var user = await moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
         if (user == null)
             return null;
 
@@ -109,7 +109,7 @@ public class UsersRepository : IUsersRepository
         user.LastUsageTime = DateTime.UtcNow;
 
         // "SQLite Error 8: 'attempt to write a readonly database'."... 
-        await fxMoviesDbContext.SaveChangesAsync();
+        await moviesDbContext.SaveChangesAsync();
 
         return new UserDataResult
         {

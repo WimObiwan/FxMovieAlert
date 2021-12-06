@@ -40,9 +40,9 @@ internal class Program
                 var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
-                    //await fxMoviesDbContext.Database.EnsureCreatedAsync();
-                    await fxMoviesDbContext.Database.MigrateAsync();
+                    var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
+                    //await moviesDbContext.Database.EnsureCreatedAsync();
+                    await moviesDbContext.Database.MigrateAsync();
                 }
 
                 using (var scope = serviceProvider.CreateScope())
@@ -211,11 +211,11 @@ internal class Program
         throw new Exception("Test Sentry");
     }
 
-    public class TemporaryFxMoviesDbContextFactory : IDesignTimeDbContextFactory<FxMoviesDbContext>
+    public class TemporaryFxMoviesDbContextFactory : IDesignTimeDbContextFactory<MoviesDbContext>
     {
-        public FxMoviesDbContext CreateDbContext(string[] args)
+        public MoviesDbContext CreateDbContext(string[] args)
         {
-            var builder = new DbContextOptionsBuilder<FxMoviesDbContext>();
+            var builder = new DbContextOptionsBuilder<MoviesDbContext>();
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", false, false)
@@ -226,7 +226,7 @@ internal class Program
             var connectionString = configuration.GetConnectionString("FxMoviesDb");
 
             builder.UseSqlite(connectionString);
-            return new FxMoviesDbContext(builder.Options);
+            return new MoviesDbContext(builder.Options);
         }
     }
 

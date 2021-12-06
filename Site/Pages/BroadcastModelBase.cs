@@ -26,7 +26,7 @@ public class Record
 public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 {
     private readonly MovieEvent.FeedType feed;
-    private readonly FxMoviesDbContext fxMoviesDbContext;
+    private readonly MoviesDbContext moviesDbContext;
     private readonly SiteOptions siteOptions;
     private readonly IUsersRepository usersRepository;
     public int AdsInterval = 5;
@@ -38,12 +38,12 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     public BroadcastsModelBase(
         MovieEvent.FeedType feed,
         IOptions<SiteOptions> siteOptions,
-        FxMoviesDbContext fxMoviesDbContext,
+        MoviesDbContext moviesDbContext,
         IUsersRepository usersRepository)
     {
         this.feed = feed;
         this.siteOptions = siteOptions.Value;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.moviesDbContext = moviesDbContext;
         this.usersRepository = usersRepository;
     }
 
@@ -134,7 +134,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         }
 
         var dbMovieEvents =
-            fxMoviesDbContext.MovieEvents.Where(me => me.Feed == feed || me.Feed == null && me.Vod == streaming);
+            moviesDbContext.MovieEvents.Where(me => me.Feed == feed || me.Feed == null && me.Vod == streaming);
 
         if (feed == MovieEvent.FeedType.Broadcast)
             dbMovieEvents = dbMovieEvents.Where(me =>

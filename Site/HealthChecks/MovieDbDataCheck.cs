@@ -64,9 +64,9 @@ public class MovieDbDataCheck : IHealthCheck
 
         using (var scope = serviceScopeFactory.CreateScope())
         {
-            var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
+            var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
 
-            var query = fxMoviesDbContext.MovieEvents
+            var query = moviesDbContext.MovieEvents
                 .Where(me =>
                     me.Feed == feedType && me.AddedTime.HasValue &&
                     (channelCode == null || me.Channel.Code == channelCode));

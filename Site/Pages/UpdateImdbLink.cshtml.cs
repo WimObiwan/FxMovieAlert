@@ -13,21 +13,21 @@ namespace FxMovies.Site.Pages;
 
 public class UpdateImdbLinkModel : PageModel
 {
-    private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly ImdbDbContext imdbDbContext;
     private readonly ILogger<UpdateImdbLinkModel> logger;
     private readonly IMovieCreationHelper movieCreationHelper;
+    private readonly MoviesDbContext moviesDbContext;
     private readonly IUpdateImdbLinkCommand updateImdbLinkCommand;
 
     public UpdateImdbLinkModel(
         ILogger<UpdateImdbLinkModel> logger,
-        FxMoviesDbContext fxMoviesDbContext,
+        MoviesDbContext moviesDbContext,
         ImdbDbContext imdbDbContext,
         IMovieCreationHelper movieCreationHelper,
         IUpdateImdbLinkCommand updateImdbLinkCommand)
     {
         this.logger = logger;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.moviesDbContext = moviesDbContext;
         this.imdbDbContext = imdbDbContext;
         this.movieCreationHelper = movieCreationHelper;
         this.updateImdbLinkCommand = updateImdbLinkCommand;

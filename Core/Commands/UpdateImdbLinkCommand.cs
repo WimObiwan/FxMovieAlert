@@ -16,26 +16,26 @@ public interface IUpdateImdbLinkCommand
 
 public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
 {
-    private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly ImdbDbContext imdbDbContext;
     private readonly ILogger<UpdateImdbUserDataCommand> logger;
     private readonly IMovieCreationHelper movieCreationHelper;
+    private readonly MoviesDbContext moviesDbContext;
 
     public UpdateImdbLinkCommand(
         ILogger<UpdateImdbUserDataCommand> logger,
-        FxMoviesDbContext fxMoviesDbContext,
+        MoviesDbContext moviesDbContext,
         ImdbDbContext imdbDbContext,
         IMovieCreationHelper movieCreationHelper)
     {
         this.logger = logger;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.moviesDbContext = moviesDbContext;
         this.imdbDbContext = imdbDbContext;
         this.movieCreationHelper = movieCreationHelper;
     }
 
     public async Task Execute(int movieEventId, string imdbId, bool ignoreImdbLink)
     {
-        var movieEvent = await fxMoviesDbContext.MovieEvents
+        var movieEvent = await moviesDbContext.MovieEvents
             .Include(me => me.Movie)
             .Include(me => me.Channel)
             .SingleOrDefaultAsync(me => me.Id == movieEventId);
@@ -70,7 +70,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                     }
                 }
 
-                fxMoviesDbContext.ManualMatches.Add(
+                moviesDbContext.ManualMatches.Add(
                     new ManualMatch
                     {
                         AddedDateTime = DateTime.UtcNow,
@@ -81,7 +81,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                 );
             }
 
-            await fxMoviesDbContext.SaveChangesAsync();
+            await moviesDbContext.SaveChangesAsync();
         }
     }
 }

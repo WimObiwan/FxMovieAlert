@@ -57,9 +57,9 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
 
         using (var scope = serviceScopeFactory.CreateScope())
         {
-            var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
+            var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
 
-            var count = await fxMoviesDbContext.MovieEvents
+            var count = await moviesDbContext.MovieEvents
                 .Where(me => me.Feed == feedType)
                 .CountAsync(me =>
                     (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&

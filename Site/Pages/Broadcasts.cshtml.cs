@@ -8,15 +8,15 @@ using Microsoft.Extensions.Options;
 namespace FxMovies.Site.Pages;
 
 [AllowAnonymous]
-public class FreeStreamingModel : BroadcastsModelBase
+public class BroadcastsModel : BroadcastsModelBase
 {
-    public FreeStreamingModel(
+    public BroadcastsModel(
         IOptions<SiteOptions> siteOptions,
-        FxMoviesDbContext fxMoviesDbContext,
+        MoviesDbContext moviesDbContext,
         IUsersRepository usersRepository)
-        : base(MovieEvent.FeedType.FreeVod,
+        : base(MovieEvent.FeedType.Broadcast,
             siteOptions,
-            fxMoviesDbContext,
+            moviesDbContext,
             usersRepository)
     {
     }

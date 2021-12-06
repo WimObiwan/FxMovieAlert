@@ -6,9 +6,9 @@ namespace FxMovies.MoviesDB;
 /// <summary>
 ///     The entity framework context with a Students DbSet
 /// </summary>
-public class FxMoviesDbContext : DbContext
+public class MoviesDbContext : DbContext
 {
-    public FxMoviesDbContext(DbContextOptions<FxMoviesDbContext> options)
+    public MoviesDbContext(DbContextOptions<MoviesDbContext> options)
         : base(options)
     {
     }
@@ -75,13 +75,13 @@ public class FxMoviesDbContext : DbContext
 // /// </summary>
 // public static class FxMoviesDbContextFactory
 // {
-//     public static FxMoviesDbContext Create(string connectionString)
+//     public static MoviesDbContext Create(string connectionString)
 //     {
-//         var optionsBuilder = new DbContextOptionsBuilder<FxMoviesDbContext>();
+//         var optionsBuilder = new DbContextOptionsBuilder<MoviesDbContext>();
 //         optionsBuilder.UseSqlite(connectionString);
 
 //         // Ensure that the SQLite database and sechema is created!
-//         var db = new FxMoviesDbContext(optionsBuilder.Options);
+//         var db = new MoviesDbContext(optionsBuilder.Options);
 //         db.Database.EnsureCreated();
 
 //         return db;

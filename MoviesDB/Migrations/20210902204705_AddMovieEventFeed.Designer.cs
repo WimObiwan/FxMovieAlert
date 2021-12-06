@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FxMoviesDB.Migrations
 {
-    [DbContext(typeof(FxMoviesDbContext))]
-    [Migration("20210823201222_AddManualMatchAddedDateTime")]
-    partial class AddManualMatchAddedDateTime
+    [DbContext(typeof(MoviesDbContext))]
+    [Migration("20210902204705_AddMovieEventFeed")]
+    partial class AddMovieEventFeed
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -18,7 +18,7 @@ namespace FxMoviesDB.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "5.0.7");
 
-            modelBuilder.Entity("FxMovies.MoviesDB.Channel", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.Channel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -41,7 +41,7 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("Channels");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.ManualMatch", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.ManualMatch", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -66,7 +66,7 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("ManualMatches");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.Movie", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.Movie", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -98,7 +98,7 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("Movies");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.MovieEvent", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.MovieEvent", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -121,6 +121,9 @@ namespace FxMoviesDB.Migrations
 
                     b.Property<string>("ExternalId")
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("Feed")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Genre")
                         .HasColumnType("TEXT");
@@ -173,7 +176,7 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("MovieEvents");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.User", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -223,7 +226,7 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.UserRating", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.UserRating", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -250,7 +253,7 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("UserRatings");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.UserWatchListItem", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.UserWatchListItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -274,22 +277,22 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("UserWatchLists");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.ManualMatch", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.ManualMatch", b =>
                 {
-                    b.HasOne("FxMovies.MoviesDB.Movie", "Movie")
+                    b.HasOne("FxMovies.Core.Entities.Movie", "Movie")
                         .WithMany("ManualMatches")
                         .HasForeignKey("MovieId");
 
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.MovieEvent", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.MovieEvent", b =>
                 {
-                    b.HasOne("FxMovies.MoviesDB.Channel", "Channel")
+                    b.HasOne("FxMovies.Core.Entities.Channel", "Channel")
                         .WithMany()
                         .HasForeignKey("ChannelId");
 
-                    b.HasOne("FxMovies.MoviesDB.Movie", "Movie")
+                    b.HasOne("FxMovies.Core.Entities.Movie", "Movie")
                         .WithMany("MovieEvents")
                         .HasForeignKey("MovieId");
 
@@ -298,13 +301,13 @@ namespace FxMoviesDB.Migrations
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.UserRating", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.UserRating", b =>
                 {
-                    b.HasOne("FxMovies.MoviesDB.Movie", "Movie")
+                    b.HasOne("FxMovies.Core.Entities.Movie", "Movie")
                         .WithMany("UserRatings")
                         .HasForeignKey("MovieId");
 
-                    b.HasOne("FxMovies.MoviesDB.User", "User")
+                    b.HasOne("FxMovies.Core.Entities.User", "User")
                         .WithMany("UserRatings")
                         .HasForeignKey("UserId");
 
@@ -313,13 +316,13 @@ namespace FxMoviesDB.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.UserWatchListItem", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.UserWatchListItem", b =>
                 {
-                    b.HasOne("FxMovies.MoviesDB.Movie", "Movie")
+                    b.HasOne("FxMovies.Core.Entities.Movie", "Movie")
                         .WithMany("UserWatchListItems")
                         .HasForeignKey("MovieId");
 
-                    b.HasOne("FxMovies.MoviesDB.User", "User")
+                    b.HasOne("FxMovies.Core.Entities.User", "User")
                         .WithMany("UserWatchListItems")
                         .HasForeignKey("UserId");
 
@@ -328,7 +331,7 @@ namespace FxMoviesDB.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.Movie", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.Movie", b =>
                 {
                     b.Navigation("ManualMatches");
 
@@ -339,7 +342,7 @@ namespace FxMoviesDB.Migrations
                     b.Navigation("UserWatchListItems");
                 });
 
-            modelBuilder.Entity("FxMovies.MoviesDB.User", b =>
+            modelBuilder.Entity("FxMovies.Core.Entities.User", b =>
                 {
                     b.Navigation("UserRatings");
 

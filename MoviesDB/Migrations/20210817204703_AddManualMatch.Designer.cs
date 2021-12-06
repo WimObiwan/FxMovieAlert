@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FxMoviesDB.Migrations
 {
-    [DbContext(typeof(FxMoviesDbContext))]
+    [DbContext(typeof(MoviesDbContext))]
     [Migration("20210817204703_AddManualMatch")]
     partial class AddManualMatch
     {

@@ -49,18 +49,18 @@ public class UpdateEpgCommandOptions
 public class UpdateEpgCommand : IUpdateEpgCommand
 {
     private readonly UpdateEpgCommandOptions.DownloadImagesOption downloadImagesOption;
-    private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IHumoService humoService;
     private readonly ImdbDbContext imdbDbContext;
     private readonly IImdbMatchingQuery imdbMatchingQuery;
     private readonly ILogger<UpdateEpgCommand> logger;
     private readonly IEnumerable<IMovieEventService> movieEventServices;
+    private readonly MoviesDbContext moviesDbContext;
     private readonly ITheMovieDbService theMovieDbService;
     private readonly UpdateEpgCommandOptions updateEpgCommandOptions;
 
     public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger,
-        FxMoviesDbContext fxMoviesDbContext, ImdbDbContext imdbDbContext,
+        MoviesDbContext moviesDbContext, ImdbDbContext imdbDbContext,
         IOptionsSnapshot<UpdateEpgCommandOptions> updateEpgCommandOptions,
         ITheMovieDbService theMovieDbService,
         IEnumerable<IMovieEventService> movieEventServices,
@@ -70,7 +70,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         IManualMatchesQuery manualMatchesQuery)
     {
         this.logger = logger;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.moviesDbContext = moviesDbContext;
         this.imdbDbContext = imdbDbContext;
         this.updateEpgCommandOptions = updateEpgCommandOptions.Value;
         this.theMovieDbService = theMovieDbService;
@@ -161,11 +161,11 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         var now = DateTime.Now;
 
         // Remove all old MovieEvents
-        var set = fxMoviesDbContext.MovieEvents.Where(x =>
+        var set = moviesDbContext.MovieEvents.Where(x =>
             x.Vod == false && x.StartTime < now.Date
             || x.Vod == true && x.EndTime.HasValue && x.EndTime.Value < now.Date);
-        fxMoviesDbContext.MovieEvents.RemoveRange(set);
-        await fxMoviesDbContext.SaveChangesAsync();
+        moviesDbContext.MovieEvents.RemoveRange(set);
+        await moviesDbContext.SaveChangesAsync();
 
         Exception firstException = null;
         var failedProviders = 0;
@@ -258,25 +258,25 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             logger.LogInformation("{ChannelName} {Id} {Title} {Year} {StartTime}",
                 movie.Channel.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
 
-        var existingMovies = fxMoviesDbContext.MovieEvents.Where(movieEventsSubset);
+        var existingMovies = moviesDbContext.MovieEvents.Where(movieEventsSubset);
         logger.LogInformation("Existing movies: {ExistingMovieCount}", await existingMovies.CountAsync());
         logger.LogInformation("New movies: {NewMovieCount}", movieEvents.Count());
 
         // Update channels
         foreach (var channel in movieEvents.Select(m => m.Channel).Distinct())
         {
-            var existingChannel = await fxMoviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
+            var existingChannel = await moviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
             if (existingChannel != null)
             {
                 existingChannel.Name = channel.Name;
                 existingChannel.LogoS = channel.LogoS;
-                fxMoviesDbContext.Channels.Update(existingChannel);
+                moviesDbContext.Channels.Update(existingChannel);
                 foreach (var movie in movieEvents.Where(m => m.Channel == channel))
                     movie.Channel = existingChannel;
             }
             else
             {
-                fxMoviesDbContext.Channels.Add(channel);
+                moviesDbContext.Channels.Add(channel);
             }
         }
 
@@ -284,8 +284,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         {
             var remove = existingMovies.ToList().Where(m1 => !movieEvents.Any(m2 => m2.ExternalId == m1.ExternalId));
             logger.LogInformation("Existing movies to be removed: {ExistingMoviesToRemove}", remove.Count());
-            fxMoviesDbContext.RemoveRange(remove);
-            await fxMoviesDbContext.SaveChangesAsync();
+            moviesDbContext.RemoveRange(remove);
+            await moviesDbContext.SaveChangesAsync();
         }
 
         foreach (var movie in movieEvents)
@@ -295,8 +295,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 .OrderBy(me => me.Id)
                 .Skip(1)
                 .ToListAsync();
-            fxMoviesDbContext.MovieEvents.RemoveRange(existingDuplicates);
-            await fxMoviesDbContext.SaveChangesAsync();
+            moviesDbContext.MovieEvents.RemoveRange(existingDuplicates);
+            await moviesDbContext.SaveChangesAsync();
         }
 
         // Update movies
@@ -342,16 +342,16 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             else
             {
                 movie.AddedTime = DateTime.UtcNow;
-                fxMoviesDbContext.MovieEvents.Add(movie);
+                moviesDbContext.MovieEvents.Add(movie);
             }
         }
 
-        await fxMoviesDbContext.SaveChangesAsync();
+        await moviesDbContext.SaveChangesAsync();
     }
 
     private async Task UpdateMissingImageLinks()
     {
-        foreach (var movieEvent in fxMoviesDbContext.MovieEvents)
+        foreach (var movieEvent in moviesDbContext.MovieEvents)
         {
             var emptyPosterM = string.IsNullOrEmpty(movieEvent.PosterM);
             var emptyPosterS = string.IsNullOrEmpty(movieEvent.PosterS);
@@ -368,7 +368,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 }
         }
 
-        await fxMoviesDbContext.SaveChangesAsync();
+        await moviesDbContext.SaveChangesAsync();
     }
 
     private async Task DownloadImageData()
@@ -380,7 +380,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         if (!Directory.Exists(basePath))
             Directory.CreateDirectory(basePath);
 
-        foreach (var channel in fxMoviesDbContext.Channels)
+        foreach (var channel in moviesDbContext.Channels)
         {
             var url = channel.LogoS;
 
@@ -427,7 +427,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             }
         }
 
-        foreach (var movieEvent in fxMoviesDbContext.MovieEvents)
+        foreach (var movieEvent in moviesDbContext.MovieEvents)
         {
             {
                 var url = movieEvent.PosterS;
@@ -471,7 +471,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             }
         }
 
-        await fxMoviesDbContext.SaveChangesAsync();
+        await moviesDbContext.SaveChangesAsync();
     }
 
     private bool CheckDownloadNotNeeded(string url, string localFile)
@@ -551,10 +551,10 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         await UpdateGenericDataWithImdb<MovieEvent>(dbMovies => dbMovies.MovieEvents.Include(me => me.Movie));
     }
 
-    private async Task UpdateGenericDataWithImdb<T>(Func<FxMoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies)
+    private async Task UpdateGenericDataWithImdb<T>(Func<MoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies)
         where T : IHasImdbLink
     {
-        var groups = fnGetMovies(fxMoviesDbContext).AsEnumerable().GroupBy(m => new { m.Title, m.Year });
+        var groups = fnGetMovies(moviesDbContext).AsEnumerable().GroupBy(m => new { m.Title, m.Year });
         var totalCount = groups.Count();
         var current = 0;
         foreach (var group in groups) //.ToList())
@@ -566,7 +566,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 var firstMovieWithImdbLink = group.First(m => m.Movie != null);
                 foreach (var other in group.Where(m => m.Movie == null)) other.Movie = firstMovieWithImdbLink.Movie;
 
-                await fxMoviesDbContext.SaveChangesAsync();
+                await moviesDbContext.SaveChangesAsync();
                 continue;
             }
 
@@ -604,7 +604,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 movie?.ImdbId ?? imdbMovie?.ImdbId, group.Count(), huntNo);
 
             if (movie == null)
-                movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
+                movie = await moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
 
             if (movie == null)
             {
@@ -624,6 +624,6 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             foreach (var movieWithImdbLink in group) movieWithImdbLink.Movie = movie;
         }
 
-        await fxMoviesDbContext.SaveChangesAsync();
+        await moviesDbContext.SaveChangesAsync();
     }
 }

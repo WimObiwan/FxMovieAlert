@@ -18,13 +18,13 @@ namespace FxMovies.Site.Pages;
 
 public class UserModel : PageModel
 {
-    private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly ImdbDbContext imdbDbContext;
     private readonly IImdbRatingsFromFileService imdbRatingsFromFileService;
     private readonly IImdbWatchlistFromFileService imdbWatchlistFromFileService;
 
     public readonly List<Tuple<string, string, string>> LastImportErrors = new();
     private readonly IMovieCreationHelper movieCreationHelper;
+    private readonly MoviesDbContext moviesDbContext;
     private readonly IUserRatingsRepository userRatingsRepository;
     private readonly IUserWatchlistRepository userWatchlistRepository;
     public string ErrorMessage;
@@ -51,7 +51,7 @@ public class UserModel : PageModel
         IUserWatchlistRepository userWatchlistRepository,
         IImdbRatingsFromFileService imdbRatingsFromFileService,
         IImdbWatchlistFromFileService imdbWatchlistFromFileService,
-        FxMoviesDbContext fxMoviesDbContext,
+        MoviesDbContext moviesDbContext,
         ImdbDbContext imdbDbContext)
     {
         this.movieCreationHelper = movieCreationHelper;
@@ -59,7 +59,7 @@ public class UserModel : PageModel
         this.userWatchlistRepository = userWatchlistRepository;
         this.imdbRatingsFromFileService = imdbRatingsFromFileService;
         this.imdbWatchlistFromFileService = imdbWatchlistFromFileService;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.moviesDbContext = moviesDbContext;
         this.imdbDbContext = imdbDbContext;
     }
 
@@ -71,15 +71,15 @@ public class UserModel : PageModel
 
         if (setimdbuserid == null)
         {
-            var user = await fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+            var user = await moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
             if (user != null) ImdbUserId = user.ImdbUserId;
         }
         else if (setimdbuserid == "remove")
         {
-            var user = await fxMoviesDbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId);
-            fxMoviesDbContext.UserRatings.RemoveRange(user.UserRatings);
-            fxMoviesDbContext.Users.Remove(user);
-            await fxMoviesDbContext.SaveChangesAsync();
+            var user = await moviesDbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId);
+            moviesDbContext.UserRatings.RemoveRange(user.UserRatings);
+            moviesDbContext.Users.Remove(user);
+            await moviesDbContext.SaveChangesAsync();
 
             ImdbUserId = null;
         }
@@ -99,13 +99,13 @@ public class UserModel : PageModel
 
         if (ImdbUserId != null)
         {
-            var user = await fxMoviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+            var user = await moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
             if (user == null)
             {
                 user = new User();
                 user.UserId = userId;
                 user.ImdbUserId = ImdbUserId;
-                fxMoviesDbContext.Users.Add(user);
+                moviesDbContext.Users.Add(user);
             }
 
             if (forcerefresh)
@@ -119,12 +119,12 @@ public class UserModel : PageModel
             WatchListLastRefreshRatingsResult = user.WatchListLastRefreshResult;
             WatchListLastRefreshSuccess = user.WatchListLastRefreshSuccess;
             user.LastUsageTime = DateTime.UtcNow;
-            await fxMoviesDbContext.SaveChangesAsync();
+            await moviesDbContext.SaveChangesAsync();
 
-            UserRatingCount = await fxMoviesDbContext.UserRatings.CountAsync(ur => ur.User.UserId == userId);
+            UserRatingCount = await moviesDbContext.UserRatings.CountAsync(ur => ur.User.UserId == userId);
             UserWatchListCount =
-                await fxMoviesDbContext.UserWatchLists.Where(ur => ur.User.UserId == userId).CountAsync();
-            var ratingLast = await fxMoviesDbContext.UserRatings
+                await moviesDbContext.UserWatchLists.Where(ur => ur.User.UserId == userId).CountAsync();
+            var ratingLast = await moviesDbContext.UserRatings
                 .Include(ur => ur.Movie)
                 .Where(ur => ur.User.UserId == userId)
                 .OrderByDescending(ur => ur.RatingDate)
@@ -139,7 +139,7 @@ public class UserModel : PageModel
                 if (movie != null) RatingLastMovie = movie.PrimaryTitle;
             }
 
-            var watchListLast = await fxMoviesDbContext.UserWatchLists
+            var watchListLast = await moviesDbContext.UserWatchLists
                 .Include(uw => uw.Movie)
                 .Where(uw => uw.User.UserId == userId)
                 .OrderByDescending(uw => uw.AddedDate)

@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FxMoviesDB.Migrations
 {
-    [DbContext(typeof(FxMoviesDbContext))]
-    [Migration("20210806085251_AddImdbIgnore")]
-    partial class AddImdbIgnore
+    [DbContext(typeof(MoviesDbContext))]
+    [Migration("20210823201222_AddManualMatchAddedDateTime")]
+    partial class AddManualMatchAddedDateTime
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -39,6 +39,31 @@ namespace FxMoviesDB.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Channels");
+                });
+
+            modelBuilder.Entity("FxMovies.MoviesDB.ManualMatch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AddedDateTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("MovieId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("NormalizedTitle")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.ToTable("ManualMatches");
                 });
 
             modelBuilder.Entity("FxMovies.MoviesDB.Movie", b =>
@@ -249,6 +274,15 @@ namespace FxMoviesDB.Migrations
                     b.ToTable("UserWatchLists");
                 });
 
+            modelBuilder.Entity("FxMovies.MoviesDB.ManualMatch", b =>
+                {
+                    b.HasOne("FxMovies.MoviesDB.Movie", "Movie")
+                        .WithMany("ManualMatches")
+                        .HasForeignKey("MovieId");
+
+                    b.Navigation("Movie");
+                });
+
             modelBuilder.Entity("FxMovies.MoviesDB.MovieEvent", b =>
                 {
                     b.HasOne("FxMovies.MoviesDB.Channel", "Channel")
@@ -296,6 +330,8 @@ namespace FxMoviesDB.Migrations
 
             modelBuilder.Entity("FxMovies.MoviesDB.Movie", b =>
                 {
+                    b.Navigation("ManualMatches");
+
                     b.Navigation("MovieEvents");
 
                     b.Navigation("UserRatings");

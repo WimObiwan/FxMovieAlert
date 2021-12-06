@@ -21,7 +21,7 @@
     <PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FxMoviesDB\FxMoviesDB.csproj" />
+    <ProjectReference Include="..\MoviesDB\MoviesDB.csproj" />
     <ProjectReference Include="..\ImdbDB\ImdbDB.csproj" />
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>

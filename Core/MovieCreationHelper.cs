@@ -14,23 +14,23 @@ public interface IMovieCreationHelper
 
 public class MovieCreationHelper : IMovieCreationHelper
 {
-    private readonly FxMoviesDbContext fxMoviesDbContext;
     private readonly ImdbDbContext imdbDbContext;
+    private readonly MoviesDbContext moviesDbContext;
     private readonly ITheMovieDbService theMovieDbService;
 
     public MovieCreationHelper(
-        FxMoviesDbContext fxMoviesDbContext,
+        MoviesDbContext moviesDbContext,
         ImdbDbContext imdbDbContext,
         ITheMovieDbService theMovieDbService)
     {
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        this.moviesDbContext = moviesDbContext;
         this.imdbDbContext = imdbDbContext;
         this.theMovieDbService = theMovieDbService;
     }
 
     public async Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
     {
-        var movie = await fxMoviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
+        var movie = await moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
         var newMovie = movie == null;
 
@@ -40,7 +40,7 @@ public class MovieCreationHelper : IMovieCreationHelper
             {
                 ImdbId = imdbId
             };
-            fxMoviesDbContext.Movies.Add(movie);
+            moviesDbContext.Movies.Add(movie);
         }
 
         if (refresh)

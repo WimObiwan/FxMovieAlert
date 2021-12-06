@@ -211,7 +211,7 @@ public class Startup
 
         services.AddWebOptimizer();
 
-        services.AddDbContext<FxMoviesDbContext>(options =>
+        services.AddDbContext<MoviesDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("FxMoviesDB")));
 
         services.AddDbContext<ImdbDbContext>(options =>
