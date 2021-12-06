@@ -49,28 +49,17 @@ public class MovieCreationHelper : IMovieCreationHelper
         return movie;
     }
 
-    public async Task<bool> RefreshIfNeeded(Movie movie)
-    {
-        if (string.IsNullOrEmpty(movie.OriginalTitle)) return await Refresh(movie);
-        return false;
-    }
-
-    public async Task<bool> Refresh(Movie movie)
+    private async Task Refresh(Movie movie)
     {
         if (movie == null)
-            return false;
+            return;
 
         var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
         if (imdbMovie != null)
         {
             movie.ImdbRating = imdbMovie.Rating;
             movie.ImdbVotes = imdbMovie.Votes;
-            if (movie.Certification == null)
-                movie.Certification = await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
-
-            return true;
+            movie.Certification ??= await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
         }
-
-        return false;
     }
 }

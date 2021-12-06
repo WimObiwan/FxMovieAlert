@@ -3,7 +3,6 @@ using FxMovies.Core.Entities;
 using FxMovies.Core.Utilities;
 using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Queries;
 
@@ -14,14 +13,11 @@ public interface IManualMatchesQuery
 
 public class ManualMatchesQuery : IManualMatchesQuery
 {
-    private readonly ILogger<ManualMatchesQuery> _logger;
     private readonly MoviesDbContext _moviesDbContext;
 
     public ManualMatchesQuery(
-        ILogger<ManualMatchesQuery> logger,
         MoviesDbContext moviesDbContext)
     {
-        _logger = logger;
         _moviesDbContext = moviesDbContext;
     }
 

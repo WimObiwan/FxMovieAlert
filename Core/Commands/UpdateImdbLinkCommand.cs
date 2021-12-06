@@ -65,8 +65,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                     {
                         movieEvent.Movie.ImdbRating = imdbMovie.Rating;
                         movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
-                        if (!movieEvent.Year.HasValue)
-                            movieEvent.Year = imdbMovie.Year;
+                        movieEvent.Year ??= imdbMovie.Year;
                     }
                 }
 
