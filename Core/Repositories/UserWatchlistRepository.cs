@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Repositories;
 
@@ -19,16 +18,13 @@ public interface IUserWatchlistRepository
 
 public class UserWatchlistRepository : IUserWatchlistRepository
 {
-    private readonly ILogger<UserWatchlistRepository> _logger;
     private readonly IMovieCreationHelper _movieCreationHelper;
     private readonly MoviesDbContext _moviesDbContext;
 
     public UserWatchlistRepository(
-        ILogger<UserWatchlistRepository> logger,
         MoviesDbContext moviesDbContext,
         IMovieCreationHelper movieCreationHelper)
     {
-        _logger = logger;
         _moviesDbContext = moviesDbContext;
         _movieCreationHelper = movieCreationHelper;
     }
@@ -55,8 +51,7 @@ public class UserWatchlistRepository : IUserWatchlistRepository
         string lastTitle = null;
         foreach (var imdbWatchlistEntry in imdbWatchlist)
         {
-            if (lastTitle == null)
-                lastTitle = imdbWatchlistEntry.Title;
+            lastTitle ??= imdbWatchlistEntry.Title;
             var imdbId = imdbWatchlistEntry.ImdbId;
             movieIdsInData.Add(imdbId);
             var movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
@@ -64,9 +59,11 @@ public class UserWatchlistRepository : IUserWatchlistRepository
                 _moviesDbContext.UserWatchLists.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
             if (userWatchlistItem == null)
             {
-                userWatchlistItem = new UserWatchListItem();
-                userWatchlistItem.User = user;
-                userWatchlistItem.Movie = movie;
+                userWatchlistItem = new UserWatchListItem
+                {
+                    User = user,
+                    Movie = movie
+                };
                 _moviesDbContext.UserWatchLists.Add(userWatchlistItem);
                 newCount++;
             }

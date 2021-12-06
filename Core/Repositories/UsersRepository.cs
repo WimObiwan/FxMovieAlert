@@ -5,16 +5,15 @@ using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Repositories;
 
 public class UserDataResult
 {
-    public DateTime? RefreshRequestTime { get; set; }
-    public DateTime? LastRefreshRatingsTime { get; set; }
-    public bool? LastRefreshSuccess { get; set; }
-    public string ImdbUserId { get; set; }
+    public DateTime? RefreshRequestTime { get; init; }
+    public DateTime? LastRefreshRatingsTime { get; init; }
+    public bool? LastRefreshSuccess { get; init; }
+    public string ImdbUserId { get; init; }
 }
 
 public interface IUsersRepository
@@ -32,14 +31,11 @@ public interface IUsersRepository
 
 public class UsersRepository : IUsersRepository
 {
-    private readonly ILogger<UsersRepository> _logger;
     private readonly MoviesDbContext _moviesDbContext;
 
     public UsersRepository(
-        ILogger<UsersRepository> logger,
         MoviesDbContext moviesDbContext)
     {
-        _logger = logger;
         _moviesDbContext = moviesDbContext;
     }
 

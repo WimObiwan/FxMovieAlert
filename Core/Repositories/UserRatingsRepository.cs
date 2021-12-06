@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Repositories;
 
@@ -22,16 +21,13 @@ public interface IUserRatingsRepository
 
 public class UserRatingsRepository : IUserRatingsRepository
 {
-    private readonly ILogger<UserRatingsRepository> _logger;
     private readonly IMovieCreationHelper _movieCreationHelper;
     private readonly MoviesDbContext _moviesDbContext;
 
     public UserRatingsRepository(
-        ILogger<UserRatingsRepository> logger,
         MoviesDbContext moviesDbContext,
         IMovieCreationHelper movieCreationHelper)
     {
-        _logger = logger;
         _moviesDbContext = moviesDbContext;
         _movieCreationHelper = movieCreationHelper;
     }
@@ -39,7 +35,7 @@ public class UserRatingsRepository : IUserRatingsRepository
     public async Task<DateTime?> GetLastRatingCheckByImdbUserId(string imdbUserId)
     {
         var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
-        return user.LastRefreshRatingsTime;
+        return user?.LastRefreshRatingsTime;
     }
 
     public async Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId,
@@ -64,17 +60,18 @@ public class UserRatingsRepository : IUserRatingsRepository
         string lastTitle = null;
         foreach (var imdbRating in imdbRatings)
         {
-            if (lastTitle == null)
-                lastTitle = imdbRating.Title;
+            lastTitle ??= imdbRating.Title;
             var imdbId = imdbRating.ImdbId;
             movieIdsInData.Add(imdbId);
             var movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
             var userRating = _moviesDbContext.UserRatings.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
             if (userRating == null)
             {
-                userRating = new UserRating();
-                userRating.User = user;
-                userRating.Movie = movie;
+                userRating = new UserRating
+                {
+                    User = user,
+                    Movie = movie
+                };
                 _moviesDbContext.UserRatings.Add(userRating);
                 newCount++;
             }

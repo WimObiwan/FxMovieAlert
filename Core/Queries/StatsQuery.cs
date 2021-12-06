@@ -4,22 +4,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Queries;
 
 public class StatsResult
 {
-    public List<User> Users { get; set; }
+    public List<User> Users { get; init; }
 
     public class User
     {
-        public string UserId { get; set; }
-        public string ImdbUserId { get; set; }
-        public DateTime? LastUsageTime { get; set; }
-        public long Usages { get; set; }
-        public int RatingCount { get; set; }
-        public int WatchListItemsCount { get; set; }
+        public string UserId { get; init; }
+        public string ImdbUserId { get; init; }
+        public DateTime? LastUsageTime { get; init; }
+        public long Usages { get; init; }
+        public int RatingCount { get; init; }
+        public int WatchListItemsCount { get; init; }
     }
 }
 
@@ -30,32 +29,30 @@ public interface IStatsQuery
 
 public class StatsQuery : IStatsQuery
 {
-    private readonly ILogger<ManualMatchesQuery> _logger;
     private readonly MoviesDbContext _moviesDbContext;
 
     public StatsQuery(
-        ILogger<ManualMatchesQuery> logger,
         MoviesDbContext moviesDbContext)
     {
-        _logger = logger;
         _moviesDbContext = moviesDbContext;
     }
 
     public async Task<StatsResult> Execute()
     {
-        var statsResult = new StatsResult();
-        statsResult.Users =
-            await _moviesDbContext.Users
-                .Select(u => new StatsResult.User
-                {
-                    UserId = u.UserId,
-                    ImdbUserId = u.ImdbUserId,
-                    LastUsageTime = u.LastUsageTime,
-                    Usages = u.Usages,
-                    RatingCount = u.UserRatings.Count(),
-                    WatchListItemsCount = u.UserWatchListItems.Count()
-                })
-                .ToListAsync();
-        return statsResult;
+        return new StatsResult
+        {
+            Users =
+                await _moviesDbContext.Users
+                    .Select(u => new StatsResult.User
+                    {
+                        UserId = u.UserId,
+                        ImdbUserId = u.ImdbUserId,
+                        LastUsageTime = u.LastUsageTime,
+                        Usages = u.Usages,
+                        RatingCount = u.UserRatings.Count,
+                        WatchListItemsCount = u.UserWatchListItems.Count
+                    })
+                    .ToListAsync()
+        };
     }
 }
