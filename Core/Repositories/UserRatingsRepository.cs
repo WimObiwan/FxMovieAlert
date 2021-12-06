@@ -22,37 +22,37 @@ public interface IUserRatingsRepository
 
 public class UserRatingsRepository : IUserRatingsRepository
 {
-    private readonly ILogger<UserRatingsRepository> logger;
-    private readonly IMovieCreationHelper movieCreationHelper;
-    private readonly MoviesDbContext moviesDbContext;
+    private readonly ILogger<UserRatingsRepository> _logger;
+    private readonly IMovieCreationHelper _movieCreationHelper;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public UserRatingsRepository(
         ILogger<UserRatingsRepository> logger,
         MoviesDbContext moviesDbContext,
         IMovieCreationHelper movieCreationHelper)
     {
-        this.logger = logger;
-        this.moviesDbContext = moviesDbContext;
-        this.movieCreationHelper = movieCreationHelper;
+        _logger = logger;
+        _moviesDbContext = moviesDbContext;
+        _movieCreationHelper = movieCreationHelper;
     }
 
     public async Task<DateTime?> GetLastRatingCheckByImdbUserId(string imdbUserId)
     {
-        var user = await moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
         return user.LastRefreshRatingsTime;
     }
 
     public async Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId,
         IEnumerable<ImdbRating> imdbRatings, bool replace = false)
     {
-        var user = await moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
         return await Store(user, imdbRatings, replace);
     }
 
     public async Task<UserListRepositoryStoreResult> StoreByUserId(string userId, IEnumerable<ImdbRating> imdbRatings,
         bool replace = false)
     {
-        var user = await moviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
         return await Store(user, imdbRatings, replace);
     }
 
@@ -68,14 +68,14 @@ public class UserRatingsRepository : IUserRatingsRepository
                 lastTitle = imdbRating.Title;
             var imdbId = imdbRating.ImdbId;
             movieIdsInData.Add(imdbId);
-            var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
-            var userRating = moviesDbContext.UserRatings.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
+            var movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
+            var userRating = _moviesDbContext.UserRatings.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
             if (userRating == null)
             {
                 userRating = new UserRating();
                 userRating.User = user;
                 userRating.Movie = movie;
-                moviesDbContext.UserRatings.Add(userRating);
+                _moviesDbContext.UserRatings.Add(userRating);
                 newCount++;
             }
             else
@@ -91,11 +91,11 @@ public class UserRatingsRepository : IUserRatingsRepository
         if (replace)
         {
             var itemsToRemove =
-                await moviesDbContext.UserRatings
+                await _moviesDbContext.UserRatings
                     .Where(ur => ur.UserId == user.Id && !movieIdsInData.Contains(ur.Movie.ImdbId))
                     .ToListAsync();
 
-            moviesDbContext.UserRatings.RemoveRange(itemsToRemove);
+            _moviesDbContext.UserRatings.RemoveRange(itemsToRemove);
             removedCount = itemsToRemove.Count;
         }
         else
@@ -103,7 +103,7 @@ public class UserRatingsRepository : IUserRatingsRepository
             removedCount = 0;
         }
 
-        await moviesDbContext.SaveChangesAsync();
+        await _moviesDbContext.SaveChangesAsync();
 
         return new UserListRepositoryStoreResult
         {

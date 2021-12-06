@@ -2,27 +2,27 @@
 @using Microsoft.Extensions.Options
 @using FxMovies.Site.Options
 @using FxMovies.Core
-@inject IOptions<SiteOptions> SiteOptions
-@inject IVersionInfo VersionInfo
+@inject IOptions<SiteOptions> _siteOptions
+@inject IVersionInfo _versionInfo
 
 <!DOCTYPE html>
 <html>
 <head>
-    @if (!string.IsNullOrEmpty(SiteOptions.Value.SentryBrowserDsn))
+    @if (!string.IsNullOrEmpty(_siteOptions.Value.SentryBrowserDsn))
     {
         <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" crossorigin="anonymous"></script>
         <script>
             Sentry.init({
-                dsn: '@SiteOptions.Value.SentryBrowserDsn',
+                dsn: '@_siteOptions.Value.SentryBrowserDsn',
                 whitelistUrls: [/filmoptv\.be/, /www\.filmoptv\.be/]
             });
         </script>
     }
 
-    @if (!string.IsNullOrEmpty(SiteOptions.Value.GoogleAnalyticsPropertyId))
+    @if (!string.IsNullOrEmpty(_siteOptions.Value.GoogleAnalyticsPropertyId))
     {
         <!-- Global Site Tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=@SiteOptions.Value.GoogleAnalyticsPropertyId"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@_siteOptions.Value.GoogleAnalyticsPropertyId"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
 
@@ -30,7 +30,7 @@
 
             gtag('js', new Date());
 
-            gtag('config', '@SiteOptions.Value.GoogleAnalyticsPropertyId');
+            gtag('config', '@_siteOptions.Value.GoogleAnalyticsPropertyId');
         </script>
     }
 
@@ -40,12 +40,12 @@
         }
     </script>
 
-    @if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsensePublishId))
+    @if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(_siteOptions.Value.GoogleAdsensePublishId))
     {
         <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
         <script>
             (adsbygoogle = window.adsbygoogle || []).push({
-                google_ad_client: "@SiteOptions.Value.GoogleAdsensePublishId",
+                google_ad_client: "@_siteOptions.Value.GoogleAdsensePublishId",
                 enable_page_level_ads: true
             });
         </script>
@@ -117,7 +117,7 @@
 </head>
 <body>
 
-@if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsensePublishId) && !string.IsNullOrEmpty(SiteOptions.Value.GoogleAdsenseVerticleAdSlot))
+@if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(_siteOptions.Value.GoogleAdsensePublishId) && !string.IsNullOrEmpty(_siteOptions.Value.GoogleAdsenseVerticleAdSlot))
 {
     <div id="ad" class="sideBar boxLeft">
 
@@ -125,8 +125,8 @@
         <!-- FilmOpTV - vertical -->
         <ins class="adsbygoogle"
              style="display: inline-block; height: 600px; width: 120px;"
-             data-ad-client="@SiteOptions.Value.GoogleAdsensePublishId"
-             data-ad-slot="@SiteOptions.Value.GoogleAdsenseVerticleAdSlot">
+             data-ad-client="@_siteOptions.Value.GoogleAdsensePublishId"
+             data-ad-slot="@_siteOptions.Value.GoogleAdsenseVerticleAdSlot">
         </ins>
         <script>
             (adsbygoogle = window.adsbygoogle || []).push({});
@@ -250,7 +250,7 @@
     <hr/>
     <footer>
         <p class="text-muted">
-            Versie @VersionInfo.Version. Running on @VersionInfo.DotNetCoreVersion.<br/>
+            Versie @_versionInfo.Version. Running on @_versionInfo.DotNetCoreVersion.<br/>
             Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.
             &copy;
             @if (DateTime.Now.Year > 2017)

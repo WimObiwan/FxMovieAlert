@@ -12,15 +12,15 @@ namespace FxMovies.Core.Services;
 
 public class VrtNuService : IMovieEventService
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<VrtNuService> logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<VrtNuService> _logger;
 
     public VrtNuService(
         ILogger<VrtNuService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public string ProviderName => "VrtNu";
@@ -48,7 +48,7 @@ public class VrtNuService : IMovieEventService
             var movieDetails = await GetSearchMovieInfo(movie.programUrl);
             if (movieDetails.duration < 75)
             {
-                logger.LogWarning("Skipped {Program}, duration {Duration} too small",
+                _logger.LogWarning("Skipped {Program}, duration {Duration} too small",
                     movieDetails.program, movieDetails.duration);
                 continue;
             }
@@ -95,7 +95,7 @@ public class VrtNuService : IMovieEventService
 
     private async Task<IList<SuggestMovieInfo>> GetSuggestMovieInfo()
     {
-        var client = httpClientFactory.CreateClient("vrtnu");
+        var client = _httpClientFactory.CreateClient("vrtnu");
         //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
         var response = await client.GetAsync("/suggest?facets[categories]=films");
         response.EnsureSuccessStatusCode();
@@ -111,7 +111,7 @@ public class VrtNuService : IMovieEventService
     {
         // https://vrtnu-api.vrt.be/search?facets[programUrl]=//www.vrt.be/vrtnu/a-z/everybody-knows/
 
-        var client = httpClientFactory.CreateClient("vrtnu");
+        var client = _httpClientFactory.CreateClient("vrtnu");
         //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
         var response = await client.GetAsync($"/search?facets[programUrl]={programUrl}");
         response.EnsureSuccessStatusCode();
@@ -122,6 +122,10 @@ public class VrtNuService : IMovieEventService
         var responseObject = await response.Content.ReadFromJsonAsync<SearchResult>();
         return responseObject.results?.FirstOrDefault();
     }
+
+    #region JsonModel
+
+    // Resharper disable All
 
     private class SuggestMovieInfo
     {
@@ -146,4 +150,8 @@ public class VrtNuService : IMovieEventService
         public int duration { get; set; }
         public string seasonName { get; set; }
     }
+
+    // Resharper restore All
+
+    #endregion
 }

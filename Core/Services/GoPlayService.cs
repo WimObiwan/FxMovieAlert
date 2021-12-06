@@ -13,15 +13,15 @@ namespace FxMovies.Core.Services;
 
 public class GoPlayService : IMovieEventService
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<GoPlayService> logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<GoPlayService> _logger;
 
     public GoPlayService(
         ILogger<GoPlayService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public string ProviderName => "GoPlay";
@@ -83,7 +83,7 @@ public class GoPlayService : IMovieEventService
     {
         // https://github.com/timrijckaert/vrtnu-vtmgo-goplay-service/tree/master/vtmgo/src/main/java/be/tapped/vtmgo/content
 
-        var client = httpClientFactory.CreateClient("goplay");
+        var client = _httpClientFactory.CreateClient("goplay");
         var response = await client.GetAsync("/programmas/");
         response.EnsureSuccessStatusCode();
 
@@ -103,7 +103,7 @@ public class GoPlayService : IMovieEventService
                 }
                 catch (Exception x)
                 {
-                    logger.LogWarning(x, "Skipping line with parsing exception, Text={dataProgramText}",
+                    _logger.LogWarning(x, "Skipping line with parsing exception, Text={dataProgramText}",
                         dataProgramText);
                     return null;
                 }
@@ -114,7 +114,7 @@ public class GoPlayService : IMovieEventService
 
     private async Task<DataProgram> GetDataProgramDetails(string link)
     {
-        var client = httpClientFactory.CreateClient("goplay");
+        var client = _httpClientFactory.CreateClient("goplay");
         var response = await client.GetAsync(link);
         response.EnsureSuccessStatusCode();
 
@@ -139,6 +139,10 @@ public class GoPlayService : IMovieEventService
         return null;
     }
 
+    #region JsonModel
+
+    // ReSharper disable All
+
     private class DataProgram
     {
         public string id { get; set; }
@@ -162,4 +166,8 @@ public class GoPlayService : IMovieEventService
             public string teaser { get; set; }
         }
     }
+
+    // ReSharper restore All
+
+    #endregion
 }

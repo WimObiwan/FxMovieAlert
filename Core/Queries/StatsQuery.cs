@@ -30,22 +30,22 @@ public interface IStatsQuery
 
 public class StatsQuery : IStatsQuery
 {
-    private readonly ILogger<ManualMatchesQuery> logger;
-    private readonly MoviesDbContext moviesDbContext;
+    private readonly ILogger<ManualMatchesQuery> _logger;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public StatsQuery(
         ILogger<ManualMatchesQuery> logger,
         MoviesDbContext moviesDbContext)
     {
-        this.logger = logger;
-        this.moviesDbContext = moviesDbContext;
+        _logger = logger;
+        _moviesDbContext = moviesDbContext;
     }
 
     public async Task<StatsResult> Execute()
     {
         var statsResult = new StatsResult();
         statsResult.Users =
-            await moviesDbContext.Users
+            await _moviesDbContext.Users
                 .Select(u => new StatsResult.User
                 {
                     UserId = u.UserId,

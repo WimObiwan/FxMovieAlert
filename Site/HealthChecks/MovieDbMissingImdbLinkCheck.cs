@@ -34,17 +34,17 @@ public static class MovieDbMissingImdbLinkCheckBuilderExtensions
 
 public class MovieDbMissingImdbLinkCheck : IHealthCheck
 {
-    private readonly MovieEvent.FeedType feedType;
-    private readonly HealthCheckOptions healthCheckOptions;
-    private readonly IServiceScopeFactory serviceScopeFactory;
+    private readonly MovieEvent.FeedType _feedType;
+    private readonly HealthCheckOptions _healthCheckOptions;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public MovieDbMissingImdbLinkCheck(IOptions<HealthCheckOptions> healthCheckOptions,
         IServiceScopeFactory serviceScopeFactory,
         MovieEvent.FeedType feedType)
     {
-        this.healthCheckOptions = healthCheckOptions.Value;
-        this.serviceScopeFactory = serviceScopeFactory;
-        this.feedType = feedType;
+        _healthCheckOptions = healthCheckOptions.Value;
+        _serviceScopeFactory = serviceScopeFactory;
+        _feedType = feedType;
     }
 
     public async Task<HealthCheckResult> CheckHealthAsync(
@@ -55,18 +55,18 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
         // Seems a bug to me, workaround is using a separate service scope scope.
         // https://github.com/dotnet/aspnetcore/issues/14453
 
-        using (var scope = serviceScopeFactory.CreateScope())
+        using (var scope = _serviceScopeFactory.CreateScope())
         {
             var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
 
             var count = await moviesDbContext.MovieEvents
-                .Where(me => me.Feed == feedType)
+                .Where(me => me.Feed == _feedType)
                 .CountAsync(me =>
                     (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&
                     me.Type == 1);
 
             HealthStatus status;
-            if (count <= (healthCheckOptions.CheckMissingImdbLinkCount ?? 7))
+            if (count <= (_healthCheckOptions.CheckMissingImdbLinkCount ?? 7))
                 status = HealthStatus.Healthy;
             else
                 status = HealthStatus.Unhealthy;

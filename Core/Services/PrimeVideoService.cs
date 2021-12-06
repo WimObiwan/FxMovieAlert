@@ -24,18 +24,18 @@ public class PrimeVideoServiceOptions
 
 public class PrimeVideoService : IMovieEventService
 {
-    private readonly HttpClient httpClient;
-    private readonly ILogger<PrimeVideoService> logger;
-    private readonly PrimeVideoServiceOptions primeVideoServiceOptions;
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<PrimeVideoService> _logger;
+    private readonly PrimeVideoServiceOptions _primeVideoServiceOptions;
 
     public PrimeVideoService(
         ILogger<PrimeVideoService> logger,
         IOptions<PrimeVideoServiceOptions> primeVideoServiceOptions,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.primeVideoServiceOptions = primeVideoServiceOptions.Value;
-        httpClient = httpClientFactory.CreateClient("primevideo");
+        _logger = logger;
+        _primeVideoServiceOptions = primeVideoServiceOptions.Value;
+        _httpClient = httpClientFactory.CreateClient("primevideo");
     }
 
     public string ProviderName => "PrimeVideo";
@@ -55,10 +55,10 @@ public class PrimeVideoService : IMovieEventService
 
         var movies = await GetMovieInfo();
         DateTime dateTime;
-        if (primeVideoServiceOptions.LocalDownloadOverride == null)
+        if (_primeVideoServiceOptions.LocalDownloadOverride == null)
             dateTime = DateTime.Now;
         else
-            dateTime = new FileInfo(primeVideoServiceOptions.LocalDownloadOverride).LastWriteTime;
+            dateTime = new FileInfo(_primeVideoServiceOptions.LocalDownloadOverride).LastWriteTime;
 
         var movieEvents = new List<MovieEvent>();
         foreach (var movie in movies)
@@ -107,18 +107,18 @@ public class PrimeVideoService : IMovieEventService
 
     private string GetFullUrl(string url)
     {
-        if (Uri.TryCreate(httpClient.BaseAddress, url, out var uri))
+        if (Uri.TryCreate(_httpClient.BaseAddress, url, out var uri))
             return uri.ToString();
         return null;
     }
 
     private async Task<Stream> GetStream()
     {
-        var localDownloadOverride = primeVideoServiceOptions.LocalDownloadOverride;
-        logger.LogInformation("Using LocalDownloadOverride {LocalDownloadOverride}", localDownloadOverride);
+        var localDownloadOverride = _primeVideoServiceOptions.LocalDownloadOverride;
+        _logger.LogInformation("Using LocalDownloadOverride {LocalDownloadOverride}", localDownloadOverride);
         if (localDownloadOverride != null) return File.OpenRead(localDownloadOverride);
 
-        var response = await httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE?ie=UTF8");
+        var response = await _httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE?ie=UTF8");
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadAsStreamAsync();
@@ -145,6 +145,10 @@ public class PrimeVideoService : IMovieEventService
 
         return items.ToList();
     }
+
+    #region JsonModel
+
+    // Resharper disable All
 
     private class Json
     {
@@ -182,4 +186,8 @@ public class PrimeVideoService : IMovieEventService
             }
         }
     }
+
+    // Resharper restore All
+
+    #endregion
 }

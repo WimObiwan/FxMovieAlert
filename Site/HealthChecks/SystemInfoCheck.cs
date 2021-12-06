@@ -9,11 +9,11 @@ namespace FxMovies.Site.HealthChecks;
 
 public class SystemInfoCheck : IHealthCheck
 {
-    private readonly IVersionInfo versionInfo;
+    private readonly IVersionInfo _versionInfo;
 
     public SystemInfoCheck(IVersionInfo versionInfo)
     {
-        this.versionInfo = versionInfo;
+        _versionInfo = versionInfo;
     }
 
     public Task<HealthCheckResult> CheckHealthAsync(
@@ -23,8 +23,8 @@ public class SystemInfoCheck : IHealthCheck
         var result = new HealthCheckResult(HealthStatus.Healthy, null, null,
             new Dictionary<string, object>
             {
-                { "Version", versionInfo.Version },
-                { "DotNetCoreVersion", versionInfo.DotNetCoreVersion },
+                { "Version", _versionInfo.Version },
+                { "DotNetCoreVersion", _versionInfo.DotNetCoreVersion },
                 { "MachineName", Environment.MachineName }
             });
 

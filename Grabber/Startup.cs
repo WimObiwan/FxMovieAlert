@@ -9,21 +9,21 @@ namespace FxMovies.Grabber;
 
 public class Startup
 {
-    private readonly IConfiguration configuration;
+    private readonly IConfiguration _configuration;
 
     public Startup(IConfiguration configuration)
     {
-        this.configuration = configuration;
+        _configuration = configuration;
     }
 
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddDbContext<MoviesDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("FxMoviesDB")));
+            options.UseSqlite(_configuration.GetConnectionString("FxMoviesDB")));
 
         services.AddDbContext<ImdbDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
+            options.UseSqlite(_configuration.GetConnectionString("ImdbDb")));
 
-        services.AddFxMoviesCore(configuration, typeof(Program).Assembly);
+        services.AddFxMoviesCore(_configuration, typeof(Program).Assembly);
     }
 }

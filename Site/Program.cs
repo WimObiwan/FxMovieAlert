@@ -7,7 +7,7 @@ using Serilog.Events;
 
 namespace FxMovies.Site;
 
-public class Program
+public static class Program
 {
     public static int Main(string[] args)
     {

@@ -19,31 +19,31 @@ public interface IUserWatchlistRepository
 
 public class UserWatchlistRepository : IUserWatchlistRepository
 {
-    private readonly ILogger<UserWatchlistRepository> logger;
-    private readonly IMovieCreationHelper movieCreationHelper;
-    private readonly MoviesDbContext moviesDbContext;
+    private readonly ILogger<UserWatchlistRepository> _logger;
+    private readonly IMovieCreationHelper _movieCreationHelper;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public UserWatchlistRepository(
         ILogger<UserWatchlistRepository> logger,
         MoviesDbContext moviesDbContext,
         IMovieCreationHelper movieCreationHelper)
     {
-        this.logger = logger;
-        this.moviesDbContext = moviesDbContext;
-        this.movieCreationHelper = movieCreationHelper;
+        _logger = logger;
+        _moviesDbContext = moviesDbContext;
+        _movieCreationHelper = movieCreationHelper;
     }
 
     public async Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId,
         IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false)
     {
-        var user = await moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
         return await Store(user, imdbWatchlist, replace);
     }
 
     public async Task<UserListRepositoryStoreResult> StoreByUserId(string userId,
         IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false)
     {
-        var user = await moviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
         return await Store(user, imdbWatchlist, replace);
     }
 
@@ -59,15 +59,15 @@ public class UserWatchlistRepository : IUserWatchlistRepository
                 lastTitle = imdbWatchlistEntry.Title;
             var imdbId = imdbWatchlistEntry.ImdbId;
             movieIdsInData.Add(imdbId);
-            var movie = await movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
+            var movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
             var userWatchlistItem =
-                moviesDbContext.UserWatchLists.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
+                _moviesDbContext.UserWatchLists.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
             if (userWatchlistItem == null)
             {
                 userWatchlistItem = new UserWatchListItem();
                 userWatchlistItem.User = user;
                 userWatchlistItem.Movie = movie;
-                moviesDbContext.UserWatchLists.Add(userWatchlistItem);
+                _moviesDbContext.UserWatchLists.Add(userWatchlistItem);
                 newCount++;
             }
             else
@@ -82,11 +82,11 @@ public class UserWatchlistRepository : IUserWatchlistRepository
         if (replace)
         {
             var itemsToRemove =
-                await moviesDbContext.UserWatchLists
+                await _moviesDbContext.UserWatchLists
                     .Where(ur => ur.UserId == user.Id && !movieIdsInData.Contains(ur.Movie.ImdbId))
                     .ToListAsync();
 
-            moviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);
+            _moviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);
             removedCount = itemsToRemove.Count;
         }
         else
@@ -94,7 +94,7 @@ public class UserWatchlistRepository : IUserWatchlistRepository
             removedCount = 0;
         }
 
-        await moviesDbContext.SaveChangesAsync();
+        await _moviesDbContext.SaveChangesAsync();
 
         return new UserListRepositoryStoreResult
         {

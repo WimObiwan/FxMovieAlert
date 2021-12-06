@@ -16,12 +16,12 @@ public interface IImdbWatchlistFromFileService
 
 public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 {
-    private readonly ILogger<ImdbWatchlistFromFileService> logger;
+    private readonly ILogger<ImdbWatchlistFromFileService> _logger;
 
     public ImdbWatchlistFromFileService(
         ILogger<ImdbWatchlistFromFileService> logger)
     {
-        this.logger = logger;
+        _logger = logger;
     }
 
     public IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>> lastImportErrors)
@@ -38,7 +38,7 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
                 {
                     try
                     {
-                        var _const = record.Const;
+                        var constId = record.Const;
 
                         var date = DateTime.ParseExact(record.Created,
                             new[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
@@ -46,7 +46,7 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 
                         return new ImdbWatchlist
                         {
-                            ImdbId = _const,
+                            ImdbId = constId,
                             Title = record.Title,
                             Date = date
                         };
@@ -80,7 +80,13 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
             return result;
         }
     }
+
+    #region CsvModel
+
+    // Resharper disable All
+
 #pragma warning disable CS0649
+
     [IgnoreFirst]
     [DelimitedRecord(",")]
     private class ImdbUserWatchlistRecord
@@ -120,4 +126,8 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
         [FieldQuoted] public string Year;
         [FieldQuoted] public string YourRating;
     }
+
+    // Resharper restore All
+
+    #endregion
 }

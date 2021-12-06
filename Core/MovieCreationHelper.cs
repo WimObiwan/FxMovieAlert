@@ -14,23 +14,23 @@ public interface IMovieCreationHelper
 
 public class MovieCreationHelper : IMovieCreationHelper
 {
-    private readonly ImdbDbContext imdbDbContext;
-    private readonly MoviesDbContext moviesDbContext;
-    private readonly ITheMovieDbService theMovieDbService;
+    private readonly ImdbDbContext _imdbDbContext;
+    private readonly MoviesDbContext _moviesDbContext;
+    private readonly ITheMovieDbService _theMovieDbService;
 
     public MovieCreationHelper(
         MoviesDbContext moviesDbContext,
         ImdbDbContext imdbDbContext,
         ITheMovieDbService theMovieDbService)
     {
-        this.moviesDbContext = moviesDbContext;
-        this.imdbDbContext = imdbDbContext;
-        this.theMovieDbService = theMovieDbService;
+        _moviesDbContext = moviesDbContext;
+        _imdbDbContext = imdbDbContext;
+        _theMovieDbService = theMovieDbService;
     }
 
     public async Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
     {
-        var movie = await moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
+        var movie = await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
         var newMovie = movie == null;
 
@@ -40,7 +40,7 @@ public class MovieCreationHelper : IMovieCreationHelper
             {
                 ImdbId = imdbId
             };
-            moviesDbContext.Movies.Add(movie);
+            _moviesDbContext.Movies.Add(movie);
         }
 
         if (refresh)
@@ -60,13 +60,13 @@ public class MovieCreationHelper : IMovieCreationHelper
         if (movie == null)
             return false;
 
-        var imdbMovie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
+        var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
         if (imdbMovie != null)
         {
             movie.ImdbRating = imdbMovie.Rating;
             movie.ImdbVotes = imdbMovie.Votes;
             if (movie.Certification == null)
-                movie.Certification = await theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+                movie.Certification = await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
 
             return true;
         }

@@ -12,29 +12,29 @@ public interface IUpdateAllImdbUsersDataCommand
 
 public class UpdateAllImdbUsersDataCommand : IUpdateAllImdbUsersDataCommand
 {
-    private readonly ILogger<UpdateAllImdbUsersDataCommand> logger;
-    private readonly IUpdateImdbUserDataCommand updateImdbUserDataCommand;
-    private readonly IUsersRepository usersRepository;
+    private readonly ILogger<UpdateAllImdbUsersDataCommand> _logger;
+    private readonly IUpdateImdbUserDataCommand _updateImdbUserDataCommand;
+    private readonly IUsersRepository _usersRepository;
 
     public UpdateAllImdbUsersDataCommand(ILogger<UpdateAllImdbUsersDataCommand> logger,
-        IUpdateImdbUserDataCommand UpdateImdbUserDataCommand,
+        IUpdateImdbUserDataCommand updateImdbUserDataCommand,
         IUsersRepository usersRepository)
     {
-        this.logger = logger;
-        updateImdbUserDataCommand = UpdateImdbUserDataCommand;
-        this.usersRepository = usersRepository;
+        _logger = logger;
+        _updateImdbUserDataCommand = updateImdbUserDataCommand;
+        _usersRepository = usersRepository;
     }
 
     public async Task<int> Execute()
     {
-        await foreach (var imdbUserId in usersRepository.GetAllImdbUserIds())
+        await foreach (var imdbUserId in _usersRepository.GetAllImdbUserIds())
             try
             {
-                await updateImdbUserDataCommand.Execute(imdbUserId, false);
+                await _updateImdbUserDataCommand.Execute(imdbUserId, false);
             }
             catch (Exception x)
             {
-                logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", imdbUserId);
+                _logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", imdbUserId);
             }
 
         return 0;

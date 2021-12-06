@@ -33,34 +33,33 @@ public class TheMovieDbServiceOptions
 
 public class TheMovieDbService : ITheMovieDbService
 {
-    private readonly string apiKey;
-    private readonly string[] certificationCountryPreference;
-    private readonly IHttpClientFactory httpClientFactory;
-
-    private readonly ILogger<TheMovieDbServiceOptions> logger;
+    private readonly string _apiKey;
+    private readonly string[] _certificationCountryPreference;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<TheMovieDbServiceOptions> _logger;
 
     public TheMovieDbService(ILogger<TheMovieDbServiceOptions> logger,
         IOptionsSnapshot<TheMovieDbServiceOptions> options,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
         var o = options.Value;
-        apiKey = o.ApiKey;
-        certificationCountryPreference = o.CertificationCountryPreference;
+        _apiKey = o.ApiKey;
+        _certificationCountryPreference = o.CertificationCountryPreference;
     }
 
     public async Task<string> GetCertification(string imdbId)
     {
-        if (string.IsNullOrEmpty(apiKey) || certificationCountryPreference == null)
+        if (string.IsNullOrEmpty(_apiKey) || _certificationCountryPreference == null)
             return "";
 
         var queryParams = new Dictionary<string, string>();
-        queryParams.Add("api_key", apiKey);
+        queryParams.Add("api_key", _apiKey);
         queryParams.Add("language", "en-US");
         queryParams.Add("append_to_response", "releases");
         var url = QueryHelpers.AddQueryString($"/3/movie/{imdbId}", queryParams);
-        var client = httpClientFactory.CreateClient("tmdb");
+        var client = _httpClientFactory.CreateClient("tmdb");
 
         try
         {
@@ -68,28 +67,28 @@ public class TheMovieDbService : ITheMovieDbService
             var certifications = releases?.countries;
             if (certifications == null)
             {
-                logger.LogInformation("Certification {ImdbId} ==> NONE", imdbId);
+                _logger.LogInformation("Certification {ImdbId} ==> NONE", imdbId);
                 return null;
             }
 
-            foreach (var countryId in certificationCountryPreference)
+            foreach (var countryId in _certificationCountryPreference)
             {
                 var certification = certifications.FirstOrDefault(c =>
                     c.iso_3166_1 == countryId && !string.IsNullOrEmpty(c.certification));
                 if (certification != null)
                 {
                     var label = $"{certification.iso_3166_1}:{certification.certification}";
-                    logger.LogInformation("Certification {ImdbId} ==> {Label}", imdbId, label);
+                    _logger.LogInformation("Certification {ImdbId} ==> {Label}", imdbId, label);
                     return label;
                 }
             }
 
-            logger.LogInformation("Certification {ImdbId} ==> NOT FOUND IN {CertificationsCount} items", imdbId,
+            _logger.LogInformation("Certification {ImdbId} ==> NOT FOUND IN {CertificationsCount} items", imdbId,
                 certifications.Count);
         }
         catch (Exception x)
         {
-            logger.LogError(x, "Certification {ImdbId} ==> EXCEPTION", imdbId);
+            _logger.LogError(x, "Certification {ImdbId} ==> EXCEPTION", imdbId);
         }
 
         return null;
@@ -100,16 +99,16 @@ public class TheMovieDbService : ITheMovieDbService
         // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US
 
         var queryParams = new Dictionary<string, string>();
-        queryParams.Add("api_key", apiKey);
+        queryParams.Add("api_key", _apiKey);
         queryParams.Add("language", "en-US");
         var url = QueryHelpers.AddQueryString($"/3/movie/{imdbId}", queryParams);
-        var client = httpClientFactory.CreateClient("tmdb");
+        var client = _httpClientFactory.CreateClient("tmdb");
 
         try
         {
             var movie = await client.GetFromJsonAsync<Movie>(url);
 
-            logger.LogInformation("Image {ImdbId} ==> {OriginalTitle}", imdbId, movie.original_title);
+            _logger.LogInformation("Image {ImdbId} ==> {OriginalTitle}", imdbId, movie.original_title);
 
             var baseUrl = "http://image.tmdb.org/t/p";
             string posterM, posterS;
@@ -145,7 +144,9 @@ public class TheMovieDbService : ITheMovieDbService
         }
     }
 
-    #region JSonModel
+    #region JsonModel
+
+    // Resharper disable All
 
     [DebuggerDisplay("iso_3166_1 = {iso_3166_1}")]
     private class Country
@@ -165,6 +166,8 @@ public class TheMovieDbService : ITheMovieDbService
         public string poster_path { get; set; }
         public string original_title { get; set; }
     }
+
+    // Resharper restore All
 
     #endregion
 }

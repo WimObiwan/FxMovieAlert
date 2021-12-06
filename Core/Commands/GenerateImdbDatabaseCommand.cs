@@ -8,7 +8,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
-using FxMovies.Core.Services;
 using FxMovies.Core.Utilities;
 using FxMovies.ImdbDB;
 using Microsoft.EntityFrameworkCore;
@@ -37,21 +36,18 @@ public class GenerateImdbDatabaseCommandOptions
 
 public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 {
-    private const int batchSize = 10000;
-    private readonly GenerateImdbDatabaseCommandOptions generateImdbDatabaseCommandOptions;
-    private readonly ILogger<UpdateEpgCommand> logger;
-    private readonly IServiceScopeFactory serviceScopeFactory;
-    private readonly ITheMovieDbService theMovieDbService;
+    private const int BatchSize = 10000;
+    private readonly GenerateImdbDatabaseCommandOptions _generateImdbDatabaseCommandOptions;
+    private readonly ILogger<UpdateEpgCommand> _logger;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public GenerateImdbDatabaseCommand(ILogger<UpdateEpgCommand> logger,
         IServiceScopeFactory serviceScopeFactory,
-        IOptionsSnapshot<GenerateImdbDatabaseCommandOptions> generateImdbDatabaseCommandOptions,
-        ITheMovieDbService theMovieDbService)
+        IOptionsSnapshot<GenerateImdbDatabaseCommandOptions> generateImdbDatabaseCommandOptions)
     {
-        this.logger = logger;
-        this.serviceScopeFactory = serviceScopeFactory;
-        this.generateImdbDatabaseCommandOptions = generateImdbDatabaseCommandOptions.Value;
-        this.theMovieDbService = theMovieDbService;
+        _logger = logger;
+        _serviceScopeFactory = serviceScopeFactory;
+        _generateImdbDatabaseCommandOptions = generateImdbDatabaseCommandOptions.Value;
     }
 
     public async Task<int> Execute()
@@ -67,13 +63,13 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
     private async Task ImportImdbData_Remove()
     {
-        logger.LogInformation("Removing MovieAlternatives");
+        _logger.LogInformation("Removing MovieAlternatives");
         do
         {
-            using (var scope = serviceScopeFactory.CreateScope())
+            using (var scope = _serviceScopeFactory.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
-                var batch = db.MovieAlternatives.AsNoTracking().OrderBy(ma => ma.Id).Take(batchSize);
+                var batch = db.MovieAlternatives.AsNoTracking().OrderBy(ma => ma.Id).Take(BatchSize);
                 if (!batch.Any())
                     break;
                 db.MovieAlternatives.RemoveRange(batch);
@@ -81,13 +77,13 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
             }
         } while (true);
 
-        logger.LogInformation("Removing Movies");
+        _logger.LogInformation("Removing Movies");
         do
         {
-            using (var scope = serviceScopeFactory.CreateScope())
+            using (var scope = _serviceScopeFactory.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
-                var batch = db.Movies.AsNoTracking().OrderBy(m => m.Id).Take(batchSize);
+                var batch = db.Movies.AsNoTracking().OrderBy(m => m.Id).Take(BatchSize);
                 if (!batch.Any())
                     break;
                 db.Movies.RemoveRange(batch);
@@ -98,9 +94,9 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
     private async Task ImportImdbData_Movies()
     {
-        var debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
 
-        var fileToDecompress = new FileInfo(generateImdbDatabaseCommandOptions.ImdbMoviesList);
+        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbMoviesList);
         using (var originalFileStream = fileToDecompress.OpenRead())
         using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
         using (var textReader = new StreamReader(decompressionStream))
@@ -119,7 +115,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
             // Skip header
             textReader.ReadLine();
 
-            var FilterTypes = new[]
+            var filterTypes = new[]
             {
                 "movie",
                 "video",
@@ -131,18 +127,18 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
             do
             {
-                using (var scope = serviceScopeFactory.CreateScope())
+                using (var scope = _serviceScopeFactory.CreateScope())
                 using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
                     var batchCount = 0;
-                    while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
+                    while (batchCount < BatchSize && (text = textReader.ReadLine()) != null)
                     {
                         batchCount++;
                         count++;
 
-                        if (count % batchSize == 0)
+                        if (count % BatchSize == 0)
                         {
-                            logger.LogInformation(
+                            _logger.LogInformation(
                                 "UpdateImdbDataWithMovies: {CountDone} records done ({PercentDone}%), "
                                 + "{CountAlternatives} alternatives, {CountSkipped} records skipped ({PercentSkipped}%), {msecs}",
                                 count, originalFileStream.Position * 100 / originalFileStream.Length,
@@ -158,12 +154,12 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                         var match = regex.Match(text);
                         if (!match.Success)
                         {
-                            logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
+                            _logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
                             continue;
                         }
 
                         // Filter on movie|video|short|tvMovie|tvMiniSeries
-                        if (!FilterTypes.Contains(match.Groups[2].Value))
+                        if (!filterTypes.Contains(match.Groups[2].Value))
                         {
                             skipped++;
                             continue;
@@ -212,17 +208,17 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 }
             } while (text != null);
 
-            logger.LogInformation("IMDb movies scanned: {Count}", count);
+            _logger.LogInformation("IMDb movies scanned: {Count}", count);
         }
     }
 
     private async Task ImportImdbData_AlsoKnownAs()
     {
-        var debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
-        var akaFilterRegion = generateImdbDatabaseCommandOptions.AkaFilterRegion;
-        var akaFilterLanguage = generateImdbDatabaseCommandOptions.AkaFilterLanguage;
+        var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var akaFilterRegion = _generateImdbDatabaseCommandOptions.AkaFilterRegion;
+        var akaFilterLanguage = _generateImdbDatabaseCommandOptions.AkaFilterLanguage;
 
-        var fileToDecompress = new FileInfo(generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList);
+        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList);
         using (var originalFileStream = fileToDecompress.OpenRead())
         using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
         using (var textReader = new StreamReader(decompressionStream))
@@ -246,19 +242,19 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
             do
             {
-                using (var scope = serviceScopeFactory.CreateScope())
+                using (var scope = _serviceScopeFactory.CreateScope())
                 using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
                     var batchCount = 0;
-                    while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
+                    while (batchCount < BatchSize && (text = textReader.ReadLine()) != null)
                     {
                         batchCount++;
                         count++;
 
-                        if (count % batchSize == 0)
+                        if (count % BatchSize == 0)
                         {
                             await db.SaveChangesAsync();
-                            logger.LogInformation(
+                            _logger.LogInformation(
                                 "UpdateImdbDataWithAkas: {CountDone} records done ({PercentDone}%), "
                                 + "{CountAlternatives} alternatives, {CountSkipped} records skipped ({PercentSkipped}%), {msecs}",
                                 count, originalFileStream.Position * 100 / originalFileStream.Length,
@@ -274,7 +270,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                         var match = regex.Match(text);
                         if (!match.Success)
                         {
-                            logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
+                            _logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
                             continue;
                         }
 
@@ -318,15 +314,15 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 }
             } while (text != null);
 
-            logger.LogInformation("IMDb movies scanned: {Count}", count);
+            _logger.LogInformation("IMDb movies scanned: {Count}", count);
         }
     }
 
     private async Task ImportImdbData_Ratings()
     {
-        var debugMaxImdbRowCount = generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
 
-        var fileToDecompress = new FileInfo(generateImdbDatabaseCommandOptions.ImdbRatingsList);
+        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbRatingsList);
         using (var originalFileStream = fileToDecompress.OpenRead())
         using (var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
         using (var textReader = new StreamReader(decompressionStream))
@@ -347,19 +343,19 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
             do
             {
-                using (var scope = serviceScopeFactory.CreateScope())
+                using (var scope = _serviceScopeFactory.CreateScope())
                 using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
                 {
                     var batchCount = 0;
-                    while (batchCount < batchSize && (text = textReader.ReadLine()) != null)
+                    while (batchCount < BatchSize && (text = textReader.ReadLine()) != null)
                     {
                         batchCount++;
                         count++;
 
-                        if (count % batchSize == 0)
+                        if (count % BatchSize == 0)
                         {
                             await db.SaveChangesAsync();
-                            logger.LogInformation(
+                            _logger.LogInformation(
                                 "UpdateImdbDataWithRatings: {CountDone} records done ({PercentDone}%), "
                                 + "{CountSkipped} records skipped ({PercentSkipped}%), {msecs}",
                                 count, originalFileStream.Position * 100 / originalFileStream.Length,
@@ -375,7 +371,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                         var match = regex.Match(text);
                         if (!match.Success)
                         {
-                            logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
+                            _logger.LogWarning("Unable to parse line {LineNo}: {LineText}", count, text);
                             continue;
                         }
 
@@ -404,7 +400,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 }
             } while (text != null);
 
-            logger.LogInformation("IMDb ratings scanned: {Count}", count);
+            _logger.LogInformation("IMDb ratings scanned: {Count}", count);
         }
     }
 
@@ -412,27 +408,27 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     {
         var year = DateTime.Now.Year - 2;
 
-        logger.LogInformation("Removing Movies without Rating");
+        _logger.LogInformation("Removing Movies without Rating");
 
         int total;
-        using (var scope = serviceScopeFactory.CreateScope())
+        using (var scope = _serviceScopeFactory.CreateScope())
         using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
         {
             total = db.Movies.Where(m => !m.Rating.HasValue && m.Year <= year).OrderBy(m => m.Id).Count();
         }
 
-        logger.LogInformation("Removing {Count} Movies without Rating", total);
+        _logger.LogInformation("Removing {Count} Movies without Rating", total);
         long count = 0;
         do
         {
-            using (var scope = serviceScopeFactory.CreateScope())
+            using (var scope = _serviceScopeFactory.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
             {
                 var batch = db.Movies
                     .AsNoTracking()
                     .Where(m => !m.Rating.HasValue && m.Year <= year)
                     .OrderBy(m => m.Id)
-                    .Take(batchSize)
+                    .Take(BatchSize)
                     .Include(m => m.MovieAlternatives);
                 count += batch.Count();
                 if (!batch.Any())
@@ -440,7 +436,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 // This also removes Alternatives
                 db.Movies.RemoveRange(batch);
                 await db.SaveChangesAsync();
-                logger.LogInformation("Removing {TotalCount} Movies without Rating, {PercentDone}%", total,
+                _logger.LogInformation("Removing {TotalCount} Movies without Rating, {PercentDone}%", total,
                     count * 100 / total);
             }
         } while (true);
@@ -448,10 +444,10 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
 
     private async Task ImportImdbData_Vacuum()
     {
-        using (var scope = serviceScopeFactory.CreateScope())
+        using (var scope = _serviceScopeFactory.CreateScope())
         using (var db = scope.ServiceProvider.GetRequiredService<ImdbDbContext>())
         {
-            logger.LogInformation("Doing 'VACUUM'...");
+            _logger.LogInformation("Doing 'VACUUM'...");
             await db.Database.ExecuteSqlRawAsync("VACUUM;");
         }
     }

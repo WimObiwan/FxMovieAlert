@@ -14,21 +14,21 @@ public interface IManualMatchesQuery
 
 public class ManualMatchesQuery : IManualMatchesQuery
 {
-    private readonly ILogger<ManualMatchesQuery> logger;
-    private readonly MoviesDbContext moviesDbContext;
+    private readonly ILogger<ManualMatchesQuery> _logger;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public ManualMatchesQuery(
         ILogger<ManualMatchesQuery> logger,
         MoviesDbContext moviesDbContext)
     {
-        this.logger = logger;
-        this.moviesDbContext = moviesDbContext;
+        _logger = logger;
+        _moviesDbContext = moviesDbContext;
     }
 
     public async Task<ManualMatch> Execute(string movieTitle)
     {
         var movieTitleNormalized = TitleNormalizer.NormalizeTitle(movieTitle);
-        var manualMatch = await moviesDbContext.ManualMatches
+        var manualMatch = await _moviesDbContext.ManualMatches
             .Include(mm => mm.Movie)
             .FirstOrDefaultAsync(mm => mm.NormalizedTitle == movieTitleNormalized);
         return manualMatch;

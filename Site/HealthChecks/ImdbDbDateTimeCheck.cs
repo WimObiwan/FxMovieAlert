@@ -11,18 +11,18 @@ namespace FxMovies.Site.HealthChecks;
 
 public class ImdbDbDateTimeCheck : IHealthCheck
 {
-    private readonly IConfiguration configuration;
+    private readonly IConfiguration _configuration;
 
     public ImdbDbDateTimeCheck(IConfiguration configuration)
     {
-        this.configuration = configuration;
+        _configuration = configuration;
     }
 
     public Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
-        var connectionString = configuration.GetConnectionString("ImdbDb");
+        var connectionString = _configuration.GetConnectionString("ImdbDb");
 
         var connectionStringBuilder = new DbConnectionStringBuilder();
         connectionStringBuilder.ConnectionString = connectionString;

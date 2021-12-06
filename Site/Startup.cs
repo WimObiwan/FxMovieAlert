@@ -31,25 +31,25 @@ namespace FxMovies.Site;
 
 public class Startup
 {
-    private readonly IConfiguration configuration;
-    private readonly IWebHostEnvironment environment;
-    private readonly HealthCheckOptions healthCheckOptions;
+    private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _environment;
+    private readonly HealthCheckOptions _healthCheckOptions;
 
     public Startup(
         IConfiguration configuration,
         IWebHostEnvironment environment)
     {
-        this.configuration = configuration;
-        this.environment = environment;
+        _configuration = configuration;
+        _environment = environment;
 
-        healthCheckOptions = new HealthCheckOptions();
-        configuration.GetSection(HealthCheckOptions.Position).Bind(healthCheckOptions);
+        _healthCheckOptions = new HealthCheckOptions();
+        configuration.GetSection(HealthCheckOptions.Position).Bind(_healthCheckOptions);
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        var pathToCryptoKeys = Path.Join(environment.ContentRootPath, "dp_keys");
+        var pathToCryptoKeys = Path.Join(_environment.ContentRootPath, "dp_keys");
         Directory.CreateDirectory(pathToCryptoKeys);
         services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(pathToCryptoKeys));
@@ -83,11 +83,11 @@ public class Startup
             .AddOpenIdConnect("Auth0", options =>
             {
                 // Set the authority to your Auth0 domain
-                options.Authority = $"https://{configuration["Auth0:Domain"]}";
+                options.Authority = $"https://{_configuration["Auth0:Domain"]}";
 
                 // Configure the Auth0 Client ID and Client Secret
-                options.ClientId = configuration["Auth0:ClientId"];
-                options.ClientSecret = configuration["Auth0:ClientSecret"];
+                options.ClientId = _configuration["Auth0:ClientId"];
+                options.ClientSecret = _configuration["Auth0:ClientSecret"];
 
                 // Set response type to code
                 options.ResponseType = "code";
@@ -142,7 +142,7 @@ public class Startup
                     OnRedirectToIdentityProviderForSignOut = context =>
                     {
                         var logoutUri =
-                            $"https://{configuration["Auth0:Domain"]}/v2/logout?client_id={configuration["Auth0:ClientId"]}";
+                            $"https://{_configuration["Auth0:Domain"]}/v2/logout?client_id={_configuration["Auth0:ClientId"]}";
 
                         var postLogoutUri = context.Properties.RedirectUri;
                         if (!string.IsNullOrEmpty(postLogoutUri))
@@ -173,30 +173,32 @@ public class Startup
                 ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
         });
 
-        if (healthCheckOptions.Uri != null)
+        if (_healthCheckOptions.Uri != null)
             services.AddHealthChecks()
                 .AddSqlite(
-                    configuration.GetConnectionString("FxMoviesDB"),
+                    _configuration.GetConnectionString("FxMoviesDB"),
                     name: "sqlite-FxMoviesDB")
                 // .AddSqlite(
                 //     sqliteConnectionString: _configuration.GetConnectionString("FxMoviesHistoryDb"), 
                 //     name: "sqlite-FxMoviesHistoryDb")
                 .AddSqlite(
-                    configuration.GetConnectionString("ImdbDb"),
+                    _configuration.GetConnectionString("ImdbDb"),
                     name: "sqlite-ImdbDb")
                 .AddIdentityServer(
-                    new Uri($"https://{configuration["Auth0:Domain"]}"),
+                    new Uri($"https://{_configuration["Auth0:Domain"]}"),
                     "idsvr-Auth0")
-                .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", healthCheckOptions, MovieEvent.FeedType.Broadcast)
-                .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", healthCheckOptions, MovieEvent.FeedType.FreeVod)
-                .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", healthCheckOptions, MovieEvent.FeedType.PaidVod)
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", healthCheckOptions, MovieEvent.FeedType.FreeVod,
+                .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", _healthCheckOptions, MovieEvent.FeedType.Broadcast)
+                .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", _healthCheckOptions, MovieEvent.FeedType.FreeVod)
+                .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", _healthCheckOptions, MovieEvent.FeedType.PaidVod)
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", _healthCheckOptions,
+                    MovieEvent.FeedType.FreeVod,
                     "vtmgo")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions, MovieEvent.FeedType.FreeVod,
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", _healthCheckOptions,
+                    MovieEvent.FeedType.FreeVod,
                     "vrtnu")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", healthCheckOptions,
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", _healthCheckOptions,
                     MovieEvent.FeedType.FreeVod, "goplay")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", healthCheckOptions,
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", _healthCheckOptions,
                     MovieEvent.FeedType.PaidVod, "primevideo")
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-FreeStreaming-missingImdbLink", MovieEvent.FeedType.FreeVod)
@@ -212,14 +214,14 @@ public class Startup
         services.AddWebOptimizer();
 
         services.AddDbContext<MoviesDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("FxMoviesDB")));
+            options.UseSqlite(_configuration.GetConnectionString("FxMoviesDB")));
 
         services.AddDbContext<ImdbDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
+            options.UseSqlite(_configuration.GetConnectionString("ImdbDb")));
 
-        services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
+        services.Configure<SiteOptions>(_configuration.GetSection(SiteOptions.Position));
 
-        services.AddFxMoviesCore(configuration, typeof(Startup).Assembly);
+        services.AddFxMoviesCore(_configuration, typeof(Startup).Assembly);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -243,7 +245,7 @@ public class Startup
             SupportedUICultures = supportedCultures
         });
 
-        if (environment.IsDevelopment())
+        if (_environment.IsDevelopment())
             app.UseDeveloperExceptionPage();
         else
             app.UseExceptionHandler("/Error");
@@ -274,8 +276,8 @@ public class Startup
 
         app.UseAuthentication();
 
-        if (healthCheckOptions.Uri != null)
-            app.UseHealthChecks(healthCheckOptions.Uri,
+        if (_healthCheckOptions.Uri != null)
+            app.UseHealthChecks(_healthCheckOptions.Uri,
                 new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
                 {
                     Predicate = _ => true,
@@ -326,6 +328,10 @@ public class Startup
         await httpContext.Response.WriteAsJsonAsync(zabbixResponse);
     }
 
+    #region ZabbixResponse JsonModel
+
+    // Resharper disable All
+
     private class ZabbixResponse
     {
         public int status { get; set; }
@@ -341,4 +347,8 @@ public class Startup
             public IDictionary<string, object> data { get; set; }
         }
     }
+
+    // Resharper restore All
+
+    #endregion
 }

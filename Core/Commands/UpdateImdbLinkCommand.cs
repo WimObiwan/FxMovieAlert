@@ -16,10 +16,10 @@ public interface IUpdateImdbLinkCommand
 
 public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
 {
-    private readonly ImdbDbContext imdbDbContext;
-    private readonly ILogger<UpdateImdbUserDataCommand> logger;
-    private readonly IMovieCreationHelper movieCreationHelper;
-    private readonly MoviesDbContext moviesDbContext;
+    private readonly ImdbDbContext _imdbDbContext;
+    private readonly ILogger<UpdateImdbUserDataCommand> _logger;
+    private readonly IMovieCreationHelper _movieCreationHelper;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public UpdateImdbLinkCommand(
         ILogger<UpdateImdbUserDataCommand> logger,
@@ -27,15 +27,15 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
         ImdbDbContext imdbDbContext,
         IMovieCreationHelper movieCreationHelper)
     {
-        this.logger = logger;
-        this.moviesDbContext = moviesDbContext;
-        this.imdbDbContext = imdbDbContext;
-        this.movieCreationHelper = movieCreationHelper;
+        _logger = logger;
+        _moviesDbContext = moviesDbContext;
+        _imdbDbContext = imdbDbContext;
+        _movieCreationHelper = movieCreationHelper;
     }
 
     public async Task Execute(int movieEventId, string imdbId, bool ignoreImdbLink)
     {
-        var movieEvent = await moviesDbContext.MovieEvents
+        var movieEvent = await _moviesDbContext.MovieEvents
             .Include(me => me.Movie)
             .Include(me => me.Channel)
             .SingleOrDefaultAsync(me => me.Id == movieEventId);
@@ -45,13 +45,13 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                 movieEvent.Movie.ImdbIgnore != ignoreImdbLink)
             {
                 // Already ok, Do nothing
-                logger.LogInformation("Skipped saving {ImdbId}, no changes", imdbId);
+                _logger.LogInformation("Skipped saving {ImdbId}, no changes", imdbId);
             }
             else
             {
                 Movie movie;
                 if (imdbId != null)
-                    movie = await movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
+                    movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
                 else
                     movie = new Movie();
 
@@ -60,7 +60,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
 
                 if (imdbId != null)
                 {
-                    var imdbMovie = await imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
+                    var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
                     if (imdbMovie != null)
                     {
                         movieEvent.Movie.ImdbRating = imdbMovie.Rating;
@@ -70,7 +70,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                     }
                 }
 
-                moviesDbContext.ManualMatches.Add(
+                _moviesDbContext.ManualMatches.Add(
                     new ManualMatch
                     {
                         AddedDateTime = DateTime.UtcNow,
@@ -81,7 +81,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                 );
             }
 
-            await moviesDbContext.SaveChangesAsync();
+            await _moviesDbContext.SaveChangesAsync();
         }
     }
 }

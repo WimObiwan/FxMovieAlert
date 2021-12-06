@@ -1,11 +1,11 @@
 ﻿// Write your Javascript code.
 // Navigation Scripts to Show Header on Scroll-Up
 jQuery(document).ready(function($) {
-    var MQL = 1500;
+    var mql = 1500;
     $(".sideBar").fadeOut("fast");
 
     //primary navigation slide-in effect
-    if ($(window).width() >= MQL) {
+    if ($(window).width() >= mql) {
         $(window).on("scroll",
             {
             },

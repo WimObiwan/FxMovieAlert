@@ -15,21 +15,21 @@ namespace FxMovies.Core.Services;
 
 public interface IImdbRatingsFromWebService
 {
-    Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, bool getAll);
-    Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, DateTime? fromDateTime);
+    Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, bool getAll);
+    Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, DateTime? fromDateTime);
 }
 
 public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<ImdbRatingsFromWebService> logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<ImdbRatingsFromWebService> _logger;
 
     public ImdbRatingsFromWebService(
         ILogger<ImdbRatingsFromWebService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, bool getAll)
@@ -54,7 +54,7 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
 
     private async Task<IHtmlDocument> FetchHtmlDocument(string url)
     {
-        var client = httpClientFactory.CreateClient("imdb");
+        var client = _httpClientFactory.CreateClient("imdb");
         var response = await client.GetAsync(url);
         response.EnsureSuccessStatusCode();
         // Troubleshoot: Debug console: 

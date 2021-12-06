@@ -31,22 +31,22 @@ public class ImdbMatchingQueryResult
 
 public class ImdbMatchingQuery : IImdbMatchingQuery
 {
-    private readonly List<Func<string, int?, IQueryable<ImdbMovie>>> huntingProcedure;
-    private readonly ImdbDbContext imdbDbContext;
-    private readonly ILogger<ImdbMatchingQuery> logger;
+    private readonly List<Func<string, int?, IQueryable<ImdbMovie>>> _huntingProcedure;
+    private readonly ImdbDbContext _imdbDbContext;
+    private readonly ILogger<ImdbMatchingQuery> _logger;
 
     public ImdbMatchingQuery(ILogger<ImdbMatchingQuery> logger,
         IOptionsSnapshot<ImdbMatchingQueryOptions> imdbMatchingQueryOptions,
         ImdbDbContext imdbDbContext)
     {
-        this.logger = logger;
+        _logger = logger;
         var imdbHuntingYearDiff = imdbMatchingQueryOptions.Value.ImdbHuntingYearDiff ?? 2;
-        this.imdbDbContext = imdbDbContext;
+        _imdbDbContext = imdbDbContext;
 
-        huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>>>();
+        _huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>>>();
 
         // Search for PrimaryTitle (Year)
-        huntingProcedure.Add((title, releaseYear) =>
+        _huntingProcedure.Add((title, releaseYear) =>
         {
             var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
             return imdbDbContext.MovieAlternatives
@@ -58,7 +58,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
         });
 
         // Search for AlternativeTitle (Year)
-        huntingProcedure.Add((title, releaseYear) =>
+        _huntingProcedure.Add((title, releaseYear) =>
         {
             var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
             return imdbDbContext.MovieAlternatives
@@ -70,7 +70,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
         });
 
         // Search for PrimaryTitle (+/-Year)
-        huntingProcedure.Add((title, releaseYear) =>
+        _huntingProcedure.Add((title, releaseYear) =>
         {
             var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
             if (!releaseYear.HasValue)
@@ -86,7 +86,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
         });
 
         // Search for AlternativeTitle (+/-Year)
-        huntingProcedure.Add((title, releaseYear) =>
+        _huntingProcedure.Add((title, releaseYear) =>
         {
             var normalizedTitle = TitleNormalizer.NormalizeTitle(title);
             if (!releaseYear.HasValue)
@@ -106,7 +106,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
     {
         ImdbMovie imdbMovie = null;
         var huntNo = 0;
-        foreach (var hunt in huntingProcedure)
+        foreach (var hunt in _huntingProcedure)
         {
             var huntResult = hunt(movieTitle, movieReleaseYear);
 

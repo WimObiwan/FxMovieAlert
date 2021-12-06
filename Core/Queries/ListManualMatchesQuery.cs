@@ -14,20 +14,20 @@ public interface IListManualMatchesQuery
 
 public class ListManualMatchesQuery : IListManualMatchesQuery
 {
-    private readonly ILogger<ListManualMatchesQuery> logger;
-    private readonly MoviesDbContext moviesDbContext;
+    private readonly ILogger<ListManualMatchesQuery> _logger;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public ListManualMatchesQuery(
         ILogger<ListManualMatchesQuery> logger,
         MoviesDbContext moviesDbContext)
     {
-        this.logger = logger;
-        this.moviesDbContext = moviesDbContext;
+        _logger = logger;
+        _moviesDbContext = moviesDbContext;
     }
 
     public async Task<List<ManualMatch>> Execute()
     {
-        return await moviesDbContext.ManualMatches
+        return await _moviesDbContext.ManualMatches
             .Include(mm => mm.Movie)
             .ToListAsync();
     }

@@ -25,23 +25,23 @@ public class VtmGoServiceOptions
 
 public class VtmGoService : IMovieEventService
 {
-    private readonly string authToken;
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<VtmGoService> logger;
-    private readonly string password;
-    private readonly string username;
+    private readonly string _authToken;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<VtmGoService> _logger;
+    private readonly string _password;
+    private readonly string _username;
 
     public VtmGoService(
         ILogger<VtmGoService> logger,
         IOptions<VtmGoServiceOptions> vtmGoServiceOptions,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
+        _logger = logger;
         var options = vtmGoServiceOptions.Value;
-        authToken = options.AuthToken;
-        username = options.Username;
-        password = options.Password;
-        this.httpClientFactory = httpClientFactory;
+        _authToken = options.AuthToken;
+        _username = options.Username;
+        _password = options.Password;
+        _httpClientFactory = httpClientFactory;
     }
 
     public string ProviderName => "VtmGo";
@@ -55,7 +55,7 @@ public class VtmGoService : IMovieEventService
         // https://github.com/add-ons/plugin.video.vtm.go/blob/master/resources/lib/vtmgo/vtmgo.py
 
         string lfvpToken;
-        if (string.IsNullOrEmpty(authToken))
+        if (string.IsNullOrEmpty(_authToken))
         {
             // why?
             await VtmGoAuthorize();
@@ -65,17 +65,17 @@ public class VtmGoService : IMovieEventService
         }
         else
         {
-            var jwtToken = new JwtSecurityToken(authToken);
+            var jwtToken = new JwtSecurityToken(_authToken);
             if (DateTime.UtcNow < jwtToken.ValidTo)
             {
-                logger.LogInformation("Configured refresh token is still valid ({JwtTokenValidTo})", jwtToken.ValidTo);
-                lfvpToken = authToken;
+                _logger.LogInformation("Configured refresh token is still valid ({JwtTokenValidTo})", jwtToken.ValidTo);
+                lfvpToken = _authToken;
             }
             else
             {
-                logger.LogInformation("Configured refresh token is no longer valid ({JwtTokenValidTo})",
+                _logger.LogInformation("Configured refresh token is no longer valid ({JwtTokenValidTo})",
                     jwtToken.ValidTo);
-                lfvpToken = await DpgRefreshToken(authToken);
+                lfvpToken = await DpgRefreshToken(_authToken);
             }
         }
 
@@ -95,7 +95,7 @@ public class VtmGoService : IMovieEventService
             var movieInfo = await GetMovieInfo(lfvpToken, profileId, movieId);
             if (movieInfo.movie.durationSeconds < 75 * 60)
             {
-                logger.LogWarning("Skipped {Name}, duration {DurationSeconds} too small",
+                _logger.LogWarning("Skipped {Name}, duration {DurationSeconds} too small",
                     movieInfo.movie.name, movieInfo.movie.durationSeconds);
                 continue;
             }
@@ -136,7 +136,7 @@ public class VtmGoService : IMovieEventService
         queryParams.Add("redirect_uri", "https://login2.vtm.be/continue");
         var url = QueryHelpers.AddQueryString("/authorize", queryParams);
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        var client = httpClientFactory.CreateClient("vtmgo_login");
+        var client = _httpClientFactory.CreateClient("vtmgo_login");
         var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
     }
@@ -148,10 +148,10 @@ public class VtmGoService : IMovieEventService
         var url = QueryHelpers.AddQueryString("/login", queryParams);
         var request = new HttpRequestMessage(HttpMethod.Post, url);
         var body = new List<KeyValuePair<string, string>>();
-        body.Add(new KeyValuePair<string, string>("userName", username));
-        body.Add(new KeyValuePair<string, string>("password", password));
+        body.Add(new KeyValuePair<string, string>("userName", _username));
+        body.Add(new KeyValuePair<string, string>("password", _password));
         request.Content = new FormUrlEncodedContent(body);
-        var client = httpClientFactory.CreateClient("vtmgo_login");
+        var client = _httpClientFactory.CreateClient("vtmgo_login");
         var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
@@ -179,7 +179,7 @@ public class VtmGoService : IMovieEventService
             idToken
         };
 
-        var client = httpClientFactory.CreateClient("vtmgo_dpg");
+        var client = _httpClientFactory.CreateClient("vtmgo_dpg");
         var response = await client.PostAsJsonAsync("/vtmgo/tokens", body);
         response.EnsureSuccessStatusCode();
         var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
@@ -193,7 +193,7 @@ public class VtmGoService : IMovieEventService
             lfvpToken = oldToken
         };
 
-        var client = httpClientFactory.CreateClient("vtmgo_dpg");
+        var client = _httpClientFactory.CreateClient("vtmgo_dpg");
         var response = await client.PostAsJsonAsync("/vtmgo/tokens/refresh", body);
         response.EnsureSuccessStatusCode();
         var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
@@ -202,7 +202,7 @@ public class VtmGoService : IMovieEventService
 
     private async Task<string> GetProfileId(string lfvpToken)
     {
-        var client = httpClientFactory.CreateClient("vtmgo_dpg");
+        var client = _httpClientFactory.CreateClient("vtmgo_dpg");
         client.DefaultRequestHeaders.Add("lfvp-auth", lfvpToken);
         // var responseObject = await client.GetFromJsonAsync<DpgProfileResponse[]>("/profiles?products=VTM_GO,VTM_GO_KIDS");
         var response = await client.GetAsync("/profiles?products=VTM_GO,VTM_GO_KIDS");
@@ -217,7 +217,7 @@ public class VtmGoService : IMovieEventService
 
     private async Task<List<string>> GetCatalog(string lfvpToken, string profileId)
     {
-        var client = httpClientFactory.CreateClient("vtmgo_dpg");
+        var client = _httpClientFactory.CreateClient("vtmgo_dpg");
         client.DefaultRequestHeaders.Add("lfvp-auth", lfvpToken);
         client.DefaultRequestHeaders.Add("x-dpp-profile", profileId);
         //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
@@ -235,7 +235,7 @@ public class VtmGoService : IMovieEventService
 
     private async Task<DpgMovieResponse> GetMovieInfo(string lfvpToken, string profileId, string movieId)
     {
-        var client = httpClientFactory.CreateClient("vtmgo_dpg");
+        var client = _httpClientFactory.CreateClient("vtmgo_dpg");
         client.DefaultRequestHeaders.Add("lfvp-auth", lfvpToken);
         client.DefaultRequestHeaders.Add("x-dpp-profile", profileId);
         var response = await client.GetAsync("/vtmgo/movies/" + movieId);
@@ -247,6 +247,10 @@ public class VtmGoService : IMovieEventService
         var responseObject = await response.Content.ReadFromJsonAsync<DpgMovieResponse>();
         return responseObject;
     }
+
+    #region JsonModel
+
+    // Resharper disable All
 
     private class DpgTokenResponse
     {
@@ -296,4 +300,8 @@ public class VtmGoService : IMovieEventService
             public int productionYear { get; set; }
         }
     }
+
+    // Resharper restore All
+
+    #endregion
 }

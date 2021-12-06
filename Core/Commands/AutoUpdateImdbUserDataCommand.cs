@@ -24,72 +24,72 @@ public class AutoUpdateImdbUserDataCommandOptions
 
 public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
 {
-    private readonly TimeSpan autoUpdateInterval;
-    private readonly TimeSpan autoUpdateIntervalActiveUser;
-    private readonly ILogger<AutoUpdateImdbUserDataCommand> logger;
-    private readonly bool updateAllRatings;
-    private readonly IUpdateImdbUserDataCommand updateImdbUserDataCommand;
-    private readonly IUsersRepository usersRepository;
+    private readonly TimeSpan _autoUpdateInterval;
+    private readonly TimeSpan _autoUpdateIntervalActiveUser;
+    private readonly ILogger<AutoUpdateImdbUserDataCommand> _logger;
+    private readonly bool _updateAllRatings;
+    private readonly IUpdateImdbUserDataCommand _updateImdbUserDataCommand;
+    private readonly IUsersRepository _usersRepository;
 
     public AutoUpdateImdbUserDataCommand(ILogger<AutoUpdateImdbUserDataCommand> logger,
         IOptionsSnapshot<AutoUpdateImdbUserDataCommandOptions> autoUpdateImdbUserDataCommandOptions,
         IUpdateImdbUserDataCommand updateImdbUserDataCommand,
         IUsersRepository usersRepository)
     {
-        this.logger = logger;
-        this.updateImdbUserDataCommand = updateImdbUserDataCommand;
-        this.usersRepository = usersRepository;
-        autoUpdateInterval = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateInterval ?? TimeSpan.FromDays(1);
-        autoUpdateIntervalActiveUser = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateIntervalActiveUser ??
-                                       TimeSpan.FromHours(1);
-        updateAllRatings = autoUpdateImdbUserDataCommandOptions.Value.UpdateAllRatings ?? false;
+        _logger = logger;
+        _updateImdbUserDataCommand = updateImdbUserDataCommand;
+        _usersRepository = usersRepository;
+        _autoUpdateInterval = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateInterval ?? TimeSpan.FromDays(1);
+        _autoUpdateIntervalActiveUser = autoUpdateImdbUserDataCommandOptions.Value.AutoUpdateIntervalActiveUser ??
+                                        TimeSpan.FromHours(1);
+        _updateAllRatings = autoUpdateImdbUserDataCommandOptions.Value.UpdateAllRatings ?? false;
     }
 
     public async Task<int> Execute()
     {
         var now = DateTime.UtcNow;
-        var lastUpdateThreshold = now.Add(-autoUpdateInterval);
-        var lastUpdateThresholdActiveUser = now.Add(-autoUpdateIntervalActiveUser);
+        var lastUpdateThreshold = now.Add(-_autoUpdateInterval);
+        var lastUpdateThresholdActiveUser = now.Add(-_autoUpdateIntervalActiveUser);
 
-        logger.LogInformation(
+        _logger.LogInformation(
             "Loading users that need to be refreshed (inactive user threshold {LastUpdateThreshold}, active user threshold {LastUpdateThresholdActiveUser})",
             lastUpdateThreshold, lastUpdateThresholdActiveUser);
 
         // ToList, to prevent locking errors when updating while iterating:
         var usersToUpdate = new List<User>();
-        await foreach (var item in usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold,
+        await foreach (var item in _usersRepository.GetAllImdbUsersToAutoUpdate(lastUpdateThreshold,
                            lastUpdateThresholdActiveUser))
             usersToUpdate.Add(item);
 
         foreach (var user in usersToUpdate)
         {
-            logger.LogInformation(
+            _logger.LogInformation(
                 "User {ImdbUserId} needs a refresh of the IMDb User ratings, LastUsageTime = {LastUsageTime}",
                 user.ImdbUserId, user.LastUsageTime);
             if (user.RefreshRequestTime.HasValue)
-                logger.LogInformation(
+                _logger.LogInformation(
                     "   * Refresh requested (RefreshRequestTime {RefreshRequestTime}, {RefreshRequestTimeSecondsAgo} seconds ago)",
                     user.RefreshRequestTime.Value, (now - user.RefreshRequestTime.Value).TotalSeconds);
             if (!user.LastRefreshRatingsTime.HasValue)
-                logger.LogInformation("   * Never refreshed");
+                _logger.LogInformation("   * Never refreshed");
             else if (user.LastRefreshRatingsTime.Value < lastUpdateThreshold)
-                logger.LogInformation(
+                _logger.LogInformation(
                     "   * Last refresh too old for inactive user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
                     user.LastRefreshRatingsTime.Value);
             else if (user.LastUsageTime.HasValue && user.LastUsageTime.Value >
                                                  user.LastRefreshRatingsTime.Value // used since last refreshtime
                                                  && user.LastRefreshRatingsTime.Value <
                                                  lastUpdateThresholdActiveUser) // last refresh is before active user threshold
-                logger.LogInformation(
+                _logger.LogInformation(
                     "   * Last refresh too old for active user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
                     user.LastRefreshRatingsTime.Value);
             try
             {
-                await updateImdbUserDataCommand.Execute(user.ImdbUserId, updateAllRatings);
+                await _updateImdbUserDataCommand.Execute(user.ImdbUserId, _updateAllRatings);
             }
             catch (Exception x)
             {
-                logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", user.ImdbUserId);
+                _logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", user.ImdbUserId);
             }
         }
 

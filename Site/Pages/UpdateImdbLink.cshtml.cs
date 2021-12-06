@@ -13,11 +13,11 @@ namespace FxMovies.Site.Pages;
 
 public class UpdateImdbLinkModel : PageModel
 {
-    private readonly ImdbDbContext imdbDbContext;
-    private readonly ILogger<UpdateImdbLinkModel> logger;
-    private readonly IMovieCreationHelper movieCreationHelper;
-    private readonly MoviesDbContext moviesDbContext;
-    private readonly IUpdateImdbLinkCommand updateImdbLinkCommand;
+    private readonly ImdbDbContext _imdbDbContext;
+    private readonly ILogger<UpdateImdbLinkModel> _logger;
+    private readonly IMovieCreationHelper _movieCreationHelper;
+    private readonly MoviesDbContext _moviesDbContext;
+    private readonly IUpdateImdbLinkCommand _updateImdbLinkCommand;
 
     public UpdateImdbLinkModel(
         ILogger<UpdateImdbLinkModel> logger,
@@ -26,11 +26,11 @@ public class UpdateImdbLinkModel : PageModel
         IMovieCreationHelper movieCreationHelper,
         IUpdateImdbLinkCommand updateImdbLinkCommand)
     {
-        this.logger = logger;
-        this.moviesDbContext = moviesDbContext;
-        this.imdbDbContext = imdbDbContext;
-        this.movieCreationHelper = movieCreationHelper;
-        this.updateImdbLinkCommand = updateImdbLinkCommand;
+        _logger = logger;
+        _moviesDbContext = moviesDbContext;
+        _imdbDbContext = imdbDbContext;
+        _movieCreationHelper = movieCreationHelper;
+        _updateImdbLinkCommand = updateImdbLinkCommand;
     }
 
     public IActionResult OnGet()
@@ -64,7 +64,7 @@ public class UpdateImdbLinkModel : PageModel
                 overwrite = true;
             }
 
-            if (overwrite) await updateImdbLinkCommand.Execute(movieeventid.Value, setimdbid, setIgnore);
+            if (overwrite) await _updateImdbLinkCommand.Execute(movieeventid.Value, setimdbid, setIgnore);
         }
 
         return Redirect(returnPage);

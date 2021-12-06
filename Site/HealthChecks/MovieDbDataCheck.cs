@@ -37,10 +37,10 @@ public static class MovieDbDataCheckBuilderExtensions
 
 public class MovieDbDataCheck : IHealthCheck
 {
-    private readonly string channelCode;
-    private readonly MovieEvent.FeedType feedType;
-    private readonly HealthCheckOptions healthCheckOptions;
-    private readonly IServiceScopeFactory serviceScopeFactory;
+    private readonly string _channelCode;
+    private readonly MovieEvent.FeedType _feedType;
+    private readonly HealthCheckOptions _healthCheckOptions;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public MovieDbDataCheck(
         IServiceScopeFactory serviceScopeFactory,
@@ -48,10 +48,10 @@ public class MovieDbDataCheck : IHealthCheck
         MovieEvent.FeedType feedType,
         string channelCode)
     {
-        this.serviceScopeFactory = serviceScopeFactory;
-        this.healthCheckOptions = healthCheckOptions;
-        this.feedType = feedType;
-        this.channelCode = channelCode;
+        _serviceScopeFactory = serviceScopeFactory;
+        _healthCheckOptions = healthCheckOptions;
+        _feedType = feedType;
+        _channelCode = channelCode;
     }
 
     public async Task<HealthCheckResult> CheckHealthAsync(
@@ -62,14 +62,14 @@ public class MovieDbDataCheck : IHealthCheck
         // Seems a bug to me, workaround is using a separate service scope scope.
         // https://github.com/dotnet/aspnetcore/issues/14453
 
-        using (var scope = serviceScopeFactory.CreateScope())
+        using (var scope = _serviceScopeFactory.CreateScope())
         {
             var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
 
             var query = moviesDbContext.MovieEvents
                 .Where(me =>
-                    me.Feed == feedType && me.AddedTime.HasValue &&
-                    (channelCode == null || me.Channel.Code == channelCode));
+                    me.Feed == _feedType && me.AddedTime.HasValue &&
+                    (_channelCode == null || me.Channel.Code == _channelCode));
             var count = await query.CountAsync();
             DateTime? lastMovieAddedTime;
             if (count > 0)
@@ -80,14 +80,14 @@ public class MovieDbDataCheck : IHealthCheck
 
             const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
             double checkLastMovieAddedMoreThanDaysAgo;
-            if (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
+            if (_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
                 checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
-            else if (channelCode == null ||
-                     !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(channelCode,
+            else if (_channelCode == null ||
+                     !_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(_channelCode,
                          out checkLastMovieAddedMoreThanDaysAgo))
-                if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{feedType}",
+                if (!_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{_feedType}",
                         out checkLastMovieAddedMoreThanDaysAgo))
-                    if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("",
+                    if (!_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("",
                             out checkLastMovieAddedMoreThanDaysAgo))
                         checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
 
@@ -105,13 +105,13 @@ public class MovieDbDataCheck : IHealthCheck
                 { "AlarmThreshold", checkLastMovieAddedMoreThanDaysAgo }
             };
 
-            if (feedType == MovieEvent.FeedType.Broadcast)
+            if (_feedType == MovieEvent.FeedType.Broadcast)
             {
                 var lastMovieStartTime = await query.MaxAsync(me => me.StartTime);
                 var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
 
                 if (status == HealthStatus.Healthy &&
-                    lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
+                    lastMovieStartDaysFromNow <= (_healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
                     status = HealthStatus.Unhealthy;
                 else
                     status = HealthStatus.Healthy;

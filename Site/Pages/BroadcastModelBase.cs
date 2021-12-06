@@ -25,10 +25,10 @@ public class Record
 
 public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 {
-    private readonly MovieEvent.FeedType feed;
-    private readonly MoviesDbContext moviesDbContext;
-    private readonly SiteOptions siteOptions;
-    private readonly IUsersRepository usersRepository;
+    private readonly MovieEvent.FeedType _feed;
+    private readonly MoviesDbContext _moviesDbContext;
+    private readonly SiteOptions _siteOptions;
+    private readonly IUsersRepository _usersRepository;
     public int AdsInterval = 5;
     public bool EditImdbLinks;
     public bool? LastRefreshSuccess;
@@ -41,10 +41,10 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         MoviesDbContext moviesDbContext,
         IUsersRepository usersRepository)
     {
-        this.feed = feed;
-        this.siteOptions = siteOptions.Value;
-        this.moviesDbContext = moviesDbContext;
-        this.usersRepository = usersRepository;
+        _feed = feed;
+        _siteOptions = siteOptions.Value;
+        _moviesDbContext = moviesDbContext;
+        _usersRepository = usersRepository;
     }
 
     public int HighlightedFilterMonthsThreshold { get; } = 36;
@@ -95,8 +95,8 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         var now = DateTime.Now;
 
-        AdsInterval = siteOptions.AdsInterval;
-        FilterMaxDaysDefault = siteOptions.DefaultMaxDays;
+        AdsInterval = _siteOptions.AdsInterval;
+        FilterMaxDaysDefault = _siteOptions.DefaultMaxDays;
         FilterMaxDays = FilterMaxDaysDefault;
         FilterTypeMask = FilterTypeMaskDefault;
 
@@ -120,7 +120,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
             FilterCert = Cert.all;
 
         bool? streaming;
-        switch (feed)
+        switch (_feed)
         {
             case MovieEvent.FeedType.Broadcast:
                 streaming = false;
@@ -134,9 +134,9 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         }
 
         var dbMovieEvents =
-            moviesDbContext.MovieEvents.Where(me => me.Feed == feed || me.Feed == null && me.Vod == streaming);
+            _moviesDbContext.MovieEvents.Where(me => me.Feed == _feed || me.Feed == null && me.Vod == streaming);
 
-        if (feed == MovieEvent.FeedType.Broadcast)
+        if (_feed == MovieEvent.FeedType.Broadcast)
             dbMovieEvents = dbMovieEvents.Where(me =>
                 (FilterMaxDays == 0 || me.StartTime.Date <= now.Date.AddDays(FilterMaxDays)) && me.EndTime >= now &&
                 me.StartTime >= now.AddMinutes(-30));
@@ -145,7 +145,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         if (userId != null)
         {
-            var result = await usersRepository.UpdateUserLastUsedAndGetData(userId);
+            var result = await _usersRepository.UpdateUserLastUsedAndGetData(userId);
             if (result != null)
             {
                 RefreshRequestTime = result.RefreshRequestTime;

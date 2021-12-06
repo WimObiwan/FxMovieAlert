@@ -17,7 +17,7 @@ public interface IHumoService
 
 public class HumoService : IHumoService
 {
-    private static readonly string[] channels =
+    private static readonly string[] Channels =
     {
         "een",
         "canvas",
@@ -42,16 +42,15 @@ public class HumoService : IHumoService
         "cartoon24"
     };
 
-    private readonly IHttpClientFactory httpClientFactory;
-
-    private readonly ILogger<HumoService> logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<HumoService> _logger;
 
     public HumoService(
         ILogger<HumoService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IList<MovieEvent>> GetGuide(DateTime date)
@@ -69,12 +68,12 @@ public class HumoService : IHumoService
 
     private async Task<Humo> GetHumoData(DateTime date)
     {
-        var dateYMD = date.ToString("yyyy-MM-dd");
-        var url = $"/tv-gids/api/v2/broadcasts/{dateYMD}";
+        var dateString = date.ToString("yyyy-MM-dd");
+        var url = $"/tv-gids/api/v2/broadcasts/{dateString}";
 
-        logger.LogInformation("Retrieving from Humo: {Url}", url);
+        _logger.LogInformation("Retrieving from Humo: {Url}", url);
 
-        var client = httpClientFactory.CreateClient("humo");
+        var client = _httpClientFactory.CreateClient("humo");
         var response = await client.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
@@ -91,7 +90,7 @@ public class HumoService : IHumoService
         }
         catch (Exception e)
         {
-            logger.LogError(e, "First try failed, {Date}", date);
+            _logger.LogError(e, "First try failed, {Date}", date);
         }
 
         await Task.Delay(5000);
@@ -102,7 +101,7 @@ public class HumoService : IHumoService
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Second try failed, {Date}", date);
+            _logger.LogError(e, "Second try failed, {Date}", date);
 
             throw;
         }
@@ -111,12 +110,12 @@ public class HumoService : IHumoService
     private void FilterBroadcasters(DateTime date, Humo humo)
     {
         if (humo == null || humo.channels == null) return;
-        foreach (var channel in channels)
+        foreach (var channel in Channels)
             if (!humo.channels.Any(b => b != null && b.seoKey == channel))
-                logger.LogWarning("No broadcasts found for Channel {channel} on {Date}",
+                _logger.LogWarning("No broadcasts found for Channel {channel} on {Date}",
                     channel, date.ToShortDateString());
 
-        humo.channels.RemoveAll(b => b == null || !channels.Contains(b.seoKey));
+        humo.channels.RemoveAll(b => b == null || !Channels.Contains(b.seoKey));
     }
 
     private void FilterMovies(Humo humo)
@@ -229,7 +228,9 @@ public class HumoService : IHumoService
         return movies;
     }
 
-    #region JSonModel
+    #region JsonModel
+
+    // Resharper disable All
 
     [DebuggerDisplay("title = {title}")]
     private class HumoBroadcast
@@ -272,6 +273,8 @@ public class HumoService : IHumoService
     {
         public List<HumoChannel> channels { get; set; }
     }
+
+    // Resharper restore All
 
     #endregion
 }

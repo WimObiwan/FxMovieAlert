@@ -15,20 +15,20 @@ namespace FxMovies.Core.Services;
 
 public interface IImdbWatchlistFromWebService
 {
-    Task<IList<ImdbWatchlist>> GetWatchlistAsync(string ImdbUserId);
+    Task<IList<ImdbWatchlist>> GetWatchlistAsync(string imdbUserId);
 }
 
 public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<ImdbWatchlistFromWebService> logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<ImdbWatchlistFromWebService> _logger;
 
     public ImdbWatchlistFromWebService(
         ILogger<ImdbWatchlistFromWebService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IList<ImdbWatchlist>> GetWatchlistAsync(string imdbUserId)
@@ -39,7 +39,7 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 
     private async Task<JsonData> GetDocumentString(string imdbUserId)
     {
-        var client = httpClientFactory.CreateClient("imdb");
+        var client = _httpClientFactory.CreateClient("imdb");
         var response = await client.GetAsync($"/user/{imdbUserId}/watchlist?sort=date_added%2Cdesc&view=detail");
         response.EnsureSuccessStatusCode();
         // Troubleshoot: Debug console: 
@@ -73,6 +73,10 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
         }).ToList();
     }
 
+    #region JsonModel
+
+    // Resharper disable All
+
     private class JsonData
     {
         public List list { get; set; }
@@ -99,4 +103,8 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
     {
         public string title { get; set; }
     }
+
+    // Resharper restore All
+
+    #endregion
 }
