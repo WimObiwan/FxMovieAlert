@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using FileHelpers;
 using FxMovies.Core.Entities;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services;
 
@@ -16,21 +15,13 @@ public interface IImdbWatchlistFromFileService
 
 public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 {
-    private readonly ILogger<ImdbWatchlistFromFileService> _logger;
-
-    public ImdbWatchlistFromFileService(
-        ILogger<ImdbWatchlistFromFileService> logger)
-    {
-        _logger = logger;
-    }
-
     public IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>> lastImportErrors)
     {
         List<Tuple<string, string, string>> lastImportErrors2 = null;
         var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
 
         var moreErrors = 0;
-        using (var reader = new StreamReader(stream))
+        using var reader = new StreamReader(stream);
         using (engine.BeginReadStream(reader))
         {
             var result =
@@ -53,8 +44,7 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
                     }
                     catch (Exception x)
                     {
-                        if (lastImportErrors2 == null)
-                            lastImportErrors2 = new List<Tuple<string, string, string>>();
+                        lastImportErrors2 ??= new List<Tuple<string, string, string>>();
 
                         if (lastImportErrors2.Count < 25)
                             lastImportErrors2.Add(

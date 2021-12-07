@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using FxMovies.Core;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
 using FxMovies.Core.Services;
@@ -21,12 +20,12 @@ public class UserModel : PageModel
     private readonly ImdbDbContext _imdbDbContext;
     private readonly IImdbRatingsFromFileService _imdbRatingsFromFileService;
     private readonly IImdbWatchlistFromFileService _imdbWatchlistFromFileService;
-    private readonly IMovieCreationHelper _movieCreationHelper;
     private readonly MoviesDbContext _moviesDbContext;
     private readonly IUserRatingsRepository _userRatingsRepository;
     private readonly IUserWatchlistRepository _userWatchlistRepository;
 
     public readonly List<Tuple<string, string, string>> LastImportErrors = new();
+    public readonly string WarningMessage = null;
     public string ErrorMessage;
     public string ImdbUserId;
     public string LastRefreshRatingsResult;
@@ -38,7 +37,6 @@ public class UserModel : PageModel
     public DateTime? RefreshRequestTime;
     public int UserRatingCount;
     public int UserWatchListCount;
-    public string WarningMessage = null;
     public DateTime? WatchListLastDate;
     public string WatchListLastMovie;
     public string WatchListLastRefreshRatingsResult;
@@ -46,7 +44,6 @@ public class UserModel : PageModel
     public DateTime? WatchListLastRefreshTime;
 
     public UserModel(
-        IMovieCreationHelper movieCreationHelper,
         IUserRatingsRepository userRatingsRepository,
         IUserWatchlistRepository userWatchlistRepository,
         IImdbRatingsFromFileService imdbRatingsFromFileService,
@@ -54,7 +51,6 @@ public class UserModel : PageModel
         MoviesDbContext moviesDbContext,
         ImdbDbContext imdbDbContext)
     {
-        _movieCreationHelper = movieCreationHelper;
         _userRatingsRepository = userRatingsRepository;
         _userWatchlistRepository = userWatchlistRepository;
         _imdbRatingsFromFileService = imdbRatingsFromFileService;
@@ -77,9 +73,12 @@ public class UserModel : PageModel
         else if (setimdbuserid == "remove")
         {
             var user = await _moviesDbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId);
-            _moviesDbContext.UserRatings.RemoveRange(user.UserRatings);
-            _moviesDbContext.Users.Remove(user);
-            await _moviesDbContext.SaveChangesAsync();
+            if (user != null)
+            {
+                _moviesDbContext.UserRatings.RemoveRange(user.UserRatings);
+                _moviesDbContext.Users.Remove(user);
+                await _moviesDbContext.SaveChangesAsync();
+            }
 
             ImdbUserId = null;
         }
@@ -93,7 +92,7 @@ public class UserModel : PageModel
             }
             else
             {
-                ErrorMessage = string.Format("Er werd een ongeldige IMDb Gebruikers ID opgegeven: {0}.", setimdbuserid);
+                ErrorMessage = string.Format($"Er werd een ongeldige IMDb Gebruikers ID opgegeven: {setimdbuserid}.");
             }
         }
 
@@ -102,9 +101,11 @@ public class UserModel : PageModel
             var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
             if (user == null)
             {
-                user = new User();
-                user.UserId = userId;
-                user.ImdbUserId = ImdbUserId;
+                user = new User
+                {
+                    UserId = userId,
+                    ImdbUserId = ImdbUserId
+                };
                 _moviesDbContext.Users.Add(user);
             }
 
@@ -161,10 +162,11 @@ public class UserModel : PageModel
             // Missing file
             return new BadRequestResult();
 
-        var ratings = Request.Form["type"].Contains("ratings");
-        var watchlist = Request.Form["type"].Contains("watchlist");
+        var type = Request.Form["type"];
+        var ratings = type.Contains("ratings");
+        var watchlist = type.Contains("watchlist");
 
-        if (ratings ^ (watchlist == false))
+        if ((ratings ^ watchlist) == false)
             // Exactly 1 should be true
             return new BadRequestResult();
 
@@ -176,7 +178,8 @@ public class UserModel : PageModel
 
         if (ratings)
             await OnPostRatings(file);
-        else if (watchlist) await OnPostWatchlist(file);
+        else //if (watchlist)
+            await OnPostWatchlist(file);
 
         await OnGet();
 
@@ -191,12 +194,10 @@ public class UserModel : PageModel
         IEnumerable<ImdbRating> imdbRatings;
         try
         {
-            using (var stream = file.OpenReadStream())
-            {
-                imdbRatings = _imdbRatingsFromFileService.GetRatings(stream, out var lastImportErrors);
-                if (lastImportErrors != null)
-                    LastImportErrors.AddRange(lastImportErrors);
-            }
+            await using var stream = file.OpenReadStream();
+            imdbRatings = _imdbRatingsFromFileService.GetRatings(stream, out var lastImportErrors);
+            if (lastImportErrors != null)
+                LastImportErrors.AddRange(lastImportErrors);
         }
         catch (Exception x)
         {
@@ -229,13 +230,11 @@ public class UserModel : PageModel
         IEnumerable<ImdbWatchlist> imdbWatchlist;
         try
         {
-            using (var stream = file.OpenReadStream())
-            {
-                imdbWatchlist = _imdbWatchlistFromFileService.GetWatchlist(stream, out var lastImportErrors);
-                LastImportErrors.Clear();
-                if (lastImportErrors != null)
-                    LastImportErrors.AddRange(lastImportErrors);
-            }
+            await using var stream = file.OpenReadStream();
+            imdbWatchlist = _imdbWatchlistFromFileService.GetWatchlist(stream, out var lastImportErrors);
+            LastImportErrors.Clear();
+            if (lastImportErrors != null)
+                LastImportErrors.AddRange(lastImportErrors);
         }
         catch (Exception x)
         {

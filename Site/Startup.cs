@@ -58,7 +58,7 @@ public class Startup
         services.Configure<CookiePolicyOptions>(options =>
         {
             // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-            options.CheckConsentNeeded = context => true;
+            options.CheckConsentNeeded = _ => true;
             options.Secure = CookieSecurePolicy.Always;
             options.MinimumSameSitePolicy = SameSiteMode.None;
         });
@@ -111,27 +111,31 @@ public class Startup
                     OnTicketReceived = context =>
                     {
                         // Get the ClaimsIdentity
-                        var identity = context.Principal.Identity as ClaimsIdentity;
-                        if (identity != null)
+                        if (context.Principal?.Identity is ClaimsIdentity identity)
                         {
                             // Add the Name ClaimType. This is required if we want User.Identity.Name to actually return something!
-                            if (!context.Principal.HasClaim(c => c.Type == ClaimTypes.Name) &&
-                                identity.HasClaim(c => c.Type == "name"))
-                                identity.AddClaim(new Claim(ClaimTypes.Name, identity.FindFirst("name").Value));
+                            if (!context.Principal.HasClaim(c => c.Type == ClaimTypes.Name))
+                            {
+                                var name = identity.FindFirst("name")?.Value;
+                                if (name != null)
+                                    identity.AddClaim(new Claim(ClaimTypes.Name, name));
+                            }
 
                             // Check if token names are stored in Properties
-                            if (context.Properties.Items.ContainsKey(".TokenNames"))
+                            var items = context.Properties?.Items;
+                            if (items != null
+                                && items.TryGetValue(".TokenNames", out var tokenNamesString)
+                                && tokenNamesString != null)
                             {
                                 // Token names a semicolon separated
-                                var tokenNames = context.Properties.Items[".TokenNames"].Split(';');
+                                var tokenNames = tokenNamesString.Split(';');
 
                                 // Add each token value as Claim
                                 foreach (var tokenName in tokenNames)
-                                {
                                     // Tokens are stored in a Dictionary with the Key ".Token.<token name>"
-                                    var tokenValue = context.Properties.Items[$".Token.{tokenName}"];
-                                    identity.AddClaim(new Claim(tokenName, tokenValue));
-                                }
+                                    if (items.TryGetValue($".Token.{tokenName}", out var tokenValue) &&
+                                        tokenValue != null)
+                                        identity.AddClaim(new Claim(tokenName, tokenValue));
                             }
                         }
 

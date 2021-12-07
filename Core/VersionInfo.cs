@@ -15,7 +15,7 @@ public class VersionInfo : IVersionInfo
     {
         Version = assemblyForVersion
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            .InformationalVersion;
+            ?.InformationalVersion;
     }
 
     public string Version { get; }

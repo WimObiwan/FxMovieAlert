@@ -24,26 +24,34 @@ public class ImdbDbDateTimeCheck : IHealthCheck
     {
         var connectionString = _configuration.GetConnectionString("ImdbDb");
 
-        var connectionStringBuilder = new DbConnectionStringBuilder();
-        connectionStringBuilder.ConnectionString = connectionString;
+        var connectionStringBuilder = new DbConnectionStringBuilder
+        {
+            ConnectionString = connectionString
+        };
         var filePath = connectionStringBuilder["Data Source"].ToString();
-        var fileInfo = new FileInfo(filePath);
-        var lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
-        var ageDays = (DateTime.UtcNow - lastWriteTimeUtc).TotalDays;
-
         HealthStatus status;
-        if (ageDays > 92.0)
-            status = HealthStatus.Unhealthy;
-        else
-            status = HealthStatus.Healthy;
+        Dictionary<string, object> data;
+        if (filePath != null)
+        {
+            var fileInfo = new FileInfo(filePath);
+            var lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+            var ageDays = (DateTime.UtcNow - lastWriteTimeUtc).TotalDays;
 
-        var result = new HealthCheckResult(status, null, null,
-            new Dictionary<string, object>
+            status = ageDays > 92.0 ? HealthStatus.Unhealthy : HealthStatus.Healthy;
+
+            data = new Dictionary<string, object>
             {
                 { "ImdbDbLastWriteTimeUtc", lastWriteTimeUtc },
                 { "ImdbDbAgeDays", ageDays }
-            });
+            };
+        }
+        else
+        {
+            status = HealthStatus.Unhealthy;
+            data = null;
+        }
 
+        var result = new HealthCheckResult(status, null, null, data);
         return Task.FromResult(result);
     }
 }

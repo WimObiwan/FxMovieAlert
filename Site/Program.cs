@@ -34,7 +34,7 @@ public static class Program
         }
     }
 
-    public static IWebHostBuilder CreateHostBuilder(string[] args)
+    private static IWebHostBuilder CreateHostBuilder(string[] args)
     {
         return WebHost.CreateDefaultBuilder(args)
             .UseSerilog()

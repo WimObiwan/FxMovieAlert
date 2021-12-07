@@ -42,33 +42,43 @@ public class GoPlayService : IMovieEventService
             .Select(async dataProgram =>
             {
                 var link = dataProgram.link;
-                string image = image = dataProgram.images.teaser;
+                var image = dataProgram.images.teaser;
 
                 if (link != null && link.StartsWith('/'))
                     link = "https://www.goplay.be" + link;
 
-                var dataProgramDetails = await GetDataProgramDetails(link);
-
-                return new MovieEvent
+                try
                 {
-                    ExternalId = dataProgram.id,
-                    Type = 1, // 1 = movie, 2 = short movie, 3 = serie
-                    Title = dataProgram.title.Trim(),
-                    Year = null,
-                    Vod = true,
-                    Feed = MovieEvent.FeedType.FreeVod,
-                    StartTime = GetDateTime(dataProgramDetails.pageInfo.publishDate) ?? DateTime.UtcNow,
-                    EndTime = GetDateTime(dataProgramDetails.pageInfo.unpublishDate),
-                    Channel = channel,
-                    PosterS = image,
-                    PosterM = image,
-                    Duration = null,
-                    Content = dataProgramDetails.pageInfo.description,
-                    VodLink = link,
-                    AddedTime = DateTime.UtcNow
-                };
+                    var dataProgramDetails = await GetDataProgramDetails(link);
+
+                    return new MovieEvent
+                    {
+                        ExternalId = dataProgram.id,
+                        Type = 1, // 1 = movie, 2 = short movie, 3 = serie
+                        Title = dataProgram.title.Trim(),
+                        Year = null,
+                        Vod = true,
+                        Feed = MovieEvent.FeedType.FreeVod,
+                        StartTime = GetDateTime(dataProgramDetails.pageInfo.publishDate) ?? DateTime.UtcNow,
+                        EndTime = GetDateTime(dataProgramDetails.pageInfo.unpublishDate),
+                        Channel = channel,
+                        PosterS = image,
+                        PosterM = image,
+                        Duration = null,
+                        Content = dataProgramDetails.pageInfo.description,
+                        VodLink = link,
+                        AddedTime = DateTime.UtcNow
+                    };
+                }
+                catch (Exception x)
+                {
+                    _logger.LogWarning(x, "Skipping event with parsing exception, Url={link}",
+                        link);
+                    return null;
+                }
             })
-            .Select(t => t.Result)
+            .Select(t => t?.Result)
+            .Where(me => me != null)
             .ToList();
     }
 
@@ -87,7 +97,7 @@ public class GoPlayService : IMovieEventService
         var response = await client.GetAsync("/programmas/");
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
@@ -99,6 +109,9 @@ public class GoPlayService : IMovieEventService
                 var dataProgramText = e.GetAttribute("data-program");
                 try
                 {
+                    if (dataProgramText == null)
+                        throw new Exception("Entry contains no data-program");
+
                     return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
                 }
                 catch (Exception x)
@@ -118,7 +131,7 @@ public class GoPlayService : IMovieEventService
         var response = await client.GetAsync(link);
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
@@ -130,13 +143,10 @@ public class GoPlayService : IMovieEventService
             .OrderByDescending(s => s.Length)
             .FirstOrDefault();
 
-        var dataProgramDetails = JsonSerializer.Deserialize<DataProgram>(dataProgramText);
-        return dataProgramDetails;
-    }
+        if (dataProgramText == null)
+            throw new Exception("Entry contains no json");
 
-    private MovieEvent TransformDataProgram(string json)
-    {
-        return null;
+        return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
     }
 
     #region JsonModel

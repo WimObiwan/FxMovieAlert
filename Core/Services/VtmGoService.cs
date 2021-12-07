@@ -126,14 +126,16 @@ public class VtmGoService : IMovieEventService
 
     private async Task VtmGoAuthorize()
     {
-        var queryParams = new Dictionary<string, string>();
-        queryParams.Add("client_id", "vtm-go-android");
-        queryParams.Add("response_type", "id_token");
-        queryParams.Add("scope", "openid email profile address phone");
-        queryParams.Add("nonce", "55007373265");
-        queryParams.Add("sdkVersion", "0.13.1");
-        queryParams.Add("state", "dnRtLWdvLWFuZHJvaWQ=");
-        queryParams.Add("redirect_uri", "https://login2.vtm.be/continue");
+        var queryParams = new Dictionary<string, string>
+        {
+            { "client_id", "vtm-go-android" },
+            { "response_type", "id_token" },
+            { "scope", "openid email profile address phone" },
+            { "nonce", "55007373265" },
+            { "sdkVersion", "0.13.1" },
+            { "state", "dnRtLWdvLWFuZHJvaWQ=" },
+            { "redirect_uri", "https://login2.vtm.be/continue" }
+        };
         var url = QueryHelpers.AddQueryString("/authorize", queryParams);
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         var client = _httpClientFactory.CreateClient("vtmgo_login");
@@ -143,13 +145,17 @@ public class VtmGoService : IMovieEventService
 
     private async Task<string> VtmGoLogin()
     {
-        var queryParams = new Dictionary<string, string>();
-        queryParams.Add("client_id", "vtm-go-android");
+        var queryParams = new Dictionary<string, string>
+        {
+            { "client_id", "vtm-go-android" }
+        };
         var url = QueryHelpers.AddQueryString("/login", queryParams);
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        var body = new List<KeyValuePair<string, string>>();
-        body.Add(new KeyValuePair<string, string>("userName", _username));
-        body.Add(new KeyValuePair<string, string>("password", _password));
+        var body = new List<KeyValuePair<string, string>>
+        {
+            new("userName", _username),
+            new("password", _password)
+        };
         request.Content = new FormUrlEncodedContent(body);
         var client = _httpClientFactory.CreateClient("vtmgo_login");
         var response = await client.SendAsync(request);
@@ -165,7 +171,7 @@ public class VtmGoService : IMovieEventService
         response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
-        var fragment = request.RequestUri.Fragment;
+        var fragment = request.RequestUri?.Fragment;
         if (fragment == null || !fragment.StartsWith('#'))
             throw new Exception("Expected fragment in redirect URL");
         var fragmentQueryParams = QueryHelpers.ParseQuery(fragment.Substring(1));
@@ -183,6 +189,9 @@ public class VtmGoService : IMovieEventService
         var response = await client.PostAsJsonAsync("/vtmgo/tokens", body);
         response.EnsureSuccessStatusCode();
         var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
+        if (responseObject == null)
+            throw new Exception("Response is missing");
+
         return responseObject.lfvpToken;
     }
 
@@ -197,6 +206,9 @@ public class VtmGoService : IMovieEventService
         var response = await client.PostAsJsonAsync("/vtmgo/tokens/refresh", body);
         response.EnsureSuccessStatusCode();
         var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
+        if (responseObject == null)
+            throw new Exception("Response is missing");
+
         return responseObject.lfvpToken;
     }
 
@@ -212,6 +224,9 @@ public class VtmGoService : IMovieEventService
         // ==> nq = non-quoted
 
         var responseObject = await response.Content.ReadFromJsonAsync<DpgProfileResponse[]>();
+        if (responseObject == null)
+            throw new Exception("Response is missing");
+
         return responseObject[0].id;
     }
 
@@ -228,6 +243,9 @@ public class VtmGoService : IMovieEventService
         // ==> nq = non-quoted
 
         var responseObject = await response.Content.ReadFromJsonAsync<DpgCatalogResponse>();
+        if (responseObject == null)
+            throw new Exception("Response is missing");
+
         var movies = responseObject.pagedTeasers.content.Where(c => c.target.type == "MOVIE").Select(c => c.target.id)
             .ToList();
         return movies;

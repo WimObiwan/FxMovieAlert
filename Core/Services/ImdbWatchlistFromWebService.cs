@@ -9,7 +9,6 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services;
 
@@ -21,13 +20,10 @@ public interface IImdbWatchlistFromWebService
 public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<ImdbWatchlistFromWebService> _logger;
 
     public ImdbWatchlistFromWebService(
-        ILogger<ImdbWatchlistFromWebService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        _logger = logger;
         _httpClientFactory = httpClientFactory;
     }
 
@@ -47,7 +43,7 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
         // ==> nq = non-quoted
 
         string text;
-        using (var stream = await response.Content.ReadAsStreamAsync())
+        await using var stream = await response.Content.ReadAsStreamAsync();
         using (TextReader textReader = new StreamReader(stream))
         {
             text = await textReader.ReadToEndAsync();

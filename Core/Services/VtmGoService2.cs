@@ -42,7 +42,7 @@ public class VtmGoService2 : IMovieEventService
         return (await GetMovieUrls())
             .Select(async url => await GetMovieDetails(url))
             .Select(t => t.Result)
-            .Where(me => me != null && me.Duration >= 75)
+            .Where(me => me is { Duration: >= 75 })
             .ToList();
     }
 
@@ -51,7 +51,7 @@ public class VtmGoService2 : IMovieEventService
         var response = await _httpClient.GetAsync("films");
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
         return document
@@ -68,20 +68,19 @@ public class VtmGoService2 : IMovieEventService
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
         var title = document.GetElementsByClassName("detail__title")
-            .OfType<IElement>()
             .Select(e => e.Text())
             .FirstOrDefault();
 
         _logger.LogInformation($"Fetching {title}");
 
         var labels = document.GetElementsByClassName("detail__meta-label")
-            .OfType<IElement>()
-            .Select(e => e.Text().Trim());
+            .Select(e => e.Text().Trim())
+            .ToList();
 
         _logger.LogInformation($"Using labels {string.Join('/', labels)}");
 

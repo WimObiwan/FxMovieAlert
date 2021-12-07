@@ -11,8 +11,6 @@ namespace FxMovies.Site.Pages;
 
 public class AccountModel : PageModel
 {
-    public string Message { get; set; }
-
     public void OnGet()
     {
     }
@@ -50,7 +48,7 @@ public class AccountModel : PageModel
 
         // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
         Response.Headers.Remove("transfer-encoding");
-        await response.Content.CopyToAsync(Response.Body);
+        await response.Content.CopyToAsync(Response.Body, cancellationToken);
         return new EmptyResult();
     }
 }

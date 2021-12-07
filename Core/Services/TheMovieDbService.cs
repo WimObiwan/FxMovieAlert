@@ -13,8 +13,8 @@ namespace FxMovies.Core.Services;
 
 public class GetImagesResult
 {
-    public string Medium { get; set; }
-    public string Small { get; set; }
+    public string Medium { get; init; }
+    public string Small { get; init; }
 }
 
 public interface ITheMovieDbService
@@ -54,10 +54,12 @@ public class TheMovieDbService : ITheMovieDbService
         if (string.IsNullOrEmpty(_apiKey) || _certificationCountryPreference == null)
             return "";
 
-        var queryParams = new Dictionary<string, string>();
-        queryParams.Add("api_key", _apiKey);
-        queryParams.Add("language", "en-US");
-        queryParams.Add("append_to_response", "releases");
+        var queryParams = new Dictionary<string, string>
+        {
+            { "api_key", _apiKey },
+            { "language", "en-US" },
+            { "append_to_response", "releases" }
+        };
         var url = QueryHelpers.AddQueryString($"/3/movie/{imdbId}", queryParams);
         var client = _httpClientFactory.CreateClient("tmdb");
 
@@ -98,15 +100,19 @@ public class TheMovieDbService : ITheMovieDbService
     {
         // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US
 
-        var queryParams = new Dictionary<string, string>();
-        queryParams.Add("api_key", _apiKey);
-        queryParams.Add("language", "en-US");
+        var queryParams = new Dictionary<string, string>
+        {
+            { "api_key", _apiKey },
+            { "language", "en-US" }
+        };
         var url = QueryHelpers.AddQueryString($"/3/movie/{imdbId}", queryParams);
         var client = _httpClientFactory.CreateClient("tmdb");
 
         try
         {
             var movie = await client.GetFromJsonAsync<Movie>(url);
+            if (movie == null)
+                throw new Exception("Movie is missing");
 
             _logger.LogInformation("Image {ImdbId} ==> {OriginalTitle}", imdbId, movie.original_title);
 

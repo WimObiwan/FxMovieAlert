@@ -17,10 +17,10 @@ namespace FxMovies.Site.Pages;
 
 public class Record
 {
-    public MovieEvent MovieEvent { get; set; }
-    public UserRating UserRating { get; set; }
-    public UserWatchListItem UserWatchListItem { get; set; }
-    public bool Highlighted { get; set; }
+    public MovieEvent MovieEvent { get; init; }
+    public UserRating UserRating { get; init; }
+    public UserWatchListItem UserWatchListItem { get; init; }
+    public bool Highlighted { get; init; }
 }
 
 public class BroadcastsModelBase : PageModel, IFilterBarParentModel
@@ -28,10 +28,13 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     private readonly MovieEvent.FeedType _feed;
     private readonly MoviesDbContext _moviesDbContext;
     private readonly SiteOptions _siteOptions;
+
     private readonly IUsersRepository _usersRepository;
-    public int AdsInterval = 5;
+
+    //public int AdsInterval = 5;
     public bool EditImdbLinks;
-    public bool? LastRefreshSuccess;
+
+    //public bool? LastRefreshSuccess;
     public MovieEvent MovieEvent;
     public IList<Record> Records = new List<Record>();
 
@@ -47,8 +50,8 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         _usersRepository = usersRepository;
     }
 
-    public int HighlightedFilterMonthsThreshold { get; } = 36;
-    public int HighlightedFilterRatingThreshold { get; } = 8;
+    private int HighlightedFilterMonthsThreshold { get; } = 36;
+    private int HighlightedFilterRatingThreshold { get; } = 8;
     public string ImdbUserId { get; private set; }
     public DateTime? RefreshRequestTime { get; private set; }
     public DateTime? LastRefreshRatingsTime { get; private set; }
@@ -95,7 +98,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         var now = DateTime.Now;
 
-        AdsInterval = _siteOptions.AdsInterval;
+        //AdsInterval = _siteOptions.AdsInterval;
         FilterMaxDaysDefault = _siteOptions.DefaultMaxDays;
         FilterMaxDays = FilterMaxDaysDefault;
         FilterTypeMask = FilterTypeMaskDefault;
@@ -111,7 +114,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
             FilterMinRating = minrating.Value;
 
         // Only allow setting more days when authenticated
-        if (maxdays.HasValue && User.Identity.IsAuthenticated)
+        if (maxdays.HasValue && (User.Identity?.IsAuthenticated ?? false))
             FilterMaxDays = maxdays.Value;
 
         FilterNotYetRated = notyetrated;
@@ -150,7 +153,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
             {
                 RefreshRequestTime = result.RefreshRequestTime;
                 LastRefreshRatingsTime = result.LastRefreshRatingsTime;
-                LastRefreshSuccess = result.LastRefreshSuccess;
+                //LastRefreshSuccess = result.LastRefreshSuccess;
                 ImdbUserId = result.ImdbUserId;
             }
         }
@@ -248,27 +251,27 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         Records = await tmp.ToListAsync();
     }
 
-    private static Cert ParseCertification(string certification)
-    {
-        switch (certification)
-        {
-            case null:
-            case "":
-                return Cert.none;
-            case "US:G":
-                return Cert.g;
-            case "US:PG":
-                return Cert.pg;
-            case "US:PG-13":
-                return Cert.pg13;
-            case "US:R":
-                return Cert.r;
-            case "US:NC-17":
-                return Cert.nc17;
-            default:
-                return Cert.other;
-        }
-    }
+    // private static Cert ParseCertification(string certification)
+    // {
+    //     switch (certification)
+    //     {
+    //         case null:
+    //         case "":
+    //             return Cert.none;
+    //         case "US:G":
+    //             return Cert.g;
+    //         case "US:PG":
+    //             return Cert.pg;
+    //         case "US:PG-13":
+    //             return Cert.pg13;
+    //         case "US:R":
+    //             return Cert.r;
+    //         case "US:NC-17":
+    //             return Cert.nc17;
+    //         default:
+    //             return Cert.other;
+    //     }
+    // }
 
     public async Task OnGetLogin(string returnUrl = "/")
     {

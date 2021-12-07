@@ -3,33 +3,18 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core;
 using FxMovies.Core.Commands;
-using FxMovies.ImdbDB;
-using FxMovies.MoviesDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Site.Pages;
 
 public class UpdateImdbLinkModel : PageModel
 {
-    private readonly ImdbDbContext _imdbDbContext;
-    private readonly ILogger<UpdateImdbLinkModel> _logger;
-    private readonly IMovieCreationHelper _movieCreationHelper;
-    private readonly MoviesDbContext _moviesDbContext;
     private readonly IUpdateImdbLinkCommand _updateImdbLinkCommand;
 
     public UpdateImdbLinkModel(
-        ILogger<UpdateImdbLinkModel> logger,
-        MoviesDbContext moviesDbContext,
-        ImdbDbContext imdbDbContext,
-        IMovieCreationHelper movieCreationHelper,
         IUpdateImdbLinkCommand updateImdbLinkCommand)
     {
-        _logger = logger;
-        _moviesDbContext = moviesDbContext;
-        _imdbDbContext = imdbDbContext;
-        _movieCreationHelper = movieCreationHelper;
         _updateImdbLinkCommand = updateImdbLinkCommand;
     }
 

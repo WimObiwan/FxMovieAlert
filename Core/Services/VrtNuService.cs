@@ -120,6 +120,9 @@ public class VrtNuService : IMovieEventService
         // ==> nq = non-quoted
 
         var responseObject = await response.Content.ReadFromJsonAsync<SearchResult>();
+        if (responseObject == null)
+            throw new Exception("Response is missing");
+
         return responseObject.results?.FirstOrDefault();
     }
 

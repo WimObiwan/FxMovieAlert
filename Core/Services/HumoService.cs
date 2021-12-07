@@ -145,10 +145,9 @@ public class HumoService : IHumoService
 
             foreach (var broadcast in humoChannel.broadcasts)
             {
-                var description = broadcast.synopsis;
-                int? year = null;
                 // int year = broadcast.program.year;
 
+                // var description = broadcast.synopsis;
                 // description = description.Replace($" ({year})", "");
 
                 // if (broadcast.program.episodenumber != 0 && broadcast.program.episodeseason != 0)
@@ -163,16 +162,9 @@ public class HumoService : IHumoService
 
                 int type;
                 if (broadcast.IsMovie())
-                {
-                    if (broadcast.IsShort())
-                        type = 2; // short
-                    else
-                        type = 1; // movie
-                }
+                    type = broadcast.IsShort() ? 2 : 1; // 1 = movie, 2 = short
                 else
-                {
                     type = 3; // serie
-                }
 
                 string opinion = null;
                 // string opinion = broadcast.program.opinion;
@@ -191,7 +183,7 @@ public class HumoService : IHumoService
                 if (broadcast.rating.HasValue)
                 {
                     var rating = broadcast.rating.Value;
-                    if (rating > 0 && rating <= 100)
+                    if (rating is (> 0 and <= 100))
                     {
                         var stars = new string('★', rating / 20);
                         if (rating % 20 > 0)
@@ -205,12 +197,12 @@ public class HumoService : IHumoService
                     ExternalId = broadcast.uuid.ToString(),
                     Channel = channel,
                     Title = broadcast.title,
-                    Year = year,
+                    Year = null,
                     Vod = false,
                     Feed = MovieEvent.FeedType.Broadcast,
-                    StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000)
+                    StartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.from / 1000.0)
                         .ToLocalTime(),
-                    EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000)
+                    EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000.0)
                         .ToLocalTime(),
                     Duration = broadcast.duration.HasValue ? broadcast.duration.Value / 60 : null,
                     PosterS = broadcast.imageUrl,

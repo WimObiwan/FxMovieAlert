@@ -55,29 +55,25 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
         // Seems a bug to me, workaround is using a separate service scope scope.
         // https://github.com/dotnet/aspnetcore/issues/14453
 
-        using (var scope = _serviceScopeFactory.CreateScope())
-        {
-            var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
+        using var scope = _serviceScopeFactory.CreateScope();
+        var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
 
-            var count = await moviesDbContext.MovieEvents
-                .Where(me => me.Feed == _feedType)
-                .CountAsync(me =>
-                    (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&
-                    me.Type == 1);
+        var count = await moviesDbContext.MovieEvents
+            .Where(me => me.Feed == _feedType)
+            .CountAsync(me =>
+                (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&
+                me.Type == 1, cancellationToken);
 
-            HealthStatus status;
-            if (count <= (_healthCheckOptions.CheckMissingImdbLinkCount ?? 7))
-                status = HealthStatus.Healthy;
-            else
-                status = HealthStatus.Unhealthy;
+        var status = count <= (_healthCheckOptions.CheckMissingImdbLinkCount ?? 7)
+            ? HealthStatus.Healthy
+            : HealthStatus.Unhealthy;
 
-            var result = new HealthCheckResult(status, null, null,
-                new Dictionary<string, object>
-                {
-                    { "MissingImdbLinkCount", count }
-                });
+        var result = new HealthCheckResult(status, null, null,
+            new Dictionary<string, object>
+            {
+                { "MissingImdbLinkCount", count }
+            });
 
-            return result;
-        }
+        return result;
     }
 }

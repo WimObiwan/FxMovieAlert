@@ -54,11 +54,9 @@ public class PrimeVideoService : IMovieEventService
         };
 
         var movies = await GetMovieInfo();
-        DateTime dateTime;
-        if (_primeVideoServiceOptions.LocalDownloadOverride == null)
-            dateTime = DateTime.Now;
-        else
-            dateTime = new FileInfo(_primeVideoServiceOptions.LocalDownloadOverride).LastWriteTime;
+        var dateTime = _primeVideoServiceOptions.LocalDownloadOverride == null
+            ? DateTime.Now
+            : new FileInfo(_primeVideoServiceOptions.LocalDownloadOverride).LastWriteTime;
 
         var movieEvents = new List<MovieEvent>();
         foreach (var movie in movies)
@@ -126,7 +124,7 @@ public class PrimeVideoService : IMovieEventService
 
     private async Task<IList<Json.Props.Collection.Item>> GetMovieInfo()
     {
-        using var stream = await GetStream();
+        await using var stream = await GetStream();
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
@@ -138,7 +136,13 @@ public class PrimeVideoService : IMovieEventService
             .OrderByDescending(s => s.Length)
             .FirstOrDefault();
 
+        if (jsonText == null)
+            throw new Exception("Json text missing");
+
         var json = JsonSerializer.Deserialize<Json>(jsonText);
+        if (json == null)
+            throw new Exception("Json missing");
+
         var items = json.props.collections
             .SelectMany(c => c.items)
             .Where(i => i.watchlistAction?.formatCode == "mv");
