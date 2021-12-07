@@ -1,4 +1,4 @@
-namespace FxMovieAlert;
+namespace FxMovies.Core;
 
 public static class Claims
 {

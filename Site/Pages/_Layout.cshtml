@@ -1,0 +1,280 @@
+@using FxMovies.Site.Utilities
+@using Microsoft.Extensions.Options
+@using FxMovies.Site.Options
+@using FxMovies.Core
+@inject IOptions<SiteOptions> _siteOptions
+@inject IVersionInfo _versionInfo
+
+<!DOCTYPE html>
+<html>
+<head>
+    @if (!string.IsNullOrEmpty(_siteOptions.Value.SentryBrowserDsn))
+    {
+        <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" crossorigin="anonymous"></script>
+        <script>
+            Sentry.init({
+                dsn: '@_siteOptions.Value.SentryBrowserDsn',
+                whitelistUrls: [/filmoptv\.be/, /www\.filmoptv\.be/]
+            });
+        </script>
+    }
+
+    @if (!string.IsNullOrEmpty(_siteOptions.Value.GoogleAnalyticsPropertyId))
+    {
+        <!-- Global Site Tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@_siteOptions.Value.GoogleAnalyticsPropertyId"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() { dataLayer.push(arguments); }
+
+            gtag('js', new Date());
+
+            gtag('config', '@_siteOptions.Value.GoogleAnalyticsPropertyId');
+        </script>
+    }
+
+    <script>
+        function hide(selector) {
+            $(selector).fadeOut();
+        }
+    </script>
+
+    @if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(_siteOptions.Value.GoogleAdsensePublishId))
+    {
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({
+                google_ad_client: "@_siteOptions.Value.GoogleAdsensePublishId",
+                enable_page_level_ads: true
+            });
+        </script>
+    }
+
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play."/>
+    @if (ViewData.ContainsKey("og:title"))
+    {
+        <meta property="og:title" content="@ViewData["og:title"] - FilmOpTV.be"/>
+    }
+    else
+    {
+        <meta property="og:title" content="FilmOpTV.be"/>
+    }
+    <meta property="og:type" content="website"/>
+    @if (ViewData.ContainsKey("og:url"))
+    {
+        <meta property="og:url" content="@("https://www.filmoptv.be" + ViewData["og:url"])"/>
+    }
+    else
+    {
+        <meta property="og:url" content="https://www.filmoptv.be"/>
+    }
+    @if (ViewData.ContainsKey("og:image"))
+    {
+        <meta property="og:image" content="@("https://www.filmoptv.be" + ViewData["og:image"])"/>
+    }
+    else
+    {
+        <meta property="og:image" content="https://www.filmoptv.be/images/film-256x256.png"/>
+    }
+    @if (ViewData.ContainsKey("og:image:secure_url"))
+    {
+        <meta property="og:image:secure_url" content="@("https://www.filmoptv.be" + ViewData["og:image"])"/>
+    }
+    else
+    {
+        <meta property="og:image:secure_url" content="https://www.filmoptv.be/images/film-256x256.png"/>
+    }
+    @if (ViewData.ContainsKey("og:description"))
+    {
+        <meta property="og:description" content="@ViewData["og:description"]"/>
+    }
+    else
+    {
+        <meta property="og:description" content="Een overzicht van alle films op de Vlaamse zenders met informatie van IMDb. En mogelijkheid om rechtstreeks je Digicorder te programmeren via Telenet Yelo Play."/>
+    }
+
+    <title>@ViewData["Title"] - FilmOpTV.be</title>
+
+    @if (!string.IsNullOrEmpty(ViewData["Canonical"] as string))
+    {
+        <link rel="canonical" href="https://www.filmoptv.be@(ViewData["Canonical"])"/>
+    }
+
+    <!-- https://realfavicongenerator.net -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="stylesheet" async href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <meta name="theme-color" content="#ffffff">
+
+    <link rel="stylesheet" async href="~/css/site.css" asp-append-version="true"/>
+    <link rel="stylesheet" async href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.css" integrity="sha512-mG7Xo6XLlQ13JGPQLgLxI7bz8QlErrsE9rYQDRgF+6AlQHm9Tn5bh/vaIKxBmM9mULPC6yizAhEmKyGgNHCIvg==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+</head>
+<body>
+
+@if (!User.Identity.IsAuthenticated && !string.IsNullOrEmpty(_siteOptions.Value.GoogleAdsensePublishId) && !string.IsNullOrEmpty(_siteOptions.Value.GoogleAdsenseVerticleAdSlot))
+{
+    <div id="ad" class="sideBar boxLeft">
+
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <!-- FilmOpTV - vertical -->
+        <ins class="adsbygoogle"
+             style="display: inline-block; height: 600px; width: 120px;"
+             data-ad-client="@_siteOptions.Value.GoogleAdsensePublishId"
+             data-ad-slot="@_siteOptions.Value.GoogleAdsenseVerticleAdSlot">
+        </ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+
+        <br/>
+        <p class="text-muted">
+            <small>
+                <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">
+                    <span class="glyphicon glyphicon-user"></span>
+                    Inloggen
+                </a>
+                om advertenties te verbergen.
+            </small>
+        </p>
+
+    </div>
+}
+
+<script>
+    // Detect JS support
+    document.body.className = document.body.className + " js_enabled";
+
+    function TestSentry() {
+        throw "Sentry test exception!";
+    }
+</script>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a asp-page="/Index" class="navbar-brand">FilmOpTV.be</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li id="broadcasts" class="nav-item @Html.IsSelected("/Broadcasts", "active")">
+                    <a asp-page="/Broadcasts">
+                        <i class="fas fa-tv"></i>
+                        <span class="hidden-sm">&nbsp;Uitzendingen</span>
+                    </a>
+                </li>
+                <li id="freestreaming" class="nav-item @Html.IsSelected("/FreeStreaming", "active")">
+                    <a asp-page="/FreeStreaming">
+                        <i class="fas fa-play"></i>
+                        <span class="hidden-sm">&nbsp;Gratis Streaming</span>
+                    </a>
+                </li>
+                <li id="paidstreaming" class="nav-item @Html.IsSelected("/PaidStreaming", "active")">
+                    <a asp-page="/PaidStreaming">
+                        <i class="fas fa-euro-sign"></i>
+                        <span class="hidden-sm">&nbsp;Betalende Streaming</span>
+                    </a>
+                </li>
+                <li id="user" class="nav-item @Html.IsSelected("/User", "active")">
+                    <a asp-page="/User">
+                        <i class="fas fa-user-cog"></i>
+                        <span class="hidden-sm">&nbsp;Gebruiker</span>
+                    </a>
+                </li>
+                <li id="about" class="nav-item @Html.IsSelected("/About", "active")">
+                    <a asp-page="/About">
+                        <span class="glyphicon glyphicon-info-sign"></span>
+                        <span class="hidden-sm">&nbsp;Info</span>
+                    </a>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
+                    {
+                        <li>
+                            <a href="#">Admin</a>
+                        </li>
+                    }
+                    var picture = Url.Page("Account", "Avatar");
+                    <li>
+                        <a asp-page="/Account" asp-page-handler="logout" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">
+                            <!--p title="Afloggen (@User.Identity.Name)"-->
+                            @if (!string.IsNullOrEmpty(picture))
+                            {
+                                <div class="avatar">
+                                    <img src="@picture" loading="lazy" alt="avatar"/>
+                                </div>
+                            }
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li>
+                        <a asp-page="/Account" asp-page-handler="login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">
+                            <span class="glyphicon glyphicon-user"></span>
+                            &nbsp;<span class="hidden-sm">Inloggen</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<partial name="_CookieConsentPartial"/>
+
+<div class="container body-content">
+    <p class="">
+        <div id="installContainer" class="alert alert-success small-alert hidden">
+            Je kunt FilmOpTv.be nu ook installeren als <i>app</i>. Druk hiervoor op de knop
+            <button id="butInstall" type="button">
+                installeren
+            </button>
+        </div>
+    </p>
+
+    @RenderBody()
+    <hr/>
+    <footer>
+        <p class="text-muted">
+            Versie @_versionInfo.Version. Running on @_versionInfo.DotNetCoreVersion.<br/>
+            Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.
+            &copy;
+            @if (DateTime.Now.Year > 2017)
+            {
+                @: 2017-@(DateTime.Now.Year)
+            }
+            else
+            {
+                @: 2017
+            }
+            - Fox Innovations / Wim Devos
+            @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
+            {
+                <a href="#" title="Client-side javascript Sentry test" onclick="TestSentry()">&pi;</a>
+                <a href="/?m=-2" title="Server-side dotnet Core Sentry test">&pi;</a>
+            }
+        </p>
+    </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha512-oBTprMeNEKCnqfuqKd6sbvFzmFQtlXS3e0C/RGFV0hD6QzhHV+ODfaQbAlmY6/q0ubbwlAM/nCJjkrgA3waLzg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+@RenderSection("Scripts", false)
+</body>
+</html>

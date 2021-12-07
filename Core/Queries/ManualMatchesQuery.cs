@@ -1,9 +1,8 @@
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Utilities;
-using FxMovies.FxMoviesDB;
+using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Queries;
 
@@ -14,21 +13,18 @@ public interface IManualMatchesQuery
 
 public class ManualMatchesQuery : IManualMatchesQuery
 {
-    private readonly FxMoviesDbContext fxMoviesDbContext;
-    private readonly ILogger<ManualMatchesQuery> logger;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public ManualMatchesQuery(
-        ILogger<ManualMatchesQuery> logger,
-        FxMoviesDbContext fxMoviesDbContext)
+        MoviesDbContext moviesDbContext)
     {
-        this.logger = logger;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        _moviesDbContext = moviesDbContext;
     }
 
     public async Task<ManualMatch> Execute(string movieTitle)
     {
         var movieTitleNormalized = TitleNormalizer.NormalizeTitle(movieTitle);
-        var manualMatch = await fxMoviesDbContext.ManualMatches
+        var manualMatch = await _moviesDbContext.ManualMatches
             .Include(mm => mm.Movie)
             .FirstOrDefaultAsync(mm => mm.NormalizedTitle == movieTitleNormalized);
         return manualMatch;

@@ -15,26 +15,20 @@ namespace FxMovies.Core.Services;
 
 public interface IImdbRatingsFromWebService
 {
-    Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, bool getAll);
-    Task<IList<ImdbRating>> GetRatingsAsync(string ImdbUserId, DateTime? fromDateTime);
+    Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, DateTime? fromDateTime);
 }
 
 public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<ImdbRatingsFromWebService> logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<ImdbRatingsFromWebService> _logger;
 
     public ImdbRatingsFromWebService(
-        ILogger<ImdbRatingsFromWebService> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ILogger<ImdbRatingsFromWebService> logger)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
-    }
-
-    public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, bool getAll)
-    {
-        return await GetRatingsAsync(imdbUserId, getAll ? DateTime.MinValue : null);
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, DateTime? fromDateTime)
@@ -43,10 +37,8 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
         var url = $"/user/{imdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
         do
         {
-            using (var htmlDocument = await FetchHtmlDocument(url))
-            {
-                url = GetRatingsSinglePageAsync(htmlDocument, ratings);
-            }
+            using var htmlDocument = await FetchHtmlDocument(url);
+            url = GetRatingsSinglePageAsync(htmlDocument, ratings);
         } while (url != null && fromDateTime.HasValue && fromDateTime.Value < ratings.Min(r => r.Date));
 
         return ratings;
@@ -54,14 +46,14 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
 
     private async Task<IHtmlDocument> FetchHtmlDocument(string url)
     {
-        var client = httpClientFactory.CreateClient("imdb");
+        var client = _httpClientFactory.CreateClient("imdb");
         var response = await client.GetAsync(url);
         response.EnsureSuccessStatusCode();
         // Troubleshoot: Debug console: 
         //   response.Content.ReadAsStringAsync().Result,nq 
         // ==> nq = non-quoted
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         var parser = new HtmlParser();
         return await parser.ParseDocumentAsync(stream);
     }
@@ -73,32 +65,47 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
             return null;
         var elements = ratingsContainer.GetElementsByClassName("lister-item");
         foreach (var element in elements)
-        {
-            var child = element.QuerySelector("div:nth-child(1)");
-            var tt = child.Attributes["data-tconst"].Value;
-            child = element.QuerySelector("div:nth-child(2) > p:nth-child(5)");
-
-            var dateString = Regex.Replace(
-                child.InnerHtml,
-                "Rated on (.*)", "$1");
-            var date = DateTime.ParseExact(dateString, "dd MMM yyyy", CultureInfo.InvariantCulture);
-            child = element.QuerySelector("div:nth-child(2) > div:nth-child(4) > div:nth-child(2) > span:nth-child(2)");
-
-            var title = WebUtility.UrlDecode(
-                element.QuerySelector("div:nth-child(2) > h3:nth-child(2) > a:nth-child(3)").InnerHtml.Trim());
-
-            var rating = int.Parse(child.InnerHtml);
-            ratings.Add(new ImdbRating
+            try
             {
-                ImdbId = tt,
-                Rating = rating,
-                Date = date,
-                Title = title
-            });
-        }
+                var child = element.QuerySelector("div:nth-child(1)");
+                var tt = child?.Attributes["data-tconst"]?.Value;
+                if (tt == null)
+                    throw new Exception("data-tconst not found");
 
-        var nextUrl = document.QuerySelector("a.flat-button:nth-child(3)").Attributes["href"].Value;
+                child = element.QuerySelector("div:nth-child(2) > p:nth-child(5)");
+                var dateString = child?.InnerHtml;
+                if (dateString == null)
+                    throw new Exception("date not found");
+                dateString = Regex.Replace(
+                    dateString,
+                    "Rated on (.*)", "$1");
+                var date = DateTime.ParseExact(dateString, "dd MMM yyyy", CultureInfo.InvariantCulture);
 
-        return nextUrl;
+                var title = element.QuerySelector("div:nth-child(2) > h3:nth-child(2) > a:nth-child(3)")?.InnerHtml
+                    .Trim();
+                if (title == null)
+                    throw new Exception("title not found");
+                title = WebUtility.UrlDecode(title);
+
+                child = element.QuerySelector(
+                    "div:nth-child(2) > div:nth-child(4) > div:nth-child(2) > span:nth-child(2)");
+                var ratingString = child?.InnerHtml;
+                if (ratingString == null)
+                    throw new Exception("rating not found");
+                var rating = int.Parse(ratingString);
+                ratings.Add(new ImdbRating
+                {
+                    ImdbId = tt,
+                    Rating = rating,
+                    Date = date,
+                    Title = title
+                });
+            }
+            catch (Exception x)
+            {
+                _logger.LogWarning(x, "Skipping element");
+            }
+
+        return document.QuerySelector("a.flat-button:nth-child(3)")?.Attributes["href"]?.Value;
     }
 }

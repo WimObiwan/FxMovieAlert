@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using FileHelpers;
 using FxMovies.Core.Entities;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services;
 
@@ -16,21 +15,13 @@ public interface IImdbWatchlistFromFileService
 
 public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 {
-    private readonly ILogger<ImdbWatchlistFromFileService> logger;
-
-    public ImdbWatchlistFromFileService(
-        ILogger<ImdbWatchlistFromFileService> logger)
-    {
-        this.logger = logger;
-    }
-
     public IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>> lastImportErrors)
     {
         List<Tuple<string, string, string>> lastImportErrors2 = null;
         var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
 
         var moreErrors = 0;
-        using (var reader = new StreamReader(stream))
+        using var reader = new StreamReader(stream);
         using (engine.BeginReadStream(reader))
         {
             var result =
@@ -38,7 +29,7 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
                 {
                     try
                     {
-                        var _const = record.Const;
+                        var constId = record.Const;
 
                         var date = DateTime.ParseExact(record.Created,
                             new[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
@@ -46,15 +37,14 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 
                         return new ImdbWatchlist
                         {
-                            ImdbId = _const,
+                            ImdbId = constId,
                             Title = record.Title,
                             Date = date
                         };
                     }
                     catch (Exception x)
                     {
-                        if (lastImportErrors2 == null)
-                            lastImportErrors2 = new List<Tuple<string, string, string>>();
+                        lastImportErrors2 ??= new List<Tuple<string, string, string>>();
 
                         if (lastImportErrors2.Count < 25)
                             lastImportErrors2.Add(
@@ -80,7 +70,13 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
             return result;
         }
     }
+
+    #region CsvModel
+
+    // Resharper disable All
+
 #pragma warning disable CS0649
+
     [IgnoreFirst]
     [DelimitedRecord(",")]
     private class ImdbUserWatchlistRecord
@@ -120,4 +116,8 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
         [FieldQuoted] public string Year;
         [FieldQuoted] public string YourRating;
     }
+
+    // Resharper restore All
+
+    #endregion
 }

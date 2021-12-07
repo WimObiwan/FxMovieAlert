@@ -14,18 +14,18 @@ namespace FxMovies.Core.Services;
 
 public class VtmGoService2 : IMovieEventService
 {
-    private readonly Channel channel;
-    private readonly HttpClient httpClient;
-    private readonly ILogger<VtmGoService2> logger;
+    private readonly Channel _channel;
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<VtmGoService2> _logger;
 
     public VtmGoService2(
         ILogger<VtmGoService2> logger,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        httpClient = httpClientFactory.CreateClient("vtmgo");
+        _logger = logger;
+        _httpClient = httpClientFactory.CreateClient("vtmgo");
 
-        channel = new Channel
+        _channel = new Channel
         {
             Code = "vtmgo",
             Name = "VTM GO",
@@ -42,16 +42,16 @@ public class VtmGoService2 : IMovieEventService
         return (await GetMovieUrls())
             .Select(async url => await GetMovieDetails(url))
             .Select(t => t.Result)
-            .Where(me => me != null && me.Duration >= 75)
+            .Where(me => me is { Duration: >= 75 })
             .ToList();
     }
 
     private async Task<IEnumerable<string>> GetMovieUrls()
     {
-        var response = await httpClient.GetAsync("films");
+        var response = await _httpClient.GetAsync("films");
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
         return document
@@ -65,25 +65,24 @@ public class VtmGoService2 : IMovieEventService
 
     private async Task<MovieEvent> GetMovieDetails(string url)
     {
-        var response = await httpClient.GetAsync(url);
+        var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
         var title = document.GetElementsByClassName("detail__title")
-            .OfType<IElement>()
             .Select(e => e.Text())
             .FirstOrDefault();
 
-        logger.LogInformation($"Fetching {title}");
+        _logger.LogInformation($"Fetching {title}");
 
         var labels = document.GetElementsByClassName("detail__meta-label")
-            .OfType<IElement>()
-            .Select(e => e.Text().Trim());
+            .Select(e => e.Text().Trim())
+            .ToList();
 
-        logger.LogInformation($"Using labels {string.Join('/', labels)}");
+        _logger.LogInformation($"Using labels {string.Join('/', labels)}");
 
         var year = labels
             .Select(l => Regex.Match(l, @"^(\d{4})$"))
@@ -142,7 +141,7 @@ public class VtmGoService2 : IMovieEventService
             Content = description,
             PosterS = image,
             PosterM = image,
-            Channel = channel,
+            Channel = _channel,
             Duration = durationMin,
             Vod = true,
             Feed = MovieEvent.FeedType.FreeVod,

@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>FxMovies.Core</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FxMoviesDB\FxMoviesDB.csproj" />
+    <ProjectReference Include="..\MoviesDB\MoviesDB.csproj" />
     <ProjectReference Include="..\ImdbDB\ImdbDB.csproj" />
     <ProjectReference Include="..\Core.Entities\Core.Entities.csproj" />
   </ItemGroup>

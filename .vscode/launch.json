@@ -9,9 +9,9 @@
            "type": "coreclr",
            "request": "launch",
            "preLaunchTask": "build",
-           "program": "${workspaceRoot}/FxMovieAlert/bin/Debug/net6.0/FxMovieAlert.dll",
+           "program": "${workspaceRoot}/Site/bin/Debug/net6.0/Site.dll",
            "args": [],
-           "cwd": "${workspaceRoot}/FxMovieAlert",
+           "cwd": "${workspaceRoot}/Site",
            "stopAtEntry": false,
            "launchBrowser": {
                "enabled": true,

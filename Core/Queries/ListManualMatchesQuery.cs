@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
-using FxMovies.FxMoviesDB;
+using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Queries;
 
@@ -14,20 +13,17 @@ public interface IListManualMatchesQuery
 
 public class ListManualMatchesQuery : IListManualMatchesQuery
 {
-    private readonly FxMoviesDbContext fxMoviesDbContext;
-    private readonly ILogger<ListManualMatchesQuery> logger;
+    private readonly MoviesDbContext _moviesDbContext;
 
     public ListManualMatchesQuery(
-        ILogger<ListManualMatchesQuery> logger,
-        FxMoviesDbContext fxMoviesDbContext)
+        MoviesDbContext moviesDbContext)
     {
-        this.logger = logger;
-        this.fxMoviesDbContext = fxMoviesDbContext;
+        _moviesDbContext = moviesDbContext;
     }
 
     public async Task<List<ManualMatch>> Execute()
     {
-        return await fxMoviesDbContext.ManualMatches
+        return await _moviesDbContext.ManualMatches
             .Include(mm => mm.Movie)
             .ToListAsync();
     }

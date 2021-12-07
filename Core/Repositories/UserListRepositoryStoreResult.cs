@@ -2,8 +2,8 @@ namespace FxMovies.Core.Repositories;
 
 public class UserListRepositoryStoreResult
 {
-    public int ExistingCount { get; internal set; }
-    public int NewCount { get; internal set; }
-    public int RemovedCount { get; internal set; }
-    public string LastTitle { get; internal set; }
+    public int ExistingCount { get; internal init; }
+    public int NewCount { get; internal init; }
+    public int RemovedCount { get; internal init; }
+    public string LastTitle { get; internal init; }
 }

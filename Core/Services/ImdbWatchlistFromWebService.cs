@@ -9,26 +9,22 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services;
 
 public interface IImdbWatchlistFromWebService
 {
-    Task<IList<ImdbWatchlist>> GetWatchlistAsync(string ImdbUserId);
+    Task<IList<ImdbWatchlist>> GetWatchlistAsync(string imdbUserId);
 }
 
 public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<ImdbWatchlistFromWebService> logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public ImdbWatchlistFromWebService(
-        ILogger<ImdbWatchlistFromWebService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        this.logger = logger;
-        this.httpClientFactory = httpClientFactory;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IList<ImdbWatchlist>> GetWatchlistAsync(string imdbUserId)
@@ -39,7 +35,7 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 
     private async Task<JsonData> GetDocumentString(string imdbUserId)
     {
-        var client = httpClientFactory.CreateClient("imdb");
+        var client = _httpClientFactory.CreateClient("imdb");
         var response = await client.GetAsync($"/user/{imdbUserId}/watchlist?sort=date_added%2Cdesc&view=detail");
         response.EnsureSuccessStatusCode();
         // Troubleshoot: Debug console: 
@@ -47,7 +43,7 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
         // ==> nq = non-quoted
 
         string text;
-        using (var stream = await response.Content.ReadAsStreamAsync())
+        await using var stream = await response.Content.ReadAsStreamAsync();
         using (TextReader textReader = new StreamReader(stream))
         {
             text = await textReader.ReadToEndAsync();
@@ -72,6 +68,10 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
             };
         }).ToList();
     }
+
+    #region JsonModel
+
+    // Resharper disable All
 
     private class JsonData
     {
@@ -99,4 +99,8 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
     {
         public string title { get; set; }
     }
+
+    // Resharper restore All
+
+    #endregion
 }

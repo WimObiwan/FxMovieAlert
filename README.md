@@ -12,7 +12,7 @@ dotnet tool install --global JetBrains.ReSharper.GlobalTools --version 2021.3.0-
 # Cleanup
 jb cleanupcode ./FxMovieAlert.sln
 # Inspect
-jb inspectcode -o=/tmp/test.xml ./FxMovieAlert.sln
+jb inspectcode -f=html -o=/tmp/inspectcode.html ./FxMovieAlert.sln
 # Duplicate finder
-jb dupfinder ./FxMovieAlert.slnjb dupfinder ./FxMovieAlert.sln
+jb dupfinder ./FxMovieAlert.sln
 ```

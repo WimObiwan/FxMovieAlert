@@ -4,8 +4,8 @@ using CommandLine;
 using FxMovies.Core;
 using FxMovies.Core.Commands;
 using FxMovies.Core.Queries;
-using FxMovies.FxMoviesDB;
 using FxMovies.ImdbDB;
+using FxMovies.MoviesDB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -30,80 +30,78 @@ internal class Program
 
         try
         {
-            using (var host = CreateHostBuilder(args).Build())
+            using var host = CreateHostBuilder(args).Build();
+            var versionInfo = host.Services.GetRequiredService<IVersionInfo>();
+            var logger = host.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("Version {Version}, running on {DotNetCoreVersion}", versionInfo.Version,
+                versionInfo.DotNetCoreVersion);
+
+            var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
+            using (var scope = serviceProvider.CreateScope())
             {
-                var versionInfo = host.Services.GetRequiredService<IVersionInfo>();
-                var logger = host.Services.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation("Version {Version}, running on {DotNetCoreVersion}", versionInfo.Version,
-                    versionInfo.DotNetCoreVersion);
+                var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
+                //await moviesDbContext.Database.EnsureCreatedAsync();
+                await moviesDbContext.Database.MigrateAsync();
+            }
 
-                var serviceProvider = host.Services.GetRequiredService<IServiceProvider>();
-                using (var scope = serviceProvider.CreateScope())
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var imdbDbContext = scope.ServiceProvider.GetRequiredService<ImdbDbContext>();
+                await imdbDbContext.Database.EnsureCreatedAsync();
+                //await imdbDbContext.Database.MigrateAsync();
+            }
+
+            using (SentrySdk.Init(o =>
+                   {
+                       o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
+                       // When configuring for the first time, to see what the SDK is doing:
+                       //o.Debug = true;
+                       // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+                       // We recommend adjusting this value in production.
+                       o.TracesSampleRate = 1.0;
+                   }))
+            {
+                try
                 {
-                    var fxMoviesDbContext = scope.ServiceProvider.GetRequiredService<FxMoviesDbContext>();
-                    //await fxMoviesDbContext.Database.EnsureCreatedAsync();
-                    await fxMoviesDbContext.Database.MigrateAsync();
+                    return await Parser.Default
+                        .ParseArguments<
+                            HelpOptions,
+                            GenerateImdbDatabaseOptions,
+                            UpdateImdbUserDataOptions,
+                            UpdateAllImdbUsersDataOptions,
+                            AutoUpdateImdbUserDataOptions,
+                            UpdateEpgOptions,
+                            ListManualMatchesOptions,
+                            StatsOptions,
+                            // TwitterBotOptions,
+                            // ManualOptions,
+                            TestImdbMatchingOptions,
+                            TestSentryOptions
+                        >(args)
+                        .MapResult(
+                            (HelpOptions _) => RunHelp(),
+                            (GenerateImdbDatabaseOptions _) =>
+                                host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Execute(),
+                            (UpdateImdbUserDataOptions o) =>
+                                host.Services.GetRequiredService<IUpdateImdbUserDataCommand>()
+                                    .Execute(o.ImdbUserId, o.UpdateAllRatings),
+                            (UpdateAllImdbUsersDataOptions _) => host.Services
+                                .GetRequiredService<IUpdateAllImdbUsersDataCommand>().Execute(),
+                            (AutoUpdateImdbUserDataOptions _) => host.Services
+                                .GetRequiredService<IAutoUpdateImdbUserDataCommand>().Execute(),
+                            (UpdateEpgOptions _) => host.Services.GetRequiredService<IUpdateEpgCommand>().Execute(),
+                            (ListManualMatchesOptions _) => RunListManualMatches(host),
+                            (StatsOptions _) => RunStats(host),
+                            // (TwitterBotOptions o) => Run(o),
+                            // (ManualOptions o) => Run(o),
+                            (TestImdbMatchingOptions o) => RunTestImdbMatching(host, o),
+                            (TestSentryOptions _) => RunTestSentry(),
+                            _ => Task.FromResult(1));
                 }
-
-                using (var scope = serviceProvider.CreateScope())
+                catch (Exception x)
                 {
-                    var imdbDbContext = scope.ServiceProvider.GetRequiredService<ImdbDbContext>();
-                    await imdbDbContext.Database.EnsureCreatedAsync();
-                    //await imdbDbContext.Database.MigrateAsync();
-                }
-
-                using (SentrySdk.Init(o =>
-                       {
-                           o.Dsn = "https://3181503fa0264cdb827506614c8973f2@o210563.ingest.sentry.io/1335361";
-                           // When configuring for the first time, to see what the SDK is doing:
-                           //o.Debug = true;
-                           // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-                           // We recommend adjusting this value in production.
-                           o.TracesSampleRate = 1.0;
-                       }))
-                {
-                    try
-                    {
-                        return await Parser.Default
-                            .ParseArguments<
-                                HelpOptions,
-                                GenerateImdbDatabaseOptions,
-                                UpdateImdbUserDataOptions,
-                                UpdateAllImdbUsersDataOptions,
-                                AutoUpdateImdbUserDataOptions,
-                                UpdateEpgOptions,
-                                ListManualMatchesOptions,
-                                StatsOptions,
-                                // TwitterBotOptions,
-                                // ManualOptions,
-                                TestImdbMatchingOptions,
-                                TestSentryOptions
-                            >(args)
-                            .MapResult(
-                                (HelpOptions o) => Run(o),
-                                (GenerateImdbDatabaseOptions o) =>
-                                    host.Services.GetRequiredService<IGenerateImdbDatabaseCommand>().Execute(),
-                                (UpdateImdbUserDataOptions o) =>
-                                    host.Services.GetRequiredService<IUpdateImdbUserDataCommand>()
-                                        .Execute(o.ImdbUserId, o.UpdateAllRatings),
-                                (UpdateAllImdbUsersDataOptions o) => host.Services
-                                    .GetRequiredService<IUpdateAllImdbUsersDataCommand>().Execute(),
-                                (AutoUpdateImdbUserDataOptions o) => host.Services
-                                    .GetRequiredService<IAutoUpdateImdbUserDataCommand>().Execute(),
-                                (UpdateEpgOptions o) => host.Services.GetRequiredService<IUpdateEpgCommand>().Execute(),
-                                (ListManualMatchesOptions o) => Run(host, o),
-                                (StatsOptions o) => Run(host, o),
-                                // (TwitterBotOptions o) => Run(o),
-                                // (ManualOptions o) => Run(o),
-                                (TestImdbMatchingOptions o) => Run(host, o),
-                                (TestSentryOptions o) => Run(o),
-                                errs => Task.FromResult(1));
-                    }
-                    catch (Exception x)
-                    {
-                        SentrySdk.CaptureException(x);
-                        throw;
-                    }
+                    SentrySdk.CaptureException(x);
+                    throw;
                 }
             }
         }
@@ -134,7 +132,7 @@ internal class Program
             .UseStartup<Startup>();
     }
 
-    private static Task<int> Run(HelpOptions options)
+    private static Task<int> RunHelp()
     {
         return Task.FromResult(0);
     }
@@ -151,7 +149,7 @@ internal class Program
     //     return 0;
     // }
 
-    private static async Task<int> Run(IHost host, ListManualMatchesOptions o)
+    private static async Task<int> RunListManualMatches(IHost host)
     {
         var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
@@ -167,7 +165,7 @@ internal class Program
         return 0;
     }
 
-    private static async Task<int> Run(IHost host, StatsOptions o)
+    private static async Task<int> RunStats(IHost host)
     {
         var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
@@ -186,7 +184,7 @@ internal class Program
         return 0;
     }
 
-    private static async Task<int> Run(IHost host, TestImdbMatchingOptions o)
+    private static async Task<int> RunTestImdbMatching(IHost host, TestImdbMatchingOptions o)
     {
         var movieTitle = o.Title;
         var movieReleaseYear = o.Year;
@@ -206,16 +204,16 @@ internal class Program
         return 1;
     }
 
-    private static Task<int> Run(TestSentryOptions options)
+    private static Task<int> RunTestSentry()
     {
         throw new Exception("Test Sentry");
     }
 
-    public class TemporaryFxMoviesDbContextFactory : IDesignTimeDbContextFactory<FxMoviesDbContext>
+    public class TemporaryFxMoviesDbContextFactory : IDesignTimeDbContextFactory<MoviesDbContext>
     {
-        public FxMoviesDbContext CreateDbContext(string[] args)
+        public MoviesDbContext CreateDbContext(string[] args)
         {
-            var builder = new DbContextOptionsBuilder<FxMoviesDbContext>();
+            var builder = new DbContextOptionsBuilder<MoviesDbContext>();
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", false, false)
@@ -226,7 +224,7 @@ internal class Program
             var connectionString = configuration.GetConnectionString("FxMoviesDb");
 
             builder.UseSqlite(connectionString);
-            return new FxMoviesDbContext(builder.Options);
+            return new MoviesDbContext(builder.Options);
         }
     }
 
