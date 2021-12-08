@@ -167,10 +167,7 @@ public partial class FilterBar
         StringBuilder sb = null;
         if ((cert & Cert.none) != 0)
         {
-            if (sb == null)
-                sb = new StringBuilder();
-            else
-                sb.Append(",");
+            sb = new StringBuilder();
             sb.Append("Zonder");
         }
 
