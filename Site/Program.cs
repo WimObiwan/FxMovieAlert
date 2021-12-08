@@ -90,8 +90,6 @@ public static class Program
             options.MinimumSameSitePolicy = SameSiteMode.None;
         });
 
-        services.AddFxMoviesAuthentication(configuration);
-
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders =
@@ -111,6 +109,7 @@ public static class Program
 
         services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
 
+        services.AddFxMoviesAuthentication(configuration.GetSection(Auth0Options.Position).Get<Auth0Options>());
         services.AddFxMoviesHealthChecks(configuration);
         services.AddFxMoviesCore(configuration, typeof(Program).Assembly);
     }

@@ -1,11 +1,11 @@
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using FxMovies.Site.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FxMovies.Site;
@@ -13,7 +13,7 @@ namespace FxMovies.Site;
 internal static class AuthenticationApplicationBuilderExtensions
 {
     public static IServiceCollection AddFxMoviesAuthentication(this IServiceCollection services,
-        IConfiguration configuration)
+        Auth0Options auth0Options)
     {
         services.AddAuthentication(options =>
             {
@@ -35,11 +35,11 @@ internal static class AuthenticationApplicationBuilderExtensions
             .AddOpenIdConnect("Auth0", options =>
             {
                 // Set the authority to your Auth0 domain
-                options.Authority = $"https://{configuration["Auth0:Domain"]}";
+                options.Authority = $"https://{auth0Options.Domain}";
 
                 // Configure the Auth0 Client ID and Client Secret
-                options.ClientId = configuration["Auth0:ClientId"];
-                options.ClientSecret = configuration["Auth0:ClientSecret"];
+                options.ClientId = auth0Options.ClientId;
+                options.ClientSecret = auth0Options.ClientSecret;
 
                 // Set response type to code
                 options.ResponseType = "code";
@@ -62,7 +62,7 @@ internal static class AuthenticationApplicationBuilderExtensions
                 {
                     OnTicketReceived = OnTicketReceived,
                     OnRedirectToIdentityProviderForSignOut =
-                        ctx => OnRedirectToIdentityProviderForSignOut(ctx, configuration)
+                        ctx => OnRedirectToIdentityProviderForSignOut(ctx, auth0Options)
                 };
             });
 
@@ -103,10 +103,10 @@ internal static class AuthenticationApplicationBuilderExtensions
         return Task.CompletedTask;
     }
 
-    private static Task OnRedirectToIdentityProviderForSignOut(RedirectContext context, IConfiguration configuration)
+    private static Task OnRedirectToIdentityProviderForSignOut(RedirectContext context, Auth0Options auth0Options)
     {
         var logoutUri =
-            $"https://{configuration["Auth0:Domain"]}/v2/logout?client_id={configuration["Auth0:ClientId"]}";
+            $"https://{auth0Options.Domain}/v2/logout?client_id={auth0Options.ClientId}";
 
         var postLogoutUri = context.Properties.RedirectUri;
         if (!string.IsNullOrEmpty(postLogoutUri))
