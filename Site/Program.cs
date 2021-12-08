@@ -1,5 +1,6 @@
-using System;
-using Microsoft.AspNetCore;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -9,7 +10,7 @@ namespace FxMovies.Site;
 
 public static class Program
 {
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -20,7 +21,7 @@ public static class Program
         try
         {
             Log.Information("Starting web host");
-            CreateHostBuilder(args).Build().Run();
+            await CreateWebApplication(args).RunAsync();
             return 0;
         }
         catch (Exception ex)
@@ -34,19 +35,23 @@ public static class Program
         }
     }
 
-    private static IWebHostBuilder CreateHostBuilder(string[] args)
+    private static WebApplication CreateWebApplication(string[] args)
     {
-        return WebHost.CreateDefaultBuilder(args)
-            .UseSerilog()
-            .ConfigureAppConfiguration((hostingContext, config) =>
-            {
-                config
-                    .AddJsonFile("appsettings.json", false, false)
-                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, false)
-                    .AddJsonFile("appsettings.Local.json", true, false)
-                    .AddEnvironmentVariables();
-            })
-            .UseSentry()
-            .UseStartup<Startup>();
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Configuration.AddJsonFile("appsettings.Local.json", true, false);
+
+        builder.WebHost.UseSerilog();
+        builder.WebHost.UseSentry();
+
+        // Manually create an instance of the Startup class
+        var startup = new Startup(builder.Configuration, builder.Environment);
+        startup.ConfigureServices(builder.Services);
+
+        var webApplication = builder.Build();
+
+        startup.Configure(webApplication);
+
+        return webApplication;
     }
 }
