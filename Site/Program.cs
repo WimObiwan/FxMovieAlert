@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using FxMovies.Core;
-using FxMovies.Core.Entities;
 using FxMovies.ImdbDB;
 using FxMovies.MoviesDB;
 using FxMovies.Site.HealthChecks;
@@ -22,7 +19,6 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using Serilog;
@@ -83,9 +79,6 @@ public static class Program
     private static void ConfigureServices(IServiceCollection services, IWebHostEnvironment environment,
         IConfiguration configuration)
     {
-        HealthCheckOptions _healthCheckOptions = new();
-        configuration.GetSection(HealthCheckOptions.Position).Bind(_healthCheckOptions);
-
         var pathToCryptoKeys = Path.Join(environment.ContentRootPath, "dp_keys");
         Directory.CreateDirectory(pathToCryptoKeys);
         services.AddDataProtection()
@@ -214,41 +207,6 @@ public static class Program
                 ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
         });
 
-        if (_healthCheckOptions.Uri != null)
-            services.AddHealthChecks()
-                .AddSqlite(
-                    configuration.GetConnectionString("FxMoviesDB"),
-                    name: "sqlite-FxMoviesDB")
-                // .AddSqlite(
-                //     sqliteConnectionString: configuration.GetConnectionString("FxMoviesHistoryDb"), 
-                //     name: "sqlite-FxMoviesHistoryDb")
-                .AddSqlite(
-                    configuration.GetConnectionString("ImdbDb"),
-                    name: "sqlite-ImdbDb")
-                .AddIdentityServer(
-                    new Uri($"https://{configuration["Auth0:Domain"]}"),
-                    "idsvr-Auth0")
-                .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", _healthCheckOptions, MovieEvent.FeedType.Broadcast)
-                .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", _healthCheckOptions, MovieEvent.FeedType.FreeVod)
-                .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", _healthCheckOptions, MovieEvent.FeedType.PaidVod)
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", _healthCheckOptions,
-                    MovieEvent.FeedType.FreeVod,
-                    "vtmgo")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", _healthCheckOptions,
-                    MovieEvent.FeedType.FreeVod,
-                    "vrtnu")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", _healthCheckOptions,
-                    MovieEvent.FeedType.FreeVod, "goplay")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", _healthCheckOptions,
-                    MovieEvent.FeedType.PaidVod, "primevideo")
-                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", MovieEvent.FeedType.Broadcast)
-                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-FreeStreaming-missingImdbLink", MovieEvent.FeedType.FreeVod)
-                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)
-                .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime")
-                .AddCheck<SystemInfoCheck>("SystemInfo");
-
-        //services.AddHealthChecksUI();
-
         // Add framework services.
         services.AddRazorPages();
 
@@ -262,14 +220,12 @@ public static class Program
 
         services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
 
+        services.AddFxMoviesHealthChecks(configuration);
         services.AddFxMoviesCore(configuration, typeof(Program).Assembly);
     }
 
     private static void ConfigureMiddleware(WebApplication app)
     {
-        HealthCheckOptions _healthCheckOptions = new();
-        app.Configuration.GetSection(HealthCheckOptions.Position).Bind(_healthCheckOptions);
-
         // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-2.1
         app.UseForwardedHeaders();
 
@@ -319,19 +275,7 @@ public static class Program
 
         app.UseAuthentication();
 
-        if (_healthCheckOptions.Uri != null)
-            app.UseHealthChecks(_healthCheckOptions.Uri,
-                new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-                {
-                    Predicate = _ => true,
-                    //ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                    ResponseWriter = WriteZabbixResponse
-                });
-        // app.UseHealthChecksUI(o => 
-        // {
-        //     o.UIPath = "/hc-ui";
-        //     o.ApiPath = "/hc";
-        // });
+        app.UseFxMoviesHealthChecks();
 
         app.UseRouting();
 
@@ -348,50 +292,4 @@ public static class Program
             });
         });
     }
-
-    private static async Task WriteZabbixResponse(HttpContext httpContext, HealthReport result)
-    {
-        httpContext.Response.ContentType = "application/json";
-
-        var zabbixResponse = new ZabbixResponse
-        {
-            status = (int)result.Status,
-            statusText = result.Status.ToString(),
-            results = result.Entries.Select(pair =>
-                new ZabbixResponse.ResultItem
-                {
-                    name = pair.Key,
-                    status = (int)pair.Value.Status,
-                    statusText = pair.Value.Status.ToString(),
-                    description = pair.Value.Description,
-                    data = pair.Value.Data.ToDictionary(s => s.Key, s => s.Value)
-                }).ToList()
-        };
-
-        await httpContext.Response.WriteAsJsonAsync(zabbixResponse);
-    }
-
-    #region ZabbixResponse JsonModel
-
-    // Resharper disable All
-
-    private class ZabbixResponse
-    {
-        public int status { get; set; }
-        public string statusText { get; set; }
-        public List<ResultItem> results { get; set; }
-
-        public class ResultItem
-        {
-            public string name { get; set; }
-            public int status { get; set; }
-            public string statusText { get; set; }
-            public string description { get; set; }
-            public IDictionary<string, object> data { get; set; }
-        }
-    }
-
-    // Resharper restore All
-
-    #endregion
 }
