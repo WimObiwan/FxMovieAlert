@@ -41,7 +41,6 @@ public static class Program
             .ConfigureAppConfiguration((hostingContext, config) =>
             {
                 config
-                    //.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                     .AddJsonFile("appsettings.json", false, false)
                     .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, false)
                     .AddJsonFile("appsettings.Local.json", true, false)
