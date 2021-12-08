@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -47,15 +47,7 @@ public static class Program
                     .AddJsonFile("appsettings.Local.json", true, false)
                     .AddEnvironmentVariables();
             })
-            .UseSentry(o =>
-            {
-                o.Dsn = "https://44d07a7cb1df484ca9a745af1ca94a2f@o210563.ingest.sentry.io/1335368";
-                // When configuring for the first time, to see what the SDK is doing:
-                // o.Debug = true;
-                // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-                // We recommend adjusting this value in production.
-                o.TracesSampleRate = 1.0;
-            })
+            .UseSentry()
             .UseStartup<Startup>();
     }
 }
