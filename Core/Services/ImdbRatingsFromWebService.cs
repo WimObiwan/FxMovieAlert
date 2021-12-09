@@ -68,30 +68,22 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
             try
             {
                 var child = element.QuerySelector("div:nth-child(1)");
-                var tt = child?.Attributes["data-tconst"]?.Value;
-                if (tt == null)
-                    throw new Exception("data-tconst not found");
+                var tt = child?.Attributes["data-tconst"]?.Value ?? throw new Exception("data-tconst not found");
 
                 child = element.QuerySelector("div:nth-child(2) > p:nth-child(5)");
-                var dateString = child?.InnerHtml;
-                if (dateString == null)
-                    throw new Exception("date not found");
+                var dateString = child?.InnerHtml ?? throw new Exception("date not found");
                 dateString = Regex.Replace(
                     dateString,
                     "Rated on (.*)", "$1");
                 var date = DateTime.ParseExact(dateString, "dd MMM yyyy", CultureInfo.InvariantCulture);
 
-                var title = element.QuerySelector("div:nth-child(2) > h3:nth-child(2) > a:nth-child(3)")?.InnerHtml
-                    .Trim();
-                if (title == null)
-                    throw new Exception("title not found");
+                var title = element.QuerySelector("div:nth-child(2) > h3:nth-child(2) > a:nth-child(3)")
+                    ?.InnerHtml.Trim() ?? throw new Exception("title not found");
                 title = WebUtility.UrlDecode(title);
 
                 child = element.QuerySelector(
                     "div:nth-child(2) > div:nth-child(4) > div:nth-child(2) > span:nth-child(2)");
-                var ratingString = child?.InnerHtml;
-                if (ratingString == null)
-                    throw new Exception("rating not found");
+                var ratingString = child?.InnerHtml ?? throw new Exception("rating not found");
                 var rating = int.Parse(ratingString);
                 ratings.Add(new ImdbRating
                 {

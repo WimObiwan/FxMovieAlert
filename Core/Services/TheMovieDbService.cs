@@ -110,9 +110,7 @@ public class TheMovieDbService : ITheMovieDbService
 
         try
         {
-            var movie = await client.GetFromJsonAsync<Movie>(url);
-            if (movie == null)
-                throw new Exception("Movie is missing");
+            var movie = await client.GetFromJsonAsync<Movie>(url) ?? throw new Exception("Movie is missing");
 
             _logger.LogInformation("Image {ImdbId} ==> {OriginalTitle}", imdbId, movie.original_title);
 

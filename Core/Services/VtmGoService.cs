@@ -188,10 +188,8 @@ public class VtmGoService : IMovieEventService
         var client = _httpClientFactory.CreateClient("vtmgo_dpg");
         var response = await client.PostAsJsonAsync("/vtmgo/tokens", body);
         response.EnsureSuccessStatusCode();
-        var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
-        if (responseObject == null)
-            throw new Exception("Response is missing");
-
+        var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>() ??
+                             throw new Exception("Response is missing");
         return responseObject.lfvpToken;
     }
 
@@ -205,10 +203,8 @@ public class VtmGoService : IMovieEventService
         var client = _httpClientFactory.CreateClient("vtmgo_dpg");
         var response = await client.PostAsJsonAsync("/vtmgo/tokens/refresh", body);
         response.EnsureSuccessStatusCode();
-        var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>();
-        if (responseObject == null)
-            throw new Exception("Response is missing");
-
+        var responseObject = await response.Content.ReadFromJsonAsync<DpgTokenResponse>() ??
+                             throw new Exception("Response is missing");
         return responseObject.lfvpToken;
     }
 
@@ -223,10 +219,8 @@ public class VtmGoService : IMovieEventService
         //   response.Content.ReadAsStringAsync().Result,nq 
         // ==> nq = non-quoted
 
-        var responseObject = await response.Content.ReadFromJsonAsync<DpgProfileResponse[]>();
-        if (responseObject == null)
-            throw new Exception("Response is missing");
-
+        var responseObject = await response.Content.ReadFromJsonAsync<DpgProfileResponse[]>() ??
+                             throw new Exception("Response is missing");
         return responseObject[0].id;
     }
 
@@ -242,10 +236,8 @@ public class VtmGoService : IMovieEventService
         //   response.Content.ReadAsStringAsync().Result,nq 
         // ==> nq = non-quoted
 
-        var responseObject = await response.Content.ReadFromJsonAsync<DpgCatalogResponse>();
-        if (responseObject == null)
-            throw new Exception("Response is missing");
-
+        var responseObject = await response.Content.ReadFromJsonAsync<DpgCatalogResponse>() ??
+                             throw new Exception("Response is missing");
         var movies = responseObject.pagedTeasers.content.Where(c => c.target.type == "MOVIE").Select(c => c.target.id)
             .ToList();
         return movies;

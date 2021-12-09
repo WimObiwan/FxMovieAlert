@@ -106,12 +106,11 @@ public class GoPlayService : IMovieEventService
             .Where(e => e.GetAttribute("data-category") == "5286") // 5286 = Film
             .Select(e =>
             {
-                var dataProgramText = e.GetAttribute("data-program");
+                string dataProgramText = null;
                 try
                 {
-                    if (dataProgramText == null)
-                        throw new Exception("Entry contains no data-program");
-
+                    dataProgramText = e.GetAttribute("data-program") ??
+                                      throw new Exception("Entry contains no data-program");
                     return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
                 }
                 catch (Exception x)
@@ -136,15 +135,13 @@ public class GoPlayService : IMovieEventService
         var document = await parser.ParseDocumentAsync(stream);
 
         var dataProgramText = document
-            .QuerySelectorAll("script")
-            .OfType<IHtmlScriptElement>()
-            .Where(s => s.Type == "application/json")
-            .Select(s => s.Text)
-            .OrderByDescending(s => s.Length)
-            .FirstOrDefault();
-
-        if (dataProgramText == null)
-            throw new Exception("Entry contains no json");
+                                  .QuerySelectorAll("script")
+                                  .OfType<IHtmlScriptElement>()
+                                  .Where(s => s.Type == "application/json")
+                                  .Select(s => s.Text)
+                                  .OrderByDescending(s => s.Length)
+                                  .FirstOrDefault()
+                              ?? throw new Exception("Entry contains no json");
 
         return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
     }

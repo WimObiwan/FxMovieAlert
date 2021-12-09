@@ -129,19 +129,15 @@ public class PrimeVideoService : IMovieEventService
         var document = await parser.ParseDocumentAsync(stream);
 
         var jsonText = document
-            .QuerySelectorAll("script")
-            .OfType<IHtmlScriptElement>()
-            .Where(s => s.Type == "text/template")
-            .Select(s => s.Text)
-            .OrderByDescending(s => s.Length)
-            .FirstOrDefault();
+                           .QuerySelectorAll("script")
+                           .OfType<IHtmlScriptElement>()
+                           .Where(s => s.Type == "text/template")
+                           .Select(s => s.Text)
+                           .OrderByDescending(s => s.Length)
+                           .FirstOrDefault()
+                       ?? throw new Exception("Json text missing");
 
-        if (jsonText == null)
-            throw new Exception("Json text missing");
-
-        var json = JsonSerializer.Deserialize<Json>(jsonText);
-        if (json == null)
-            throw new Exception("Json missing");
+        var json = JsonSerializer.Deserialize<Json>(jsonText) ?? throw new Exception("Json missing");
 
         var items = json.props.collections
             .SelectMany(c => c.items)
