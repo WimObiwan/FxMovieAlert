@@ -240,20 +240,35 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
         // Transform movie titles
         foreach (var movie in movieEvents)
-        foreach (var item in _updateEpgCommandOptions.MovieTitlesToTransform)
         {
-            var newTitle = Regex.Replace(movie.Title, item, "$1");
-            if (movie.Title != newTitle)
+            foreach (var item in _updateEpgCommandOptions.MovieTitlesToTransform)
             {
-                _logger.LogInformation("Transforming movie: {Id} {Title} to {NewTitle}", movie.Id, movie.Title,
-                    newTitle);
-                movie.Title = newTitle;
+                var newTitle = Regex.Replace(movie.Title, item, "$1");
+                if (movie.Title != newTitle)
+                {
+                    _logger.LogInformation("Transforming movie: {Id} {Title} to {NewTitle}", movie.Id, movie.Title,
+                        newTitle);
+                    movie.Title = newTitle;
+                }
             }
-        }
 
-        foreach (var movie in movieEvents)
+            foreach (var item in _updateEpgCommandOptions.YearSplitterPatterns)
+            {
+                var match = Regex.Match(movie.Title, item);
+                if (match.Success)
+                {
+                    var year = match.Groups[2].Value;
+                    if (int.TryParse(year, out var yearInt))
+                    {
+                        movie.Year = yearInt;
+                        movie.Title = match.Groups[1].Value.Trim();
+                    }
+                }
+            }
+
             _logger.LogInformation("{ChannelName} {Id} {Title} {Year} {StartTime}",
                 movie.Channel.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
+        }
 
         var existingMovies = _moviesDbContext.MovieEvents.Where(movieEventsSubset);
         _logger.LogInformation("Existing movies: {ExistingMovieCount}", await existingMovies.CountAsync());
