@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -62,7 +62,7 @@ public static class Program
 
         var webApplication = builder.Build();
 
-        ConfigureMiddleware(webApplication);
+        ConfigureMiddleware(webApplication, builder.Configuration);
 
         return webApplication;
     }
@@ -76,7 +76,9 @@ public static class Program
     private static void ConfigureServices(IServiceCollection services, IWebHostEnvironment environment,
         IConfiguration configuration)
     {
-        var pathToCryptoKeys = Path.Join(environment.ContentRootPath, "dp_keys");
+        var pathToCryptoKeys = configuration["DataProtection:PathToCryptoKeys"];
+        if (string.IsNullOrEmpty(pathToCryptoKeys))
+            pathToCryptoKeys = Path.Join(environment.ContentRootPath, "dp_keys");
         Directory.CreateDirectory(pathToCryptoKeys);
         services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(pathToCryptoKeys));
