@@ -54,7 +54,7 @@ public class PrimeVideoService : IMovieEventService
         };
 
         var movies = await GetMovieInfo();
-        var dateTime = _primeVideoServiceOptions.LocalDownloadOverride == null
+        var dateTime = string.IsNullOrEmpty(_primeVideoServiceOptions.LocalDownloadOverride)
             ? DateTime.Now
             : new FileInfo(_primeVideoServiceOptions.LocalDownloadOverride).LastWriteTime;
 
@@ -114,7 +114,7 @@ public class PrimeVideoService : IMovieEventService
     {
         var localDownloadOverride = _primeVideoServiceOptions.LocalDownloadOverride;
         _logger.LogInformation("Using LocalDownloadOverride {LocalDownloadOverride}", localDownloadOverride);
-        if (localDownloadOverride != null) return File.OpenRead(localDownloadOverride);
+        if (!string.IsNullOrEmpty(localDownloadOverride)) return File.OpenRead(localDownloadOverride);
 
         var response = await _httpClient.GetAsync("/storefront/ref=atv_nb_lcl_nl_BE?ie=UTF8");
         response.EnsureSuccessStatusCode();
