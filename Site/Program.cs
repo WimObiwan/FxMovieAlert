@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -13,9 +13,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using Serilog;
@@ -116,7 +118,7 @@ public static class Program
         services.AddFxMoviesCore(configuration, typeof(Program).Assembly);
     }
 
-    private static void ConfigureMiddleware(WebApplication app)
+    private static void ConfigureMiddleware(WebApplication app, IConfiguration configuration)
     {
         // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-2.1
         app.UseForwardedHeaders();
@@ -157,12 +159,19 @@ public static class Program
 
         app.UseStaticFiles(new StaticFileOptions
         {
-            OnPrepareResponse = ctx =>
-            {
-                const int durationInSeconds = 60 * 60 * 24;
-                ctx.Context.Response.Headers[HeaderNames.CacheControl] = "public,max-age=" + durationInSeconds;
-            }
+            OnPrepareResponse = SetCacheControlHeader
         });
+
+        var cachedImagePath = configuration["ImageBasePath"];
+        if (string.IsNullOrEmpty(cachedImagePath))
+            cachedImagePath = Path.Join(app.Environment.ContentRootPath, "wwwroot", "images", "cache");
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = SetCacheControlHeader,
+            RequestPath = "/images/cache",
+            FileProvider = new PhysicalFileProvider(cachedImagePath)
+        });
+
         app.UseCookiePolicy();
 
         app.UseAuthentication();
@@ -183,5 +192,11 @@ public static class Program
                 return Task.CompletedTask;
             });
         });
+    }
+
+    private static void SetCacheControlHeader(StaticFileResponseContext ctx)
+    {
+        const int durationInSeconds = 60 * 60 * 24;
+        ctx.Context.Response.Headers[HeaderNames.CacheControl] = "public,max-age=" + durationInSeconds;
     }
 }
