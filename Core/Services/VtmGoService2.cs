@@ -97,7 +97,7 @@ public class VtmGoService2 : IMovieEventService
             .FirstOrDefault();
 
         var availableDays = labels
-            .Select(l => Regex.Match(l, @"^Nog (\d{1,3}) dagen beschikbaar$"))
+            .Select(l => Regex.Match(l, @"^Nog (\d{1,3}) dag(?:en)? beschikbaar$"))
             .Where(m => m.Success)
             .Select(m => (int?)int.Parse(m.Groups[1].Value))
             .FirstOrDefault();
