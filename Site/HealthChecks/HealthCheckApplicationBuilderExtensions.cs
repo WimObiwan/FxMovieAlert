@@ -36,19 +36,13 @@ internal static class HealthCheckApplicationBuilderExtensions
                 .AddIdentityServer(
                     new Uri($"https://{configuration["Auth0:Domain"]}"),
                     "idsvr-Auth0")
-                .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", healthCheckOptions, MovieEvent.FeedType.Broadcast)
-                .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", healthCheckOptions, MovieEvent.FeedType.FreeVod)
-                .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", healthCheckOptions, MovieEvent.FeedType.PaidVod)
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", healthCheckOptions,
-                    MovieEvent.FeedType.FreeVod,
-                    "vtmgo")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", healthCheckOptions,
-                    MovieEvent.FeedType.FreeVod,
-                    "vrtnu")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", healthCheckOptions,
-                    MovieEvent.FeedType.FreeVod, "goplay")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", healthCheckOptions,
-                    MovieEvent.FeedType.PaidVod, "primevideo")
+                .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", MovieEvent.FeedType.Broadcast)
+                .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", MovieEvent.FeedType.FreeVod)
+                .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", MovieEvent.FeedType.PaidVod)
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", MovieEvent.FeedType.FreeVod, "vtmgo")
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", MovieEvent.FeedType.FreeVod, "vrtnu")
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", MovieEvent.FeedType.FreeVod, "goplay")
+                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", MovieEvent.FeedType.PaidVod, "primevideo")
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-FreeStreaming-missingImdbLink", MovieEvent.FeedType.FreeVod)
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)

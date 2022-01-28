@@ -9,6 +9,7 @@ using FxMovies.Site.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
 namespace FxMovies.Site.HealthChecks;
 
@@ -17,7 +18,6 @@ public static class MovieDbDataCheckBuilderExtensions
     public static IHealthChecksBuilder AddMovieDbDataCheck(
         this IHealthChecksBuilder builder,
         string name,
-        HealthCheckOptions healthCheckOptions,
         MovieEvent.FeedType feedType,
         string channelCode = null,
         HealthStatus? failureStatus = default,
@@ -27,7 +27,6 @@ public static class MovieDbDataCheckBuilderExtensions
             name,
             sp => new MovieDbDataCheck(
                 sp.GetRequiredService<IServiceScopeFactory>(),
-                healthCheckOptions,
                 feedType,
                 channelCode),
             failureStatus,
@@ -39,17 +38,14 @@ public class MovieDbDataCheck : IHealthCheck
 {
     private readonly string _channelCode;
     private readonly MovieEvent.FeedType _feedType;
-    private readonly HealthCheckOptions _healthCheckOptions;
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public MovieDbDataCheck(
         IServiceScopeFactory serviceScopeFactory,
-        HealthCheckOptions healthCheckOptions,
         MovieEvent.FeedType feedType,
         string channelCode)
     {
         _serviceScopeFactory = serviceScopeFactory;
-        _healthCheckOptions = healthCheckOptions;
         _feedType = feedType;
         _channelCode = channelCode;
     }
@@ -77,16 +73,18 @@ public class MovieDbDataCheck : IHealthCheck
             lastMovieAddedTime = null;
         var lastMovieAddedDaysAgo = (DateTime.UtcNow - lastMovieAddedTime)?.TotalDays;
 
+        // Use IOptionsSnapshot<T> instead of IOptions<T> to avoid caching
+        var healthCheckOptions = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<HealthCheckOptions>>().Value;
         const double checkLastMovieAddedMoreThanDaysAgoDefault = 1.1;
         double checkLastMovieAddedMoreThanDaysAgo;
-        if (_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
+        if (healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo == null)
             checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
         else if (_channelCode == null ||
-                 !_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(_channelCode,
+                 !healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue(_channelCode,
                      out checkLastMovieAddedMoreThanDaysAgo))
-            if (!_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{_feedType}",
+            if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue($"FeedType-{_feedType}",
                     out checkLastMovieAddedMoreThanDaysAgo))
-                if (!_healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("",
+                if (!healthCheckOptions.CheckLastMovieAddedMoreThanDaysAgo.TryGetValue("",
                         out checkLastMovieAddedMoreThanDaysAgo))
                     checkLastMovieAddedMoreThanDaysAgo = checkLastMovieAddedMoreThanDaysAgoDefault;
 
@@ -110,7 +108,7 @@ public class MovieDbDataCheck : IHealthCheck
             var lastMovieStartDaysFromNow = (lastMovieStartTime - DateTime.Now).TotalDays;
 
             if (status == HealthStatus.Healthy &&
-                lastMovieStartDaysFromNow <= (_healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
+                lastMovieStartDaysFromNow <= (healthCheckOptions.CheckLastMovieMoreThanDays ?? 4.0))
                 status = HealthStatus.Unhealthy;
             else
                 status = HealthStatus.Healthy;

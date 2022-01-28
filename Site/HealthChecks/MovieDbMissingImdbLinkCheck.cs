@@ -24,7 +24,6 @@ public static class MovieDbMissingImdbLinkCheckBuilderExtensions
         return builder.Add(new HealthCheckRegistration(
             name,
             sp => new MovieDbMissingImdbLinkCheck(
-                sp.GetRequiredService<IOptions<HealthCheckOptions>>(),
                 sp.GetRequiredService<IServiceScopeFactory>(),
                 feedType),
             failureStatus,
@@ -35,14 +34,12 @@ public static class MovieDbMissingImdbLinkCheckBuilderExtensions
 public class MovieDbMissingImdbLinkCheck : IHealthCheck
 {
     private readonly MovieEvent.FeedType _feedType;
-    private readonly HealthCheckOptions _healthCheckOptions;
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public MovieDbMissingImdbLinkCheck(IOptions<HealthCheckOptions> healthCheckOptions,
+    public MovieDbMissingImdbLinkCheck(
         IServiceScopeFactory serviceScopeFactory,
         MovieEvent.FeedType feedType)
     {
-        _healthCheckOptions = healthCheckOptions.Value;
         _serviceScopeFactory = serviceScopeFactory;
         _feedType = feedType;
     }
@@ -64,7 +61,9 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
                 (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&
                 me.Type == 1, cancellationToken);
 
-        var status = count <= (_healthCheckOptions.CheckMissingImdbLinkCount ?? 7)
+        // Use IOptionsSnapshot<T> instead of IOptions<T> to avoid caching
+        var healthCheckOptions = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<HealthCheckOptions>>().Value;
+        var status = count <= (healthCheckOptions.CheckMissingImdbLinkCount ?? 7)
             ? HealthStatus.Healthy
             : HealthStatus.Unhealthy;
 
