@@ -10,11 +10,11 @@ export TARGET_PATH=$3
 
 dotnet build --configuration Release
 
-wget https://datasets.imdbws.com/title.akas.tsv.gz -O ~/tmp/filmoptv/title.akas.tsv.gz
-wget https://datasets.imdbws.com/title.basics.tsv.gz -O ~/tmp/filmoptv/title.basics.tsv.gz
-wget https://datasets.imdbws.com/title.ratings.tsv.gz -O ~/tmp/filmoptv/title.ratings.tsv.gz
+wget https://datasets.imdbws.com/title.akas.tsv.gz -O ~/tmp/filmoptv/imdb-datasets/title.akas.tsv.gz
+wget https://datasets.imdbws.com/title.basics.tsv.gz -O ~/tmp/filmoptv/imdb-datasets/title.basics.tsv.gz
+wget https://datasets.imdbws.com/title.ratings.tsv.gz -O ~/tmp/filmoptv/imdb-datasets/title.ratings.tsv.gz
 
 cd Grabber
 dotnet ./bin/Release/$RELEASE/Grabber.dll GenerateImdbDatabase
 
-rsync -av --info=progress2 ~/tmp/filmoptv/imdb.db $TARGET_SERVER:$TARGET_PATH/
+rsync -av --info=progress2 ~/tmp/filmoptv/db/imdb.db $TARGET_SERVER:$TARGET_PATH/
