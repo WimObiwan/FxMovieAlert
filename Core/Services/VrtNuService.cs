@@ -45,11 +45,11 @@ public class VrtNuService : IMovieEventService
         {
             Thread.Sleep(500);
 
-            var movieDetails = await GetSearchMovieInfo(movie.programUrl);
+            var movieDetails = await GetSearchMovieInfo(movie.programName);
             if (movieDetails.duration < 75)
             {
                 _logger.LogWarning("Skipped {Program}, duration {Duration} too small",
-                    movieDetails.program, movieDetails.duration);
+                    movieDetails.programTitle, movieDetails.duration);
                 continue;
             }
 
@@ -69,7 +69,7 @@ public class VrtNuService : IMovieEventService
             movieEvents.Add(new MovieEvent
             {
                 Channel = channel,
-                Title = movieDetails.program,
+                Title = movieDetails.programTitle,
                 Content = movieDetails.programDescription,
                 PosterM = GetFullUrl(movieDetails.programImageUrl),
                 PosterS = GetFullUrl(movieDetails.programImageUrl),
@@ -78,8 +78,8 @@ public class VrtNuService : IMovieEventService
                 VodLink = GetFullUrl(movieDetails.url),
                 Type = 1,
                 ExternalId = movieDetails.id,
-                StartTime = DateTime.Parse(movieDetails.assetOnTime),
-                EndTime = DateTime.Parse(movieDetails.assetOffTime),
+                StartTime = DateTime.Parse(movieDetails.onTime),
+                EndTime = DateTime.Parse(movieDetails.offTime),
                 Duration = movieDetails.duration,
                 Year = year
             });
@@ -107,13 +107,13 @@ public class VrtNuService : IMovieEventService
         return responseObject;
     }
 
-    private async Task<SearchMovieInfo> GetSearchMovieInfo(string programUrl)
+    private async Task<SearchMovieInfo> GetSearchMovieInfo(string programName)
     {
         // https://vrtnu-api.vrt.be/search?facets[programUrl]=//www.vrt.be/vrtnu/a-z/everybody-knows/
 
         var client = _httpClientFactory.CreateClient("vrtnu");
         //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
-        var response = await client.GetAsync($"/search?facets[programUrl]={programUrl}");
+        var response = await client.GetAsync($"/search?facets[programName]={programName}");
         response.EnsureSuccessStatusCode();
         // Troubleshoot: Debug console: 
         //   response.Content.ReadAsStringAsync().Result,nq 
@@ -131,7 +131,7 @@ public class VrtNuService : IMovieEventService
 
     private class SuggestMovieInfo
     {
-        public string programUrl { get; set; }
+        public string programName { get; set; }
     }
 
     private class SearchResult
@@ -142,13 +142,13 @@ public class VrtNuService : IMovieEventService
     private class SearchMovieInfo
     {
         public string title { get; set; }
-        public string program { get; set; }
+        public string programTitle { get; set; }
         public string programDescription { get; set; }
         public string programImageUrl { get; set; }
         public string url { get; set; }
         public string id { get; set; }
-        public string assetOnTime { get; set; }
-        public string assetOffTime { get; set; }
+        public string onTime { get; set; }
+        public string offTime { get; set; }
         public int duration { get; set; }
         public string seasonName { get; set; }
     }
