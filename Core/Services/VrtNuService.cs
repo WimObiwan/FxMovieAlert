@@ -15,6 +15,8 @@ public class VrtNuService : IMovieEventService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<VrtNuService> _logger;
 
+    private static readonly Uri BaseUrl = new Uri("https://www.vrt.be");
+
     public VrtNuService(
         ILogger<VrtNuService> logger,
         IHttpClientFactory httpClientFactory)
@@ -90,7 +92,7 @@ public class VrtNuService : IMovieEventService
 
     private string GetFullUrl(string url)
     {
-        return $"https:{url}";
+        return new Uri(BaseUrl, url).AbsoluteUri;
     }
 
     private async Task<IList<SuggestMovieInfo>> GetSuggestMovieInfo()
