@@ -82,7 +82,7 @@ public class VtmGoService2 : IMovieEventService
             .Select(e => e.Text().Trim())
             .ToList();
 
-        _logger.LogInformation($"Using labels {string.Join('/', labels)}");
+        _logger.LogInformation($"Using labels {string.Join('/', labels.Select(l => Regex.Replace(l, @"\s+", " ")))}");
 
         var year = labels
             .Select(l => Regex.Match(l, @"^(\d{4})$"))
