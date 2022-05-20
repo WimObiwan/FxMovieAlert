@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -47,42 +48,67 @@ public class VrtNuService : IMovieEventService
         {
             Thread.Sleep(500);
 
-            var movieDetails = await GetSearchMovieInfo(movie.programName);
-            if (movieDetails.duration < 75)
+            var movieDetails = await GetSearchMovieInfo(movie.programUrl);
+            int? year = movieDetails.data?.program?.seasons?.Select(s => 
             {
-                _logger.LogWarning("Skipped {Program}, duration {Duration} too small",
-                    movieDetails.programTitle, movieDetails.duration);
-                continue;
+                int? year;
+                if (int.TryParse(s.name, out var year2)
+                    && year2 >= 1930 && year2 <= DateTime.Now.Year)
+                    year = year2;
+                else
+                    year = null;
+                return year;
+            }).Where(y => y != null).FirstOrDefault();
+
+            DateTime? endTime = null;
+            var announcement = movieDetails.data?.program?.announcement?.value;
+            if (announcement != null)
+            {
+                Match match;
+                match = Regex.Match(announcement, @"^Nog (\d+) dagen beschikbaar$");
+                if (match.Success)
+                {
+                    endTime = DateTime.Today.AddDays(1 + int.Parse(match.Groups[1].Value)).AddMinutes(-1);
+                }
+                else if (announcement == "Langer dan een jaar beschikbaar")
+                {
+                    endTime = DateTime.Today.AddYears(1);
+                }
+                else
+                {
+                    match = Regex.Match(announcement, @"^Beschikbaar tot (?:\w+ )?(\d+)/(\d+)(?:/(\d+))?$");
+                    if (match.Success)
+                    {
+                        if (match.Groups[3].Success)
+                        {
+                            endTime = DateTime.ParseExact($"{match.Groups[1].Value}/{match.Groups[2].Value}/{match.Groups[3].Value}", "dd/MM/yyyy", null);
+                        }
+                        else
+                        {
+                            endTime = DateTime.ParseExact($"{match.Groups[1].Value}/{match.Groups[2].Value}", "dd/MM", null);
+                        }
+                    }
+                    else
+                    {
+                        endTime = DateTime.Today.AddDays(1).AddMinutes(-1);
+                    }
+                }
             }
-
-            var seasonName = movieDetails.seasonName;
-
-            // Skip trailers
-            if (seasonName.Equals("trailer", StringComparison.CurrentCultureIgnoreCase))
-                continue;
-
-            int? year;
-            if (int.TryParse(seasonName, out var year2)
-                && year2 >= 1930 && year2 <= DateTime.Now.Year)
-                year = year2;
-            else
-                year = null;
 
             movieEvents.Add(new MovieEvent
             {
                 Channel = channel,
-                Title = movieDetails.programTitle,
-                Content = movieDetails.programDescription,
-                PosterM = GetFullUrl(movieDetails.programImageUrl),
-                PosterS = GetFullUrl(movieDetails.programImageUrl),
+                Title = movieDetails.title,
+                Content = movieDetails.description ?? movieDetails.image.alt,
+                PosterM = GetFullUrl(movieDetails.image.src),
+                PosterS = GetFullUrl(movieDetails.image.src),
                 Vod = true,
                 Feed = MovieEvent.FeedType.FreeVod,
-                VodLink = GetFullUrl(movieDetails.url),
+                VodLink = GetFullUrl(movieDetails.reference.link),
                 Type = 1,
-                ExternalId = movieDetails.id,
-                StartTime = DateTime.Parse(movieDetails.onTime),
-                EndTime = DateTime.Parse(movieDetails.offTime),
-                Duration = movieDetails.duration,
+                ExternalId = movieDetails.data.program.id,
+                EndTime = endTime ?? DateTime.Today.AddYears(1),
+                Duration = null,
                 Year = year
             });
         }
@@ -97,6 +123,8 @@ public class VrtNuService : IMovieEventService
 
     private async Task<IList<SuggestMovieInfo>> GetSuggestMovieInfo()
     {
+        // https://search7.vrt.be/suggest?facets[categories]=films
+
         var client = _httpClientFactory.CreateClient("vrtnu");
         //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
         var response = await client.GetAsync("/suggest?facets[categories]=films");
@@ -109,22 +137,23 @@ public class VrtNuService : IMovieEventService
         return responseObject;
     }
 
-    private async Task<SearchMovieInfo> GetSearchMovieInfo(string programName)
+    private async Task<Details> GetSearchMovieInfo(string programUrl)
     {
         // https://vrtnu-api.vrt.be/search?facets[programUrl]=//www.vrt.be/vrtnu/a-z/everybody-knows/
 
         var client = _httpClientFactory.CreateClient("vrtnu");
         //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
-        var response = await client.GetAsync($"/search?facets[programName]={programName}");
+        programUrl = Regex.Replace(programUrl, "/$", ".model.json");
+        var response = await client.GetAsync(programUrl);
         response.EnsureSuccessStatusCode();
         // Troubleshoot: Debug console: 
         //   response.Content.ReadAsStringAsync().Result,nq 
         // ==> nq = non-quoted
 
-        var responseObject = await response.Content.ReadFromJsonAsync<SearchResult>() ??
+        var responseObject = await response.Content.ReadFromJsonAsync<Model>() ??
                              throw new Exception("Response is missing");
 
-        return responseObject.results?.FirstOrDefault();
+        return responseObject?.details;
     }
 
     #region JsonModel
@@ -133,29 +162,55 @@ public class VrtNuService : IMovieEventService
 
     private class SuggestMovieInfo
     {
-        public string programName { get; set; }
+        public string programUrl { get; set; }
     }
 
-    private class SearchResult
+    private class Model
     {
-        public List<SearchMovieInfo> results { get; set; }
+        public Details details { get; set; }
     }
 
-    private class SearchMovieInfo
+    private class Image
     {
-        public string title { get; set; }
-        public string programTitle { get; set; }
-        public string programDescription { get; set; }
-        public string programImageUrl { get; set; }
-        public string url { get; set; }
+        public string src { get; set; }
+        public string alt { get; set; }
+    }
+
+    private class Data
+    {
+        public Program program { get; set; }
+    }
+
+    private class Program
+    {
         public string id { get; set; }
-        public string onTime { get; set; }
-        public string offTime { get; set; }
-        public int duration { get; set; }
-        public string seasonName { get; set; }
+        public Anouncement announcement { get; set; }
+        public List<Season> seasons { get; set; }
     }
 
-    // Resharper restore All
+    public class Anouncement
+    {
+        public string value { get; set; }
+    }
+
+    private class Details
+    {
+        public Reference reference { get; set; }
+        public string title { get; set; }
+        public string description { get; set; }
+        public Image image { get; set; }
+        public Data data { get; set; }
+    }
+
+    private class Reference
+    {
+        public string link { get; set; }
+    }
+
+    private class Season
+    {
+        public string name { get; set; }
+    }
 
     #endregion
 }
