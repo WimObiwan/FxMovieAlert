@@ -95,6 +95,10 @@ public class VrtNuService : IMovieEventService
                 }
             }
 
+            int type = 1; // 1 = movie, 2 = short movie, 3 = serie
+            if (movieDetails.tags?.Any(t => string.Compare(t.name, "kortfilm", true) == 0) ?? false)
+                type = 2;
+
             movieEvents.Add(new MovieEvent
             {
                 Channel = channel,
@@ -105,7 +109,7 @@ public class VrtNuService : IMovieEventService
                 Vod = true,
                 Feed = MovieEvent.FeedType.FreeVod,
                 VodLink = GetFullUrl(movieDetails.reference.link),
-                Type = 1,
+                Type = type,
                 ExternalId = movieDetails.data.program.id,
                 EndTime = endTime ?? DateTime.Today.AddYears(1),
                 Duration = null,
@@ -200,6 +204,7 @@ public class VrtNuService : IMovieEventService
         public string description { get; set; }
         public Image image { get; set; }
         public Data data { get; set; }
+        public List<Tag> tags { get; set; }
     }
 
     private class Reference
@@ -210,6 +215,13 @@ public class VrtNuService : IMovieEventService
     private class Season
     {
         public string name { get; set; }
+    }
+
+    private class Tag
+    {
+        public string category { get; set; }
+        public string name { get; set; }
+        public string title { get; set; }
     }
 
     #endregion
