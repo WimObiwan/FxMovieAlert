@@ -74,6 +74,11 @@ public class VrtNuService : IMovieEventService
                 {
                     endTime = DateTime.Today.AddYears(1);
                 }
+                else if (Regex.IsMatch(announcement, @"^Vanaf .*$"))
+                {
+                    // Skip movies that are announced to be available in the future
+                    continue;
+                }
                 else
                 {
                     match = Regex.Match(announcement, @"^Beschikbaar tot (?:\w+ )?(\d+)/(\d+)(?:/(\d+))?$");
