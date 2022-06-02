@@ -156,9 +156,12 @@ public class HumoService : IHumoService
                 // }
 
                 var genre = broadcast.genre?.Trim() ?? "";
-                if (genre != "")
-                    genre += " - ";
-                genre += string.Join(' ', broadcast.subGenres);
+                if (broadcast.subGenres.Any())
+                {
+                    if (genre != "")
+                        genre += " - ";
+                    genre += string.Join(' ', broadcast.subGenres);
+                }
 
                 int type;
                 if (broadcast.IsMovie())
