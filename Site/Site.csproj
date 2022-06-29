@@ -6,19 +6,19 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks -->
-    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="5.0.1" />
     <!--PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="2.2.4" /-->
-    <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="5.0.1" />
-    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="5.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="6.0.2" />
+    <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="6.0.2" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="6.0.4" />
     <PackageReference Include="GitInfo" Version="2.2.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.330" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="3.11.1" />
-    <PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
+    <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.365" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.6" />
+    <PackageReference Include="Sentry.AspNetCore" Version="3.19.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MoviesDB\MoviesDB.csproj" />
