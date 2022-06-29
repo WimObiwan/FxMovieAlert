@@ -59,6 +59,7 @@ public static class Program
 
         builder.Configuration.AddJsonFile("appsettings.Local.json", true, false);
 
+        ConfigureHost(builder.Host);
         ConfigureWebHost(builder.WebHost);
         ConfigureServices(builder.Services, builder.Environment, builder.Configuration);
 
@@ -69,9 +70,13 @@ public static class Program
         return webApplication;
     }
 
+    private static void ConfigureHost(IHostBuilder hostBuilder)
+    {
+        hostBuilder.UseSerilog();
+    }
+
     private static void ConfigureWebHost(IWebHostBuilder webHostBuilder)
     {
-        webHostBuilder.UseSerilog();
         webHostBuilder.UseSentry();
     }
 
