@@ -52,9 +52,10 @@ public static class ServiceConfiguration
         services.AddScoped<IUpdateAllImdbUsersDataCommand, UpdateAllImdbUsersDataCommand>();
         services.AddScoped<IAutoUpdateImdbUserDataCommand, AutoUpdateImdbUserDataCommand>();
 
+        services.AddScoped<IBroadcastQuery, BroadcastQuery>();
         services.AddScoped<IImdbMatchingQuery, ImdbMatchingQuery>();
-        services.AddScoped<IManualMatchesQuery, ManualMatchesQuery>();
         services.AddScoped<IListManualMatchesQuery, ListManualMatchesQuery>();
+        services.AddScoped<IManualMatchesQuery, ManualMatchesQuery>();
         services.AddScoped<IStatsQuery, StatsQuery>();
 
         services.Configure<TheMovieDbServiceOptions>(configuration.GetSection(TheMovieDbServiceOptions.Position));

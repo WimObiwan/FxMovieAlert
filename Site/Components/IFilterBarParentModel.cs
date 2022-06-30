@@ -1,4 +1,5 @@
 using System;
+using FxMovies.Core.Queries;
 
 namespace FxMovies.Site.Components;
 
@@ -14,31 +15,8 @@ public interface IFilterBarParentModel
     int FilterMaxDaysDefault { get; }
     int FilterMaxDays { get; }
 
-    int Count { get; }
-    int CountTypeFilm { get; }
-    int CountTypeShort { get; }
-    int CountTypeSerie { get; }
-    int CountMinRating5 { get; }
-    int CountMinRating6 { get; }
-    int CountMinRating65 { get; }
-    int CountMinRating7 { get; }
-    int CountMinRating8 { get; }
-    int CountMinRating9 { get; }
-    int CountNotOnImdb { get; }
-    int CountNotRatedOnImdb { get; }
-    int CountNotYetRated { get; }
-    int CountRated { get; }
-    int CountCertNone { get; }
-    int CountCertG { get; }
-    int CountCertPG { get; }
-    int CountCertPG13 { get; }
-    int CountCertR { get; }
-    int CountCertNC17 { get; }
-    int CountCertOther { get; }
-    int Count3days { get; }
-    int Count5days { get; }
-    int Count8days { get; }
-
+    BroadcastQueryResult Data { get; }
+    
     string ImdbUserId { get; }
 
     DateTime? RefreshRequestTime { get; }
