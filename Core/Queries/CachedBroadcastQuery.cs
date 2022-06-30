@@ -15,7 +15,7 @@ public interface ICachedBroadcastQuery
 
 public class CachedBroadcastQueryOptions
 {
-    public static string Position => "CachedBroadcastQueryOptions";
+    public static string Position => "CachedBroadcastQuery";
 
     public double ExpirationSeconds { get; set; }
 }

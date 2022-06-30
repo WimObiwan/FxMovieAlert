@@ -61,6 +61,7 @@ public static class ServiceConfiguration
         services.AddScoped<IManualMatchesQuery, ManualMatchesQuery>();
         services.AddScoped<IStatsQuery, StatsQuery>();
 
+        services.Configure<CachedBroadcastQueryOptions>(configuration.GetSection(CachedBroadcastQueryOptions.Position));
         services.Configure<TheMovieDbServiceOptions>(configuration.GetSection(TheMovieDbServiceOptions.Position));
         services.Configure<VtmGoServiceOptions>(configuration.GetSection(VtmGoServiceOptions.Position));
         services.Configure<PrimeVideoServiceOptions>(configuration.GetSection(PrimeVideoServiceOptions.Position));
