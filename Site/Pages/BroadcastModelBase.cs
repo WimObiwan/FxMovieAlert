@@ -29,8 +29,8 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     public bool EditImdbLinks;
 
     //public bool? LastRefreshSuccess;
-    public MovieEvent MovieEvent => Data.MovieEvent;
-    public IList<Record> Records => Data.Records;
+    public MovieEvent MovieEvent => Data?.MovieEvent;
+    public IList<Record> Records => Data?.Records ?? new List<Record>();
 
     public BroadcastsModelBase(
         MovieEvent.FeedType feed,
