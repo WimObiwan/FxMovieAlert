@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core.Queries;
 
@@ -12,38 +13,59 @@ public interface ICachedBroadcastQuery
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights);
 }
 
+public class CachedBroadcastQueryOptions
+{
+    public static string Position => "CachedBroadcastQueryOptions";
+
+    public double ExpirationSeconds { get; set; }
+}
+
 public class CachedBroadcastQuery : ICachedBroadcastQuery
 {
     private readonly IBroadcastQuery _broadcastQuery;
     private readonly IMemoryCache _memoryCache;
+    private readonly CachedBroadcastQueryOptions _options;
 
-    public CachedBroadcastQuery(IBroadcastQuery broadcastQuery, IMemoryCache memoryCache)
+    public CachedBroadcastQuery(IBroadcastQuery broadcastQuery, IMemoryCache memoryCache, IOptions<CachedBroadcastQueryOptions> options)
     {
         _broadcastQuery = broadcastQuery;
         _memoryCache = memoryCache;
+        _options = options.Value;
     }
 
     public async Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays, 
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights)
     {
-        HashCode hashCode = new();
-        hashCode.Add(feed);
-        hashCode.Add(userId);
-        hashCode.Add(m);
-        hashCode.Add(filterTypeMask);
-        hashCode.Add(filterMinRating);
-        hashCode.Add(filterMaxDays);
-        hashCode.Add(highlightedFilterRatingThreshold);
-        hashCode.Add(highlightedFilterMonthsThreshold);
-        hashCode.Add(filterOnlyHighlights);
-        int hashCodeValue = hashCode.ToHashCode();
-
-        return await _memoryCache.GetOrCreateAsync(hashCodeValue, (cacheEntry) => 
-            {
-                cacheEntry.SlidingExpiration = TimeSpan.FromSeconds(60);
-                return _broadcastQuery.Execute(feed, userId, m, filterTypeMask, filterMinRating, filterMaxDays, 
+        Task<BroadcastQueryResult> Fn()
+        {
+            return _broadcastQuery.Execute(feed, userId, m, filterTypeMask, filterMinRating, filterMaxDays, 
                     highlightedFilterRatingThreshold, highlightedFilterMonthsThreshold, filterOnlyHighlights);
-            });
+        }
+
+        if (_options.ExpirationSeconds > 0.0)
+        {
+            HashCode hashCode = new();
+            hashCode.Add(feed);
+            hashCode.Add(userId);
+            hashCode.Add(m);
+            hashCode.Add(filterTypeMask);
+            hashCode.Add(filterMinRating);
+            hashCode.Add(filterMaxDays);
+            hashCode.Add(highlightedFilterRatingThreshold);
+            hashCode.Add(highlightedFilterMonthsThreshold);
+            hashCode.Add(filterOnlyHighlights);
+            int hashCodeValue = hashCode.ToHashCode();
+
+            return await _memoryCache.GetOrCreateAsync(hashCodeValue, async (cacheEntry) => 
+                {
+                    cacheEntry.SlidingExpiration = TimeSpan.FromSeconds(_options.ExpirationSeconds);
+                    return await Fn();
+                });
+        }
+        else
+        {
+            return await Fn();
+        }
    }
 }
