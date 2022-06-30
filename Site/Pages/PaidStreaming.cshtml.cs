@@ -14,12 +14,12 @@ public class PaidStreamingModel : BroadcastsModelBase
     public PaidStreamingModel(
         IOptions<SiteOptions> siteOptions,
         MoviesDbContext moviesDbContext,
-        IBroadcastQuery broadcastQuery,
+        ICachedBroadcastQuery cachedBroadcastQuery,
         IUsersRepository usersRepository)
         : base(MovieEvent.FeedType.PaidVod,
             siteOptions,
             moviesDbContext,
-            broadcastQuery,
+            cachedBroadcastQuery,
             usersRepository)
     {
     }

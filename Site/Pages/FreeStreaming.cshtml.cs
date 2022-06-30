@@ -14,12 +14,12 @@ public class FreeStreamingModel : BroadcastsModelBase
     public FreeStreamingModel(
         IOptions<SiteOptions> siteOptions,
         MoviesDbContext moviesDbContext,
-        IBroadcastQuery broadcastQuery,
+        ICachedBroadcastQuery cachedBroadcastQuery,
         IUsersRepository usersRepository)
         : base(MovieEvent.FeedType.FreeVod,
             siteOptions,
             moviesDbContext,
-            broadcastQuery,
+            cachedBroadcastQuery,
             usersRepository)
     {
     }

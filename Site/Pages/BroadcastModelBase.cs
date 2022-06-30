@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core;
 using FxMovies.Core.Entities;
@@ -11,7 +10,6 @@ using FxMovies.Site.Components;
 using FxMovies.Site.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace FxMovies.Site.Pages;
@@ -22,7 +20,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     private readonly MoviesDbContext _moviesDbContext;
     private readonly SiteOptions _siteOptions;
 
-    private readonly IBroadcastQuery _broadcastQuery;
+    private readonly ICachedBroadcastQuery _cachedBroadcastQuery;
     private readonly IUsersRepository _usersRepository;
 
     //public int AdsInterval = 5;
@@ -36,13 +34,13 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         MovieEvent.FeedType feed,
         IOptions<SiteOptions> siteOptions,
         MoviesDbContext moviesDbContext,
-        IBroadcastQuery broadcastQuery,
+        ICachedBroadcastQuery cachedBroadcastQuery,
         IUsersRepository usersRepository)
     {
         _feed = feed;
         _siteOptions = siteOptions.Value;
         _moviesDbContext = moviesDbContext;
-        _broadcastQuery = broadcastQuery;
+        _cachedBroadcastQuery = cachedBroadcastQuery;
         _usersRepository = usersRepository;
     }
 
@@ -106,7 +104,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         if (m.HasValue && m.Value == -2) throw new Exception("Sentry test exception");
 
-        Data = await _broadcastQuery.Execute(_feed, userId, m, FilterTypeMask, FilterMinRating, FilterMaxDays, HighlightedFilterRatingThreshold,
+        Data = await _cachedBroadcastQuery.Execute(_feed, userId, m, FilterTypeMask, FilterMinRating, FilterMaxDays, HighlightedFilterRatingThreshold,
             HighlightedFilterMonthsThreshold, FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault));
 
         if (Data.MovieEvent != null)

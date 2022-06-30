@@ -14,12 +14,12 @@ public class BroadcastsModel : BroadcastsModelBase
     public BroadcastsModel(
         IOptions<SiteOptions> siteOptions,
         MoviesDbContext moviesDbContext,
-        IBroadcastQuery broadcastQuery,
+        ICachedBroadcastQuery cachedBroadcastQuery,
         IUsersRepository usersRepository)
         : base(MovieEvent.FeedType.Broadcast,
             siteOptions,
             moviesDbContext,
-            broadcastQuery,
+            cachedBroadcastQuery,
             usersRepository)
     {
     }

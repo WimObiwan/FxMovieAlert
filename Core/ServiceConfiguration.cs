@@ -14,6 +14,8 @@ public static class ServiceConfiguration
     public static IServiceCollection AddFxMoviesCore(this IServiceCollection services, IConfiguration configuration,
         Assembly assembly)
     {
+        services.AddMemoryCache();
+
         services.AddHttpClient("humo", c => { c.BaseAddress = new Uri("https://www.humo.be"); });
         services.AddHttpClient("goplay", c => { c.BaseAddress = new Uri("https://www.goplay.be"); });
         services.AddHttpClient("vtmgo", c => { c.BaseAddress = new Uri("https://vtm.be/vtmgo/"); });
@@ -53,6 +55,7 @@ public static class ServiceConfiguration
         services.AddScoped<IAutoUpdateImdbUserDataCommand, AutoUpdateImdbUserDataCommand>();
 
         services.AddScoped<IBroadcastQuery, BroadcastQuery>();
+        services.AddScoped<ICachedBroadcastQuery, CachedBroadcastQuery>();
         services.AddScoped<IImdbMatchingQuery, ImdbMatchingQuery>();
         services.AddScoped<IListManualMatchesQuery, ListManualMatchesQuery>();
         services.AddScoped<IManualMatchesQuery, ManualMatchesQuery>();
