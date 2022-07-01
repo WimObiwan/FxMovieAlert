@@ -10,7 +10,7 @@ public interface ICachedBroadcastQuery
 {
     Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays, 
-        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights);
+        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights, bool forceNoCache);
 }
 
 public class CachedBroadcastQueryOptions
@@ -37,7 +37,7 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
 
     public async Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays, 
-        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights)
+        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights, bool forceNoCache)
     {
         Task<BroadcastQueryResult> Fn()
         {
@@ -45,7 +45,7 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
                     highlightedFilterRatingThreshold, highlightedFilterMonthsThreshold, filterOnlyHighlights);
         }
 
-        if (_options.Enable)
+        if (_options.Enable && !forceNoCache)
         {
             HashCode hashCode = new();
             hashCode.Add(feed);

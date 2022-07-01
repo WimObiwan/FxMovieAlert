@@ -66,7 +66,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     public bool Debug { get; private set; }
 
     public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null,
-        bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null, bool debug = false)
+        bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null, bool debug = false, bool noCache = false)
     {
         var userId = ClaimChecker.UserId(User.Identity);
         Debug = debug;
@@ -110,7 +110,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         var stopwatch = Stopwatch.StartNew();
         Data = await _cachedBroadcastQuery.Execute(_feed, userId, m, FilterTypeMask, FilterMinRating, FilterMaxDays, HighlightedFilterRatingThreshold,
-            HighlightedFilterMonthsThreshold, FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault));
+            HighlightedFilterMonthsThreshold, FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault), noCache);
         ActualDuration = stopwatch.Elapsed;
 
         if (Data.MovieEvent != null)
