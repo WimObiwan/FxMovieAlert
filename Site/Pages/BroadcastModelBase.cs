@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using FxMovies.Core;
 using FxMovies.Core.Entities;
@@ -61,11 +62,14 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     public int FilterMaxDays { get; private set; } = 8;
 
     public BroadcastQueryResult Data { get; private set; }
+    public TimeSpan ActualDuration { get; private set; }
+    public bool Debug { get; private set; }
 
     public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null,
-        bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null)
+        bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null, bool debug = false)
     {
         var userId = ClaimChecker.UserId(User.Identity);
+        Debug = debug;
 
         //AdsInterval = _siteOptions.AdsInterval;
         FilterMaxDaysDefault = _siteOptions.DefaultMaxDays;
@@ -104,8 +108,10 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
         if (m.HasValue && m.Value == -2) throw new Exception("Sentry test exception");
 
+        var stopwatch = Stopwatch.StartNew();
         Data = await _cachedBroadcastQuery.Execute(_feed, userId, m, FilterTypeMask, FilterMinRating, FilterMaxDays, HighlightedFilterRatingThreshold,
             HighlightedFilterMonthsThreshold, FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault));
+        ActualDuration = stopwatch.Elapsed;
 
         if (Data.MovieEvent != null)
         {

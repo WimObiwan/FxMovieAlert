@@ -68,6 +68,19 @@
 
 <component type="typeof(FilterBar)" render-mode="Static" param-ParentModel="Model"/>
 
+@if (@Model.Debug)
+{
+    <pre>
+    Debug information:
+    - ActualDateTime: @now.ToLocalTime().ToString("s");
+    - ActualDuration: @Model.ActualDuration.ToString();
+    - CacheEnabled:   @Model.Data.CacheEnabled
+    - CacheUsed:      @Model.Data.CacheUsed
+    - QueryDateTime:  @Model.Data.QueryDateTime.ToLocalTime().ToString("s");
+    - QueryDuration:  @Model.Data.QueryDuration.ToString();
+    </pre>
+}
+
 <table class="table">
 <tbody>
 @{
