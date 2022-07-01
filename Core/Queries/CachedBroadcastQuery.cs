@@ -58,13 +58,18 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
             hashCode.Add(highlightedFilterMonthsThreshold);
             hashCode.Add(filterOnlyHighlights);
             int hashCodeValue = hashCode.ToHashCode();
+            bool cacheUsed = true;
 
-            return await _memoryCache.GetOrCreateAsync(hashCodeValue, async (cacheEntry) => 
+            var result = await _memoryCache.GetOrCreateAsync(hashCodeValue, async (cacheEntry) => 
                 {
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_options.AbsoluteExpirationSeconds);
                     cacheEntry.SlidingExpiration = TimeSpan.FromSeconds(_options.SlidingExpirationSeconds);
+                    cacheUsed = false;
                     return await Fn();
                 });
+            result.CacheEnabled = true;
+            result.CacheUsed = cacheUsed;
+            return result;
         }
         else
         {

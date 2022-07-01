@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -45,6 +46,11 @@ public class BroadcastQueryResult
     public List<Record> Records;
 
     public MovieEvent MovieEvent;
+
+    public bool CacheEnabled;
+    public bool CacheUsed;
+    public DateTime QueryDateTime;
+    public TimeSpan QueryDuration;
 }
 
 public class Record
@@ -71,6 +77,7 @@ public class BroadcastQuery : IBroadcastQuery
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays, 
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights)
     {
+        var stopwatch = Stopwatch.StartNew();
         BroadcastQueryResult result = new();
 
         var now = DateTime.Now;
@@ -182,6 +189,9 @@ public class BroadcastQuery : IBroadcastQuery
                 .Include(me => me.Channel)
                 .SingleOrDefaultAsync(me => me.Id == m.Value);
         }
+
+        result.QueryDateTime = DateTime.UtcNow;
+        result.QueryDuration = stopwatch.Elapsed;
 
         return result;
     }
