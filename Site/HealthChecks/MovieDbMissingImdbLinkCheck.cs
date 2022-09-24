@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -55,7 +56,19 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
         using var scope = _serviceScopeFactory.CreateScope();
         var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
 
-        var count = await moviesDbContext.MovieEvents
+        var dbMovieEvents =
+            moviesDbContext.MovieEvents.Where(me => me.Feed == _feedType || me.Feed == null && me.Vod == true);
+
+        DateTime now = DateTime.Now;
+
+        if (_feedType == MovieEvent.FeedType.Broadcast)
+            dbMovieEvents = dbMovieEvents.Where(me =>
+                me.EndTime >= now &&
+                me.StartTime >= now.AddMinutes(-30));
+        else
+            dbMovieEvents = dbMovieEvents.Where(me => me.EndTime == null || me.EndTime >= now);
+
+        var count = await dbMovieEvents
             .Where(me => me.Feed == _feedType)
             .CountAsync(me =>
                 (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&
