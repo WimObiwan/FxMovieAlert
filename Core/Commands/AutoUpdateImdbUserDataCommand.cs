@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Repositories;
@@ -13,6 +14,7 @@ public interface IAutoUpdateImdbUserDataCommand
     Task<int> Execute();
 }
 
+[ExcludeFromCodeCoverage]
 public class AutoUpdateImdbUserDataCommandOptions
 {
     public static string Position => "AutoUpdateImdbUserData";

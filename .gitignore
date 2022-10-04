@@ -38,3 +38,5 @@ packages/
 appsettings.Local.json
 dp_keys/
 upgrade.sh
+
+CoverageResults/

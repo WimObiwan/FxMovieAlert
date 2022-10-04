@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -15,6 +16,7 @@ public interface IImdbMatchingQuery
     Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear);
 }
 
+[ExcludeFromCodeCoverage]
 public class ImdbMatchingQueryOptions
 {
     public static string Position => "ImdbMatching";
@@ -22,6 +24,7 @@ public class ImdbMatchingQueryOptions
     public int? ImdbHuntingYearDiff { get; set; }
 }
 
+[ExcludeFromCodeCoverage]
 public class ImdbMatchingQueryResult
 {
     public ImdbMovie ImdbMovie { get; init; }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
@@ -12,16 +13,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core.Services;
-
-public class VtmGoServiceOptions
-{
-    public static string Position => "VtmGoService";
-
-    // https://vtm.be/vtmgo --> login --> F12 --> Tab "Storage" --> Cookies --> https://vtm.be --> lfvp_auth_token --> "ey...
-    public string AuthToken { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
-}
 
 public class VtmGoService : IMovieEventService
 {

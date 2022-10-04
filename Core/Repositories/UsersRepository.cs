@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.Core.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class UserDataResult
 {
     public DateTime? RefreshRequestTime { get; init; }

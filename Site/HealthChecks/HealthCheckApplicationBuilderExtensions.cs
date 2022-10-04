@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -95,6 +96,7 @@ internal static class HealthCheckApplicationBuilderExtensions
 
     // Resharper disable All
 
+    [ExcludeFromCodeCoverage]
     private class ZabbixResponse
     {
         public int status { get; set; }

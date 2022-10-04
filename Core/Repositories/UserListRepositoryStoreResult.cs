@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace FxMovies.Core.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class UserListRepositoryStoreResult
 {
     public int ExistingCount { get; internal init; }

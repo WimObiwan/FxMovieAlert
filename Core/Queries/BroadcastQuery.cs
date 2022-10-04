@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -16,6 +17,7 @@ public interface IBroadcastQuery
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights);
 }
 
+[ExcludeFromCodeCoverage]
 public class BroadcastQueryResult
 {
     public int Count;
@@ -53,6 +55,7 @@ public class BroadcastQueryResult
     public TimeSpan QueryDuration;
 }
 
+[ExcludeFromCodeCoverage]
 public class Record
 {
     public MovieEvent MovieEvent { get; init; }

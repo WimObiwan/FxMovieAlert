@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 namespace FxMovies.Site.Options;
 
+[ExcludeFromCodeCoverage]
 public class SiteOptions
 {
     public static string Position => "Site";

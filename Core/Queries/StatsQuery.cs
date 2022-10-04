@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.MoviesDB;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.Core.Queries;
 
+[ExcludeFromCodeCoverage]
 public class StatsResult
 {
     public List<User> Users { get; init; }

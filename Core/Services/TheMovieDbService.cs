@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace FxMovies.Core.Services;
 
+[ExcludeFromCodeCoverage]
 public class GetImagesResult
 {
     public string Medium { get; init; }
@@ -23,6 +25,7 @@ public interface ITheMovieDbService
     Task<GetImagesResult> GetImages(string imdbId);
 }
 
+[ExcludeFromCodeCoverage]
 public class TheMovieDbServiceOptions
 {
     public static string Position => "TheMovieDbService";
