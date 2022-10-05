@@ -9,7 +9,7 @@ namespace FxMovies.Core;
 
 public interface IMovieCreationHelper
 {
-    Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
+    Task<Movie?> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
 }
 
 public class MovieCreationHelper : IMovieCreationHelper
@@ -28,7 +28,7 @@ public class MovieCreationHelper : IMovieCreationHelper
         _theMovieDbService = theMovieDbService;
     }
 
-    public async Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
+    public async Task<Movie?> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
     {
         var movie = await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
@@ -43,7 +43,7 @@ public class MovieCreationHelper : IMovieCreationHelper
             _moviesDbContext.Movies.Add(movie);
         }
 
-        if (refresh)
+        if (refresh && movie != null)
             await Refresh(movie);
 
         return movie;
@@ -51,15 +51,13 @@ public class MovieCreationHelper : IMovieCreationHelper
 
     private async Task Refresh(Movie movie)
     {
-        if (movie == null)
-            return;
-
         var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
         if (imdbMovie != null)
         {
             movie.ImdbRating = imdbMovie.Rating;
             movie.ImdbVotes = imdbMovie.Votes;
-            movie.Certification ??= await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+            if (movie.Certification == null && movie.ImdbId != null)
+                movie.Certification = await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
         }
     }
 }

@@ -27,11 +27,11 @@ public class GenerateImdbDatabaseCommandOptions
     public static string Position => "GenerateImdbDatabase";
 
     public int? DebugMaxImdbRowCount { get; set; }
-    public string ImdbMoviesList { get; set; }
-    public string ImdbAlsoKnownAsList { get; set; }
-    public string ImdbRatingsList { get; set; }
-    public string[] AkaFilterRegion { get; set; }
-    public string[] AkaFilterLanguage { get; set; }
+    public string? ImdbMoviesList { get; set; }
+    public string? ImdbAlsoKnownAsList { get; set; }
+    public string? ImdbRatingsList { get; set; }
+    public string[]? AkaFilterRegion { get; set; }
+    public string[]? AkaFilterLanguage { get; set; }
 }
 
 public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
@@ -97,7 +97,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
         long count = 0, countAlternatives = 0, skipped = 0;
-        string text = null;
+        string? text = null;
 
         // tconst	titleType	primaryTitle	originalTitle	isAdult	startYear	endYear	runtimeMinutes	genres
         // tt0000009	movie	Miss Jerry	Miss Jerry	0	1894	\N	45	Romance
@@ -266,8 +266,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 }
 
                 if (!(
-                        akaFilterRegion.Contains(match.Groups[3].Value)
-                        || akaFilterLanguage.Contains(match.Groups[4].Value)
+                        akaFilterRegion != null && akaFilterRegion.Contains(match.Groups[3].Value)
+                        || akaFilterLanguage != null && akaFilterLanguage.Contains(match.Groups[4].Value)
                     ))
                 {
                     skipped++;
@@ -319,7 +319,7 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
         long count = 0, skipped = 0;
-        string text = null;
+        string? text = null;
 
         // New  Distribution  Votes  Rank  Title
         //       0000000125  1852213   9.2  The Shawshank Redemption (1994)

@@ -65,33 +65,42 @@ public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
 
         foreach (var user in usersToUpdate)
         {
-            _logger.LogInformation(
-                "User {ImdbUserId} needs a refresh of the IMDb User ratings, LastUsageTime = {LastUsageTime}",
-                user.ImdbUserId, user.LastUsageTime);
-            if (user.RefreshRequestTime.HasValue)
-                _logger.LogInformation(
-                    "   * Refresh requested (RefreshRequestTime {RefreshRequestTime}, {RefreshRequestTimeSecondsAgo} seconds ago)",
-                    user.RefreshRequestTime.Value, (now - user.RefreshRequestTime.Value).TotalSeconds);
-            if (!user.LastRefreshRatingsTime.HasValue)
-                _logger.LogInformation("   * Never refreshed");
-            else if (user.LastRefreshRatingsTime.Value < lastUpdateThreshold)
-                _logger.LogInformation(
-                    "   * Last refresh too old for inactive user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
-                    user.LastRefreshRatingsTime.Value);
-            else if (user.LastUsageTime.HasValue && user.LastUsageTime.Value >
-                                                 user.LastRefreshRatingsTime.Value // used since last refreshtime
-                                                 && user.LastRefreshRatingsTime.Value <
-                                                 lastUpdateThresholdActiveUser) // last refresh is before active user threshold
-                _logger.LogInformation(
-                    "   * Last refresh too old for active user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
-                    user.LastRefreshRatingsTime.Value);
-            try
+            if (!string.IsNullOrEmpty(user.ImdbUserId))
             {
-                await _updateImdbUserDataCommand.Execute(user.ImdbUserId, _updateAllRatings);
+                _logger.LogInformation(
+                    "User {ImdbUserId} needs a refresh of the IMDb User ratings, LastUsageTime = {LastUsageTime}",
+                    user.ImdbUserId, user.LastUsageTime);
+                if (user.RefreshRequestTime.HasValue)
+                    _logger.LogInformation(
+                        "   * Refresh requested (RefreshRequestTime {RefreshRequestTime}, {RefreshRequestTimeSecondsAgo} seconds ago)",
+                        user.RefreshRequestTime.Value, (now - user.RefreshRequestTime.Value).TotalSeconds);
+                if (!user.LastRefreshRatingsTime.HasValue)
+                    _logger.LogInformation("   * Never refreshed");
+                else if (user.LastRefreshRatingsTime.Value < lastUpdateThreshold)
+                    _logger.LogInformation(
+                        "   * Last refresh too old for inactive user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
+                        user.LastRefreshRatingsTime.Value);
+                else if (user.LastUsageTime.HasValue && user.LastUsageTime.Value >
+                                                    user.LastRefreshRatingsTime.Value // used since last refreshtime
+                                                    && user.LastRefreshRatingsTime.Value <
+                                                    lastUpdateThresholdActiveUser) // last refresh is before active user threshold
+                    _logger.LogInformation(
+                        "   * Last refresh too old for active user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
+                        user.LastRefreshRatingsTime.Value);
+                try
+                {
+                    await _updateImdbUserDataCommand.Execute(user.ImdbUserId, _updateAllRatings);
+                }
+                catch (Exception x)
+                {
+                    _logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", user.ImdbUserId);
+                }
             }
-            catch (Exception x)
+            else
             {
-                _logger.LogError(x, "Failed to update ratings for ImdbUserId {ImdbUserId}", user.ImdbUserId);
+                _logger.LogInformation(
+                    "Skipping user {UserId}, because no ImdbUserId configured",
+                    user.UserId);
             }
         }
 

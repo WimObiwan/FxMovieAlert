@@ -11,7 +11,8 @@ public class VersionInfoTest
     public void Test()
     {
         VersionInfo versionInfo = new(typeof(object).Assembly);
-        bool isMatch = Regex.IsMatch(versionInfo.Version, @"^\d+\.\d+\.\d+\+.*$");
+        Assert.NotNull(versionInfo.Version);
+        bool isMatch = Regex.IsMatch(versionInfo.Version!, @"^\d+\.\d+\.\d+\+.*$");
         Assert.True(isMatch, versionInfo.Version);
 
         isMatch = Regex.IsMatch(versionInfo.DotNetCoreVersion, @"^\.NET \d+\.\d+\.\d+$");

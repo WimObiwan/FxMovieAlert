@@ -106,7 +106,7 @@ public class GoPlayService : IMovieEventService
             .Where(e => e.GetAttribute("data-category") == "5286") // 5286 = Film
             .Select(e =>
             {
-                string dataProgramText = null;
+                string? dataProgramText = null;
                 try
                 {
                     dataProgramText = e.GetAttribute("data-program") ??
@@ -121,6 +121,7 @@ public class GoPlayService : IMovieEventService
                 }
             })
             .Where(e => e != null)
+            .Select(e => e!)
             .ToList();
     }
 
@@ -143,7 +144,7 @@ public class GoPlayService : IMovieEventService
                                   .FirstOrDefault()
                               ?? throw new Exception("Entry contains no json");
 
-        return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
+        return JsonSerializer.Deserialize<DataProgram>(dataProgramText) ?? throw new Exception("DataProgram missing");
     }
 
     #region JsonModel
@@ -152,25 +153,25 @@ public class GoPlayService : IMovieEventService
 
     private class DataProgram
     {
-        public string id { get; set; }
-        public string title { get; set; }
-        public string link { get; set; }
-        public PageInfo pageInfo { get; set; }
-        public Images images { get; set; }
+        public string? id { get; set; }
+        public string? title { get; set; }
+        public string? link { get; set; }
+        public PageInfo? pageInfo { get; set; }
+        public Images? images { get; set; }
 
         public class PageInfo
         {
-            public string title { get; set; }
-            public string type { get; set; }
+            public string? title { get; set; }
+            public string? type { get; set; }
             public int? publishDate { get; set; }
             public int? unpublishDate { get; set; }
-            public string description { get; set; }
+            public string? description { get; set; }
         }
 
         public class Images
         {
-            public string poster { get; set; }
-            public string teaser { get; set; }
+            public string? poster { get; set; }
+            public string? teaser { get; set; }
         }
     }
 

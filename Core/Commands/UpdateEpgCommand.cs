@@ -91,7 +91,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
     public async Task<int> Execute()
     {
-        Exception firstException = null;
+        Exception? firstException = null;
         var failedOperations = 0;
 
         try
@@ -581,7 +581,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             var imdbMovie = imdbMatchingQueryResult.ImdbMovie;
             var huntNo = imdbMatchingQueryResult.HuntNo;
 
-            Movie movie = null;
+            Movie? movie = null;
             if (imdbMovie == null)
             {
                 huntNo = -1;

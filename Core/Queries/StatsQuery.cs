@@ -11,12 +11,12 @@ namespace FxMovies.Core.Queries;
 [ExcludeFromCodeCoverage]
 public class StatsResult
 {
-    public List<User> Users { get; init; }
+    public List<User> Users { get; init; } = new();
 
     public class User
     {
-        public string UserId { get; init; }
-        public string ImdbUserId { get; init; }
+        public string? UserId { get; init; }
+        public string? ImdbUserId { get; init; }
         public DateTime? LastUsageTime { get; init; }
         public long Usages { get; init; }
         public int RatingCount { get; init; }

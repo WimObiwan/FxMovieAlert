@@ -13,17 +13,6 @@ using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services;
 
-[ExcludeFromCodeCoverage]
-public class VtmGoServiceOptions
-{
-    public static string Position => "VtmGoService";
-
-    // https://vtm.be/vtmgo --> login --> F12 --> Tab "Storage" --> Cookies --> https://vtm.be --> lfvp_auth_token --> "ey...
-    public string AuthToken { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
-}
-
 public class VtmGoService2 : IMovieEventService
 {
     private readonly Channel _channel;
@@ -54,7 +43,8 @@ public class VtmGoService2 : IMovieEventService
         return (await GetMovieUrls())
             .Select(async url => await GetMovieDetails(url))
             .Select(t => t.Result)
-            .Where(me => me is { Duration: >= 75 })
+            .Where(me => me != null && me is { Duration: >= 75 })
+            .Select(me => me!)
             .ToList();
     }
 
@@ -75,7 +65,7 @@ public class VtmGoService2 : IMovieEventService
             .AsEnumerable();
     }
 
-    private async Task<MovieEvent> GetMovieDetails(string url)
+    private async Task<MovieEvent?> GetMovieDetails(string url)
     {
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
