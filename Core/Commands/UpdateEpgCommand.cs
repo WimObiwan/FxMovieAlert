@@ -35,17 +35,17 @@ public class UpdateEpgCommandOptions
 
     public static string Position => "UpdateEpg";
 
-    public string[] MovieTitlesToIgnore { get; set; }
-    public string[] MovieTitlesToTransform { get; set; }
-    public string[] YearSplitterPatterns { get; set; }
+    public string[]? MovieTitlesToIgnore { get; set; }
+    public string[]? MovieTitlesToTransform { get; set; }
+    public string[]? YearSplitterPatterns { get; set; }
     public int? MaxDays { get; set; }
-    public string ImageBasePath { get; set; }
+    public string? ImageBasePath { get; set; }
 
     // Resharper disable All
-    public Dictionary<string, string> ImageOverrideMap { get; set; }
+    public Dictionary<string, string>? ImageOverrideMap { get; set; }
     // Resharper restore All
 
-    public string[] ActivateProviders { get; set; }
+    public string[]? ActivateProviders { get; set; }
 
     public DownloadImagesOption? DownloadImages { get; set; }
 }
@@ -151,8 +151,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
     {
         var activateProviders = _updateEpgCommandOptions.ActivateProviders;
         return activateProviders == null
-               || !_updateEpgCommandOptions.ActivateProviders.Any()
-               || _updateEpgCommandOptions.ActivateProviders.Contains(provider);
+               || !activateProviders.Any()
+               || activateProviders.Contains(provider);
     }
 
     private async Task UpdateDatabaseEpg()
@@ -166,7 +166,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         _moviesDbContext.MovieEvents.RemoveRange(set);
         await _moviesDbContext.SaveChangesAsync();
 
-        Exception firstException = null;
+        Exception? firstException = null;
         var failedProviders = 0;
 
         foreach (var service in _movieEventServices)
@@ -176,7 +176,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 try
                 {
                     var movieEvents = await service.GetMovieEvents();
-                    await UpdateMovieEvents(movieEvents, me => me.Vod && me.Channel.Code == channelCode);
+                    await UpdateMovieEvents(movieEvents, me => me.Vod && me.Channel != null && me.Channel.Code == channelCode);
                 }
                 catch (Exception x)
                 {
@@ -228,8 +228,16 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         // Remove movies that should be ignored
         bool IsMovieIgnored(MovieEvent movieEvent)
         {
-            foreach (var item in _updateEpgCommandOptions.MovieTitlesToIgnore)
-                if (Regex.IsMatch(movieEvent.Title, item))
+            var title = movieEvent.Title;
+            if (string.IsNullOrEmpty(title))
+                return true;
+
+            var movieTitlesToIgnore = _updateEpgCommandOptions.MovieTitlesToIgnore;
+            if (movieTitlesToIgnore == null)
+                return false;
+
+            foreach (var item in movieTitlesToIgnore)
+                if (Regex.IsMatch(title, item))
                     return true;
             return false;
         }
@@ -241,33 +249,44 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         // Transform movie titles
         foreach (var movie in movieEvents)
         {
-            foreach (var item in _updateEpgCommandOptions.MovieTitlesToTransform)
+            if (movie.Title == null)
+                continue;
+
+            var movieTitlesToTransform = _updateEpgCommandOptions.MovieTitlesToTransform;
+            if (movieTitlesToTransform != null)
             {
-                var newTitle = Regex.Replace(movie.Title, item, "$1");
-                if (movie.Title != newTitle)
+                foreach (var item in movieTitlesToTransform)
                 {
-                    _logger.LogInformation("Transforming movie: {Id} {Title} to {NewTitle}", movie.Id, movie.Title,
-                        newTitle);
-                    movie.Title = newTitle;
+                    var newTitle = Regex.Replace(movie.Title, item, "$1");
+                    if (movie.Title != newTitle)
+                    {
+                        _logger.LogInformation("Transforming movie: {Id} {Title} to {NewTitle}", movie.Id, movie.Title,
+                            newTitle);
+                        movie.Title = newTitle;
+                    }
                 }
             }
 
-            foreach (var item in _updateEpgCommandOptions.YearSplitterPatterns)
+            var yearSplitterPatterns = _updateEpgCommandOptions.YearSplitterPatterns;
+            if (yearSplitterPatterns != null)
             {
-                var match = Regex.Match(movie.Title, item);
-                if (match.Success)
+                foreach (var item in yearSplitterPatterns)
                 {
-                    var year = match.Groups[2].Value;
-                    if (int.TryParse(year, out var yearInt))
+                    var match = Regex.Match(movie.Title, item);
+                    if (match.Success)
                     {
-                        movie.Year = yearInt;
-                        movie.Title = match.Groups[1].Value.Trim();
+                        var year = match.Groups[2].Value;
+                        if (int.TryParse(year, out var yearInt))
+                        {
+                            movie.Year = yearInt;
+                            movie.Title = match.Groups[1].Value.Trim();
+                        }
                     }
                 }
             }
 
             _logger.LogInformation("{ChannelName} {Id} {Title} {Year} {StartTime}",
-                movie.Channel.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
+                movie.Channel?.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
         }
 
         var existingMovies = _moviesDbContext.MovieEvents.Where(movieEventsSubset);
@@ -275,7 +294,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         _logger.LogInformation("New movies: {NewMovieCount}", movieEvents.Count);
 
         // Update channels
-        foreach (var channel in movieEvents.Select(m => m.Channel).Distinct())
+        foreach (var channel in movieEvents.Select(m => m.Channel).Where(c => c != null).Select(c => c!).Distinct())
         {
             var existingChannel = await _moviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
             if (existingChannel != null)
@@ -408,7 +427,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
             var name = "channel-" + channel.Code;
 
-            if (_updateEpgCommandOptions.ImageOverrideMap.TryGetValue(name, out var imageOverride))
+            var imageOverrideMap = _updateEpgCommandOptions.ImageOverrideMap; 
+            if (imageOverrideMap != null && imageOverrideMap.TryGetValue(name, out var imageOverride))
             {
                 var target = Path.Combine(basePath, name);
                 File.Copy(imageOverride, target, true);
@@ -444,7 +464,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             {
                 var url = movieEvent.PosterS;
 
-                if (url == null)
+                if (string.IsNullOrEmpty(url))
                     continue;
 
                 if (CheckDownloadNotNeeded(movieEvent.PosterS_Local))
@@ -467,7 +487,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             {
                 var url = movieEvent.PosterM;
 
-                if (url == null)
+                if (string.IsNullOrEmpty(url))
                     continue;
 
                 if (CheckDownloadNotNeeded(movieEvent.PosterM_Local))
@@ -486,7 +506,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         await _moviesDbContext.SaveChangesAsync();
     }
 
-    private bool CheckDownloadNotNeeded(string localFile)
+    private bool CheckDownloadNotNeeded(string? localFile)
     {
         if (_downloadImagesOption == UpdateEpgCommandOptions.DownloadImagesOption.Active)
             return false;
@@ -497,7 +517,12 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             if (string.IsNullOrEmpty(localFile))
                 return false;
 
-            var file = Path.Combine(_updateEpgCommandOptions.ImageBasePath, localFile);
+            var imageBasePath = _updateEpgCommandOptions.ImageBasePath;
+            string file;
+            if (string.IsNullOrEmpty(imageBasePath))
+                file = localFile;
+            else
+                file = Path.Combine(imageBasePath, localFile);
             return File.Exists(file);
         }
 
@@ -518,7 +543,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         }
     }
 
-    private async Task<string> DownloadFile(string url, string basePath, string name, int resize)
+    private async Task<string?> DownloadFile(string url, string basePath, string name, int resize)
     {
         if (string.IsNullOrEmpty(url))
             return null;
@@ -560,7 +585,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
     private async Task UpdateGenericDataWithImdb(Func<MoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies)
     {
-        var groups = fnGetMovies(_moviesDbContext).AsEnumerable().GroupBy(m => new { m.Title, m.Year }).ToList();
+        var groups = fnGetMovies(_moviesDbContext).AsEnumerable().Where(m => m.Title != null).GroupBy(m => new { m.Title, m.Year }).ToList();
         var totalCount = groups.Count;
         var current = 0;
         foreach (var group in groups) //.ToList())
@@ -598,23 +623,26 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 }
             }
 
-            if (movie == null && imdbMovie == null)
-            {
-                _logger.LogInformation("UpdateEpgDataWithImdb: Could not find movie '{Title} ({Year})' in IMDb",
-                    first.Title, first.Year);
-                continue;
-            }
-
             _logger.LogInformation("{PercentDone}% {Title} ({Year}) ==> {ImdbId}, duplicity={Duplicity}, HUNT#{HuntNo}",
                 100 * current / totalCount, first.Title, first.Year,
                 movie?.ImdbId ?? imdbMovie?.ImdbId, group.Count(), huntNo);
 
-            movie ??= await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
-
-            movie ??= new Movie
+            if (movie == null)
             {
-                ImdbId = imdbMovie.ImdbId
-            };
+                if (imdbMovie == null)
+                {
+                    _logger.LogInformation("UpdateEpgDataWithImdb: Could not find movie '{Title} ({Year})' in IMDb",
+                        first.Title, first.Year);
+                    continue;
+                }
+
+                movie ??= await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
+
+                movie ??= new Movie
+                {
+                    ImdbId = imdbMovie.ImdbId
+                };
+            }
 
             if (imdbMovie != null)
             {
@@ -622,7 +650,10 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 movie.ImdbVotes = imdbMovie.Votes;
             }
 
-            movie.Certification ??= await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+            if (movie.Certification == null && movie.ImdbId != null)
+            {
+                movie.Certification ??= await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+            }
 
             foreach (var movieWithImdbLink in group) movieWithImdbLink.Movie = movie;
         }

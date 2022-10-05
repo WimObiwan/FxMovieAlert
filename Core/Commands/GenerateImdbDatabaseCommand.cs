@@ -91,8 +91,9 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private async Task ImportImdbData_Movies()
     {
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var imdbMoviesList = _generateImdbDatabaseCommandOptions.ImdbMoviesList ?? throw new Exception("Missing option ImdbMoviesList");
 
-        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbMoviesList);
+        var fileToDecompress = new FileInfo(imdbMoviesList);
         await using var originalFileStream = fileToDecompress.OpenRead();
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
@@ -210,13 +211,14 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
         var akaFilterRegion = _generateImdbDatabaseCommandOptions.AkaFilterRegion;
         var akaFilterLanguage = _generateImdbDatabaseCommandOptions.AkaFilterLanguage;
+        var imdbAlsoKnownAsList = _generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList ?? throw new Exception("Missing option ImdbAlsoKnownAsList");
 
-        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList);
+        var fileToDecompress = new FileInfo(imdbAlsoKnownAsList);
         await using var originalFileStream = fileToDecompress.OpenRead();
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
         long count = 0, countAlternatives = 0, skipped = 0;
-        string text = null;
+        string? text = null;
 
         // 1        2           3       4       5           6       7           8
         // titleId	ordering	title	region	language	types	attributes	isOriginalTitle
@@ -313,8 +315,9 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private async Task ImportImdbData_Ratings()
     {
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var imdbRatingsList = _generateImdbDatabaseCommandOptions.ImdbRatingsList ?? throw new Exception("Missing option ImdbRatingsList");
 
-        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbRatingsList);
+        var fileToDecompress = new FileInfo(imdbRatingsList);
         await using var originalFileStream = fileToDecompress.OpenRead();
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
