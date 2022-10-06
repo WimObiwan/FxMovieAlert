@@ -585,7 +585,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
     private async Task UpdateGenericDataWithImdb(Func<MoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies)
     {
-        var groups = fnGetMovies(_moviesDbContext).AsEnumerable().Where(m => m.Title != null).GroupBy(m => new { m.Title, m.Year }).ToList();
+        var groups = fnGetMovies(_moviesDbContext).AsEnumerable().Where(m => m.Title != null).GroupBy(m => new { Title = m.Title!, m.Year }).ToList();
         var totalCount = groups.Count;
         var current = 0;
         foreach (var group in groups) //.ToList())
@@ -602,7 +602,10 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             }
 
             var first = group.First();
-            var imdbMatchingQueryResult = await _imdbMatchingQuery.Execute(first.Title, first.Year);
+            var title = first.Title;
+            if (title == null)
+                continue;
+            var imdbMatchingQueryResult = await _imdbMatchingQuery.Execute(title, first.Year);
             var imdbMovie = imdbMatchingQueryResult.ImdbMovie;
             var huntNo = imdbMatchingQueryResult.HuntNo;
 
@@ -611,20 +614,20 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             {
                 huntNo = -1;
 
-                var manualMatch = await _manualMatchesQuery.Execute(first.Title);
+                var manualMatch = await _manualMatchesQuery.Execute(title);
                 movie = manualMatch?.Movie;
                 if (movie != null)
                 {
                     _logger.LogInformation(
                         "UpdateEpgDataWithImdb: Fallback using ManualMatch for '{Title} ({Year})' to existing Movie {MovieID} {ImdbId}",
-                        first.Title, first.Year, movie.Id, movie.ImdbId);
+                        title, first.Year, movie.Id, movie.ImdbId);
 
                     imdbMovie = await _imdbDbContext.Movies.FirstOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
                 }
             }
 
             _logger.LogInformation("{PercentDone}% {Title} ({Year}) ==> {ImdbId}, duplicity={Duplicity}, HUNT#{HuntNo}",
-                100 * current / totalCount, first.Title, first.Year,
+                100 * current / totalCount, title, first.Year,
                 movie?.ImdbId ?? imdbMovie?.ImdbId, group.Count(), huntNo);
 
             if (movie == null)
@@ -632,7 +635,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 if (imdbMovie == null)
                 {
                     _logger.LogInformation("UpdateEpgDataWithImdb: Could not find movie '{Title} ({Year})' in IMDb",
-                        first.Title, first.Year);
+                        title, first.Year);
                     continue;
                 }
 

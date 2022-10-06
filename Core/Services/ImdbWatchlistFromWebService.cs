@@ -50,14 +50,17 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
         }
 
         var jsonString = Regex.Match(text, @"IMDbReactInitialState\.push\(({.*})\);").Groups[1].Value;
-        return JsonSerializer.Deserialize<JsonData>(jsonString);
+        return JsonSerializer.Deserialize<JsonData>(jsonString) ?? throw new Exception("Json missing");
     }
 
     private IList<ImdbWatchlist> GetWatchlist(JsonData jsonData)
     {
+        if (jsonData.list == null || jsonData.list.items == null || jsonData.titles == null)
+            throw new Exception("Json missing");
         return jsonData.list.items.Select(i =>
         {
-            jsonData.titles.TryGetValue(i.imdbMovieId, out var title);
+            string imdbMovieId = i.imdbMovieId ?? throw new Exception("Json missing");
+            jsonData.titles.TryGetValue(imdbMovieId, out var title);
             DateTime.TryParseExact(i.added, "dd MMM yyyy", CultureInfo.GetCultureInfo("en-GB"),
                 DateTimeStyles.AllowWhiteSpaces, out var dateTimeAdded);
             return new ImdbWatchlist
@@ -75,29 +78,29 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 
     private class JsonData
     {
-        public List list { get; set; }
-        public Dictionary<string, Title> titles { get; set; }
+        public List? list { get; set; }
+        public Dictionary<string, Title?>? titles { get; set; }
     }
 
     private class List
     {
-        public List<Item> items { get; set; }
+        public List<Item>? items { get; set; }
     }
 
     private class Item
     {
-        public string added { get; set; }
-        [JsonPropertyName("const")] public string imdbMovieId { get; set; }
+        public string? added { get; set; }
+        [JsonPropertyName("const")] public string? imdbMovieId { get; set; }
     }
 
     private class Title
     {
-        public Primary primary { get; set; }
+        public Primary? primary { get; set; }
     }
 
     private class Primary
     {
-        public string title { get; set; }
+        public string? title { get; set; }
     }
 
     // Resharper restore All

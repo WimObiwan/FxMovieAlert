@@ -10,14 +10,14 @@ namespace FxMovies.Core.Services;
 
 public interface IImdbWatchlistFromFileService
 {
-    IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>> lastImportErrors);
+    IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>>? lastImportErrors);
 }
 
 public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 {
-    public IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>> lastImportErrors)
+    public IList<ImdbWatchlist> GetWatchlist(Stream stream, out List<Tuple<string, string, string>>? lastImportErrors)
     {
-        List<Tuple<string, string, string>> lastImportErrors2 = null;
+        List<Tuple<string, string, string>>? lastImportErrors2 = null;
         var engine = new FileHelperAsyncEngine<ImdbUserWatchlistRecord>();
 
         var moreErrors = 0;
@@ -30,6 +30,9 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
                     try
                     {
                         var constId = record.Const;
+
+                        if (string.IsNullOrEmpty(record.Created))
+                            throw new Exception("Column Created is empty");
 
                         var date = DateTime.ParseExact(record.Created,
                             new[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
@@ -57,9 +60,9 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
 
                         return null;
                     }
-                }).Where(i => i != null).ToList();
+                }).Where(i => i != null).Select(i => i!).ToList();
 
-            if (moreErrors > 0)
+            if (lastImportErrors2 != null && moreErrors > 0)
                 lastImportErrors2.Add(
                     Tuple.Create(
                         $"And {moreErrors} more errors...",
@@ -81,40 +84,40 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
     [DelimitedRecord(",")]
     private class ImdbUserWatchlistRecord
     {
-        [FieldQuoted] public string Const;
+        [FieldQuoted] public string? Const;
 
         [FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'
-        public string Created;
+        public string? Created;
 
-        [FieldQuoted] public string description;
+        [FieldQuoted] public string? description;
 
-        [FieldQuoted] public string Directors;
-        [FieldQuoted] public string Genres;
-        [FieldQuoted] public string IMDbRating;
+        [FieldQuoted] public string? Directors;
+        [FieldQuoted] public string? Genres;
+        [FieldQuoted] public string? IMDbRating;
 
         //[FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'?
-        public string Modified;
+        public string? Modified;
 
-        [FieldQuoted] public string NumVotes;
+        [FieldQuoted] public string? NumVotes;
         // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
 
-        [FieldQuoted] public string Position;
-        [FieldQuoted] public string Rated;
+        [FieldQuoted] public string? Position;
+        [FieldQuoted] public string? Rated;
 
         [FieldQuoted]
         //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
-        public string ReleaseDate;
+        public string? ReleaseDate;
 
-        [FieldQuoted] public string Runtime;
-        [FieldQuoted] public string Title;
-        [FieldQuoted] public string TitleType;
-        [FieldQuoted] public string Url;
-        [FieldQuoted] public string Year;
-        [FieldQuoted] public string YourRating;
+        [FieldQuoted] public string? Runtime;
+        [FieldQuoted] public string? Title;
+        [FieldQuoted] public string? TitleType;
+        [FieldQuoted] public string? Url;
+        [FieldQuoted] public string? Year;
+        [FieldQuoted] public string? YourRating;
     }
 
     // Resharper restore All

@@ -21,7 +21,7 @@ public class PrimeVideoServiceOptions
 {
     public static string Position => "PrimeVideoService";
 
-    public string LocalDownloadOverride { get; set; }
+    public string? LocalDownloadOverride { get; set; }
 }
 
 public class PrimeVideoService : IMovieEventService
@@ -70,6 +70,7 @@ public class PrimeVideoService : IMovieEventService
                 year = null;
 
             int? duration;
+            string runtime = movie.runtime ?? throw new Exception("Missing data");
             var match = Regex.Match(movie.runtime, @"^(?:(\d+) (?:uur|h) )?(\d+) min$");
             if (match.Success)
             {
@@ -88,11 +89,11 @@ public class PrimeVideoService : IMovieEventService
                 Channel = channel,
                 Title = HttpUtility.HtmlDecode(movie.title),
                 Content = movie.synopsis,
-                PosterM = movie.image.url,
-                PosterS = movie.image.url,
+                PosterM = movie.image?.url,
+                PosterS = movie.image?.url,
                 Vod = true,
                 Feed = MovieEvent.FeedType.PaidVod,
-                VodLink = GetFullUrl(movie.link.url),
+                VodLink = movie.link?.url == null ? null : GetFullUrl(movie.link.url),
                 Type = 1,
                 ExternalId = movie.titleID,
                 StartTime = dateTime,
@@ -105,7 +106,7 @@ public class PrimeVideoService : IMovieEventService
         return movieEvents;
     }
 
-    private string GetFullUrl(string url)
+    private string? GetFullUrl(string url)
     {
         if (Uri.TryCreate(_httpClient.BaseAddress, url, out var uri))
             return uri.ToString();
@@ -141,8 +142,9 @@ public class PrimeVideoService : IMovieEventService
 
         var json = JsonSerializer.Deserialize<Json>(jsonText) ?? throw new Exception("Json missing");
 
-        var items = json.props.collections
-            .SelectMany(c => c.items)
+        var collections = json.props?.collections ?? throw new Exception("Json missing");
+        var items = collections
+            .SelectMany(c => c.items!)
             .Where(i => i.watchlistAction?.formatCode == "mv");
 
         return items.ToList();
@@ -154,35 +156,35 @@ public class PrimeVideoService : IMovieEventService
 
     private class Json
     {
-        public Props props { get; set; }
+        public Props? props { get; set; }
 
         public class Props
         {
-            public List<Collection> collections { get; set; }
+            public List<Collection>? collections { get; set; }
 
             public class Collection
             {
-                public List<Item> items { get; set; }
+                public List<Item>? items { get; set; }
 
                 public class Item
                 {
-                    public Url image { get; set; }
-                    public Url link { get; set; }
-                    public string title { get; set; }
-                    public string titleID { get; set; }
-                    public string releaseYear { get; set; }
-                    public string runtime { get; set; }
-                    public string synopsis { get; set; }
-                    public WatchlistAction watchlistAction { get; set; }
+                    public Url? image { get; set; }
+                    public Url? link { get; set; }
+                    public string? title { get; set; }
+                    public string? titleID { get; set; }
+                    public string? releaseYear { get; set; }
+                    public string? runtime { get; set; }
+                    public string? synopsis { get; set; }
+                    public WatchlistAction? watchlistAction { get; set; }
 
                     public class Url
                     {
-                        public string url { get; set; }
+                        public string? url { get; set; }
                     }
 
                     public class WatchlistAction
                     {
-                        public string formatCode { get; set; }
+                        public string? formatCode { get; set; }
                     }
                 }
             }

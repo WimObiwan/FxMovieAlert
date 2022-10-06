@@ -42,43 +42,47 @@ public class GoPlayService : IMovieEventService
             .Select(async dataProgram =>
             {
                 var link = dataProgram.link;
-                var image = dataProgram.images.teaser;
+                var image = dataProgram.images?.teaser;
 
-                if (link != null && link.StartsWith('/'))
-                    link = "https://www.goplay.be" + link;
-
-                try
+                if (link != null)
                 {
-                    var dataProgramDetails = await GetDataProgramDetails(link);
+                    if (link.StartsWith('/'))
+                        link = "https://www.goplay.be" + link;
 
-                    return new MovieEvent
+                    try
                     {
-                        ExternalId = dataProgram.id,
-                        Type = 1, // 1 = movie, 2 = short movie, 3 = serie
-                        Title = dataProgram.title.Trim(),
-                        Year = null,
-                        Vod = true,
-                        Feed = MovieEvent.FeedType.FreeVod,
-                        StartTime = GetDateTime(dataProgramDetails.pageInfo.publishDate) ?? DateTime.UtcNow,
-                        EndTime = GetDateTime(dataProgramDetails.pageInfo.unpublishDate),
-                        Channel = channel,
-                        PosterS = image,
-                        PosterM = image,
-                        Duration = null,
-                        Content = dataProgramDetails.pageInfo.description,
-                        VodLink = link,
-                        AddedTime = DateTime.UtcNow
-                    };
+                        var dataProgramDetails = await GetDataProgramDetails(link);
+
+                        return new MovieEvent
+                        {
+                            ExternalId = dataProgram.id,
+                            Type = 1, // 1 = movie, 2 = short movie, 3 = serie
+                            Title = dataProgram.title?.Trim(),
+                            Year = null,
+                            Vod = true,
+                            Feed = MovieEvent.FeedType.FreeVod,
+                            StartTime = GetDateTime(dataProgramDetails.pageInfo?.publishDate) ?? DateTime.UtcNow,
+                            EndTime = GetDateTime(dataProgramDetails.pageInfo?.unpublishDate),
+                            Channel = channel,
+                            PosterS = image,
+                            PosterM = image,
+                            Duration = null,
+                            Content = dataProgramDetails.pageInfo?.description,
+                            VodLink = link,
+                            AddedTime = DateTime.UtcNow
+                        };
+                    }
+                    catch (Exception x)
+                    {
+                        _logger.LogWarning(x, "Skipping event with parsing exception, Url={link}",
+                            link);
+                    }
                 }
-                catch (Exception x)
-                {
-                    _logger.LogWarning(x, "Skipping event with parsing exception, Url={link}",
-                        link);
-                    return null;
-                }
+                return null;
             })
             .Select(t => t?.Result)
             .Where(me => me != null)
+            .Select(me => me!)
             .ToList();
     }
 

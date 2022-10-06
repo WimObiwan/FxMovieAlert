@@ -15,13 +15,13 @@ namespace FxMovies.Core.Services;
 [ExcludeFromCodeCoverage]
 public class GetImagesResult
 {
-    public string Medium { get; init; }
-    public string Small { get; init; }
+    public string? Medium { get; init; }
+    public string? Small { get; init; }
 }
 
 public interface ITheMovieDbService
 {
-    Task<string> GetCertification(string imdbId);
+    Task<string?> GetCertification(string imdbId);
     Task<GetImagesResult> GetImages(string imdbId);
 }
 
@@ -30,14 +30,14 @@ public class TheMovieDbServiceOptions
 {
     public static string Position => "TheMovieDbService";
 
-    public string ApiKey { get; set; }
-    public string[] CertificationCountryPreference { get; set; }
+    public string? ApiKey { get; set; }
+    public string[]? CertificationCountryPreference { get; set; }
 }
 
 public class TheMovieDbService : ITheMovieDbService
 {
-    private readonly string _apiKey;
-    private readonly string[] _certificationCountryPreference;
+    private readonly string? _apiKey;
+    private readonly string[]? _certificationCountryPreference;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TheMovieDbServiceOptions> _logger;
 
@@ -52,7 +52,7 @@ public class TheMovieDbService : ITheMovieDbService
         _certificationCountryPreference = o.CertificationCountryPreference;
     }
 
-    public async Task<string> GetCertification(string imdbId)
+    public async Task<string?> GetCertification(string imdbId)
     {
         if (string.IsNullOrEmpty(_apiKey) || _certificationCountryPreference == null)
             return "";
@@ -105,7 +105,7 @@ public class TheMovieDbService : ITheMovieDbService
 
         var queryParams = new Dictionary<string, string>
         {
-            { "api_key", _apiKey },
+            { "api_key", _apiKey ?? throw new Exception("ApiKey options missing") },
             { "language", "en-US" }
         };
         var url = QueryHelpers.AddQueryString($"/3/movie/{imdbId}", queryParams);
@@ -118,7 +118,7 @@ public class TheMovieDbService : ITheMovieDbService
             _logger.LogInformation("Image {ImdbId} ==> {OriginalTitle}", imdbId, movie.original_title);
 
             var baseUrl = "http://image.tmdb.org/t/p";
-            string posterM, posterS;
+            string? posterM, posterS;
 
             // Image sizes:
             // https://api.themoviedb.org/3/configuration?api_key=<key>&language=en-US
@@ -158,20 +158,20 @@ public class TheMovieDbService : ITheMovieDbService
     [DebuggerDisplay("iso_3166_1 = {iso_3166_1}")]
     private class Country
     {
-        public string certification { get; set; }
-        public string iso_3166_1 { get; set; }
+        public string? certification { get; set; }
+        public string? iso_3166_1 { get; set; }
     }
 
     private class Releases
     {
-        public List<Country> countries { get; set; }
+        public List<Country>? countries { get; set; }
     }
 
     private class Movie
     {
-        public string backdrop_path { get; set; }
-        public string poster_path { get; set; }
-        public string original_title { get; set; }
+        public string? backdrop_path { get; set; }
+        public string? poster_path { get; set; }
+        public string? original_title { get; set; }
     }
 
     // Resharper restore All

@@ -9,7 +9,7 @@ namespace FxMovies.Core;
 
 public interface IMovieCreationHelper
 {
-    Task<Movie?> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
+    Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false);
 }
 
 public class MovieCreationHelper : IMovieCreationHelper
@@ -28,13 +28,11 @@ public class MovieCreationHelper : IMovieCreationHelper
         _theMovieDbService = theMovieDbService;
     }
 
-    public async Task<Movie?> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
+    public async Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
     {
         var movie = await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
-        var newMovie = movie == null;
-
-        if (newMovie)
+        if (movie == null)
         {
             movie = new Movie
             {
@@ -43,7 +41,7 @@ public class MovieCreationHelper : IMovieCreationHelper
             _moviesDbContext.Movies.Add(movie);
         }
 
-        if (refresh && movie != null)
+        if (refresh)
             await Refresh(movie);
 
         return movie;

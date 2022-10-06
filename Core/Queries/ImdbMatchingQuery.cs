@@ -27,13 +27,13 @@ public class ImdbMatchingQueryOptions
 [ExcludeFromCodeCoverage]
 public class ImdbMatchingQueryResult
 {
-    public ImdbMovie ImdbMovie { get; init; }
+    public ImdbMovie? ImdbMovie { get; init; }
     public int HuntNo { get; init; }
 }
 
 public class ImdbMatchingQuery : IImdbMatchingQuery
 {
-    private readonly List<Func<string, int?, IQueryable<ImdbMovie>>> _huntingProcedure;
+    private readonly List<Func<string, int?, IQueryable<ImdbMovie>?>> _huntingProcedure;
     private readonly ImdbDbContext _imdbDbContext;
 
     public ImdbMatchingQuery(
@@ -43,7 +43,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
         var imdbHuntingYearDiff = imdbMatchingQueryOptions.Value.ImdbHuntingYearDiff ?? 2;
         _imdbDbContext = imdbDbContext;
 
-        _huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>>>
+        _huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>?>>
         {
             // Search for PrimaryTitle (Year)
             (title, releaseYear) =>
@@ -105,7 +105,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
 
     public async Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear)
     {
-        ImdbMovie imdbMovie = null;
+        ImdbMovie? imdbMovie = null;
         var huntNo = 0;
         foreach (var hunt in _huntingProcedure)
         {
