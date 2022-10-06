@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace FxMovies.Site.Options;
 
+[ExcludeFromCodeCoverage]
 public class Auth0Options
 {
     public static string Position => "Auth0";

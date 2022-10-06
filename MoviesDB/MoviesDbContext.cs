@@ -13,13 +13,13 @@ public class MoviesDbContext : DbContext
     {
     }
 
-    public DbSet<Channel> Channels { get; set; }
-    public DbSet<Movie> Movies { get; set; }
-    public DbSet<MovieEvent> MovieEvents { get; set; }
-    public DbSet<UserRating> UserRatings { get; set; }
-    public DbSet<UserWatchListItem> UserWatchLists { get; set; }
-    public DbSet<User> Users { get; set; }
-    public DbSet<ManualMatch> ManualMatches { get; set; }
+    public DbSet<Channel> Channels { get; set; } = default!;
+    public DbSet<Movie> Movies { get; set; } = default!;
+    public DbSet<MovieEvent> MovieEvents { get; set; } = default!;
+    public DbSet<UserRating> UserRatings { get; set; } = default!;
+    public DbSet<UserWatchListItem> UserWatchLists { get; set; } = default!;
+    public DbSet<User> Users { get; set; } = default!;
+    public DbSet<ManualMatch> ManualMatches { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

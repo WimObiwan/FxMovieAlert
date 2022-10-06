@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -15,6 +16,7 @@ public interface IImdbMatchingQuery
     Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear);
 }
 
+[ExcludeFromCodeCoverage]
 public class ImdbMatchingQueryOptions
 {
     public static string Position => "ImdbMatching";
@@ -22,15 +24,16 @@ public class ImdbMatchingQueryOptions
     public int? ImdbHuntingYearDiff { get; set; }
 }
 
+[ExcludeFromCodeCoverage]
 public class ImdbMatchingQueryResult
 {
-    public ImdbMovie ImdbMovie { get; init; }
+    public ImdbMovie? ImdbMovie { get; init; }
     public int HuntNo { get; init; }
 }
 
 public class ImdbMatchingQuery : IImdbMatchingQuery
 {
-    private readonly List<Func<string, int?, IQueryable<ImdbMovie>>> _huntingProcedure;
+    private readonly List<Func<string, int?, IQueryable<ImdbMovie>?>> _huntingProcedure;
     private readonly ImdbDbContext _imdbDbContext;
 
     public ImdbMatchingQuery(
@@ -40,7 +43,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
         var imdbHuntingYearDiff = imdbMatchingQueryOptions.Value.ImdbHuntingYearDiff ?? 2;
         _imdbDbContext = imdbDbContext;
 
-        _huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>>>
+        _huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>?>>
         {
             // Search for PrimaryTitle (Year)
             (title, releaseYear) =>
@@ -102,7 +105,7 @@ public class ImdbMatchingQuery : IImdbMatchingQuery
 
     public async Task<ImdbMatchingQueryResult> Execute(string movieTitle, int? movieReleaseYear)
     {
-        ImdbMovie imdbMovie = null;
+        ImdbMovie? imdbMovie = null;
         var huntNo = 0;
         foreach (var hunt in _huntingProcedure)
         {

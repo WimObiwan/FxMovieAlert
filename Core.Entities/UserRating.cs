@@ -8,8 +8,8 @@ namespace FxMovies.Core.Entities;
 public class UserRating
 {
     public int Id { get; set; }
-    public User User { get; set; }
-    public Movie Movie { get; set; }
+    public User? User { get; set; }
+    public Movie? Movie { get; set; }
     public DateTime RatingDate { get; set; }
     public int Rating { get; set; }
 

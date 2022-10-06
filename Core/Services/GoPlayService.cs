@@ -42,43 +42,47 @@ public class GoPlayService : IMovieEventService
             .Select(async dataProgram =>
             {
                 var link = dataProgram.link;
-                var image = dataProgram.images.teaser;
+                var image = dataProgram.images?.teaser;
 
-                if (link != null && link.StartsWith('/'))
-                    link = "https://www.goplay.be" + link;
-
-                try
+                if (link != null)
                 {
-                    var dataProgramDetails = await GetDataProgramDetails(link);
+                    if (link.StartsWith('/'))
+                        link = "https://www.goplay.be" + link;
 
-                    return new MovieEvent
+                    try
                     {
-                        ExternalId = dataProgram.id,
-                        Type = 1, // 1 = movie, 2 = short movie, 3 = serie
-                        Title = dataProgram.title.Trim(),
-                        Year = null,
-                        Vod = true,
-                        Feed = MovieEvent.FeedType.FreeVod,
-                        StartTime = GetDateTime(dataProgramDetails.pageInfo.publishDate) ?? DateTime.UtcNow,
-                        EndTime = GetDateTime(dataProgramDetails.pageInfo.unpublishDate),
-                        Channel = channel,
-                        PosterS = image,
-                        PosterM = image,
-                        Duration = null,
-                        Content = dataProgramDetails.pageInfo.description,
-                        VodLink = link,
-                        AddedTime = DateTime.UtcNow
-                    };
+                        var dataProgramDetails = await GetDataProgramDetails(link);
+
+                        return new MovieEvent
+                        {
+                            ExternalId = dataProgram.id,
+                            Type = 1, // 1 = movie, 2 = short movie, 3 = serie
+                            Title = dataProgram.title?.Trim(),
+                            Year = null,
+                            Vod = true,
+                            Feed = MovieEvent.FeedType.FreeVod,
+                            StartTime = GetDateTime(dataProgramDetails.pageInfo?.publishDate) ?? DateTime.UtcNow,
+                            EndTime = GetDateTime(dataProgramDetails.pageInfo?.unpublishDate),
+                            Channel = channel,
+                            PosterS = image,
+                            PosterM = image,
+                            Duration = null,
+                            Content = dataProgramDetails.pageInfo?.description,
+                            VodLink = link,
+                            AddedTime = DateTime.UtcNow
+                        };
+                    }
+                    catch (Exception x)
+                    {
+                        _logger.LogWarning(x, "Skipping event with parsing exception, Url={link}",
+                            link);
+                    }
                 }
-                catch (Exception x)
-                {
-                    _logger.LogWarning(x, "Skipping event with parsing exception, Url={link}",
-                        link);
-                    return null;
-                }
+                return null;
             })
             .Select(t => t?.Result)
             .Where(me => me != null)
+            .Select(me => me!)
             .ToList();
     }
 
@@ -106,7 +110,7 @@ public class GoPlayService : IMovieEventService
             .Where(e => e.GetAttribute("data-category") == "5286") // 5286 = Film
             .Select(e =>
             {
-                string dataProgramText = null;
+                string? dataProgramText = null;
                 try
                 {
                     dataProgramText = e.GetAttribute("data-program") ??
@@ -121,6 +125,7 @@ public class GoPlayService : IMovieEventService
                 }
             })
             .Where(e => e != null)
+            .Select(e => e!)
             .ToList();
     }
 
@@ -143,7 +148,7 @@ public class GoPlayService : IMovieEventService
                                   .FirstOrDefault()
                               ?? throw new Exception("Entry contains no json");
 
-        return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
+        return JsonSerializer.Deserialize<DataProgram>(dataProgramText) ?? throw new Exception("DataProgram missing");
     }
 
     #region JsonModel
@@ -152,25 +157,25 @@ public class GoPlayService : IMovieEventService
 
     private class DataProgram
     {
-        public string id { get; set; }
-        public string title { get; set; }
-        public string link { get; set; }
-        public PageInfo pageInfo { get; set; }
-        public Images images { get; set; }
+        public string? id { get; set; }
+        public string? title { get; set; }
+        public string? link { get; set; }
+        public PageInfo? pageInfo { get; set; }
+        public Images? images { get; set; }
 
         public class PageInfo
         {
-            public string title { get; set; }
-            public string type { get; set; }
+            public string? title { get; set; }
+            public string? type { get; set; }
             public int? publishDate { get; set; }
             public int? unpublishDate { get; set; }
-            public string description { get; set; }
+            public string? description { get; set; }
         }
 
         public class Images
         {
-            public string poster { get; set; }
-            public string teaser { get; set; }
+            public string? poster { get; set; }
+            public string? teaser { get; set; }
         }
     }
 

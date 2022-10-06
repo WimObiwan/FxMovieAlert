@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FxMovies.Site.Options;
 
 // Resharper disable All
+[ExcludeFromCodeCoverage]
 public class HealthCheckOptions
 {
     public static string Position => "HealthCheck";

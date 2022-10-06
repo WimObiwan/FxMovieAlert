@@ -32,14 +32,14 @@ public class UserWatchlistRepository : IUserWatchlistRepository
     public async Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId,
         IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false)
     {
-        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await _moviesDbContext.Users.SingleAsync(u => u.ImdbUserId == imdbUserId);
         return await Store(user, imdbWatchlist, replace);
     }
 
     public async Task<UserListRepositoryStoreResult> StoreByUserId(string userId,
         IEnumerable<ImdbWatchlist> imdbWatchlist, bool replace = false)
     {
-        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        var user = await _moviesDbContext.Users.SingleAsync(u => u.UserId == userId);
         return await Store(user, imdbWatchlist, replace);
     }
 
@@ -48,11 +48,14 @@ public class UserWatchlistRepository : IUserWatchlistRepository
     {
         int newCount = 0, existingCount = 0;
         var movieIdsInData = new List<string>();
-        string lastTitle = null;
+        string? lastTitle = null;
         foreach (var imdbWatchlistEntry in imdbWatchlist)
         {
             lastTitle ??= imdbWatchlistEntry.Title;
             var imdbId = imdbWatchlistEntry.ImdbId;
+            if (imdbId == null)
+                continue;
+
             movieIdsInData.Add(imdbId);
             var movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
             var userWatchlistItem =
@@ -80,7 +83,7 @@ public class UserWatchlistRepository : IUserWatchlistRepository
         {
             var itemsToRemove =
                 await _moviesDbContext.UserWatchLists
-                    .Where(ur => ur.UserId == user.Id && !movieIdsInData.Contains(ur.Movie.ImdbId))
+                    .Where(ur => ur.UserId == user.Id && ur.Movie != null && ur.Movie.ImdbId != null && !movieIdsInData.Contains(ur.Movie.ImdbId))
                     .ToListAsync();
 
             _moviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);

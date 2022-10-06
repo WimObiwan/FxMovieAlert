@@ -32,9 +32,7 @@ public class MovieCreationHelper : IMovieCreationHelper
     {
         var movie = await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
 
-        var newMovie = movie == null;
-
-        if (newMovie)
+        if (movie == null)
         {
             movie = new Movie
             {
@@ -51,15 +49,13 @@ public class MovieCreationHelper : IMovieCreationHelper
 
     private async Task Refresh(Movie movie)
     {
-        if (movie == null)
-            return;
-
         var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
         if (imdbMovie != null)
         {
             movie.ImdbRating = imdbMovie.Rating;
             movie.ImdbVotes = imdbMovie.Votes;
-            movie.Certification ??= await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+            if (movie.Certification == null && movie.ImdbId != null)
+                movie.Certification = await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
         }
     }
 }

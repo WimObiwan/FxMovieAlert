@@ -41,14 +41,14 @@ public class UserRatingsRepository : IUserRatingsRepository
     public async Task<UserListRepositoryStoreResult> StoreByImdbUserId(string imdbUserId,
         IEnumerable<ImdbRating> imdbRatings, bool replace = false)
     {
-        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.ImdbUserId == imdbUserId);
+        var user = await _moviesDbContext.Users.SingleAsync(u => u.ImdbUserId == imdbUserId);
         return await Store(user, imdbRatings, replace);
     }
 
     public async Task<UserListRepositoryStoreResult> StoreByUserId(string userId, IEnumerable<ImdbRating> imdbRatings,
         bool replace = false)
     {
-        var user = await _moviesDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        var user = await _moviesDbContext.Users.SingleAsync(u => u.UserId == userId);
         return await Store(user, imdbRatings, replace);
     }
 
@@ -57,11 +57,14 @@ public class UserRatingsRepository : IUserRatingsRepository
     {
         int newCount = 0, existingCount = 0;
         var movieIdsInData = new List<string>();
-        string lastTitle = null;
+        string? lastTitle = null;
         foreach (var imdbRating in imdbRatings)
         {
             lastTitle ??= imdbRating.Title;
             var imdbId = imdbRating.ImdbId;
+            if (imdbId == null)
+                continue;
+
             movieIdsInData.Add(imdbId);
             var movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
             var userRating = _moviesDbContext.UserRatings.FirstOrDefault(ur => ur.User == user && ur.Movie == movie);
@@ -89,7 +92,7 @@ public class UserRatingsRepository : IUserRatingsRepository
         {
             var itemsToRemove =
                 await _moviesDbContext.UserRatings
-                    .Where(ur => ur.UserId == user.Id && !movieIdsInData.Contains(ur.Movie.ImdbId))
+                    .Where(ur => ur.UserId == user.Id && ur.Movie != null && ur.Movie.ImdbId != null && !movieIdsInData.Contains(ur.Movie.ImdbId))
                     .ToListAsync();
 
             _moviesDbContext.UserRatings.RemoveRange(itemsToRemove);

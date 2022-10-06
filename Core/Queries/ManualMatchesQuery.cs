@@ -8,7 +8,7 @@ namespace FxMovies.Core.Queries;
 
 public interface IManualMatchesQuery
 {
-    Task<ManualMatch> Execute(string movieTitle);
+    Task<ManualMatch?> Execute(string movieTitle);
 }
 
 public class ManualMatchesQuery : IManualMatchesQuery
@@ -21,7 +21,7 @@ public class ManualMatchesQuery : IManualMatchesQuery
         _moviesDbContext = moviesDbContext;
     }
 
-    public async Task<ManualMatch> Execute(string movieTitle)
+    public async Task<ManualMatch?> Execute(string movieTitle)
     {
         var movieTitleNormalized = TitleNormalizer.NormalizeTitle(movieTitle);
         var manualMatch = await _moviesDbContext.ManualMatches

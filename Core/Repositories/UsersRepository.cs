@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -8,12 +9,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.Core.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class UserDataResult
 {
     public DateTime? RefreshRequestTime { get; init; }
     public DateTime? LastRefreshRatingsTime { get; init; }
     public bool? LastRefreshSuccess { get; init; }
-    public string ImdbUserId { get; init; }
+    public string? ImdbUserId { get; init; }
 }
 
 public interface IUsersRepository
@@ -26,7 +28,7 @@ public interface IUsersRepository
     Task SetRatingRefreshResult(string imdbUserId, bool succeeded, string result);
     Task SetWatchlistRefreshResult(string imdbUserId, bool succeeded, string result);
     Task UnsetRefreshRequestTime(string imdbUserId);
-    Task<UserDataResult> UpdateUserLastUsedAndGetData(string userId);
+    Task<UserDataResult?> UpdateUserLastUsedAndGetData(string userId);
 }
 
 public class UsersRepository : IUsersRepository
@@ -42,7 +44,9 @@ public class UsersRepository : IUsersRepository
     public IAsyncEnumerable<string> GetAllImdbUserIds()
     {
         return _moviesDbContext.Users
-            .Select(u => u.ImdbUserId).AsAsyncEnumerable();
+            .Where(u => u.ImdbUserId != null)
+            .Select(u => u.ImdbUserId!)
+            .AsAsyncEnumerable();
     }
 
     public IAsyncEnumerable<User> GetAllImdbUsersToAutoUpdate(DateTime lastUpdateThreshold,
@@ -95,7 +99,7 @@ public class UsersRepository : IUsersRepository
         }
     }
 
-    public async Task<UserDataResult> UpdateUserLastUsedAndGetData(string userId)
+    public async Task<UserDataResult?> UpdateUserLastUsedAndGetData(string userId)
     {
         var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
         if (user == null)

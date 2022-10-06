@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Caching.Memory;
@@ -13,6 +14,7 @@ public interface ICachedBroadcastQuery
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights, bool forceNoCache);
 }
 
+[ExcludeFromCodeCoverage]
 public class CachedBroadcastQueryOptions
 {
     public static string Position => "CachedBroadcastQuery";

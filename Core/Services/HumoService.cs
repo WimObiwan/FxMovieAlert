@@ -79,7 +79,7 @@ public class HumoService : IHumoService
 
         var humo = await response.Content.ReadFromJsonAsync<Humo>();
 
-        return humo;
+        return humo ?? throw new InvalidOperationException();
     }
 
     private async Task<Humo> GetHumoDataWithRetry(DateTime date)
@@ -124,7 +124,7 @@ public class HumoService : IHumoService
 
         foreach (var channel in humo.channels)
             //channel.broadcasts.RemoveAll(b => !b.IsMovie() && ! b.IsFirstOfSerieSeason());
-            channel.broadcasts.RemoveAll(b => !b.IsMovie());
+            channel?.broadcasts?.RemoveAll(b => !b.IsMovie());
 
         humo.channels.RemoveAll(c => c.broadcasts == null || c.broadcasts.Count == 0);
     }
@@ -143,6 +143,9 @@ public class HumoService : IHumoService
                 LogoS = humoChannel.channelLogoUrl
             };
 
+            if (humoChannel.broadcasts == null)
+                continue;
+
             foreach (var broadcast in humoChannel.broadcasts)
             {
                 // int year = broadcast.program.year;
@@ -156,7 +159,7 @@ public class HumoService : IHumoService
                 // }
 
                 var genre = broadcast.genre?.Trim() ?? "";
-                if (broadcast.subGenres.Any())
+                if (broadcast.subGenres != null && broadcast.subGenres.Any())
                 {
                     if (genre != "")
                         genre += " - ";
@@ -169,7 +172,7 @@ public class HumoService : IHumoService
                 else
                     type = 3; // serie
 
-                string opinion = null;
+                string? opinion = null;
                 // string opinion = broadcast.program.opinion;
                 // if (!string.IsNullOrEmpty(broadcast.program.appreciation) 
                 //     && int.TryParse(broadcast.program.appreciation, out int appreciation)
@@ -234,18 +237,18 @@ public class HumoService : IHumoService
         public long from { get; set; }
         public long to { get; set; }
         public int? duration { get; set; }
-        public string playableType { get; set; }
-        public string title { get; set; }
-        public string genre { get; set; }
-        public string[] subGenres { get; set; }
-        public string synopsis { get; set; }
-        public string imageUrl { get; set; }
+        public string? playableType { get; set; }
+        public string? title { get; set; }
+        public string? genre { get; set; }
+        public string[]? subGenres { get; set; }
+        public string? synopsis { get; set; }
+        public string? imageUrl { get; set; }
         public int? rating { get; set; }
 
 
         public bool IsMovie()
         {
-            return playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
+            return playableType != null && playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
         }
         //public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
 
@@ -258,15 +261,15 @@ public class HumoService : IHumoService
     [DebuggerDisplay("name = {name}")]
     private class HumoChannel
     {
-        public string seoKey { get; set; }
-        public string name { get; set; }
-        public string channelLogoUrl { get; set; }
-        public List<HumoBroadcast> broadcasts { get; set; }
+        public string? seoKey { get; set; }
+        public string? name { get; set; }
+        public string? channelLogoUrl { get; set; }
+        public List<HumoBroadcast>? broadcasts { get; set; }
     }
 
     private class Humo
     {
-        public List<HumoChannel> channels { get; set; }
+        public List<HumoChannel>? channels { get; set; }
     }
 
     // Resharper restore All

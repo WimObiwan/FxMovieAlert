@@ -27,11 +27,11 @@ public class GenerateImdbDatabaseCommandOptions
     public static string Position => "GenerateImdbDatabase";
 
     public int? DebugMaxImdbRowCount { get; set; }
-    public string ImdbMoviesList { get; set; }
-    public string ImdbAlsoKnownAsList { get; set; }
-    public string ImdbRatingsList { get; set; }
-    public string[] AkaFilterRegion { get; set; }
-    public string[] AkaFilterLanguage { get; set; }
+    public string? ImdbMoviesList { get; set; }
+    public string? ImdbAlsoKnownAsList { get; set; }
+    public string? ImdbRatingsList { get; set; }
+    public string[]? AkaFilterRegion { get; set; }
+    public string[]? AkaFilterLanguage { get; set; }
 }
 
 public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
@@ -91,13 +91,14 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private async Task ImportImdbData_Movies()
     {
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var imdbMoviesList = _generateImdbDatabaseCommandOptions.ImdbMoviesList ?? throw new Exception("Missing option ImdbMoviesList");
 
-        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbMoviesList);
+        var fileToDecompress = new FileInfo(imdbMoviesList);
         await using var originalFileStream = fileToDecompress.OpenRead();
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
         long count = 0, countAlternatives = 0, skipped = 0;
-        string text = null;
+        string? text = null;
 
         // tconst	titleType	primaryTitle	originalTitle	isAdult	startYear	endYear	runtimeMinutes	genres
         // tt0000009	movie	Miss Jerry	Miss Jerry	0	1894	\N	45	Romance
@@ -210,13 +211,14 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
         var akaFilterRegion = _generateImdbDatabaseCommandOptions.AkaFilterRegion;
         var akaFilterLanguage = _generateImdbDatabaseCommandOptions.AkaFilterLanguage;
+        var imdbAlsoKnownAsList = _generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList ?? throw new Exception("Missing option ImdbAlsoKnownAsList");
 
-        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList);
+        var fileToDecompress = new FileInfo(imdbAlsoKnownAsList);
         await using var originalFileStream = fileToDecompress.OpenRead();
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
         long count = 0, countAlternatives = 0, skipped = 0;
-        string text = null;
+        string? text = null;
 
         // 1        2           3       4       5           6       7           8
         // titleId	ordering	title	region	language	types	attributes	isOriginalTitle
@@ -266,8 +268,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 }
 
                 if (!(
-                        akaFilterRegion.Contains(match.Groups[3].Value)
-                        || akaFilterLanguage.Contains(match.Groups[4].Value)
+                        akaFilterRegion != null && akaFilterRegion.Contains(match.Groups[3].Value)
+                        || akaFilterLanguage != null && akaFilterLanguage.Contains(match.Groups[4].Value)
                     ))
                 {
                     skipped++;
@@ -313,13 +315,14 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private async Task ImportImdbData_Ratings()
     {
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
+        var imdbRatingsList = _generateImdbDatabaseCommandOptions.ImdbRatingsList ?? throw new Exception("Missing option ImdbRatingsList");
 
-        var fileToDecompress = new FileInfo(_generateImdbDatabaseCommandOptions.ImdbRatingsList);
+        var fileToDecompress = new FileInfo(imdbRatingsList);
         await using var originalFileStream = fileToDecompress.OpenRead();
         await using var decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress);
         using var textReader = new StreamReader(decompressionStream);
         long count = 0, skipped = 0;
-        string text = null;
+        string? text = null;
 
         // New  Distribution  Votes  Rank  Title
         //       0000000125  1852213   9.2  The Shawshank Redemption (1994)

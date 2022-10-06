@@ -26,3 +26,5 @@ using System.Reflection;
 [assembly: AssemblyProduct("FilmOpTv")]
 
 [assembly: AssemblyTitle("FilmOpTv Web")]
+
+[assembly: System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]

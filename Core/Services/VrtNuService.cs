@@ -48,6 +48,7 @@ public class VrtNuService : IMovieEventService
         {
             Thread.Sleep(500);
 
+            var programUrl = movie.programUrl ?? throw new Exception("Json missing");
             var movieDetails = await GetSearchMovieInfo(movie.programUrl);
             int? year = movieDetails.data?.program?.seasons?.Select(s => 
             {
@@ -104,18 +105,21 @@ public class VrtNuService : IMovieEventService
             if (movieDetails.tags?.Any(t => string.Compare(t.name, "kortfilm", true) == 0) ?? false)
                 type = 2;
 
+            var imageUrl = movieDetails.image?.src == null ? null : GetFullUrl(movieDetails.image.src);
+            var vodUrl = movieDetails.reference?.link == null ? null : GetFullUrl(movieDetails.reference.link);
+
             movieEvents.Add(new MovieEvent
             {
                 Channel = channel,
                 Title = movieDetails.title,
-                Content = movieDetails.description ?? movieDetails.image.alt,
-                PosterM = GetFullUrl(movieDetails.image.src),
-                PosterS = GetFullUrl(movieDetails.image.src),
+                Content = movieDetails.description ?? movieDetails.image?.alt,
+                PosterM = imageUrl,
+                PosterS = imageUrl,
                 Vod = true,
                 Feed = MovieEvent.FeedType.FreeVod,
-                VodLink = GetFullUrl(movieDetails.reference.link),
+                VodLink = vodUrl,
                 Type = type,
-                ExternalId = movieDetails.data.program.id,
+                ExternalId = movieDetails.data?.program?.id,
                 EndTime = endTime ?? DateTime.Today.AddYears(1),
                 Duration = null,
                 Year = year
@@ -142,7 +146,7 @@ public class VrtNuService : IMovieEventService
         //   response.Content.ReadAsStringAsync().Result,nq 
         // ==> nq = non-quoted
 
-        var responseObject = await response.Content.ReadFromJsonAsync<List<SuggestMovieInfo>>();
+        var responseObject = await response.Content.ReadFromJsonAsync<List<SuggestMovieInfo>>() ?? throw new Exception("Missing data");
         return responseObject;
     }
 
@@ -162,7 +166,7 @@ public class VrtNuService : IMovieEventService
         var responseObject = await response.Content.ReadFromJsonAsync<Model>() ??
                              throw new Exception("Response is missing");
 
-        return responseObject?.details;
+        return responseObject.details ?? throw new Exception("Details is missing");;
     }
 
     #region JsonModel
@@ -171,62 +175,62 @@ public class VrtNuService : IMovieEventService
 
     private class SuggestMovieInfo
     {
-        public string programUrl { get; set; }
+        public string? programUrl { get; set; }
     }
 
     private class Model
     {
-        public Details details { get; set; }
+        public Details? details { get; set; }
     }
 
     private class Image
     {
-        public string src { get; set; }
-        public string alt { get; set; }
+        public string? src { get; set; }
+        public string? alt { get; set; }
     }
 
     private class Data
     {
-        public Program program { get; set; }
+        public Program? program { get; set; }
     }
 
     private class Program
     {
-        public string id { get; set; }
-        public Anouncement announcement { get; set; }
-        public List<Season> seasons { get; set; }
+        public string? id { get; set; }
+        public Anouncement? announcement { get; set; }
+        public List<Season>? seasons { get; set; }
     }
 
     public class Anouncement
     {
-        public string value { get; set; }
+        public string? value { get; set; }
     }
 
     private class Details
     {
-        public Reference reference { get; set; }
-        public string title { get; set; }
-        public string description { get; set; }
-        public Image image { get; set; }
-        public Data data { get; set; }
-        public List<Tag> tags { get; set; }
+        public Reference? reference { get; set; }
+        public string? title { get; set; }
+        public string? description { get; set; }
+        public Image? image { get; set; }
+        public Data? data { get; set; }
+        public List<Tag>? tags { get; set; }
     }
 
     private class Reference
     {
-        public string link { get; set; }
+        public string? link { get; set; }
     }
 
     private class Season
     {
-        public string name { get; set; }
+        public string? name { get; set; }
     }
 
     private class Tag
     {
-        public string category { get; set; }
-        public string name { get; set; }
-        public string title { get; set; }
+        public string? category { get; set; }
+        public string? name { get; set; }
+        public string? title { get; set; }
     }
 
     #endregion

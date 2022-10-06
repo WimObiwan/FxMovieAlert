@@ -10,14 +10,14 @@ namespace FxMovies.Core.Services;
 
 public interface IImdbRatingsFromFileService
 {
-    IList<ImdbRating> GetRatings(Stream stream, out List<Tuple<string, string, string>> lastImportErrors);
+    IList<ImdbRating>? GetRatings(Stream stream, out List<Tuple<string, string, string>>? lastImportErrors);
 }
 
 public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
 {
-    public IList<ImdbRating> GetRatings(Stream stream, out List<Tuple<string, string, string>> lastImportErrors)
+    public IList<ImdbRating>? GetRatings(Stream stream, out List<Tuple<string, string, string>>? lastImportErrors)
     {
-        List<Tuple<string, string, string>> lastImportErrors2 = null;
+        List<Tuple<string, string, string>>? lastImportErrors2 = null;
         var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
 
         var moreErrors = 0;
@@ -30,10 +30,16 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
                     try
                     {
                         var constId = record.Const;
+                        
+                        if (string.IsNullOrEmpty(record.DateAdded))
+                            throw new Exception("Column DateAdded is empty");
 
                         var date = DateTime.ParseExact(record.DateAdded,
                             new[] { "yyyy-MM-dd", "ddd MMM d HH:mm:ss yyyy", "ddd MMM dd HH:mm:ss yyyy" },
                             CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AllowWhiteSpaces);
+
+                        if (string.IsNullOrEmpty(record.YourRating))
+                            throw new Exception("Column YourRating is empty");
 
                         // Ratings
                         // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
@@ -62,9 +68,9 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
 
                         return null;
                     }
-                }).Where(i => i != null).ToList();
+                }).Where(i => i != null).Select(i => i!).ToList();
 
-            if (moreErrors > 0)
+            if (lastImportErrors2 != null && moreErrors > 0)
                 lastImportErrors2.Add(
                     Tuple.Create(
                         $"And {moreErrors} more errors...",
@@ -86,29 +92,29 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
     private class ImdbUserRatingRecord
     {
         // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
-        [FieldQuoted] public string Const;
+        [FieldQuoted] public string? Const;
 
         [FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'
-        public string DateAdded;
+        public string? DateAdded;
 
-        [FieldQuoted] public string Directors;
-        [FieldQuoted] public string Genres;
-        [FieldQuoted] public string IMDbRating;
-        [FieldQuoted] public string NumVotes;
+        [FieldQuoted] public string? Directors;
+        [FieldQuoted] public string? Genres;
+        [FieldQuoted] public string? IMDbRating;
+        [FieldQuoted] public string? NumVotes;
 
         [FieldQuoted]
         //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
-        public string ReleaseDate;
+        public string? ReleaseDate;
 
-        [FieldQuoted] public string Runtime;
+        [FieldQuoted] public string? Runtime;
 
-        [FieldQuoted] public string Title;
-        [FieldQuoted] public string TitleType;
-        [FieldQuoted] public string Url;
-        [FieldQuoted] public string Year;
-        [FieldQuoted] public string YourRating;
+        [FieldQuoted] public string? Title;
+        [FieldQuoted] public string? TitleType;
+        [FieldQuoted] public string? Url;
+        [FieldQuoted] public string? Year;
+        [FieldQuoted] public string? YourRating;
     }
 
     // Resharper restore All

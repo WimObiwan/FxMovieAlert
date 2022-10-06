@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -42,7 +43,8 @@ public class VtmGoService2 : IMovieEventService
         return (await GetMovieUrls())
             .Select(async url => await GetMovieDetails(url))
             .Select(t => t.Result)
-            .Where(me => me is { Duration: >= 75 })
+            .Where(me => me != null && me is { Duration: >= 75 })
+            .Select(me => me!)
             .ToList();
     }
 
@@ -63,7 +65,7 @@ public class VtmGoService2 : IMovieEventService
             .AsEnumerable();
     }
 
-    private async Task<MovieEvent> GetMovieDetails(string url)
+    private async Task<MovieEvent?> GetMovieDetails(string url)
     {
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();

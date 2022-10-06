@@ -58,7 +58,7 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
         return await parser.ParseDocumentAsync(stream);
     }
 
-    private string GetRatingsSinglePageAsync(IHtmlDocument document, IList<ImdbRating> ratings)
+    private string? GetRatingsSinglePageAsync(IHtmlDocument document, IList<ImdbRating> ratings)
     {
         var ratingsContainer = document.QuerySelector("#ratings-container");
         if (ratingsContainer == null)
