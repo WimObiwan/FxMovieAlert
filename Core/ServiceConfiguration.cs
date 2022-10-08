@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using FxMovies.Core.Commands;
 using FxMovies.Core.Queries;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FxMovies.Core;
 
+[ExcludeFromCodeCoverage]
 public static class ServiceConfiguration
 {
     public static IServiceCollection AddFxMoviesCore(this IServiceCollection services, IConfiguration configuration,
