@@ -41,7 +41,7 @@ public class StatsQueryTest
             }
         };
 
-        var dbContextMock = new DbContextMock<MoviesDbContext>(Util.DummyOptions);
+        var dbContextMock = new DbContextMock<MoviesDbContext>(Util.DummyMoviesDbOptions);
         var usersDbSetMock = dbContextMock.CreateDbSetMock(x => x.Users, (x, _) => x, data);
        
         StatsQuery statsQuery = new(dbContextMock.Object);

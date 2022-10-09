@@ -5,7 +5,7 @@ using FxMovies.MoviesDB;
 
 namespace FxMovies.CoreTest;
 
-public class ManualMatchesQueryTest
+public class ListManualMatchesQueryTest
 {
     [Fact]
     public async Task Test()
@@ -41,23 +41,14 @@ public class ManualMatchesQueryTest
         var dbContextMock = new DbContextMock<MoviesDbContext>(Util.DummyMoviesDbOptions);
         var manualMatchesDbSetMock = dbContextMock.CreateDbSetMock(x => x.ManualMatches, (x, _) => x, data);
        
-        string movieTitle = "Unknown";
-
-        ManualMatchesQuery manualMatchesQuery = new(dbContextMock.Object);
-        var result = await manualMatchesQuery.Execute(movieTitle);
-        Assert.Null(result);
-
-        movieTitle = "Test 2";
-
-        result = await manualMatchesQuery.Execute(movieTitle);
+        ListManualMatchesQuery listManualMatchesQuery = new(dbContextMock.Object);
+        var result = await listManualMatchesQuery.Execute();
         Assert.NotNull(result);
-        if (result != null)
-        {
-            Assert.Equal(data[1].Id, result.Id);
-            Assert.Equal(data[1].AddedDateTime, result.AddedDateTime);
-            Assert.Equal(data[1].Title, result.Title);
-            Assert.Equal(data[1].NormalizedTitle, result.NormalizedTitle);
-            Assert.Equal(data[1].Movie, result.Movie);
-        }
+        Assert.Equal(data.Length, result.Count);
+        Assert.Equal(data[0].Id, result[0].Id);
+        Assert.Equal(data[0].AddedDateTime, result[0].AddedDateTime);
+        Assert.Equal(data[0].Title, result[0].Title);
+        Assert.Equal(data[0].NormalizedTitle, result[0].NormalizedTitle);
+        Assert.Equal(data[0].Movie, result[0].Movie);
     }
 }
