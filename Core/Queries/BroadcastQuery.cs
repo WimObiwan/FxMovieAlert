@@ -68,9 +68,6 @@ public class BroadcastQuery : IBroadcastQuery
 {
     private readonly MoviesDbContext _moviesDbContext;
 
-    public const decimal NO_IMDB_ID = -1.0m;
-    public const decimal NO_IMDB_RATING = -2.0m;
-
     public BroadcastQuery(MoviesDbContext moviesDbContext)
     {
         _moviesDbContext = moviesDbContext;
@@ -145,10 +142,10 @@ public class BroadcastQuery : IBroadcastQuery
                     )
                     &&
                     (!filterMinRating.HasValue
-                     || filterMinRating.Value == NO_IMDB_ID && (me.Movie == null ||
+                     || filterMinRating.Value == Constants.NO_IMDB_ID && (me.Movie == null ||
                                                                           string.IsNullOrEmpty(me.Movie.ImdbId) &&
                                                                           !me.Movie.ImdbIgnore)
-                     || filterMinRating.Value == NO_IMDB_RATING && me.Movie!.ImdbRating == null
+                     || filterMinRating.Value == Constants.NO_IMDB_RATING && me.Movie!.ImdbRating == null
                      || filterMinRating.Value >= 0.0m && me.Movie!.ImdbRating >= filterMinRating.Value * 10)
                 // && 
                 // (FilterCert == Cert.all || (ParseCertification(me.Movie.Certification) & FilterCert) != 0)
