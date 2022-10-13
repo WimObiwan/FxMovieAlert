@@ -49,12 +49,15 @@ public class MovieCreationHelper : IMovieCreationHelper
 
     private async Task Refresh(Movie movie)
     {
+        if (movie.ImdbId == null)
+            return;
+
         var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == movie.ImdbId);
         if (imdbMovie != null)
         {
             movie.ImdbRating = imdbMovie.Rating;
             movie.ImdbVotes = imdbMovie.Votes;
-            if (movie.Certification == null && movie.ImdbId != null)
+            if (movie.Certification == null)
                 movie.Certification = await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
         }
     }
