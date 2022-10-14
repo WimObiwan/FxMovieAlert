@@ -41,7 +41,7 @@ public static class ServiceConfiguration
             c.DefaultRequestHeaders.Add("x-persgroep-os", "android");
             c.DefaultRequestHeaders.Add("x-persgroep-os-version", "25");
         });
-        services.AddHttpClient("vrtnu", c => { c.BaseAddress = new Uri("https://search7.vrt.be"); });
+        services.AddHttpClient("vrtnu", c => { c.BaseAddress = new Uri("https://www.vrt.be/vrtnu/a-z/"); });
         services.AddHttpClient("tmdb", c => { c.BaseAddress = new Uri("https://api.themoviedb.org"); });
         services.AddHttpClient("images");
         services.AddHttpClient("imdb", c => { c.BaseAddress = new Uri("https://www.imdb.com"); });

@@ -1,0 +1,488 @@
+{
+    "brand": "een",
+    "details": {
+        "contentType": "program",
+        "reference": {
+            "id": "1648206571624",
+            "link": "/vrtnu/a-z/8eraf/",
+            "modelUri": "/vrtnu/a-z/8eraf.model.json",
+            "permalink": "https://www.vrt.be/vrtnu/a-z/8eraf/",
+            "passUserIdentity": false,
+            "referenceType": "internal"
+        },
+        "title": "8eraf",
+        "subtitle": "De oude kotgenoten van W817 komen na al die jaren opnieuw samen",
+        "shortDescription": "Carlo nodigt zijn oude kotgenoten uit voor een bijzonder feest. Steve, Birgit, Zoë, Tom, Ellen en Jasmijn ontdekken dat er in al die jaren veel en tegelijkertijd ook weinig veranderd is.",
+        "description": "\u003Cp\u003EDe vrienden hebben elkaar na hun studies uit het oog verloren. Ze volgden elk hun dromen en passies en staan op een kantelpunt in hun leven. Op een dag ontvangen ze een mysterieuze videoboodschap van tech-geek Carlo. Hij nodigt zijn oude kotgenoten uit op een heel speciaal feest voor een 'bijzondere gelegenheid'.\u003C/p\u003E\r\n\u003Cp\u003ETijdens een zeer geanimeerd weekend ontdekken Steve, Birgit, Zoë, Tom, Ellen en Jasmijn dat er in al die jaren veel en tegelijkertijd ook weinig veranderd is. Maar waar is Akke? En wat is Carlo eigenlijk echt van plan?\u003C/p\u003E\r\n\u003Cp\u003EVlaamse komische film van Pietje Horsten (2021), vervolg op de Ketnet-reeks 'W817'.\u003C/p\u003E\r\n",
+        "image": {
+            "provider": "imagestore",
+            "src": "//images.vrt.be/orig/2022/03/29/2a2c7a2d-af5d-11ec-b07d-02b7b76bf47f.jpg",
+            "focalPoint": "48.978% 20.545%",
+            "id": "parsys_pageHeader",
+            "hiddenInApp": false,
+            "hiddenInWeb": false,
+            ":type": "vrtvideo/components/content/image"
+        },
+        "brand": "een",
+        "tags": [
+            {
+                "category": "categorie",
+                "name": "films",
+                "title": "Films",
+                "reference": {
+                    "id": "1507216241583",
+                    "link": "/vrtnu/categorieen/films/",
+                    "modelUri": "/vrtnu/categorieen/films.model.json",
+                    "permalink": "https://www.vrt.be/vrtnu/categorieen/films/",
+                    "passUserIdentity": false,
+                    "referenceType": "internal"
+                }
+            },
+            {
+                "category": "categorie",
+                "name": "humor",
+                "title": "Humor",
+                "reference": {
+                    "id": "1487952582482",
+                    "link": "/vrtnu/categorieen/humor/",
+                    "modelUri": "/vrtnu/categorieen/humor.model.json",
+                    "permalink": "https://www.vrt.be/vrtnu/categorieen/humor/",
+                    "passUserIdentity": false,
+                    "referenceType": "internal"
+                }
+            },
+            {
+                "category": "kanaal",
+                "name": "een",
+                "title": "Eén",
+                "reference": {
+                    "id": "1460361464283",
+                    "link": "/vrtnu/kanalen/een/",
+                    "modelUri": "/vrtnu/kanalen/een.model.json",
+                    "permalink": "https://www.vrt.be/vrtnu/kanalen/een/",
+                    "passUserIdentity": false,
+                    "referenceType": "internal"
+                }
+            }
+        ],
+        "actions": [
+            {
+                "type": "favorite-program",
+                "pageId": "1648206571624",
+                "programWhatsonId": "1472222081527",
+                "programTitle": "8eraf",
+                "programUrl": "/vrtnu/a-z/8eraf/"
+            },
+            {
+                "url": "https://www.vrt.be/vrtmax/a-z/8eraf/",
+                "type": "share-page"
+            }
+        ],
+        "data": {
+            "program": {
+                "id": "1648206571624",
+                "name": "8eraf",
+                "type": "oneoff",
+                "available": true,
+                "whatsonId": "1472222081527",
+                "announcement": {
+                    "value": "Beschikbaar tot 07/04/2023",
+                    "type": "default"
+                },
+                "options": {
+                    "datePromoted": false
+                },
+                "rawSettings": {
+                    "showEpisodeTitleSetting": "off",
+                    "showTotalWithEpisodeNumberSetting": "on",
+                    "avodSetting": "on",
+                    "autoPromoteSetting": "on"
+                },
+                "seasons": [
+                    {
+                        "id": "1648206576140",
+                        "name": "2021",
+                        "title": {
+                            "raw": "2021"
+                        },
+                        "reference": {
+                            "id": "1648206576140",
+                            "link": "/vrtnu/a-z/8eraf/2021/",
+                            "modelUri": "/vrtnu/a-z/8eraf/2021.model.json",
+                            "permalink": "https://www.vrt.be/vrtnu/a-z/8eraf/2021/",
+                            "passUserIdentity": false,
+                            "referenceType": "internal"
+                        },
+                        "numberOfEpisodes": {
+                            "raw": 1,
+                            "value": "1 Aflevering",
+                            "shortValue": "1 Afl."
+                        },
+                        "mostRelevant": true
+                    }
+                ]
+            }
+        },
+        ":type": "details"
+    },
+    "hiddenInWeb": false,
+    "ldjson": [
+        {
+            "name": "8eraf | VRT MAX",
+            "description": "Carlo nodigt zijn oude kotgenoten uit voor een bijzonder feest. Steve, Birgit, Zoë, Tom, Ellen en Jasmijn ontdekken dat er in al die jaren veel en tegelijkertijd ook weinig veranderd is. Bekijk gratis 8eraf met VRT MAX via de site of app.",
+            "thumbnailUrl": "//images.vrt.be/width1280/2022/03/29/2a2c7a2d-af5d-11ec-b07d-02b7b76bf47f.jpg",
+            "@context": "https://schema.org",
+            "@id": "1648206571624",
+            "@type": "WebPage"
+        }
+    ],
+    ":items": {
+        "parsys": {
+            ":items": {
+                "pageHeader": {
+                    "title": "8eraf",
+                    "secondaryMeta": [
+                        {
+                            "type": "icon",
+                            "value": "eu",
+                            "longValue": "Dit programma kan je enkel in de EU bekijken"
+                        },
+                        {
+                            "type": "default",
+                            "value": "2021"
+                        }
+                    ],
+                    "image": {
+                        "provider": "imagestore",
+                        "src": "//images.vrt.be/orig/2022/03/29/2a2c7a2d-af5d-11ec-b07d-02b7b76bf47f.jpg",
+                        "focalPoint": "48.978% 20.545%",
+                        "id": "parsys_pageHeader",
+                        "hiddenInApp": false,
+                        "hiddenInWeb": false,
+                        ":type": "vrtvideo/components/content/image"
+                    },
+                    "reference": {
+                        "id": "1648206571624",
+                        "link": "/vrtnu/a-z/8eraf/",
+                        "modelUri": "/vrtnu/a-z/8eraf.model.json",
+                        "permalink": "https://www.vrt.be/vrtnu/a-z/8eraf/",
+                        "passUserIdentity": false,
+                        "referenceType": "internal"
+                    },
+                    "description": "\u003Cp\u003EDe vrienden hebben elkaar na hun studies uit het oog verloren. Ze volgden elk hun dromen en passies en staan op een kantelpunt in hun leven. Op een dag ontvangen ze een mysterieuze videoboodschap van tech-geek Carlo. Hij nodigt zijn oude kotgenoten uit op een heel speciaal feest voor een 'bijzondere gelegenheid'.\u003C/p\u003E\r\n\u003Cp\u003ETijdens een zeer geanimeerd weekend ontdekken Steve, Birgit, Zoë, Tom, Ellen en Jasmijn dat er in al die jaren veel en tegelijkertijd ook weinig veranderd is. Maar waar is Akke? En wat is Carlo eigenlijk echt van plan?\u003C/p\u003E\r\n\u003Cp\u003EVlaamse komische film van Pietje Horsten (2021), vervolg op de Ketnet-reeks 'W817'.\u003C/p\u003E\r\n",
+                    "contentType": "program",
+                    "shortDescription": "Carlo nodigt zijn oude kotgenoten uit voor een bijzonder feest. Steve, Birgit, Zoë, Tom, Ellen en Jasmijn ontdekken dat er in al die jaren veel en tegelijkertijd ook weinig veranderd is.",
+                    "actions": [
+                        {
+                            "type": "favorite-program",
+                            "pageId": "1648206571624",
+                            "programWhatsonId": "1472222081527",
+                            "programTitle": "8eraf",
+                            "programUrl": "/vrtnu/a-z/8eraf/"
+                        },
+                        {
+                            "url": "https://www.vrt.be/vrtmax/a-z/8eraf/",
+                            "type": "share-page"
+                        }
+                    ],
+                    "data": {
+                        "program": {
+                            "id": "1648206571624",
+                            "name": "8eraf",
+                            "announcement": {
+                                "value": "Beschikbaar tot 07/04/2023",
+                                "type": "default"
+                            }
+                        }
+                    },
+                    "tags": [
+                        {
+                            "category": "categorie",
+                            "name": "films",
+                            "title": "Films",
+                            "reference": {
+                                "id": "1507216241583",
+                                "link": "/vrtnu/categorieen/films/",
+                                "modelUri": "/vrtnu/categorieen/films.model.json",
+                                "permalink": "https://www.vrt.be/vrtnu/categorieen/films/",
+                                "passUserIdentity": false,
+                                "referenceType": "internal"
+                            }
+                        },
+                        {
+                            "category": "categorie",
+                            "name": "humor",
+                            "title": "Humor",
+                            "reference": {
+                                "id": "1487952582482",
+                                "link": "/vrtnu/categorieen/humor/",
+                                "modelUri": "/vrtnu/categorieen/humor.model.json",
+                                "permalink": "https://www.vrt.be/vrtnu/categorieen/humor/",
+                                "passUserIdentity": false,
+                                "referenceType": "internal"
+                            }
+                        },
+                        {
+                            "category": "kanaal",
+                            "name": "een",
+                            "title": "Eén",
+                            "reference": {
+                                "id": "1460361464283",
+                                "link": "/vrtnu/kanalen/een/",
+                                "modelUri": "/vrtnu/kanalen/een.model.json",
+                                "permalink": "https://www.vrt.be/vrtnu/kanalen/een/",
+                                "passUserIdentity": false,
+                                "referenceType": "internal"
+                            }
+                        }
+                    ],
+                    "id": "parsys_pageHeader",
+                    "hiddenInApp": false,
+                    "hiddenInWeb": false,
+                    ":type": "vrtvideo/components/content/page-header"
+                },
+                "container": {
+                    "layout": "simple",
+                    "controllers": [],
+                    "id": "related-content",
+                    "hiddenInApp": false,
+                    "hiddenInWeb": false,
+                    ":items": {
+                        "episodes-list": {
+                            "layout": "simple",
+                            "controllers": [],
+                            "id": "parsys_container_episodes-list",
+                            "hiddenInApp": false,
+                            "hiddenInWeb": false,
+                            ":type": "vrtvideo/components/content/container",
+                            ":items": {
+                                "2021": {
+                                    "headerType": "none",
+                                    "layout": "stacked",
+                                    "tileContext": "similar-content",
+                                    "schedule": {},
+                                    "hiddenInApp": false,
+                                    "hiddenInWeb": false,
+                                    "title": "2021",
+                                    "tileContentType": "episode",
+                                    "tileOrientation": "landscape",
+                                    "id": "parsys_container_episodes-list_2021",
+                                    "tileType": "similar-content",
+                                    ":items": {
+                                        "1_8eraf": {
+                                            "contentType": "episode",
+                                            "reference": {
+                                                "id": "1648206576158",
+                                                "link": "/vrtnu/a-z/8eraf/2021/8eraf/",
+                                                "modelUri": "/vrtnu/a-z/8eraf/2021/8eraf.model.json",
+                                                "permalink": "https://www.vrt.be/vrtnu/a-z/8eraf/2021/8eraf/",
+                                                "internalPermalink": "https://www.vrt.be/vrtnu/p.RlLN2DLK7",
+                                                "passUserIdentity": false,
+                                                "referenceType": "internal"
+                                            },
+                                            "title": "8eraf",
+                                            "description": "De oude kotgenoten van W817 komen na al die jaren opnieuw samen",
+                                            "image": {
+                                                "provider": "imagestore",
+                                                "src": "//images.vrt.be/orig/2022/03/29/2a2c7a2d-af5d-11ec-b07d-02b7b76bf47f.jpg",
+                                                "id": "vrtvideo_thumbnail",
+                                                "hiddenInApp": false,
+                                                "hiddenInWeb": false,
+                                                ":type": "vrtvideo/components/content/image"
+                                            },
+                                            "actions": [
+                                                {
+                                                    "type": "watch-episode",
+                                                    "episodeId": "1648206576158",
+                                                    "episodeWhatsonId": "1472222081527",
+                                                    "episodeUrl": "/vrtnu/a-z/8eraf/2021/8eraf/",
+                                                    "episodePublicationId": "pbs-pub-df1c6996-7f2f-4feb-bb13-f72106d68d5e",
+                                                    "episodeVideoId": "vid-48daed12-c697-461a-8fbc-ebdc1265724a",
+                                                    "avodEnabled": true,
+                                                    "autoPromoEnabled": true,
+                                                    "programName": "8eraf",
+                                                    "playlistUrl": "/vrtnu-api/rest/public/v1/playlist/1648206576158"
+                                                }
+                                            ],
+                                            "secondaryMeta": [
+                                                {
+                                                    "type": "default",
+                                                    "value": "Films"
+                                                },
+                                                {
+                                                    "type": "default",
+                                                    "value": "Humor"
+                                                }
+                                            ],
+                                            "mediaMeta": [
+                                                {
+                                                    "type": "default",
+                                                    "value": "83 min"
+                                                }
+                                            ],
+                                            "data": {
+                                                "episode": {
+                                                    "id": "1648206576158",
+                                                    "name": "8eraf",
+                                                    "available": true
+                                                }
+                                            },
+                                            ":type": "vrtvideo/components/content/tile"
+                                        }
+                                    },
+                                    ":itemsOrder": [
+                                        "1_8eraf"
+                                    ],
+                                    ":type": "vrtvideo/components/content/tile/list"
+                                }
+                            },
+                            ":itemsOrder": [
+                                "2021"
+                            ]
+                        }
+                    },
+                    ":itemsOrder": [
+                        "episodes-list"
+                    ],
+                    ":type": "vrtvideo/components/content/container"
+                },
+                "banner": {
+                    "honeypotActionText": "Ga naar de shop",
+                    "schedule": {},
+                    "hiddenInApp": false,
+                    "hiddenInWeb": false,
+                    "title": "Ontdek de W817-collectie",
+                    "image": {
+                        "link": "https://shop.mnm.be/W817",
+                        "provider": "imagestore",
+                        "src": "//images.vrt.be/orig/2022/04/06/ccff29c2-b5e7-11ec-b07d-02b7b76bf47f.png",
+                        "focalPoint": "50% 50%",
+                        "id": "parsys_banner",
+                        "hiddenInApp": false,
+                        "hiddenInWeb": false,
+                        ":type": "vrtvideo/components/content/image"
+                    },
+                    "reference": {
+                        "link": "https://shop.mnm.be/W817",
+                        "passUserIdentity": false,
+                        "referenceType": "external"
+                    },
+                    "id": "parsys_banner",
+                    "cta": {
+                        "label": "Ga naar de shop"
+                    },
+                    ":type": "vrtvideo/components/content/banner"
+                }
+            },
+            ":itemsOrder": [
+                "pageHeader",
+                "container",
+                "banner"
+            ],
+            ":type": "wcm/foundation/components/parsys"
+        }
+    },
+    "page-header": {
+        "contentType": "program",
+        "reference": {
+            "id": "1648206571624",
+            "link": "/vrtnu/a-z/8eraf/",
+            "modelUri": "/vrtnu/a-z/8eraf.model.json",
+            "permalink": "https://www.vrt.be/vrtnu/a-z/8eraf/",
+            "passUserIdentity": false,
+            "referenceType": "internal"
+        },
+        "title": "8eraf",
+        "shortDescription": "Carlo nodigt zijn oude kotgenoten uit voor een bijzonder feest. Steve, Birgit, Zoë, Tom, Ellen en Jasmijn ontdekken dat er in al die jaren veel en tegelijkertijd ook weinig veranderd is.",
+        "description": "\u003Cp\u003EDe vrienden hebben elkaar na hun studies uit het oog verloren. Ze volgden elk hun dromen en passies en staan op een kantelpunt in hun leven. Op een dag ontvangen ze een mysterieuze videoboodschap van tech-geek Carlo. Hij nodigt zijn oude kotgenoten uit op een heel speciaal feest voor een 'bijzondere gelegenheid'.\u003C/p\u003E\r\n\u003Cp\u003ETijdens een zeer geanimeerd weekend ontdekken Steve, Birgit, Zoë, Tom, Ellen en Jasmijn dat er in al die jaren veel en tegelijkertijd ook weinig veranderd is. Maar waar is Akke? En wat is Carlo eigenlijk echt van plan?\u003C/p\u003E\r\n\u003Cp\u003EVlaamse komische film van Pietje Horsten (2021), vervolg op de Ketnet-reeks 'W817'.\u003C/p\u003E\r\n",
+        "image": {
+            "provider": "imagestore",
+            "src": "//images.vrt.be/orig/2022/03/29/2a2c7a2d-af5d-11ec-b07d-02b7b76bf47f.jpg",
+            "focalPoint": "48.978% 20.545%",
+            "id": "parsys_pageHeader",
+            "hiddenInApp": false,
+            "hiddenInWeb": false,
+            ":type": "vrtvideo/components/content/image"
+        },
+        "tags": [
+            {
+                "category": "categorie",
+                "name": "films",
+                "title": "Films",
+                "reference": {
+                    "id": "1507216241583",
+                    "link": "/vrtnu/categorieen/films/",
+                    "modelUri": "/vrtnu/categorieen/films.model.json",
+                    "permalink": "https://www.vrt.be/vrtnu/categorieen/films/",
+                    "passUserIdentity": false,
+                    "referenceType": "internal"
+                }
+            },
+            {
+                "category": "categorie",
+                "name": "humor",
+                "title": "Humor",
+                "reference": {
+                    "id": "1487952582482",
+                    "link": "/vrtnu/categorieen/humor/",
+                    "modelUri": "/vrtnu/categorieen/humor.model.json",
+                    "permalink": "https://www.vrt.be/vrtnu/categorieen/humor/",
+                    "passUserIdentity": false,
+                    "referenceType": "internal"
+                }
+            },
+            {
+                "category": "kanaal",
+                "name": "een",
+                "title": "Eén",
+                "reference": {
+                    "id": "1460361464283",
+                    "link": "/vrtnu/kanalen/een/",
+                    "modelUri": "/vrtnu/kanalen/een.model.json",
+                    "permalink": "https://www.vrt.be/vrtnu/kanalen/een/",
+                    "passUserIdentity": false,
+                    "referenceType": "internal"
+                }
+            }
+        ],
+        "actions": [
+            {
+                "type": "favorite-program",
+                "pageId": "1648206571624",
+                "programWhatsonId": "1472222081527",
+                "programTitle": "8eraf",
+                "programUrl": "/vrtnu/a-z/8eraf/"
+            },
+            {
+                "url": "https://www.vrt.be/vrtmax/a-z/8eraf/",
+                "type": "share-page"
+            }
+        ],
+        "secondaryMeta": [
+            {
+                "type": "icon",
+                "value": "eu",
+                "longValue": "Dit programma kan je enkel in de EU bekijken"
+            },
+            {
+                "type": "default",
+                "value": "2021"
+            }
+        ],
+        "data": {
+            "program": {
+                "id": "1648206571624",
+                "name": "8eraf",
+                "announcement": {
+                    "value": "Beschikbaar tot 07/04/2023",
+                    "type": "default"
+                }
+            }
+        },
+        ":type": "vrtvideo/components/content/page-header"
+    },
+    ":itemsOrder": [
+        "parsys"
+    ],
+    ":type": "vrtvideo/components/structure/page-program"
+}
