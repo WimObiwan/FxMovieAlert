@@ -6,6 +6,9 @@ using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
 
@@ -48,8 +51,8 @@ public class VrtNuService : IMovieEventService
         {
             Thread.Sleep(500);
 
-            var programUrl = movie.programUrl ?? throw new Exception("Json missing");
-            var movieDetails = await GetSearchMovieInfo(movie.programUrl);
+            var programUrl = movie ?? throw new Exception("Json missing");
+            var movieDetails = await GetSearchMovieInfo(movie);
             int? year = movieDetails.data?.program?.seasons?.Select(s => 
             {
                 int? year;
@@ -134,20 +137,50 @@ public class VrtNuService : IMovieEventService
         return new Uri(BaseUrl, url).AbsoluteUri;
     }
 
-    private async Task<IList<SuggestMovieInfo>> GetSuggestMovieInfo()
+    private async Task<IList<string>> GetSuggestMovieInfo()
     {
-        // https://search7.vrt.be/suggest?facets[categories]=films
+        // https://www.vrt.be/vrtnu/a-z/
 
         var client = _httpClientFactory.CreateClient("vrtnu");
         //var responseObject = await client.GetFromJsonAsync<DpgCatalogResponse>("/vtmgo/catalog?pageSize=2000");
-        var response = await client.GetAsync("/suggest?facets[categories]=films");
+        var response = await client.GetAsync("");
         response.EnsureSuccessStatusCode();
         // Troubleshoot: Debug console: 
         //   response.Content.ReadAsStringAsync().Result,nq 
         // ==> nq = non-quoted
 
-        var responseObject = await response.Content.ReadFromJsonAsync<List<SuggestMovieInfo>>() ?? throw new Exception("Missing data");
-        return responseObject;
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        
+        var parser = new HtmlParser();
+        var document = await parser.ParseDocumentAsync(stream);
+        return
+            document
+            .GetElementsByTagName("nui-tile")
+            .Where(e =>
+                // metadata = "brands:een;categories:,films,humor,een;title:8eraf"
+                e
+                    .Attributes["metadata"]
+                    ?.Value
+                    ?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?.Select(ms => {
+                    var msi = ms.Split(':', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    if (msi.Length == 2)
+                        return new Tuple<string, string>(msi[0], msi[1]);
+                    else
+                        return null;
+                    })
+                    ?.Where(t => t?.Item1?.Equals("categories", StringComparison.InvariantCultureIgnoreCase) ?? false)
+                    ?.FirstOrDefault()
+                    ?.Item2
+                    ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?.Any(c => c.Equals("films", StringComparison.InvariantCultureIgnoreCase))
+                    ?? false
+            )
+            .Select(e => e.Attributes["href"]?.Value)
+            .Where(v => !string.IsNullOrEmpty(v))
+            .Select(v => v!)
+            .Distinct()
+            .ToList();
     }
 
     private async Task<Details> GetSearchMovieInfo(string programUrl)
@@ -172,11 +205,6 @@ public class VrtNuService : IMovieEventService
     #region JsonModel
 
     // Resharper disable All
-
-    private class SuggestMovieInfo
-    {
-        public string? programUrl { get; set; }
-    }
 
     private class Model
     {
