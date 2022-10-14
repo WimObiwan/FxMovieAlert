@@ -45,5 +45,11 @@ public class VrtNuServiceTest
         var result = await vrtNuService.GetMovieEvents();
 
         Assert.NotNull(result);
+        Assert.Equal(23, result.Count);
+        foreach (var movieEvent in result)
+        {
+            Assert.Equal("8eraf", movieEvent.Title);
+            //Assert.Equal(110, movieEvent.Duration);
+        }
     }
 }
