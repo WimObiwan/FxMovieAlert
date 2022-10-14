@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -22,6 +23,7 @@ public interface IGenerateImdbDatabaseCommand
     Task<int> Execute();
 }
 
+[ExcludeFromCodeCoverage]
 public class GenerateImdbDatabaseCommandOptions
 {
     public static string Position => "GenerateImdbDatabase";

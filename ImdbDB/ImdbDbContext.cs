@@ -13,9 +13,9 @@ public class ImdbDbContext : DbContext
     {
     }
 
-    public DbSet<ImdbMovie> Movies { get; set; } = default!;
+    public virtual DbSet<ImdbMovie> Movies { get; set; } = default!;
 
-    public DbSet<ImdbMovieAlternative> MovieAlternatives { get; set; } = default!;
+    public virtual DbSet<ImdbMovieAlternative> MovieAlternatives { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

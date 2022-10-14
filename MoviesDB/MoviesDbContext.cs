@@ -1,4 +1,4 @@
-﻿using FxMovies.Core.Entities;
+using FxMovies.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FxMovies.MoviesDB;
@@ -13,13 +13,13 @@ public class MoviesDbContext : DbContext
     {
     }
 
-    public DbSet<Channel> Channels { get; set; } = default!;
-    public DbSet<Movie> Movies { get; set; } = default!;
-    public DbSet<MovieEvent> MovieEvents { get; set; } = default!;
-    public DbSet<UserRating> UserRatings { get; set; } = default!;
-    public DbSet<UserWatchListItem> UserWatchLists { get; set; } = default!;
-    public DbSet<User> Users { get; set; } = default!;
-    public DbSet<ManualMatch> ManualMatches { get; set; } = default!;
+    public virtual DbSet<Channel> Channels { get; set; } = default!;
+    public virtual DbSet<Movie> Movies { get; set; } = default!;
+    public virtual DbSet<MovieEvent> MovieEvents { get; set; } = default!;
+    public virtual DbSet<UserRating> UserRatings { get; set; } = default!;
+    public virtual DbSet<UserWatchListItem> UserWatchLists { get; set; } = default!;
+    public virtual DbSet<User> Users { get; set; } = default!;
+    public virtual DbSet<ManualMatch> ManualMatches { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
