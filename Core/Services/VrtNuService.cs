@@ -40,8 +40,8 @@ public class VrtNuService : IMovieEventService
         var channel = new Channel
         {
             Code = "vrtnu",
-            Name = "VRT NU",
-            LogoS = "https://www.filmoptv.be/images/vrtnu.png"
+            Name = "VRT MAX",
+            LogoS = "https://www.filmoptv.be/images/vrtmax.png"
         };
 
         var movies = await GetSuggestMovieInfo();

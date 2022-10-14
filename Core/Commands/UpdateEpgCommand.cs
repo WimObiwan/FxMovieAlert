@@ -302,7 +302,11 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             if (existingChannel != null)
             {
                 existingChannel.Name = channel.Name;
-                existingChannel.LogoS = channel.LogoS;
+                if (existingChannel.LogoS != channel.LogoS)
+                {
+                    existingChannel.LogoS = channel.LogoS;
+                    existingChannel.LogoS_Local = null;
+                }
                 _moviesDbContext.Channels.Update(existingChannel);
                 foreach (var movie in movieEvents.Where(m => m.Channel == channel))
                     movie.Channel = existingChannel;
