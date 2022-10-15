@@ -39,8 +39,6 @@ public class VrtNuServiceTest
                 return client;
             });
 
-        var client = factory.CreateClient("vrtnu");
-        //client.G
         VrtNuService vrtNuService = new(loggerMock.Object, factory);
         vrtNuService.MaxCount = 1;
         var result = await vrtNuService.GetMovieEvents();
