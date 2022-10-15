@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +20,8 @@ public class VrtNuService : IMovieEventService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<VrtNuService> _logger;
 
+    // Only keep first MaxCount MovieEvents for performance reasons during testing (Design for Testability)
+    public int MaxCount { get; set; } = 1024;
     private static readonly Uri BaseUrl = new Uri("https://www.vrt.be");
 
     public VrtNuService(
@@ -52,7 +55,8 @@ public class VrtNuService : IMovieEventService
             Thread.Sleep(500);
 
             var programUrl = movie ?? throw new Exception("Json missing");
-            var movieDetails = await GetSearchMovieInfo(movie);
+            var movieModel = await GetSearchMovieInfo(movie);
+            var movieDetails = movieModel.details ?? throw new Exception("Details is missing");
             int? year = movieDetails.data?.program?.seasons?.Select(s => 
             {
                 int? year;
@@ -111,6 +115,34 @@ public class VrtNuService : IMovieEventService
             var imageUrl = movieDetails.image?.src == null ? null : GetFullUrl(movieDetails.image.src);
             var vodUrl = movieDetails.reference?.link == null ? null : GetFullUrl(movieDetails.reference.link);
 
+            var durationText = movieModel
+                ?.items
+                ?.parsys
+                ?.items
+                ?.container
+                ?.items
+                ?.episodesList
+                ?.items
+                ?.FirstOrDefault()
+                .Value
+                ?.episodes
+                ?.FirstOrDefault()
+                .Value
+                ?.mediaMeta
+                ?.FirstOrDefault()
+                ?.value;
+            
+            int? duration = null;
+            if (durationText != null)
+            {
+                Match match;
+                match = Regex.Match(durationText, @"^(\d+) min$");
+                if (match.Success)
+                {
+                    duration = int.Parse(match.Groups[1].Value);
+                }
+            }
+
             movieEvents.Add(new MovieEvent
             {
                 Channel = channel,
@@ -124,7 +156,7 @@ public class VrtNuService : IMovieEventService
                 Type = type,
                 ExternalId = movieDetails.data?.program?.id,
                 EndTime = endTime ?? DateTime.Today.AddYears(1),
-                Duration = null,
+                Duration = duration,
                 Year = year
             });
         }
@@ -180,10 +212,11 @@ public class VrtNuService : IMovieEventService
             .Where(v => !string.IsNullOrEmpty(v))
             .Select(v => v!)
             .Distinct()
+            .Take(MaxCount)
             .ToList();
     }
 
-    private async Task<Details> GetSearchMovieInfo(string programUrl)
+    private async Task<Model> GetSearchMovieInfo(string programUrl)
     {
         // https://vrtnu-api.vrt.be/search?facets[programUrl]=//www.vrt.be/vrtnu/a-z/everybody-knows/
 
@@ -199,7 +232,7 @@ public class VrtNuService : IMovieEventService
         var responseObject = await response.Content.ReadFromJsonAsync<Model>() ??
                              throw new Exception("Response is missing");
 
-        return responseObject.details ?? throw new Exception("Details is missing");;
+        return responseObject;
     }
 
     #region JsonModel
@@ -209,6 +242,9 @@ public class VrtNuService : IMovieEventService
     private class Model
     {
         public Details? details { get; set; }
+
+        [JsonPropertyName(":items")]
+        public Items1? items { get; set; }
     }
 
     private class Image
@@ -261,5 +297,57 @@ public class VrtNuService : IMovieEventService
         public string? title { get; set; }
     }
 
+    private class Items1
+    {
+        public Parsys? parsys { get; set; }
+    }
+
+    private class Parsys
+    {
+        [JsonPropertyName(":items")]
+        public Items2? items { get; set; }
+    }
+
+    private class Items2
+    {
+        public Container? container { get; set; }
+    }
+
+    private class Container
+    {
+        [JsonPropertyName(":items")]
+        public Items3? items { get; set; }
+    }
+
+    private class Items3
+    {
+        [JsonPropertyName("episodes-list")]
+        public EpisodesList? episodesList { get; set; }
+    }
+
+    private class EpisodesList
+    {
+        [JsonPropertyName(":items")]
+        public Dictionary<string,  Season2>? items { get; set; }
+    }
+
+    private class Season2
+    {
+        [JsonPropertyName(":items")]
+        public Dictionary<string,  Episode>? episodes { get; set; }
+    }
+
+    private class Episode
+    {
+        public MediaMeta[]? mediaMeta { get; set; }
+    }
+
+    private class MediaMeta
+    {
+        public string? type { get; set; }
+        public string? value { get; set; }
+    }
+
     #endregion
+
 }
