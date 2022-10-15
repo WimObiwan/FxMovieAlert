@@ -42,10 +42,11 @@ public class VrtNuServiceTest
         var client = factory.CreateClient("vrtnu");
         //client.G
         VrtNuService vrtNuService = new(loggerMock.Object, factory);
+        vrtNuService.MaxCount = 1;
         var result = await vrtNuService.GetMovieEvents();
 
         Assert.NotNull(result);
-        Assert.Equal(23, result.Count);
+        Assert.Equal(1, result.Count);
         foreach (var movieEvent in result)
         {
             Assert.Equal("8eraf", movieEvent.Title);

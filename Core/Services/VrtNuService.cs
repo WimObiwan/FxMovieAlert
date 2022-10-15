@@ -20,6 +20,8 @@ public class VrtNuService : IMovieEventService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<VrtNuService> _logger;
 
+    // Only keep first MaxCount MovieEvents for performance reasons during testing (Design for Testability)
+    public int MaxCount { get; set; } = 1024;
     private static readonly Uri BaseUrl = new Uri("https://www.vrt.be");
 
     public VrtNuService(
@@ -210,6 +212,7 @@ public class VrtNuService : IMovieEventService
             .Where(v => !string.IsNullOrEmpty(v))
             .Select(v => v!)
             .Distinct()
+            .Take(MaxCount)
             .ToList();
     }
 
