@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp.Html.Parser;
 using FxMovies.Core.Entities;
-using Microsoft.Extensions.Logging;
 
 namespace FxMovies.Core.Services;
 
@@ -17,13 +16,10 @@ public class VrtNuService : IMovieEventService
 {
     private static readonly Uri BaseUrl = new("https://www.vrt.be");
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<VrtNuService> _logger;
 
     public VrtNuService(
-        ILogger<VrtNuService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        _logger = logger;
         _httpClientFactory = httpClientFactory;
     }
 
@@ -52,7 +48,6 @@ public class VrtNuService : IMovieEventService
         {
             Thread.Sleep(500);
 
-            var programUrl = movie ?? throw new Exception("Json missing");
             var movieModel = await GetSearchMovieInfo(movie);
             var movieDetails = movieModel.details ?? throw new Exception("Details is missing");
             var year = movieDetails.data?.program?.seasons?.Select(s =>
@@ -64,14 +59,13 @@ public class VrtNuService : IMovieEventService
                 else
                     year = null;
                 return year;
-            }).Where(y => y != null).FirstOrDefault();
+            }).FirstOrDefault(y => y != null);
 
             DateTime? endTime = null;
             var announcement = movieDetails.data?.program?.announcement?.value;
             if (announcement != null)
             {
-                Match match;
-                match = Regex.Match(announcement, @"^Nog (\d+) dagen beschikbaar$");
+                var match = Regex.Match(announcement, @"^Nog (\d+) dagen beschikbaar$");
                 if (match.Success)
                 {
                     endTime = DateTime.Today.AddDays(1 + int.Parse(match.Groups[1].Value)).AddMinutes(-1);
@@ -106,14 +100,14 @@ public class VrtNuService : IMovieEventService
             }
 
             var type = 1; // 1 = movie, 2 = short movie, 3 = serie
-            if (movieDetails.tags?.Any(t => string.Compare(t.name, "kortfilm", true) == 0) ?? false)
+            if (movieDetails.tags?.Any(t => string.Compare(t.name, "kortfilm", StringComparison.InvariantCultureIgnoreCase) == 0) ?? false)
                 type = 2;
 
             var imageUrl = movieDetails.image?.src == null ? null : GetFullUrl(movieDetails.image.src);
             var vodUrl = movieDetails.reference?.link == null ? null : GetFullUrl(movieDetails.reference.link);
 
             var durationText = movieModel
-                ?.items
+                .items
                 ?.parsys
                 ?.items
                 ?.container
@@ -122,18 +116,17 @@ public class VrtNuService : IMovieEventService
                 ?.items
                 ?.FirstOrDefault()
                 .Value
-                ?.episodes
+                .episodes
                 ?.FirstOrDefault()
                 .Value
-                ?.mediaMeta
+                .mediaMeta
                 ?.FirstOrDefault()
                 ?.value;
 
             int? duration = null;
             if (durationText != null)
             {
-                Match match;
-                match = Regex.Match(durationText, @"^(\d+) min$");
+                var match = Regex.Match(durationText, @"^(\d+) min$");
                 if (match.Success) duration = int.Parse(match.Groups[1].Value);
             }
 
@@ -187,8 +180,8 @@ public class VrtNuService : IMovieEventService
                     e
                         .Attributes["metadata"]
                         ?.Value
-                        ?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        ?.Select(ms =>
+                        .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(ms =>
                         {
                             var msi = ms.Split(':', 2,
                                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -196,13 +189,12 @@ public class VrtNuService : IMovieEventService
                                 return new Tuple<string, string>(msi[0], msi[1]);
                             return null;
                         })
-                        ?.Where(t =>
-                            t?.Item1?.Equals("categories", StringComparison.InvariantCultureIgnoreCase) ?? false)
-                        ?.FirstOrDefault()
+                        .FirstOrDefault(t =>
+                            t?.Item1.Equals("categories", StringComparison.InvariantCultureIgnoreCase) ?? false)
                         ?.Item2
-                        ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        ?.Any(c => c.Equals("films", StringComparison.InvariantCultureIgnoreCase))
-                    ?? false
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Any(c => c.Equals("films", StringComparison.InvariantCultureIgnoreCase))
+                        ?? false
                 )
                 .Select(e => e.Attributes["href"]?.Value)
                 .Where(v => !string.IsNullOrEmpty(v))

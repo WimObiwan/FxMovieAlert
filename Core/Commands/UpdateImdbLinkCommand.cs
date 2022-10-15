@@ -49,24 +49,17 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
             }
             else
             {
-                Movie? movie;
-                if (imdbId != null)
-                    movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
-                else
-                    movie = new Movie();
+                Movie movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
 
                 movieEvent.Movie = movie;
                 movie.ImdbIgnore = ignoreImdbLink;
 
-                if (imdbId != null)
+                var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
+                if (imdbMovie != null)
                 {
-                    var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
-                    if (imdbMovie != null)
-                    {
-                        movieEvent.Movie.ImdbRating = imdbMovie.Rating;
-                        movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
-                        movieEvent.Year ??= imdbMovie.Year;
-                    }
+                    movieEvent.Movie.ImdbRating = imdbMovie.Rating;
+                    movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
+                    movieEvent.Year ??= imdbMovie.Year;
                 }
 
                 _moviesDbContext.ManualMatches.Add(

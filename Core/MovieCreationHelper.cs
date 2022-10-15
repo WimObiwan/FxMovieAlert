@@ -57,8 +57,7 @@ public class MovieCreationHelper : IMovieCreationHelper
         {
             movie.ImdbRating = imdbMovie.Rating;
             movie.ImdbVotes = imdbMovie.Votes;
-            if (movie.Certification == null)
-                movie.Certification = await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
+            movie.Certification ??= await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
         }
     }
 }

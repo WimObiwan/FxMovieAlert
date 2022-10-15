@@ -12,8 +12,6 @@ public class VrtNuServiceTest
     [Fact]
     public async Task Test()
     {
-        var loggerMock = new Mock<ILogger<VrtNuService>>();
-
         var handler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
         handler.SetupRequest(HttpMethod.Get, "https://www.vrt.be/vrtnu/a-z/")
@@ -34,7 +32,7 @@ public class VrtNuServiceTest
                 return client;
             });
 
-        VrtNuService vrtNuService = new(loggerMock.Object, factory);
+        VrtNuService vrtNuService = new(factory);
         vrtNuService.MaxCount = 1;
         var result = await vrtNuService.GetMovieEvents();
 
@@ -50,12 +48,10 @@ public class VrtNuServiceTest
     [Fact(Skip = "Runtime")]
     public async Task RealTest()
     {
-        var loggerMock = new Mock<ILogger<VrtNuService>>();
-
         IServiceCollection services = new ServiceCollection(); // [1]
         services.AddHttpClient("vrtnu", c => { c.BaseAddress = new Uri("https://www.vrt.be/vrtnu/a-z/"); });
 
-        VrtNuService vrtNuService = new(loggerMock.Object,
+        VrtNuService vrtNuService = new(
             services.BuildServiceProvider().GetRequiredService<IHttpClientFactory>());
         var result = await vrtNuService.GetMovieEvents();
 

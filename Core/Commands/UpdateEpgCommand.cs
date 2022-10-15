@@ -522,11 +522,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 return false;
 
             var imageBasePath = _updateEpgCommandOptions.ImageBasePath;
-            string file;
-            if (string.IsNullOrEmpty(imageBasePath))
-                file = localFile;
-            else
-                file = Path.Combine(imageBasePath, localFile);
+            string file = string.IsNullOrEmpty(imageBasePath) ? localFile : Path.Combine(imageBasePath, localFile);
             return File.Exists(file);
         }
 

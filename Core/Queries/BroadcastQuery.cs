@@ -27,11 +27,11 @@ public class BroadcastQueryResult
     public int Count5days;
     public int Count8days;
     public int CountCertG;
-    public int CountCertNC17;
+    public int CountCertNc17;
     public int CountCertNone;
     public int CountCertOther;
-    public int CountCertPG;
-    public int CountCertPG13;
+    public int CountCertPg;
+    public int CountCertPg13;
     public int CountCertR;
     public int CountMinRating5;
     public int CountMinRating6;
@@ -122,12 +122,12 @@ public class BroadcastQuery : IBroadcastQuery
         result.CountCertNone =
             await dbMovieEvents.Where(me => string.IsNullOrEmpty(me.Movie!.Certification)).CountAsync();
         result.CountCertG = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:G").CountAsync();
-        result.CountCertPG = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:PG").CountAsync();
-        result.CountCertPG13 = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:PG-13").CountAsync();
+        result.CountCertPg = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:PG").CountAsync();
+        result.CountCertPg13 = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:PG-13").CountAsync();
         result.CountCertR = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:R").CountAsync();
-        result.CountCertNC17 = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:NC-17").CountAsync();
-        result.CountCertOther = result.Count - result.CountCertNone - result.CountCertG - result.CountCertPG -
-                                result.CountCertPG13 - result.CountCertR - result.CountCertNC17;
+        result.CountCertNc17 = await dbMovieEvents.Where(me => me.Movie!.Certification == "US:NC-17").CountAsync();
+        result.CountCertOther = result.Count - result.CountCertNone - result.CountCertG - result.CountCertPg -
+                                result.CountCertPg13 - result.CountCertR - result.CountCertNc17;
         result.CountRated = await dbMovieEvents.CountAsync(me =>
             me.Movie!.UserRatings.Any(ur => ur.User != null && ur.User.UserId == userId));
         result.CountNotYetRated = result.Count - result.CountRated;
@@ -158,8 +158,8 @@ public class BroadcastQuery : IBroadcastQuery
             .Select(me => new
             {
                 MovieEvent = me,
-                UserRating = me.Movie!.UserRatings!.FirstOrDefault(ur => ur.User!.UserId == userId),
-                UserWatchListItem = me.Movie!.UserWatchListItems!.FirstOrDefault(ur => ur.User!.UserId == userId)
+                UserRating = me.Movie!.UserRatings.FirstOrDefault(ur => ur.User!.UserId == userId),
+                UserWatchListItem = me.Movie!.UserWatchListItems.FirstOrDefault(ur => ur.User!.UserId == userId)
             })
             .Select(r => new Record
                 {
@@ -179,7 +179,7 @@ public class BroadcastQuery : IBroadcastQuery
             tmp = tmp
                 .Where(r => r.UserRating == null || r.Highlighted)
                 .OrderByDescending(r => r.Highlighted)
-                .ThenByDescending(r => r.MovieEvent!.Movie!.ImdbRating)
+                .ThenByDescending(r => r.MovieEvent.Movie!.ImdbRating)
                 .Take(30);
 
         result.Records = await tmp.ToListAsync();
