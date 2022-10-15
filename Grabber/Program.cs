@@ -261,7 +261,7 @@ internal class Program
     private class UpdateImdbUserDataOptions
     {
         [Option("imdbuserid", Required = true, HelpText = "IMDb user ID")]
-        public string ImdbUserId { get; set; }
+        public string ImdbUserId { get; set; } = default!;
 
         [Option("updateAllRatings", HelpText = "Update all ratings instead of the last 100")]
         public bool UpdateAllRatings { get; set; }
@@ -310,7 +310,7 @@ internal class Program
     private class TestImdbMatchingOptions
     {
         [Option("title", Required = true, HelpText = "Movie title")]
-        public string Title { get; set; }
+        public string Title { get; set; } = default!;
 
         [Option("year", Required = false, HelpText = "Movie release year")]
         public int? Year { get; set; }
