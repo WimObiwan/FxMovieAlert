@@ -11,7 +11,7 @@ namespace FxMovies.Core.Commands;
 
 public interface IUpdateImdbLinkCommand
 {
-    Task Execute(int movieEventId, string imdbId, bool ignoreImdbLink);
+    Task Execute(int movieEventId, string? imdbId, bool ignoreImdbLink);
 }
 
 public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
@@ -33,7 +33,7 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
         _movieCreationHelper = movieCreationHelper;
     }
 
-    public async Task Execute(int movieEventId, string imdbId, bool ignoreImdbLink)
+    public async Task Execute(int movieEventId, string? imdbId, bool ignoreImdbLink)
     {
         var movieEvent = await _moviesDbContext.MovieEvents
             .Include(me => me.Movie)
@@ -49,17 +49,30 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
             }
             else
             {
-                Movie movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
+                Movie? movie;
+                if (imdbId != null)
+                    movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
+                else
+                    movie = null;
 
                 movieEvent.Movie = movie;
-                movie.ImdbIgnore = ignoreImdbLink;
-
-                var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
-                if (imdbMovie != null)
+                if (movie != null)
                 {
-                    movieEvent.Movie.ImdbRating = imdbMovie.Rating;
-                    movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
-                    movieEvent.Year ??= imdbMovie.Year;
+                    movie.ImdbIgnore = ignoreImdbLink;
+                }
+
+                if (imdbId != null)
+                {
+                    var imdbMovie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
+                    if (imdbMovie != null)
+                    {
+                        if (movieEvent.Movie != null)
+                        {
+                            movieEvent.Movie.ImdbRating = imdbMovie.Rating;
+                            movieEvent.Movie.ImdbVotes = imdbMovie.Votes;
+                        }
+                        movieEvent.Year ??= imdbMovie.Year;
+                    }
                 }
 
                 _moviesDbContext.ManualMatches.Add(

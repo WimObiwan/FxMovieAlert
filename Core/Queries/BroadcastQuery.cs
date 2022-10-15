@@ -12,7 +12,7 @@ namespace FxMovies.Core.Queries;
 
 public interface IBroadcastQuery
 {
-    Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
+    Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string? userId, int? m,
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays,
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights);
 }
@@ -72,7 +72,7 @@ public class BroadcastQuery : IBroadcastQuery
         _moviesDbContext = moviesDbContext;
     }
 
-    public async Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
+    public async Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string? userId, int? m,
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays,
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights)
     {

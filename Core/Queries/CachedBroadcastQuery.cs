@@ -9,7 +9,7 @@ namespace FxMovies.Core.Queries;
 
 public interface ICachedBroadcastQuery
 {
-    Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
+    Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string? userId, int? m,
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays,
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights,
         bool forceNoCache);
@@ -39,7 +39,7 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
         _options = options.Value;
     }
 
-    public async Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
+    public async Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string? userId, int? m,
         int filterTypeMask, decimal? filterMinRating, int filterMaxDays,
         int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights,
         bool forceNoCache)
