@@ -75,7 +75,9 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
                         AddedDateTime = DateTime.UtcNow,
                         Movie = movie,
                         Title = movieEvent.Title,
-                        NormalizedTitle = movieEvent.Title == null ? null : TitleNormalizer.NormalizeTitle(movieEvent.Title)
+                        NormalizedTitle = movieEvent.Title == null
+                            ? null
+                            : TitleNormalizer.NormalizeTitle(movieEvent.Title)
                     }
                 );
             }

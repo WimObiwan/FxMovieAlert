@@ -10,8 +10,9 @@ namespace FxMovies.Core.Queries;
 public interface ICachedBroadcastQuery
 {
     Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
-        int filterTypeMask, decimal? filterMinRating, int filterMaxDays, 
-        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights, bool forceNoCache);
+        int filterTypeMask, decimal? filterMinRating, int filterMaxDays,
+        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights,
+        bool forceNoCache);
 }
 
 [ExcludeFromCodeCoverage]
@@ -30,7 +31,8 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
     private readonly IMemoryCache _memoryCache;
     private readonly CachedBroadcastQueryOptions _options;
 
-    public CachedBroadcastQuery(IBroadcastQuery broadcastQuery, IMemoryCache memoryCache, IOptions<CachedBroadcastQueryOptions> options)
+    public CachedBroadcastQuery(IBroadcastQuery broadcastQuery, IMemoryCache memoryCache,
+        IOptions<CachedBroadcastQueryOptions> options)
     {
         _broadcastQuery = broadcastQuery;
         _memoryCache = memoryCache;
@@ -38,13 +40,14 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
     }
 
     public async Task<BroadcastQueryResult> Execute(MovieEvent.FeedType feed, string userId, int? m,
-        int filterTypeMask, decimal? filterMinRating, int filterMaxDays, 
-        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights, bool forceNoCache)
+        int filterTypeMask, decimal? filterMinRating, int filterMaxDays,
+        int highlightedFilterRatingThreshold, int highlightedFilterMonthsThreshold, bool filterOnlyHighlights,
+        bool forceNoCache)
     {
         Task<BroadcastQueryResult> Fn()
         {
-            return _broadcastQuery.Execute(feed, userId, m, filterTypeMask, filterMinRating, filterMaxDays, 
-                    highlightedFilterRatingThreshold, highlightedFilterMonthsThreshold, filterOnlyHighlights);
+            return _broadcastQuery.Execute(feed, userId, m, filterTypeMask, filterMinRating, filterMaxDays,
+                highlightedFilterRatingThreshold, highlightedFilterMonthsThreshold, filterOnlyHighlights);
         }
 
         if (_options.Enable && !forceNoCache)
@@ -59,23 +62,21 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
             hashCode.Add(highlightedFilterRatingThreshold);
             hashCode.Add(highlightedFilterMonthsThreshold);
             hashCode.Add(filterOnlyHighlights);
-            int hashCodeValue = hashCode.ToHashCode();
-            bool cacheUsed = true;
+            var hashCodeValue = hashCode.ToHashCode();
+            var cacheUsed = true;
 
-            var result = await _memoryCache.GetOrCreateAsync(hashCodeValue, async (cacheEntry) => 
-                {
-                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_options.AbsoluteExpirationSeconds);
-                    cacheEntry.SlidingExpiration = TimeSpan.FromSeconds(_options.SlidingExpirationSeconds);
-                    cacheUsed = false;
-                    return await Fn();
-                });
+            var result = await _memoryCache.GetOrCreateAsync(hashCodeValue, async cacheEntry =>
+            {
+                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_options.AbsoluteExpirationSeconds);
+                cacheEntry.SlidingExpiration = TimeSpan.FromSeconds(_options.SlidingExpirationSeconds);
+                cacheUsed = false;
+                return await Fn();
+            });
             result.CacheEnabled = true;
             result.CacheUsed = cacheUsed;
             return result;
         }
-        else
-        {
-            return await Fn();
-        }
-   }
+
+        return await Fn();
+    }
 }

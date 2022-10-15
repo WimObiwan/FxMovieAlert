@@ -59,7 +59,7 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
             throw new Exception("Json missing");
         return jsonData.list.items.Select(i =>
         {
-            string imdbMovieId = i.imdbMovieId ?? throw new Exception("Json missing");
+            var imdbMovieId = i.imdbMovieId ?? throw new Exception("Json missing");
             jsonData.titles.TryGetValue(imdbMovieId, out var title);
             DateTime.TryParseExact(i.added, "dd MMM yyyy", CultureInfo.GetCultureInfo("en-GB"),
                 DateTimeStyles.AllowWhiteSpaces, out var dateTimeAdded);

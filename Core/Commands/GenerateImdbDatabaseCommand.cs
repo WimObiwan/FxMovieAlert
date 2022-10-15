@@ -93,7 +93,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private async Task ImportImdbData_Movies()
     {
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
-        var imdbMoviesList = _generateImdbDatabaseCommandOptions.ImdbMoviesList ?? throw new Exception("Missing option ImdbMoviesList");
+        var imdbMoviesList = _generateImdbDatabaseCommandOptions.ImdbMoviesList ??
+                             throw new Exception("Missing option ImdbMoviesList");
 
         var fileToDecompress = new FileInfo(imdbMoviesList);
         await using var originalFileStream = fileToDecompress.OpenRead();
@@ -213,7 +214,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
         var akaFilterRegion = _generateImdbDatabaseCommandOptions.AkaFilterRegion;
         var akaFilterLanguage = _generateImdbDatabaseCommandOptions.AkaFilterLanguage;
-        var imdbAlsoKnownAsList = _generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList ?? throw new Exception("Missing option ImdbAlsoKnownAsList");
+        var imdbAlsoKnownAsList = _generateImdbDatabaseCommandOptions.ImdbAlsoKnownAsList ??
+                                  throw new Exception("Missing option ImdbAlsoKnownAsList");
 
         var fileToDecompress = new FileInfo(imdbAlsoKnownAsList);
         await using var originalFileStream = fileToDecompress.OpenRead();
@@ -270,8 +272,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
                 }
 
                 if (!(
-                        akaFilterRegion != null && akaFilterRegion.Contains(match.Groups[3].Value)
-                        || akaFilterLanguage != null && akaFilterLanguage.Contains(match.Groups[4].Value)
+                        (akaFilterRegion != null && akaFilterRegion.Contains(match.Groups[3].Value))
+                        || (akaFilterLanguage != null && akaFilterLanguage.Contains(match.Groups[4].Value))
                     ))
                 {
                     skipped++;
@@ -317,7 +319,8 @@ public class GenerateImdbDatabaseCommand : IGenerateImdbDatabaseCommand
     private async Task ImportImdbData_Ratings()
     {
         var debugMaxImdbRowCount = _generateImdbDatabaseCommandOptions.DebugMaxImdbRowCount ?? 0;
-        var imdbRatingsList = _generateImdbDatabaseCommandOptions.ImdbRatingsList ?? throw new Exception("Missing option ImdbRatingsList");
+        var imdbRatingsList = _generateImdbDatabaseCommandOptions.ImdbRatingsList ??
+                              throw new Exception("Missing option ImdbRatingsList");
 
         var fileToDecompress = new FileInfo(imdbRatingsList);
         await using var originalFileStream = fileToDecompress.OpenRead();

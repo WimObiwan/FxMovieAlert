@@ -30,7 +30,7 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
                     try
                     {
                         var constId = record.Const;
-                        
+
                         if (string.IsNullOrEmpty(record.DateAdded))
                             throw new Exception("Column DateAdded is empty");
 

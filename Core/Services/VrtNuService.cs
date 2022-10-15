@@ -7,8 +7,6 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using AngleSharp.Dom;
-using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
@@ -17,12 +15,9 @@ namespace FxMovies.Core.Services;
 
 public class VrtNuService : IMovieEventService
 {
+    private static readonly Uri BaseUrl = new("https://www.vrt.be");
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<VrtNuService> _logger;
-
-    // Only keep first MaxCount MovieEvents for performance reasons during testing (Design for Testability)
-    public int MaxCount { get; set; } = 1024;
-    private static readonly Uri BaseUrl = new Uri("https://www.vrt.be");
 
     public VrtNuService(
         ILogger<VrtNuService> logger,
@@ -31,6 +26,9 @@ public class VrtNuService : IMovieEventService
         _logger = logger;
         _httpClientFactory = httpClientFactory;
     }
+
+    // Only keep first MaxCount MovieEvents for performance reasons during testing (Design for Testability)
+    public int MaxCount { get; set; } = 1024;
 
     public string ProviderName => "VrtNu";
 
@@ -57,7 +55,7 @@ public class VrtNuService : IMovieEventService
             var programUrl = movie ?? throw new Exception("Json missing");
             var movieModel = await GetSearchMovieInfo(movie);
             var movieDetails = movieModel.details ?? throw new Exception("Details is missing");
-            int? year = movieDetails.data?.program?.seasons?.Select(s => 
+            var year = movieDetails.data?.program?.seasons?.Select(s =>
             {
                 int? year;
                 if (int.TryParse(s.name, out var year2)
@@ -93,13 +91,12 @@ public class VrtNuService : IMovieEventService
                     if (match.Success)
                     {
                         if (match.Groups[3].Success)
-                        {
-                            endTime = DateTime.ParseExact($"{match.Groups[1].Value}/{match.Groups[2].Value}/{match.Groups[3].Value}", "dd/MM/yyyy", null);
-                        }
+                            endTime = DateTime.ParseExact(
+                                $"{match.Groups[1].Value}/{match.Groups[2].Value}/{match.Groups[3].Value}",
+                                "dd/MM/yyyy", null);
                         else
-                        {
-                            endTime = DateTime.ParseExact($"{match.Groups[1].Value}/{match.Groups[2].Value}", "dd/MM", null);
-                        }
+                            endTime = DateTime.ParseExact($"{match.Groups[1].Value}/{match.Groups[2].Value}", "dd/MM",
+                                null);
                     }
                     else
                     {
@@ -108,7 +105,7 @@ public class VrtNuService : IMovieEventService
                 }
             }
 
-            int type = 1; // 1 = movie, 2 = short movie, 3 = serie
+            var type = 1; // 1 = movie, 2 = short movie, 3 = serie
             if (movieDetails.tags?.Any(t => string.Compare(t.name, "kortfilm", true) == 0) ?? false)
                 type = 2;
 
@@ -131,16 +128,13 @@ public class VrtNuService : IMovieEventService
                 ?.mediaMeta
                 ?.FirstOrDefault()
                 ?.value;
-            
+
             int? duration = null;
             if (durationText != null)
             {
                 Match match;
                 match = Regex.Match(durationText, @"^(\d+) min$");
-                if (match.Success)
-                {
-                    duration = int.Parse(match.Groups[1].Value);
-                }
+                if (match.Success) duration = int.Parse(match.Groups[1].Value);
             }
 
             movieEvents.Add(new MovieEvent
@@ -182,38 +176,40 @@ public class VrtNuService : IMovieEventService
         // ==> nq = non-quoted
 
         await using var stream = await response.Content.ReadAsStreamAsync();
-        
+
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
         return
             document
-            .GetElementsByTagName("nui-tile")
-            .Where(e =>
-                // metadata = "brands:een;categories:,films,humor,een;title:8eraf"
-                e
-                    .Attributes["metadata"]
-                    ?.Value
-                    ?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                    ?.Select(ms => {
-                    var msi = ms.Split(':', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    if (msi.Length == 2)
-                        return new Tuple<string, string>(msi[0], msi[1]);
-                    else
-                        return null;
-                    })
-                    ?.Where(t => t?.Item1?.Equals("categories", StringComparison.InvariantCultureIgnoreCase) ?? false)
-                    ?.FirstOrDefault()
-                    ?.Item2
-                    ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                    ?.Any(c => c.Equals("films", StringComparison.InvariantCultureIgnoreCase))
+                .GetElementsByTagName("nui-tile")
+                .Where(e =>
+                    // metadata = "brands:een;categories:,films,humor,een;title:8eraf"
+                    e
+                        .Attributes["metadata"]
+                        ?.Value
+                        ?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        ?.Select(ms =>
+                        {
+                            var msi = ms.Split(':', 2,
+                                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                            if (msi.Length == 2)
+                                return new Tuple<string, string>(msi[0], msi[1]);
+                            return null;
+                        })
+                        ?.Where(t =>
+                            t?.Item1?.Equals("categories", StringComparison.InvariantCultureIgnoreCase) ?? false)
+                        ?.FirstOrDefault()
+                        ?.Item2
+                        ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        ?.Any(c => c.Equals("films", StringComparison.InvariantCultureIgnoreCase))
                     ?? false
-            )
-            .Select(e => e.Attributes["href"]?.Value)
-            .Where(v => !string.IsNullOrEmpty(v))
-            .Select(v => v!)
-            .Distinct()
-            .Take(MaxCount)
-            .ToList();
+                )
+                .Select(e => e.Attributes["href"]?.Value)
+                .Where(v => !string.IsNullOrEmpty(v))
+                .Select(v => v!)
+                .Distinct()
+                .Take(MaxCount)
+                .ToList();
     }
 
     private async Task<Model> GetSearchMovieInfo(string programUrl)
@@ -243,8 +239,7 @@ public class VrtNuService : IMovieEventService
     {
         public Details? details { get; set; }
 
-        [JsonPropertyName(":items")]
-        public Items1? items { get; set; }
+        [JsonPropertyName(":items")] public Items1? items { get; set; }
     }
 
     private class Image
@@ -304,8 +299,7 @@ public class VrtNuService : IMovieEventService
 
     private class Parsys
     {
-        [JsonPropertyName(":items")]
-        public Items2? items { get; set; }
+        [JsonPropertyName(":items")] public Items2? items { get; set; }
     }
 
     private class Items2
@@ -315,26 +309,22 @@ public class VrtNuService : IMovieEventService
 
     private class Container
     {
-        [JsonPropertyName(":items")]
-        public Items3? items { get; set; }
+        [JsonPropertyName(":items")] public Items3? items { get; set; }
     }
 
     private class Items3
     {
-        [JsonPropertyName("episodes-list")]
-        public EpisodesList? episodesList { get; set; }
+        [JsonPropertyName("episodes-list")] public EpisodesList? episodesList { get; set; }
     }
 
     private class EpisodesList
     {
-        [JsonPropertyName(":items")]
-        public Dictionary<string,  Season2>? items { get; set; }
+        [JsonPropertyName(":items")] public Dictionary<string, Season2>? items { get; set; }
     }
 
     private class Season2
     {
-        [JsonPropertyName(":items")]
-        public Dictionary<string,  Episode>? episodes { get; set; }
+        [JsonPropertyName(":items")] public Dictionary<string, Episode>? episodes { get; set; }
     }
 
     private class Episode
@@ -349,5 +339,4 @@ public class VrtNuService : IMovieEventService
     }
 
     #endregion
-
 }

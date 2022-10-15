@@ -92,7 +92,9 @@ public class UserRatingsRepository : IUserRatingsRepository
         {
             var itemsToRemove =
                 await _moviesDbContext.UserRatings
-                    .Where(ur => ur.UserId == user.Id && ur.Movie != null && ur.Movie.ImdbId != null && !movieIdsInData.Contains(ur.Movie.ImdbId))
+                    .Where(ur =>
+                        ur.UserId == user.Id && ur.Movie != null && ur.Movie.ImdbId != null &&
+                        !movieIdsInData.Contains(ur.Movie.ImdbId))
                     .ToListAsync();
 
             _moviesDbContext.UserRatings.RemoveRange(itemsToRemove);

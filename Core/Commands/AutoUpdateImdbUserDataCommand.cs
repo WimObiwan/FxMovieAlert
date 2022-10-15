@@ -64,7 +64,6 @@ public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
             usersToUpdate.Add(item);
 
         foreach (var user in usersToUpdate)
-        {
             if (!string.IsNullOrEmpty(user.ImdbUserId))
             {
                 _logger.LogInformation(
@@ -81,9 +80,9 @@ public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
                         "   * Last refresh too old for inactive user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
                         user.LastRefreshRatingsTime.Value);
                 else if (user.LastUsageTime.HasValue && user.LastUsageTime.Value >
-                                                    user.LastRefreshRatingsTime.Value // used since last refreshtime
-                                                    && user.LastRefreshRatingsTime.Value <
-                                                    lastUpdateThresholdActiveUser) // last refresh is before active user threshold
+                                                     user.LastRefreshRatingsTime.Value // used since last refreshtime
+                                                     && user.LastRefreshRatingsTime.Value <
+                                                     lastUpdateThresholdActiveUser) // last refresh is before active user threshold
                     _logger.LogInformation(
                         "   * Last refresh too old for active user, LastRefreshRatingsTime = {LastRefreshRatingsTime}",
                         user.LastRefreshRatingsTime.Value);
@@ -102,7 +101,6 @@ public class AutoUpdateImdbUserDataCommand : IAutoUpdateImdbUserDataCommand
                     "Skipping user {UserId}, because no ImdbUserId configured",
                     user.UserId);
             }
-        }
 
         return 0;
     }

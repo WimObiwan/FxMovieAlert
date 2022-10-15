@@ -25,7 +25,7 @@ public class UserModel : PageModel
     private readonly IUserWatchlistRepository _userWatchlistRepository;
 
     public readonly List<Tuple<string, string, string>> LastImportErrors = new();
-    public readonly string WarningMessage = null;
+    public readonly string WarningMessage;
     public string ErrorMessage;
     public string ImdbUserId;
     public string LastRefreshRatingsResult;

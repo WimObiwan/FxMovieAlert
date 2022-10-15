@@ -17,19 +17,14 @@ namespace FxMovies.Site.Pages;
 
 public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 {
+    private readonly ICachedBroadcastQuery _cachedBroadcastQuery;
     private readonly MovieEvent.FeedType _feed;
     private readonly MoviesDbContext _moviesDbContext;
     private readonly SiteOptions _siteOptions;
-
-    private readonly ICachedBroadcastQuery _cachedBroadcastQuery;
     private readonly IUsersRepository _usersRepository;
 
     //public int AdsInterval = 5;
     public bool EditImdbLinks;
-
-    //public bool? LastRefreshSuccess;
-    public MovieEvent MovieEvent => Data?.MovieEvent;
-    public IList<Record> Records => Data?.Records ?? new List<Record>();
 
     public BroadcastsModelBase(
         MovieEvent.FeedType feed,
@@ -45,8 +40,14 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         _usersRepository = usersRepository;
     }
 
+    //public bool? LastRefreshSuccess;
+    public MovieEvent MovieEvent => Data?.MovieEvent;
+    public IList<Record> Records => Data?.Records ?? new List<Record>();
+
     private int HighlightedFilterMonthsThreshold { get; } = 36;
     private int HighlightedFilterRatingThreshold { get; } = 8;
+    public TimeSpan ActualDuration { get; private set; }
+    public bool Debug { get; private set; }
     public string ImdbUserId { get; private set; }
     public DateTime? RefreshRequestTime { get; private set; }
     public DateTime? LastRefreshRatingsTime { get; private set; }
@@ -62,8 +63,6 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     public int FilterMaxDays { get; private set; } = 8;
 
     public BroadcastQueryResult Data { get; private set; }
-    public TimeSpan ActualDuration { get; private set; }
-    public bool Debug { get; private set; }
 
     public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null,
         bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null, bool debug = false, bool noCache = false)
@@ -109,8 +108,10 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
         if (m.HasValue && m.Value == -2) throw new Exception("Sentry test exception");
 
         var stopwatch = Stopwatch.StartNew();
-        Data = await _cachedBroadcastQuery.Execute(_feed, userId, m, FilterTypeMask, FilterMinRating, FilterMaxDays, HighlightedFilterRatingThreshold,
-            HighlightedFilterMonthsThreshold, FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault), noCache);
+        Data = await _cachedBroadcastQuery.Execute(_feed, userId, m, FilterTypeMask, FilterMinRating, FilterMaxDays,
+            HighlightedFilterRatingThreshold,
+            HighlightedFilterMonthsThreshold, FilterOnlyHighlights.GetValueOrDefault(FilterOnlyHighlightsDefault),
+            noCache);
         ActualDuration = stopwatch.Elapsed;
 
         if (Data.MovieEvent != null)

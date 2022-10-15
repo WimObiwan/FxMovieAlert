@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 [assembly:
@@ -27,4 +28,4 @@ using System.Reflection;
 
 [assembly: AssemblyTitle("FilmOpTv Web")]
 
-[assembly: System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+[assembly: ExcludeFromCodeCoverage]

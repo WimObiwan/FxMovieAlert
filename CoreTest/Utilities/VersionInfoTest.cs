@@ -11,7 +11,7 @@ public class VersionInfoTest
     {
         VersionInfo versionInfo = new(typeof(object).Assembly);
         Assert.NotNull(versionInfo.Version);
-        bool isMatch = Regex.IsMatch(versionInfo.Version!, @"^\d+\.\d+\.\d+\+.*$");
+        var isMatch = Regex.IsMatch(versionInfo.Version!, @"^\d+\.\d+\.\d+\+.*$");
         Assert.True(isMatch, versionInfo.Version);
 
         isMatch = Regex.IsMatch(versionInfo.DotNetCoreVersion, @"^\.NET \d+\.\d+\.\d+$");
@@ -21,11 +21,11 @@ public class VersionInfoTest
         Assert.Null(versionInfo2.Version);
     }
 
-    class TestAssembly : Assembly
+    private class TestAssembly : Assembly
     {
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
         {
             return new Attribute[0];
-        } 
+        }
     }
 }
