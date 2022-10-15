@@ -49,7 +49,7 @@ public class VrtNuServiceTest
         foreach (var movieEvent in result)
         {
             Assert.Equal("8eraf", movieEvent.Title);
-            //Assert.Equal(110, movieEvent.Duration);
+            Assert.Equal(83, movieEvent.Duration);
         }
     }
 }
