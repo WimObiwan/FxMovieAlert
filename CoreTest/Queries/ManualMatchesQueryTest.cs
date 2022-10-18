@@ -40,8 +40,8 @@ public class ManualMatchesQueryTest
 
         var dbContextMock = new DbContextMock<MoviesDbContext>(Util.DummyMoviesDbOptions);
         var manualMatchesDbSetMock = dbContextMock.CreateDbSetMock(x => x.ManualMatches, (x, _) => x, data);
-       
-        string movieTitle = "Unknown";
+
+        var movieTitle = "Unknown";
 
         ManualMatchesQuery manualMatchesQuery = new(dbContextMock.Object);
         var result = await manualMatchesQuery.Execute(movieTitle);

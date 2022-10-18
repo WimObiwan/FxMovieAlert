@@ -1,7 +1,6 @@
-namespace FxMovies.CoreTest;
-
 using FxMovies.Core.Utilities;
-using Xunit;
+
+namespace FxMovies.CoreTest;
 
 public class TitleNormalizerTest
 {

@@ -34,14 +34,12 @@ public class ImdbMatchingQueryResult
 public class ImdbMatchingQuery : IImdbMatchingQuery
 {
     private readonly List<Func<string, int?, IQueryable<ImdbMovie>?>> _huntingProcedure;
-    private readonly ImdbDbContext _imdbDbContext;
 
     public ImdbMatchingQuery(
         IOptionsSnapshot<ImdbMatchingQueryOptions> imdbMatchingQueryOptions,
         ImdbDbContext imdbDbContext)
     {
         var imdbHuntingYearDiff = imdbMatchingQueryOptions.Value.ImdbHuntingYearDiff ?? 2;
-        _imdbDbContext = imdbDbContext;
 
         _huntingProcedure = new List<Func<string, int?, IQueryable<ImdbMovie>?>>
         {

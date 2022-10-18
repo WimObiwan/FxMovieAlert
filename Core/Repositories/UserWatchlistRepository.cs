@@ -83,7 +83,9 @@ public class UserWatchlistRepository : IUserWatchlistRepository
         {
             var itemsToRemove =
                 await _moviesDbContext.UserWatchLists
-                    .Where(ur => ur.UserId == user.Id && ur.Movie != null && ur.Movie.ImdbId != null && !movieIdsInData.Contains(ur.Movie.ImdbId))
+                    .Where(ur =>
+                        ur.UserId == user.Id && ur.Movie != null && ur.Movie.ImdbId != null &&
+                        !movieIdsInData.Contains(ur.Movie.ImdbId))
                     .ToListAsync();
 
             _moviesDbContext.UserWatchLists.RemoveRange(itemsToRemove);

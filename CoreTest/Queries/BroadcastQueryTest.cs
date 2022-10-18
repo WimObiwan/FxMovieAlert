@@ -1,20 +1,16 @@
 using EntityFrameworkCoreMock;
 using FxMovies.Core.Entities;
 using FxMovies.Core.Queries;
-using FxMovies.ImdbDB;
 using FxMovies.MoviesDB;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using Moq;
 using static FxMovies.Core.Entities.MovieEvent;
 
 namespace FxMovies.CoreTest;
 
 public class BroadcastQueryTest
 {
-    (DbContextMock<MoviesDbContext>, DbSetMock<MovieEvent>) GetMockDb()
+    private (DbContextMock<MoviesDbContext>, DbSetMock<MovieEvent>) GetMockDb()
     {
-        User user1 = new User()
+        var user1 = new User
         {
             Id = 1,
             ImdbUserId = "u123456",
@@ -46,9 +42,9 @@ public class BroadcastQueryTest
             Certification = "US:PG",
             OriginalTitle = "Original title",
             ImdbIgnore = false,
-            UserRatings = new List<UserRating>()
+            UserRatings = new List<UserRating>
             {
-                new UserRating()
+                new()
                 {
                     Id = 1,
                     User = user1,
@@ -68,9 +64,9 @@ public class BroadcastQueryTest
             Certification = "US:PG-13",
             OriginalTitle = "Original title",
             ImdbIgnore = false,
-            UserRatings = new List<UserRating>()
+            UserRatings = new List<UserRating>
             {
-                new UserRating()
+                new()
                 {
                     Id = 2,
                     User = user1,
@@ -90,9 +86,9 @@ public class BroadcastQueryTest
             Certification = "US:R",
             OriginalTitle = "Original title",
             ImdbIgnore = false,
-            UserRatings = new List<UserRating>()
+            UserRatings = new List<UserRating>
             {
-                new UserRating()
+                new()
                 {
                     Id = 3,
                     User = user1,
@@ -191,14 +187,14 @@ public class BroadcastQueryTest
     [Fact]
     public async Task TestBroadcast()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMockDb();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMockDb();
 
-        FeedType feedType = FeedType.Broadcast;
-        string userId = "u123456";
+        var feedType = FeedType.Broadcast;
+        var userId = "u123456";
 
         BroadcastQuery broadcastQuery = new(moviesDbContextMock.Object);
 
-        BroadcastQueryResult result = await broadcastQuery.Execute(feedType, userId, null, 1, null, 10, 50, 50, true);
+        var result = await broadcastQuery.Execute(feedType, userId, null, 1, null, 10, 50, 50, true);
         Assert.NotNull(result);
         Assert.Equal(1, result.Count);
         Assert.Equal(1, result.CountTypeFilm);
@@ -214,10 +210,10 @@ public class BroadcastQueryTest
         Assert.Equal(0, result.CountNotRatedOnImdb);
         Assert.Equal(0, result.CountCertNone);
         Assert.Equal(0, result.CountCertG);
-        Assert.Equal(1, result.CountCertPG);
-        Assert.Equal(0, result.CountCertPG13);
+        Assert.Equal(1, result.CountCertPg);
+        Assert.Equal(0, result.CountCertPg13);
         Assert.Equal(0, result.CountCertR);
-        Assert.Equal(0, result.CountCertNC17);
+        Assert.Equal(0, result.CountCertNc17);
         Assert.Equal(0, result.CountCertOther);
         Assert.Equal(0, result.CountRated);
         Assert.Equal(1, result.CountNotYetRated);
@@ -243,14 +239,14 @@ public class BroadcastQueryTest
     [Fact]
     public async Task TestBroadcastWithMinRating50()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMockDb();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMockDb();
 
-        FeedType feedType = FeedType.Broadcast;
-        string userId = "u123456";
+        var feedType = FeedType.Broadcast;
+        var userId = "u123456";
 
         BroadcastQuery broadcastQuery = new(moviesDbContextMock.Object);
 
-        BroadcastQueryResult result = await broadcastQuery.Execute(feedType, userId, null, 1, 5.0M, 10, 50, 50, true);
+        var result = await broadcastQuery.Execute(feedType, userId, null, 1, 5.0M, 10, 50, 50, true);
         Assert.NotNull(result);
         Assert.Equal(1, result.Count);
         Assert.Equal(1, result.CountTypeFilm);
@@ -266,10 +262,10 @@ public class BroadcastQueryTest
         Assert.Equal(0, result.CountNotRatedOnImdb);
         Assert.Equal(0, result.CountCertNone);
         Assert.Equal(0, result.CountCertG);
-        Assert.Equal(1, result.CountCertPG);
-        Assert.Equal(0, result.CountCertPG13);
+        Assert.Equal(1, result.CountCertPg);
+        Assert.Equal(0, result.CountCertPg13);
         Assert.Equal(0, result.CountCertR);
-        Assert.Equal(0, result.CountCertNC17);
+        Assert.Equal(0, result.CountCertNc17);
         Assert.Equal(0, result.CountCertOther);
         Assert.Equal(0, result.CountRated);
         Assert.Equal(1, result.CountNotYetRated);
@@ -295,14 +291,14 @@ public class BroadcastQueryTest
     [Fact]
     public async Task TestBroadcastWithMinRating90()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMockDb();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMockDb();
 
-        FeedType feedType = FeedType.Broadcast;
-        string userId = "u123456";
+        var feedType = FeedType.Broadcast;
+        var userId = "u123456";
 
         BroadcastQuery broadcastQuery = new(moviesDbContextMock.Object);
 
-        BroadcastQueryResult result = await broadcastQuery.Execute(feedType, userId, null, 1, 9.0M, 10, 50, 50, true);
+        var result = await broadcastQuery.Execute(feedType, userId, null, 1, 9.0M, 10, 50, 50, true);
         Assert.NotNull(result);
         Assert.Equal(1, result.Count);
         Assert.Equal(1, result.CountTypeFilm);
@@ -318,10 +314,10 @@ public class BroadcastQueryTest
         Assert.Equal(0, result.CountNotRatedOnImdb);
         Assert.Equal(0, result.CountCertNone);
         Assert.Equal(0, result.CountCertG);
-        Assert.Equal(1, result.CountCertPG);
-        Assert.Equal(0, result.CountCertPG13);
+        Assert.Equal(1, result.CountCertPg);
+        Assert.Equal(0, result.CountCertPg13);
         Assert.Equal(0, result.CountCertR);
-        Assert.Equal(0, result.CountCertNC17);
+        Assert.Equal(0, result.CountCertNc17);
         Assert.Equal(0, result.CountCertOther);
         Assert.Equal(0, result.CountRated);
         Assert.Equal(1, result.CountNotYetRated);
@@ -347,14 +343,14 @@ public class BroadcastQueryTest
     [Fact]
     public async Task TestFreeVod()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMockDb();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMockDb();
 
-        FeedType feedType = FeedType.FreeVod;
-        string userId = "u123456";
+        var feedType = FeedType.FreeVod;
+        var userId = "u123456";
 
         BroadcastQuery broadcastQuery = new(moviesDbContextMock.Object);
 
-        BroadcastQueryResult result = await broadcastQuery.Execute(feedType, userId, null, 1, null, 10, 50, 50, true);
+        var result = await broadcastQuery.Execute(feedType, userId, null, 1, null, 10, 50, 50, true);
         Assert.NotNull(result);
         Assert.Equal(1, result.Count);
         Assert.Equal(1, result.CountTypeFilm);
@@ -370,10 +366,10 @@ public class BroadcastQueryTest
         Assert.Equal(0, result.CountNotRatedOnImdb);
         Assert.Equal(0, result.CountCertNone);
         Assert.Equal(0, result.CountCertG);
-        Assert.Equal(0, result.CountCertPG);
-        Assert.Equal(1, result.CountCertPG13);
+        Assert.Equal(0, result.CountCertPg);
+        Assert.Equal(1, result.CountCertPg13);
         Assert.Equal(0, result.CountCertR);
-        Assert.Equal(0, result.CountCertNC17);
+        Assert.Equal(0, result.CountCertNc17);
         Assert.Equal(0, result.CountCertOther);
         Assert.Equal(0, result.CountRated);
         Assert.Equal(1, result.CountNotYetRated);
@@ -399,14 +395,14 @@ public class BroadcastQueryTest
     [Fact]
     public async Task TestPaidVod()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMockDb();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMockDb();
 
-        FeedType feedType = FeedType.PaidVod;
-        string userId = "u123456";
+        var feedType = FeedType.PaidVod;
+        var userId = "u123456";
 
         BroadcastQuery broadcastQuery = new(moviesDbContextMock.Object);
 
-        BroadcastQueryResult result = await broadcastQuery.Execute(feedType, userId, null, 1, null, 10, 50, 50, true);
+        var result = await broadcastQuery.Execute(feedType, userId, null, 1, null, 10, 50, 50, true);
         Assert.NotNull(result);
         Assert.Equal(1, result.Count);
         Assert.Equal(1, result.CountTypeFilm);
@@ -422,10 +418,10 @@ public class BroadcastQueryTest
         Assert.Equal(0, result.CountNotRatedOnImdb);
         Assert.Equal(0, result.CountCertNone);
         Assert.Equal(0, result.CountCertG);
-        Assert.Equal(0, result.CountCertPG);
-        Assert.Equal(0, result.CountCertPG13);
+        Assert.Equal(0, result.CountCertPg);
+        Assert.Equal(0, result.CountCertPg13);
         Assert.Equal(1, result.CountCertR);
-        Assert.Equal(0, result.CountCertNC17);
+        Assert.Equal(0, result.CountCertNc17);
         Assert.Equal(0, result.CountCertOther);
         Assert.Equal(0, result.CountRated);
         Assert.Equal(1, result.CountNotYetRated);
@@ -451,14 +447,14 @@ public class BroadcastQueryTest
     [Fact]
     public async Task TestPaidVodWithSingleMovie()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMockDb();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMockDb();
 
-        FeedType feedType = FeedType.PaidVod;
-        string userId = "u123456";
+        var feedType = FeedType.PaidVod;
+        var userId = "u123456";
 
         BroadcastQuery broadcastQuery = new(moviesDbContextMock.Object);
 
-        BroadcastQueryResult result = await broadcastQuery.Execute(feedType, userId, 3, 1, null, 10, 50, 50, true);
+        var result = await broadcastQuery.Execute(feedType, userId, 3, 1, null, 10, 50, 50, true);
         Assert.NotNull(result);
         Assert.Equal(1, result.Count);
         Assert.Equal(1, result.CountTypeFilm);
@@ -474,10 +470,10 @@ public class BroadcastQueryTest
         Assert.Equal(0, result.CountNotRatedOnImdb);
         Assert.Equal(0, result.CountCertNone);
         Assert.Equal(0, result.CountCertG);
-        Assert.Equal(0, result.CountCertPG);
-        Assert.Equal(0, result.CountCertPG13);
+        Assert.Equal(0, result.CountCertPg);
+        Assert.Equal(0, result.CountCertPg13);
         Assert.Equal(1, result.CountCertR);
-        Assert.Equal(0, result.CountCertNC17);
+        Assert.Equal(0, result.CountCertNc17);
         Assert.Equal(0, result.CountCertOther);
         Assert.Equal(0, result.CountRated);
         Assert.Equal(1, result.CountNotYetRated);

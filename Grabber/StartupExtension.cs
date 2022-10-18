@@ -40,8 +40,8 @@ public static class HostBuilderExtensions
 
             // create a TStartup instance based on ctor
             var startUpObj = hasConfigCtor
-                ? (TStartup)Activator.CreateInstance(typeof(TStartup), ctx.Configuration)
-                : (TStartup)Activator.CreateInstance(typeof(TStartup), null);
+                ? (TStartup?)Activator.CreateInstance(typeof(TStartup), ctx.Configuration)
+                : (TStartup?)Activator.CreateInstance(typeof(TStartup), null);
 
             // finally, call the ConfigureServices implemented by the TStartup object
             cfgServicesMethod?.Invoke(startUpObj, new object[] { serviceCollection });

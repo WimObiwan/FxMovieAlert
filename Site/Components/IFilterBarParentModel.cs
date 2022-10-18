@@ -16,7 +16,7 @@ public interface IFilterBarParentModel
     int FilterMaxDays { get; }
 
     BroadcastQueryResult Data { get; }
-    
+
     string ImdbUserId { get; }
 
     DateTime? RefreshRequestTime { get; }

@@ -1,24 +1,20 @@
 using EntityFrameworkCoreMock;
 using FxMovies.Core;
 using FxMovies.Core.Entities;
-using FxMovies.Core.Queries;
 using FxMovies.Core.Services;
 using FxMovies.ImdbDB;
 using FxMovies.MoviesDB;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 using Moq;
-using static FxMovies.Core.Entities.MovieEvent;
 
 namespace FxMovies.CoreTest;
 
 public class MovieCreationHelperTest
 {
-    (DbContextMock<MoviesDbContext>, DbSetMock<Movie>) GetMoviesDbContextMock()
+    private (DbContextMock<MoviesDbContext>, DbSetMock<Movie>) GetMoviesDbContextMock()
     {
-        var movies = new Movie[]
+        var movies = new[]
         {
-            new Movie()
+            new()
             {
                 Id = 1,
                 ImdbId = "123456",
@@ -28,7 +24,7 @@ public class MovieCreationHelperTest
                 OriginalTitle = "Back to the future",
                 ImdbIgnore = false
             },
-            new Movie()
+            new Movie
             {
                 Id = 2,
                 ImdbId = null,
@@ -46,11 +42,11 @@ public class MovieCreationHelperTest
         return (moviesDbContextMock, movieEventsDbSetMock);
     }
 
-    (DbContextMock<ImdbDbContext>, DbSetMock<ImdbMovie>) GetImdbDbContextMock()
+    private (DbContextMock<ImdbDbContext>, DbSetMock<ImdbMovie>) GetImdbDbContextMock()
     {
         var imdbMovies = new ImdbMovie[]
         {
-            new ImdbMovie()
+            new()
             {
                 Id = 1,
                 ImdbId = "654321",
@@ -70,12 +66,13 @@ public class MovieCreationHelperTest
     [Fact]
     public async Task TestExisting()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMoviesDbContextMock();
-        (var imdbDbContextMock, var imdbMoviesDbSetMock) = GetImdbDbContextMock();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMoviesDbContextMock();
+        var (imdbDbContextMock, imdbMoviesDbSetMock) = GetImdbDbContextMock();
 
         Mock<ITheMovieDbService> theMovieDbServiceMock = new();
 
-        MovieCreationHelper movieCreationHelper = new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
+        MovieCreationHelper movieCreationHelper =
+            new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
         var result = await movieCreationHelper.GetOrCreateMovieByImdbId("123456");
 
         theMovieDbServiceMock.VerifyNoOtherCalls();
@@ -92,12 +89,13 @@ public class MovieCreationHelperTest
     [Fact]
     public async Task TestExistingWithRefresh()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMoviesDbContextMock();
-        (var imdbDbContextMock, var imdbMoviesDbSetMock) = GetImdbDbContextMock();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMoviesDbContextMock();
+        var (imdbDbContextMock, imdbMoviesDbSetMock) = GetImdbDbContextMock();
 
         Mock<ITheMovieDbService> theMovieDbServiceMock = new();
 
-        MovieCreationHelper movieCreationHelper = new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
+        MovieCreationHelper movieCreationHelper =
+            new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
         var result = await movieCreationHelper.GetOrCreateMovieByImdbId("123456", true);
 
         theMovieDbServiceMock.VerifyNoOtherCalls();
@@ -114,12 +112,13 @@ public class MovieCreationHelperTest
     [Fact]
     public async Task TestNonExisting()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMoviesDbContextMock();
-        (var imdbDbContextMock, var imdbMoviesDbSetMock) = GetImdbDbContextMock();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMoviesDbContextMock();
+        var (imdbDbContextMock, imdbMoviesDbSetMock) = GetImdbDbContextMock();
 
         Mock<ITheMovieDbService> theMovieDbServiceMock = new();
 
-        MovieCreationHelper movieCreationHelper = new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
+        MovieCreationHelper movieCreationHelper =
+            new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
         var result = await movieCreationHelper.GetOrCreateMovieByImdbId("654321");
 
         theMovieDbServiceMock.VerifyNoOtherCalls();
@@ -130,13 +129,14 @@ public class MovieCreationHelperTest
     [Fact]
     public async Task TestNonExistingWithRefresh1()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMoviesDbContextMock();
-        (var imdbDbContextMock, var imdbMoviesDbSetMock) = GetImdbDbContextMock();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMoviesDbContextMock();
+        var (imdbDbContextMock, imdbMoviesDbSetMock) = GetImdbDbContextMock();
 
         Mock<ITheMovieDbService> theMovieDbServiceMock = new();
         theMovieDbServiceMock.Setup(m => m.GetCertification("654321")).ReturnsAsync("US:R");
 
-        MovieCreationHelper movieCreationHelper = new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
+        MovieCreationHelper movieCreationHelper =
+            new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
         var result = await movieCreationHelper.GetOrCreateMovieByImdbId("654321", true);
 
         theMovieDbServiceMock.Verify(m => m.GetCertification("654321"));
@@ -153,13 +153,14 @@ public class MovieCreationHelperTest
     [Fact]
     public async Task TestNonExistingWithRefresh2()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMoviesDbContextMock();
-        (var imdbDbContextMock, var imdbMoviesDbSetMock) = GetImdbDbContextMock();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMoviesDbContextMock();
+        var (imdbDbContextMock, imdbMoviesDbSetMock) = GetImdbDbContextMock();
 
         Mock<ITheMovieDbService> theMovieDbServiceMock = new();
         theMovieDbServiceMock.Setup(m => m.GetCertification("654321")).ReturnsAsync((string?)null);
 
-        MovieCreationHelper movieCreationHelper = new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
+        MovieCreationHelper movieCreationHelper =
+            new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
         var result = await movieCreationHelper.GetOrCreateMovieByImdbId("654321", true);
 
         theMovieDbServiceMock.Verify(m => m.GetCertification("654321"));
@@ -176,12 +177,13 @@ public class MovieCreationHelperTest
     [Fact]
     public async Task TestNonExistingWithRefresh3()
     {
-        (var moviesDbContextMock, var movieEventsDbSetMock) = GetMoviesDbContextMock();
-        (var imdbDbContextMock, var imdbMoviesDbSetMock) = GetImdbDbContextMock();
+        var (moviesDbContextMock, movieEventsDbSetMock) = GetMoviesDbContextMock();
+        var (imdbDbContextMock, imdbMoviesDbSetMock) = GetImdbDbContextMock();
 
         Mock<ITheMovieDbService> theMovieDbServiceMock = new();
 
-        MovieCreationHelper movieCreationHelper = new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
+        MovieCreationHelper movieCreationHelper =
+            new(moviesDbContextMock.Object, imdbDbContextMock.Object, theMovieDbServiceMock.Object);
         var result = await movieCreationHelper.GetOrCreateMovieByImdbId(null!, true);
 
         theMovieDbServiceMock.VerifyNoOtherCalls();
@@ -193,5 +195,4 @@ public class MovieCreationHelperTest
         Assert.Equal("The hunt for Red October", result.OriginalTitle);
         Assert.False(result.ImdbIgnore);
     }
-
 }

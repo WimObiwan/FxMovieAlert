@@ -15,7 +15,7 @@ public interface IImdbRatingsFromFileService
 
 public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
 {
-    public IList<ImdbRating>? GetRatings(Stream stream, out List<Tuple<string, string, string>>? lastImportErrors)
+    public IList<ImdbRating> GetRatings(Stream stream, out List<Tuple<string, string, string>>? lastImportErrors)
     {
         List<Tuple<string, string, string>>? lastImportErrors2 = null;
         var engine = new FileHelperAsyncEngine<ImdbUserRatingRecord>();
@@ -30,7 +30,7 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
                     try
                     {
                         var constId = record.Const;
-                        
+
                         if (string.IsNullOrEmpty(record.DateAdded))
                             throw new Exception("Column DateAdded is empty");
 

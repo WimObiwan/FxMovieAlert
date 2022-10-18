@@ -163,8 +163,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
         // Remove all old MovieEvents
         var set = _moviesDbContext.MovieEvents.Where(x =>
-            x.Vod == false && x.StartTime < now.Date
-            || x.Vod == true && x.EndTime.HasValue && x.EndTime.Value < now.Date);
+            (x.Vod == false && x.StartTime < now.Date)
+            || (x.Vod == true && x.EndTime.HasValue && x.EndTime.Value < now.Date));
         _moviesDbContext.MovieEvents.RemoveRange(set);
         await _moviesDbContext.SaveChangesAsync();
 
@@ -178,7 +178,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 try
                 {
                     var movieEvents = await service.GetMovieEvents();
-                    await UpdateMovieEvents(movieEvents, me => me.Vod && me.Channel != null && me.Channel.Code == channelCode);
+                    await UpdateMovieEvents(movieEvents,
+                        me => me.Vod && me.Channel != null && me.Channel.Code == channelCode);
                 }
                 catch (Exception x)
                 {
@@ -256,7 +257,6 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
             var movieTitlesToTransform = _updateEpgCommandOptions.MovieTitlesToTransform;
             if (movieTitlesToTransform != null)
-            {
                 foreach (var item in movieTitlesToTransform)
                 {
                     var newTitle = Regex.Replace(movie.Title, item, "$1");
@@ -267,11 +267,9 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                         movie.Title = newTitle;
                     }
                 }
-            }
 
             var yearSplitterPatterns = _updateEpgCommandOptions.YearSplitterPatterns;
             if (yearSplitterPatterns != null)
-            {
                 foreach (var item in yearSplitterPatterns)
                 {
                     var match = Regex.Match(movie.Title, item);
@@ -285,7 +283,6 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                         }
                     }
                 }
-            }
 
             _logger.LogInformation("{ChannelName} {Id} {Title} {Year} {StartTime}",
                 movie.Channel?.Name, movie.Id, movie.Title, movie.Year, movie.StartTime);
@@ -307,6 +304,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                     existingChannel.LogoS = channel.LogoS;
                     existingChannel.LogoS_Local = null;
                 }
+
                 _moviesDbContext.Channels.Update(existingChannel);
                 foreach (var movie in movieEvents.Where(m => m.Channel == channel))
                     movie.Channel = existingChannel;
@@ -433,7 +431,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
             var name = "channel-" + channel.Code;
 
-            var imageOverrideMap = _updateEpgCommandOptions.ImageOverrideMap; 
+            var imageOverrideMap = _updateEpgCommandOptions.ImageOverrideMap;
             if (imageOverrideMap != null && imageOverrideMap.TryGetValue(name, out var imageOverride))
             {
                 var target = Path.Combine(basePath, name);
@@ -524,11 +522,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 return false;
 
             var imageBasePath = _updateEpgCommandOptions.ImageBasePath;
-            string file;
-            if (string.IsNullOrEmpty(imageBasePath))
-                file = localFile;
-            else
-                file = Path.Combine(imageBasePath, localFile);
+            string file = string.IsNullOrEmpty(imageBasePath) ? localFile : Path.Combine(imageBasePath, localFile);
             return File.Exists(file);
         }
 
@@ -591,7 +585,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
     private async Task UpdateGenericDataWithImdb(Func<MoviesDbContext, IQueryable<IHasImdbLink>> fnGetMovies)
     {
-        var groups = fnGetMovies(_moviesDbContext).AsEnumerable().Where(m => m.Title != null).GroupBy(m => new { Title = m.Title!, m.Year }).ToList();
+        var groups = fnGetMovies(_moviesDbContext).AsEnumerable().Where(m => m.Title != null)
+            .GroupBy(m => new { Title = m.Title!, m.Year }).ToList();
         var totalCount = groups.Count;
         var current = 0;
         foreach (var group in groups) //.ToList())
@@ -660,9 +655,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             }
 
             if (movie.Certification == null && movie.ImdbId != null)
-            {
                 movie.Certification ??= await _theMovieDbService.GetCertification(movie.ImdbId) ?? "";
-            }
 
             foreach (var movieWithImdbLink in group) movieWithImdbLink.Movie = movie;
         }

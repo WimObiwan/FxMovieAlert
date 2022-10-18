@@ -53,10 +53,10 @@ public partial class FilterBar
     protected int CountRated => ParentModel.Data.CountRated;
     protected int CountCertNone => ParentModel.Data.CountCertNone;
     protected int CountCertG => ParentModel.Data.CountCertG;
-    protected int CountCertPG => ParentModel.Data.CountCertPG;
-    protected int CountCertPG13 => ParentModel.Data.CountCertPG13;
+    protected int CountCertPG => ParentModel.Data.CountCertPg;
+    protected int CountCertPG13 => ParentModel.Data.CountCertPg13;
     protected int CountCertR => ParentModel.Data.CountCertR;
-    protected int CountCertNC17 => ParentModel.Data.CountCertNC17;
+    protected int CountCertNC17 => ParentModel.Data.CountCertNc17;
     protected int CountCertOther => ParentModel.Data.CountCertOther;
     protected int Count3days => ParentModel.Data.Count3days;
     protected int Count5days => ParentModel.Data.Count5days;

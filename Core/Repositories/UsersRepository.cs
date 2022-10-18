@@ -58,10 +58,10 @@ public class UsersRepository : IUsersRepository
                 || !u.LastRefreshRatingsTime.HasValue // never refreshed before, OR
                 || u.LastRefreshRatingsTime.Value <
                 lastUpdateThreshold // last refresh is before inactive user threshold
-                || u.LastUsageTime.HasValue && u.LastUsageTime.Value >
-                                            u.LastRefreshRatingsTime.Value // used since last refreshtime
-                                            && u.LastRefreshRatingsTime.Value <
-                                            lastUpdateThresholdActiveUser) // last refresh is before active user threshold
+                || (u.LastUsageTime.HasValue && u.LastUsageTime.Value >
+                                             u.LastRefreshRatingsTime.Value // used since last refreshtime
+                                             && u.LastRefreshRatingsTime.Value <
+                                             lastUpdateThresholdActiveUser)) // last refresh is before active user threshold
             .AsAsyncEnumerable();
     }
 

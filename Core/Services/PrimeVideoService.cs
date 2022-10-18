@@ -70,7 +70,7 @@ public class PrimeVideoService : IMovieEventService
                 year = null;
 
             int? duration;
-            string runtime = movie.runtime ?? throw new Exception("Missing data");
+            var runtime = movie.runtime ?? throw new Exception("Missing data");
             var match = Regex.Match(movie.runtime, @"^(?:(\d+) (?:uur|h) )?(\d+) min$");
             if (match.Success)
             {

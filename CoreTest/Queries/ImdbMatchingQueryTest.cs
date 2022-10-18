@@ -9,74 +9,74 @@ namespace FxMovies.CoreTest;
 
 public class ImdbMatchingQueryTest
 {
-    private readonly static ImdbMovie movie1976 = new()
+    private static readonly ImdbMovie movie1976 = new()
     {
         Id = 1976,
         Year = 1976,
         PrimaryTitle = "Movie Title"
     };
 
-    private readonly static ImdbMovie movie2022 = new()
+    private static readonly ImdbMovie movie2022 = new()
     {
         Id = 2022,
         Year = 2022,
         PrimaryTitle = "Movie Title 2022"
     };
 
-    private readonly static ImdbMovie movie2050 = new()
+    private static readonly ImdbMovie movie2050 = new()
     {
         Id = 2050,
         Year = 2050,
         PrimaryTitle = "Movie Title"
     };
 
-    private readonly static ImdbMovieAlternative[] data = new[]
+    private static readonly ImdbMovieAlternative[] data =
     {
-        new ImdbMovieAlternative
+        new()
         {
-            Id  = 1976 * 10 + 0,
+            Id = 1976 * 10 + 0,
             Movie = movie1976,
             AlternativeTitle = null,
             Normalized = "MOVIE TITLE"
         },
-        new ImdbMovieAlternative
+        new()
         {
-            Id  = 1976 * 10 + 1,
+            Id = 1976 * 10 + 1,
             Movie = movie1976,
             AlternativeTitle = "Movie Title First Alternative 1976",
             Normalized = "MOVIE TITLE FIRST ALTERNATIVE 1976"
         },
-        new ImdbMovieAlternative
+        new()
         {
-            Id  = 1976 * 10 + 2,
+            Id = 1976 * 10 + 2,
             Movie = movie1976,
             AlternativeTitle = "Movie Second First Alternative 1976",
             Normalized = "MOVIE TITLE SECOND ALTERNATIVE 1976"
         },
-        new ImdbMovieAlternative
+        new()
         {
-            Id  = 2022 * 10 + 0,
+            Id = 2022 * 10 + 0,
             Movie = movie2022,
             AlternativeTitle = null,
             Normalized = "MOVIE TITLE 2022"
         },
-        new ImdbMovieAlternative
+        new()
         {
-            Id  = 2022 * 10 + 1,
+            Id = 2022 * 10 + 1,
             Movie = movie2022,
             AlternativeTitle = "Movie Title First Alternative 2022",
             Normalized = "MOVIE TITLE FIRST ALTERNATIVE 2022"
         },
-        new ImdbMovieAlternative
+        new()
         {
-            Id  = 2022 * 10 + 2,
+            Id = 2022 * 10 + 2,
             Movie = movie2022,
             AlternativeTitle = "Movie Second First Alternative 2022",
             Normalized = "MOVIE TITLE SECOND ALTERNATIVE 2022"
         },
-        new ImdbMovieAlternative
+        new()
         {
-            Id  = 2050 * 10 + 0,
+            Id = 2050 * 10 + 0,
             Movie = movie2050,
             AlternativeTitle = "",
             Normalized = "MOVIE TITLE"
@@ -97,7 +97,8 @@ public class ImdbMatchingQueryTest
         });
 
         var imdbContextMock = new DbContextMock<ImdbDbContext>(Util.DummyImdbDbOptions);
-        var imdbMovieAlternativesDbSetMock = imdbContextMock.CreateDbSetMock(x => x.MovieAlternatives, (x, _) => x, data);
+        var imdbMovieAlternativesDbSetMock =
+            imdbContextMock.CreateDbSetMock(x => x.MovieAlternatives, (x, _) => x, data);
 
         ImdbMatchingQuery imdbMatchingQuery = new(optionsMock.Object, imdbContextMock.Object);
         return await imdbMatchingQuery.Execute(movieTitle, movieReleaseYear);

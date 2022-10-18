@@ -57,9 +57,9 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
         var moviesDbContext = scope.ServiceProvider.GetRequiredService<MoviesDbContext>();
 
         var dbMovieEvents =
-            moviesDbContext.MovieEvents.Where(me => me.Feed == _feedType || me.Feed == null && me.Vod == true);
+            moviesDbContext.MovieEvents.Where(me => me.Feed == _feedType || (me.Feed == null && me.Vod == true));
 
-        DateTime now = DateTime.Now;
+        var now = DateTime.Now;
 
         if (_feedType == MovieEvent.FeedType.Broadcast)
             dbMovieEvents = dbMovieEvents.Where(me =>
@@ -71,7 +71,7 @@ public class MovieDbMissingImdbLinkCheck : IHealthCheck
         var count = await dbMovieEvents
             .Where(me => me.Feed == _feedType)
             .CountAsync(me =>
-                (me.Movie == null || string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore) &&
+                (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)) &&
                 me.Type == 1, cancellationToken);
 
         // Use IOptionsSnapshot<T> instead of IOptions<T> to avoid caching

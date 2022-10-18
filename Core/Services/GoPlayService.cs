@@ -78,6 +78,7 @@ public class GoPlayService : IMovieEventService
                             link);
                     }
                 }
+
                 return null;
             })
             .Select(t => t?.Result)
