@@ -185,6 +185,8 @@ public static class Program
 
         app.UseRouting();
 
+        app.UseSentryTracing();
+
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
