@@ -12,12 +12,10 @@
     if (Model.MovieEvent != null && Model.MovieEvent.Title != null)
     {
         ViewData["og:title"] = Model.MovieEvent.Title;
-        //ViewData["og:description"] = Model.MovieEvent.Content;
-        var description = $"FilmOpTV.be '{Model.MovieEvent.Title}'";
-        if (Model.MovieEvent.Channel != null)
-            description += $" op {Model.MovieEvent.Channel.Name}";
-        if (Model.MovieEvent.Movie != null && Model.MovieEvent.Movie.ImdbRating.HasValue)
-            description += $" - {Model.MovieEvent.Movie.ImdbRating.Value / 10.0}/10 op IMDb";
+        var description = string.Format("FilmOpTV.be '{0}' op {1} - {2:dddd} om {2:HH:mm}",
+            Model.MovieEvent.Title, Model.MovieEvent.Channel.Name, Model.MovieEvent.StartTime);
+        if (Model.MovieEvent.Movie != null)
+            description += string.Format(" - {0}/10 op IMDb", Model.MovieEvent.Movie.ImdbRating / 10.0);
         ViewData["og:description"] = description;
         ViewData["og:url"] = $"/PaidStreaming/?m={Model.MovieEvent.Id}";
         ViewData["og:image"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);

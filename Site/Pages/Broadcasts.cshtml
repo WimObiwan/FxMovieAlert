@@ -12,10 +12,10 @@
     if (Model.MovieEvent != null)
     {
         ViewData["og:title"] = Model.MovieEvent.Title;
-        //ViewData["og:description"] = Model.MovieEvent.Content;
-        var description = string.Format("FilmOpTV.be '{0}' op {1} - {2:dddd} om {2:HH:mm} - {3}/10 op IMDb",
-            Model.MovieEvent.Title, Model.MovieEvent.Channel.Name, Model.MovieEvent.StartTime, Model.MovieEvent.Movie.ImdbRating / 10.0);
-        description = char.ToUpper(description[0]) + description.Substring(1);
+        var description = string.Format("FilmOpTV.be '{0}' op {1} - {2:dddd} om {2:HH:mm}",
+            Model.MovieEvent.Title, Model.MovieEvent.Channel.Name, Model.MovieEvent.StartTime);
+        if (Model.MovieEvent.Movie != null)
+            description += string.Format(" - {0}/10 op IMDb", Model.MovieEvent.Movie.ImdbRating / 10.0);
         ViewData["og:description"] = description;
         ViewData["og:url"] = $"/Broadcasts/?m={Model.MovieEvent.Id}";
         ViewData["og:image"] = Model.GetImageUrl(Model.MovieEvent.PosterM_Local, Model.MovieEvent.PosterM);
