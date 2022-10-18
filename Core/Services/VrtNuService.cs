@@ -68,7 +68,7 @@ public class VrtNuService : IMovieEventService
                 var match = Regex.Match(announcement, @"^Nog (\d+) dagen beschikbaar$");
                 if (match.Success)
                 {
-                    endTime = DateTime.Today.AddDays(1 + int.Parse(match.Groups[1].Value)).AddMinutes(-1);
+                    endTime = DateTime.Today.AddDays(2 + int.Parse(match.Groups[1].Value)).AddMinutes(-1);
                 }
                 else if (announcement == "Langer dan een jaar beschikbaar")
                 {
@@ -107,7 +107,7 @@ public class VrtNuService : IMovieEventService
             var vodUrl = movieDetails.reference?.link == null ? null : GetFullUrl(movieDetails.reference.link);
 
             var durationText = movieModel
-                .items
+                ?.items
                 ?.parsys
                 ?.items
                 ?.container
@@ -116,10 +116,10 @@ public class VrtNuService : IMovieEventService
                 ?.items
                 ?.FirstOrDefault()
                 .Value
-                .episodes
+                ?.episodes
                 ?.FirstOrDefault()
                 .Value
-                .mediaMeta
+                ?.mediaMeta
                 ?.FirstOrDefault()
                 ?.value;
 
