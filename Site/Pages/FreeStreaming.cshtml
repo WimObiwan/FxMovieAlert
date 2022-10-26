@@ -1,5 +1,7 @@
 ﻿@page
+@using Microsoft.AspNetCore.Http.Extensions
 @using System.Text.Encodings.Web
+@using System.Web
 @model FreeStreamingModel
 
 @{
@@ -178,6 +180,11 @@
 
                         @if (Model.EditImdbLinks)
                         {
+                            UriBuilder uriBuilder = new(Request.GetEncodedUrl());
+                            var queryString = HttpUtility.ParseQueryString(uriBuilder.Query);
+                            queryString.Set("m", movieEvent.Id.ToString());
+                            uriBuilder.Query = queryString.ToString();
+                            var returnUrl = uriBuilder.Uri.ToString();
                             <small>
                                 <a href="#manualImdbLink-@movieEvent.Id" data-toggle="collapse">
                                     <span class="glyphicon glyphicon-film"></span>
@@ -193,7 +200,7 @@
                                         <br/>
                                         IMDb ID: <input type="edit" name="setimdbid" value=""/> <br/>
                                         <input type="hidden" name="movieeventid" value="@movieEvent.Id"/> <br/>
-                                        <input type="hidden" name="returnPage" value="@Request.Path@Request.QueryString.Add("m", movieEvent.Id.ToString())"/> <br/>
+                                        <input type="hidden" name="returnPage" value="@returnUrl"/> <br/>
                                         <input type="submit" value="Set"/>
                                     </form>
                                 </div>
