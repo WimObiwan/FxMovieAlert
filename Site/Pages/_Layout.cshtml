@@ -25,12 +25,23 @@
         <script async src="https://www.googletagmanager.com/gtag/js?id=@_siteOptions.Value.GoogleAnalyticsPropertyId"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
-
             function gtag() { dataLayer.push(arguments); }
-
             gtag('js', new Date());
 
             gtag('config', '@_siteOptions.Value.GoogleAnalyticsPropertyId');
+        </script>
+    }
+
+    @if (!string.IsNullOrEmpty(_siteOptions.Value.GoogleAnalyticsPropertyId2))
+    {
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@_siteOptions.Value.GoogleAnalyticsPropertyId2"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', '@_siteOptions.Value.GoogleAnalyticsPropertyId2');
         </script>
     }
 
