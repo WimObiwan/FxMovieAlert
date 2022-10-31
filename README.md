@@ -1,7 +1,12 @@
 ## Coding
 
-### Code cleanup
-Migrations
+### Deploy
+
+``` bash
+./scripts/deploy.sh "net6.0" "user@linuxserver" "/var/www/sitepath" "<service-to-restart>"
+```
+
+### Migrations
 
 ``` bash
 cd ./Grabber/
