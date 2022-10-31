@@ -36,4 +36,5 @@ public class MovieEvent : IHasImdbLink
     public string? Title { get; set; }
     public int? Year { get; set; }
     public Movie? Movie { get; set; }
+    public bool? Ignore { get; set; }
 }

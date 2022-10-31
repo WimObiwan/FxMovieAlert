@@ -41,21 +41,23 @@ public class UpdateImdbLinkCommand : IUpdateImdbLinkCommand
             .SingleOrDefaultAsync(me => me.Id == movieEventId);
         if (movieEvent != null)
         {
-            if (movieEvent.Movie != null && movieEvent.Movie.ImdbId == imdbId &&
-                movieEvent.Movie.ImdbIgnore != ignoreImdbLink)
+            Movie? movie;
+            if (imdbId != null)
+                movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
+            else
+                movie = null;
+
+            if (movieEvent.Movie?.Id == movie?.Id
+                && (movie == null || movie.ImdbIgnore == ignoreImdbLink)
+                && (movieEvent.Ignore == ignoreImdbLink))
             {
                 // Already ok, Do nothing
                 _logger.LogInformation("Skipped saving {ImdbId}, no changes", imdbId);
             }
             else
             {
-                Movie? movie;
-                if (imdbId != null)
-                    movie = await _movieCreationHelper.GetOrCreateMovieByImdbId(imdbId);
-                else
-                    movie = null;
-
                 movieEvent.Movie = movie;
+                movieEvent.Ignore = ignoreImdbLink;
                 if (movie != null)
                 {
                     movie.ImdbIgnore = ignoreImdbLink;
