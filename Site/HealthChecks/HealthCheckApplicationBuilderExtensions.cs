@@ -39,14 +39,14 @@ internal static class HealthCheckApplicationBuilderExtensions
                     "idsvr-Auth0")
                 .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", MovieEvent.FeedType.FreeVod)
-                .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", MovieEvent.FeedType.PaidVod)
+                //.AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", MovieEvent.FeedType.PaidVod)
                 .AddMovieDbDataCheck("FxMoviesDB-Streaming-VtmGo-data", MovieEvent.FeedType.FreeVod, "vtmgo")
                 .AddMovieDbDataCheck("FxMoviesDB-Streaming-VrtNu-data", MovieEvent.FeedType.FreeVod, "vrtnu")
                 .AddMovieDbDataCheck("FxMoviesDB-Streaming-GoPlay-data", MovieEvent.FeedType.FreeVod, "goplay")
-                .AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", MovieEvent.FeedType.PaidVod, "primevideo")
+                //.AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", MovieEvent.FeedType.PaidVod, "primevideo")
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-FreeStreaming-missingImdbLink", MovieEvent.FeedType.FreeVod)
-                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)
+                //.AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)
                 .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime")
                 .AddCheck<SystemInfoCheck>("SystemInfo");
 
