@@ -37,6 +37,7 @@ public class UpdateEpgCommandOptions
 
     public static string Position => "UpdateEpg";
 
+    public string[]? ChannelCodesToIgnore { get; set; }
     public string[]? MovieTitlesToIgnore { get; set; }
     public string[]? MovieTitlesToTransform { get; set; }
     public string[]? YearSplitterPatterns { get; set; }
@@ -231,17 +232,28 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         // Remove movies that should be ignored
         bool IsMovieIgnored(MovieEvent movieEvent)
         {
+            var channelCodesToIgnore = _updateEpgCommandOptions.ChannelCodesToIgnore;
+            if (channelCodesToIgnore != null)
+            {
+                var channelCode = movieEvent.Channel.Code;
+                if (channelCode != null)
+                {
+                    foreach (var item in channelCodesToIgnore)
+                        if (Regex.IsMatch(channelCode, item))
+                            return true;
+                }
+            }
+
             var title = movieEvent.Title;
             if (string.IsNullOrEmpty(title))
                 return true;
 
             var movieTitlesToIgnore = _updateEpgCommandOptions.MovieTitlesToIgnore;
-            if (movieTitlesToIgnore == null)
-                return false;
+            if (movieTitlesToIgnore != null)
+                foreach (var item in movieTitlesToIgnore)
+                    if (Regex.IsMatch(title, item))
+                        return true;
 
-            foreach (var item in movieTitlesToIgnore)
-                if (Regex.IsMatch(title, item))
-                    return true;
             return false;
         }
 
