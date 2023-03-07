@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -72,7 +72,9 @@ public static class Program
 
     private static void ConfigureHost(IHostBuilder hostBuilder)
     {
-        hostBuilder.UseSerilog();
+        hostBuilder.UseSerilog((context, services, configuration) => configuration
+            .ReadFrom.Configuration(context.Configuration)
+        );
     }
 
     private static void ConfigureWebHost(IWebHostBuilder webHostBuilder)

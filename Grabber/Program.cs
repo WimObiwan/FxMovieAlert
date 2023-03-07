@@ -31,6 +31,9 @@ internal class Program
         try
         {
             using var host = CreateHostBuilder(args).Build();
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(host.Services.GetRequiredService<IConfiguration>())
+                .CreateLogger();
             var versionInfo = host.Services.GetRequiredService<IVersionInfo>();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Version {Version}, running on {DotNetCoreVersion}", versionInfo.Version,
