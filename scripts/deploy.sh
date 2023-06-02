@@ -10,4 +10,5 @@ export TARGET_SERVICE=$4
 dotnet publish --configuration Release
 rsync -av --info=progress2 --exclude=appsettings.* --exclude=wwwroot/images/cache/* ./Site/bin/Release/$RELEASE/publish/* $TARGET_SERVER:$TARGET_PATH/
 rsync -av --info=progress2 --exclude=appsettings.* --exclude=wwwroot/images/cache/* ./Grabber/bin/Release/$RELEASE/publish/* $TARGET_SERVER:$TARGET_PATH/grabber/
-ssh $TARGET_SERVER "service $TARGET_SERVICE restart"
+
+ssh $TARGET_SERVER "chown -R www-data:www-data $TARGET_PATH/dp_keys/; service $TARGET_SERVICE restart"
