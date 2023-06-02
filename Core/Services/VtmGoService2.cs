@@ -57,7 +57,7 @@ public class VtmGoService2 : IMovieEventService
         var document = await parser.ParseDocumentAsync(stream);
         return document
             .GetElementsByTagName("x-swimlane__scroller")
-            .SelectMany(e => e.GetElementsByClassName("teaser"))
+            .SelectMany(e => e.GetElementsByClassName("teaser__link"))
             .OfType<IHtmlAnchorElement>()
             .Select(e => e.Href)
             .Distinct()
