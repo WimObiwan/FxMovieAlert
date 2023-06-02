@@ -179,6 +179,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 try
                 {
                     var movieEvents = await service.GetMovieEvents();
+                    if (!movieEvents.Any())
+                        throw new Exception("No MovieEvents returned");
                     await UpdateMovieEvents(movieEvents,
                         me => me.Vod && me.Channel != null && me.Channel.Code == channelCode);
                 }
