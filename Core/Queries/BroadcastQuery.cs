@@ -144,9 +144,11 @@ public class BroadcastQuery : IBroadcastQuery
                     )
                     &&
                     (!filterMinRating.HasValue
-                     || (filterMinRating.Value == Constants.NO_IMDB_ID && (me.Movie == null ||
-                                                                           (string.IsNullOrEmpty(me.Movie.ImdbId) &&
-                                                                            !me.Movie.ImdbIgnore)))
+                     || (filterMinRating.Value == Constants.NO_IMDB_ID 
+                        && (
+                            me.Movie == null
+                            || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore)) 
+                                && (!me.Ignore.HasValue || !me.Ignore.Value))
                      || (filterMinRating.Value == Constants.NO_IMDB_RATING && me.Movie!.ImdbRating == null)
                      || (filterMinRating.Value >= 0.0m && me.Movie!.ImdbRating >= filterMinRating.Value * 10))
                 // && 
