@@ -656,10 +656,15 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
                 movie ??= await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
 
-                movie ??= new Movie
+                if (movie == null)
                 {
-                    ImdbId = imdbMovie.ImdbId
-                };
+                    movie = new Movie
+                    {
+                        ImdbId = imdbMovie.ImdbId
+                    };
+
+                    _moviesDbContext.Movies.Add(movie);
+                }
             }
 
             if (imdbMovie != null)
