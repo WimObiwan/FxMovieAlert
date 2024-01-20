@@ -17,4 +17,6 @@ wget https://datasets.imdbws.com/title.ratings.tsv.gz -O ~/tmp/filmoptv/imdb-dat
 cd Grabber
 dotnet ./bin/Release/$RELEASE/Grabber.dll GenerateImdbDatabase
 
+sleep 3
+
 rsync -av --info=progress2 ~/tmp/filmoptv/db/imdb.db $TARGET_SERVER:$TARGET_PATH/
