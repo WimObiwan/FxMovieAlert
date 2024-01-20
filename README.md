@@ -3,7 +3,7 @@
 ### Deploy
 
 ``` bash
-./scripts/deploy.sh "net6.0" "user@linuxserver" "/var/www/sitepath" "<service-to-restart>"
+./scripts/deploy.sh "net8.0" "user@linuxserver" "/var/www/sitepath" "<service-to-restart>"
 ```
 
 ### Migrations

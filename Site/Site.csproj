@@ -1,24 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>FxMovies.Site</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <!-- https://github.com/Xabaril/AspNetCore.Diagnostics.HealthChecks -->
     <!--PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="2.2.4" /-->
-    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="6.0.2" />
-    <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="6.0.2" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="6.0.5" />
-    <PackageReference Include="GitInfo" Version="2.2.0">
+    <PackageReference Include="AspNetCore.HealthChecks.OpenIdConnectServer" Version="8.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.SqLite" Version="8.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.0" />
+    <PackageReference Include="GitInfo" Version="3.3.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.372" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.10" />
-    <PackageReference Include="Sentry.AspNetCore" Version="3.22.0" />
-    <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
+    <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.396" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.1" />
+    <PackageReference Include="Sentry.AspNetCore" Version="3.41.3" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="3.1.0" />
+    <PackageReference Include="Serilog.Sinks.Seq" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MoviesDB\MoviesDB.csproj" />

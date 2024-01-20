@@ -1,6 +1,6 @@
 
 # Usage:
-#   ./scripts/deploy.sh "net6.0" "user@server.domain.tld" "/var/www/www.domain.tld" "kestrel-domain.tld"
+#   ./scripts/deploy.sh "net8.0" "user@server.domain.tld" "/var/www/www.domain.tld" "kestrel-domain.tld"
 
 export RELEASE=$1
 export TARGET_SERVER=$2

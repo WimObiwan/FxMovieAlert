@@ -71,7 +71,7 @@ public class CachedBroadcastQuery : ICachedBroadcastQuery
                 cacheEntry.SlidingExpiration = TimeSpan.FromSeconds(_options.SlidingExpirationSeconds);
                 cacheUsed = false;
                 return await Fn();
-            });
+            }) ?? throw new InvalidOperationException("Result is null");
             result.CacheEnabled = true;
             result.CacheUsed = cacheUsed;
             return result;

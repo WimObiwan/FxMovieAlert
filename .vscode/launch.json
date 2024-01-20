@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceRoot}/Site/bin/Debug/net6.0/Site.dll",
+            "program": "${workspaceRoot}/Site/bin/Debug/net8.0/Site.dll",
             "args": [],
             "cwd": "${workspaceRoot}/Site",
             "stopAtEntry": false,
@@ -40,7 +40,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/Grabber/bin/Debug/net6.0/Grabber.dll",
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net8.0/Grabber.dll",
             "args": [
                 "GenerateImdbDatabase"
             ],
@@ -56,7 +56,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/Grabber/bin/Debug/net6.0/Grabber.dll",
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net8.0/Grabber.dll",
             "args": [
                 "UpdateEPG"
             ],
@@ -72,7 +72,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/Grabber/bin/Debug/net6.0/Grabber.dll",
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net8.0/Grabber.dll",
             "args": [
                 "UpdateImdbUserData",
                 "--imdbuserid",
@@ -90,7 +90,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/Grabber/bin/Debug/net6.0/Grabber.dll",
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net8.0/Grabber.dll",
             "args": [
                 "UpdateAllImdbUsersData"
             ],
@@ -106,7 +106,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/Grabber/bin/Debug/net6.0/Grabber.dll",
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net8.0/Grabber.dll",
             "args": [
                 "AutoUpdateImdbUserData"
             ],
@@ -122,7 +122,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/Grabber/bin/Debug/net6.0/Grabber.dll",
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net8.0/Grabber.dll",
             "args": [
                 "ListManualMatches"
             ],
@@ -138,7 +138,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/Grabber/bin/Debug/net6.0/Grabber.dll",
+            "program": "${workspaceRoot}/Grabber/bin/Debug/net8.0/Grabber.dll",
             "args": [
                 "TestImdbMatching",
                 "--title",

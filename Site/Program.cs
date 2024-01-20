@@ -191,15 +191,12 @@ public static class Program
 
         app.UseAuthorization();
 
-        app.UseEndpoints(endpoints =>
+        app.MapRazorPages();
+        app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+        app.MapGet("/Streaming", ctx =>
         {
-            endpoints.MapRazorPages();
-            endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
-            endpoints.MapGet("/Streaming", ctx =>
-            {
-                ctx.Response.Redirect("/FreeStreaming" + ctx.Request.QueryString, true);
-                return Task.CompletedTask;
-            });
+            ctx.Response.Redirect("/FreeStreaming" + ctx.Request.QueryString, true);
+            return Task.CompletedTask;
         });
     }
 

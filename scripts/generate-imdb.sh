@@ -1,6 +1,6 @@
 
 # Usage:
-#   ./scripts/generate-imdb.sh "net6.0" "user@server.domain.tld" "/var/www/www.domain.tld"
+#   ./scripts/generate-imdb.sh "net8.0" "user@server.domain.tld" "/var/www/www.domain.tld"
 
 # 2021-12-08: Script takes +/- 36 minutes
 

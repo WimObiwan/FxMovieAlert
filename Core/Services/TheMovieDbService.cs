@@ -57,7 +57,7 @@ public class TheMovieDbService : ITheMovieDbService
         if (string.IsNullOrEmpty(_apiKey) || _certificationCountryPreference == null)
             return "";
 
-        var queryParams = new Dictionary<string, string>
+        var queryParams = new Dictionary<string, string?>
         {
             { "api_key", _apiKey },
             { "language", "en-US" },
@@ -103,7 +103,7 @@ public class TheMovieDbService : ITheMovieDbService
     {
         // https://api.themoviedb.org/3/movie/tt0114436?api_key=<api_key>&language=en-US
 
-        var queryParams = new Dictionary<string, string>
+        var queryParams = new Dictionary<string, string?>
         {
             { "api_key", _apiKey ?? throw new Exception("ApiKey options missing") },
             { "language", "en-US" }

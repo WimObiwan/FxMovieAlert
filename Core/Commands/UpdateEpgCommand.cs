@@ -237,7 +237,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             var channelCodesToIgnore = _updateEpgCommandOptions.ChannelCodesToIgnore;
             if (channelCodesToIgnore != null)
             {
-                var channelCode = movieEvent.Channel.Code;
+                var channelCode = movieEvent.Channel?.Code;
                 if (channelCode != null)
                 {
                     foreach (var item in channelCodesToIgnore)
