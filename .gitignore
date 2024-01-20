@@ -40,3 +40,5 @@ dp_keys/
 upgrade.sh
 
 CoverageResults/
+
+.idea
