@@ -79,6 +79,33 @@ public class VtmGoService2 : IMovieEventService
 
         _logger.LogInformation($"Fetching {title}");
 
+        var overlays = document.GetElementsByClassName("detail__header-figure").SelectMany(a =>
+            a.GetElementsByClassName("detail__labels").Cast<IHtmlImageElement>());
+
+        var products = overlays.Select(a => 
+        {
+            string? src = a.Source;
+            if (src == null)
+                return null;
+            var match = Regex.Match(src, "/(VTM_GO-P-[^-]*)-");
+            if (match.Success)
+                return match.Groups[1].Value;
+            else
+                return null;
+        });
+
+        _logger.LogInformation($"Using products {string.Join('/', products)}");
+
+        var streamz = products.Any(p => p == "VTM_GO-P-PRODUCT_STREAMZ_BASIC");
+        var streamzPlus = products.Any(p => p == "VTM_GO-P-PRODUCT_STREAMZ_PLUS");
+
+        // Streamz or StreamzPremium+ --> ignore for now
+        if (streamz || streamzPlus)
+        {
+            _logger.LogInformation($"Ignore this product (Streamz={streamz}, StreamzPlus={streamzPlus})");
+            return null; 
+        }
+                
         var labels = document.GetElementsByClassName("detail__meta-label")
             .Select(e => e.Text().Trim())
             .ToList();
