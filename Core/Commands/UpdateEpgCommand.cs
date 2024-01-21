@@ -95,7 +95,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
     public async Task<int> Execute()
     {
         Exception? firstException = null;
-        var failedOperations = 0;
+        var failedOperations = new List<string>();
 
         try
         {
@@ -104,7 +104,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         catch (Exception x)
         {
             _logger.LogError(x, "UpdateDatabaseEpg failed.  Trying to continue.");
-            failedOperations++;
+            failedOperations.Add(nameof(UpdateDatabaseEpg));
             firstException = x;
         }
 
@@ -115,7 +115,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         catch (Exception x)
         {
             _logger.LogError(x, "UpdateEpgDataWithImdb failed.  Trying to continue.");
-            failedOperations++;
+            failedOperations.Add(nameof(UpdateEpgDataWithImdb));
             firstException ??= x;
         }
 
@@ -126,7 +126,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         catch (Exception x)
         {
             _logger.LogError(x, "UpdateMissingImageLinks failed.  Trying to continue.");
-            failedOperations++;
+            failedOperations.Add(nameof(UpdateMissingImageLinks));
             firstException ??= x;
         }
 
@@ -138,14 +138,16 @@ public class UpdateEpgCommand : IUpdateEpgCommand
             catch (Exception x)
             {
                 _logger.LogError(x, "DownloadImageData failed.  Trying to continue.");
-                failedOperations++;
+                failedOperations.Add(nameof(DownloadImageData));
                 firstException ??= x;
             }
 
-        if (firstException != null)
+        if (failedOperations.Any())
+        {
             throw new Exception(
-                $"UpdateEpgCommand.Run failed for {failedOperations} operations.  InnerException contains first failure.",
+                $"UpdateEpgCommand.Run failed for {failedOperations.Count} operations ({string.Join(", ", failedOperations)}).  InnerException contains first failure.",
                 firstException);
+        }
 
         return 0;
     }
@@ -180,7 +182,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 {
                     var movieEvents = await service.GetMovieEvents();
                     if (!movieEvents.Any())
-                        throw new Exception("No MovieEvents returned");
+                        throw new Exception($"No MovieEvents returned");
                     await UpdateMovieEvents(movieEvents,
                         me => me.Vod && me.Channel != null && me.Channel.Code == channelCode);
                 }
@@ -190,7 +192,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                         "UpdateDatabaseEpg failed for {Provider}.  Trying to continue with other providers.",
                         service.ProviderName);
                     failedProviders++;
-                    firstException ??= x;
+                    firstException ??= new Exception($"UpdateDatabaseEpg failed for {service.ProviderName}", x);
                 }
             else
                 _logger.LogWarning("UpdateDatabaseEpg disabled for {Provider}.", service.ProviderName);
