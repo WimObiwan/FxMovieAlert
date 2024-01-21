@@ -67,7 +67,7 @@ public class GoPlayService : IMovieEventService
                             Channel = channel,
                             PosterS = image,
                             PosterM = image,
-                            Duration = null,
+                            Duration = dataProgramDetails.movie?.duration,
                             Content = dataProgramDetails.pageInfo?.description,
                             VodLink = link,
                             AddedTime = DateTime.UtcNow
@@ -141,6 +141,21 @@ public class GoPlayService : IMovieEventService
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
+        var data = document
+            .QuerySelectorAll("div")
+            .Select(d => d.GetAttribute("data-hero"))
+            .Where(a => a != null)
+            .OrderByDescending(s => s!.Length)
+            .FirstOrDefault();
+
+        if (data != null)
+        {
+            var data2 = 
+                JsonSerializer.Deserialize<Data>(data);
+            if (data2?.data != null)
+                return data2.data;
+        }
+
         var dataProgramText = document
                                   .QuerySelectorAll("script")
                                   .OfType<IHtmlScriptElement>()
@@ -157,6 +172,11 @@ public class GoPlayService : IMovieEventService
 
     // ReSharper disable All
 
+    private class Data
+    {
+        public DataProgram? data { get; set; }
+    }
+
     private class DataProgram
     {
         public string? id { get; set; }
@@ -164,6 +184,7 @@ public class GoPlayService : IMovieEventService
         public string? link { get; set; }
         public PageInfo? pageInfo { get; set; }
         public Images? images { get; set; }
+        public Movie? movie { get; set; }
 
         public class PageInfo
         {
@@ -178,6 +199,11 @@ public class GoPlayService : IMovieEventService
         {
             public string? poster { get; set; }
             public string? teaser { get; set; }
+        }
+
+        public class Movie
+        {
+            public int? duration { get; set; }
         }
     }
 
