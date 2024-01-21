@@ -1,4 +1,4 @@
-@page
+﻿@page
 @using Microsoft.AspNetCore.Http.Extensions
 @using System.Text.Encodings.Web
 @using System.Web
@@ -53,18 +53,16 @@
 </script>
 
 <p class="">
-    <div class="alert alert-success small-alert">
-        NIEUW! Je vindt nu ook een overzicht van GoPlay, VTM GO en VRT MAX films! Klik hiervoor op
-        <a asp-page="/FreeStreaming">
-            <i class="fas fa-play"></i>
-            &nbsp;<span class="hidden-sm">Gratis Streaming</span>
-        </a>
-        bovenaan.<br/>
-        Voor de films op de betalende platformen zoals Amazon Prime Video kies je
-        <a asp-page="/PaidStreaming">
+    <div class="alert alert-success">
+        <h4 class="alert-heading">UPDATE Januari 2024: VRT Max en Streamz</h4>
+        De films van <strong>VRT Max</strong> kunnen voorlopig niet meer opgehaald worden.  We proberen hiervoor een oplossing te vinden!
+        <br/>
+        Maar je vindt nu wel de films van <strong>Streamz</strong> en <strong>Streamz Premium+</strong> bij
+        <a asp-page="/PaidStreaming" class="alert-link">
             <i class="fas fa-euro-sign"></i>
             &nbsp;<span class="hidden-sm">Betalende Streaming</span>
-        </a>.
+        </a>
+        bovenaan.
     </div>
 </p>
 
