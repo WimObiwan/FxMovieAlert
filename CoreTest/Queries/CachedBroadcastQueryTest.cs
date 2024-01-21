@@ -16,7 +16,7 @@ public class CachedBroadcastQueryTest
 
         Mock<IBroadcastQuery> broadcastQueryMock = new();
         Mock<IMemoryCache> memoryCacheMock = new();
-        object cachedBroadcastQueryResult = new BroadcastQueryResult();
+        object? cachedBroadcastQueryResult = new BroadcastQueryResult();
         memoryCacheMock.Setup(m => m.TryGetValue(It.IsAny<object>(), out cachedBroadcastQueryResult)).Returns(true);
         Mock<IOptions<CachedBroadcastQueryOptions>> cachedBroadcastQueryOptionsMock = new();
         cachedBroadcastQueryOptionsMock.Setup(o => o.Value).Returns(new CachedBroadcastQueryOptions
