@@ -15,6 +15,8 @@ namespace FxMovies.Core.Services;
 public class VtmGoService2 : IMovieEventService
 {
     private readonly Channel _channelVtmGo;
+    private readonly Channel _channelStreamz;
+    private readonly Channel _channelStreamzPremiumPlus;
     private readonly HttpClient _httpClient;
     private readonly ILogger<VtmGoService2> _logger;
 
@@ -31,13 +33,27 @@ public class VtmGoService2 : IMovieEventService
             Name = "VTM GO",
             LogoS = "https://www.filmoptv.be/images/vtmgo.png"
         };
+
+        _channelStreamz = new Channel
+        {
+            Code = "streamzbasic",
+            Name = "Streamz",
+            LogoS = "https://www.filmoptv.be/images/streamzbasic.png"
+        };
+
+        _channelStreamzPremiumPlus = new Channel
+        {
+            Code = "streamzplus",
+            Name = "Streamz Premium+",
+            LogoS = "https://www.filmoptv.be/images/streamzplus.png"
+        };
     }
 
     public string ProviderName => "VtmGo";
 
     public string ProviderCode => "vtmgo";
 
-    public IList<string> ChannelCodes => new List<string>() { "vtmgo" };
+    public IList<string> ChannelCodes => new List<string>() { "vtmgo", "streamzbasic", "streamzplus" };
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {
@@ -94,20 +110,13 @@ public class VtmGoService2 : IMovieEventService
                 return match.Groups[1].Value;
             else
                 return null;
-        });
+        }).ToList();
 
         _logger.LogInformation($"Using products {string.Join('/', products)}");
 
         var streamz = products.Any(p => p == "VTM_GO-P-PRODUCT_STREAMZ_BASIC");
         var streamzPlus = products.Any(p => p == "VTM_GO-P-PRODUCT_STREAMZ_PLUS");
 
-        // Streamz or StreamzPremium+ --> ignore for now
-        if (streamz || streamzPlus)
-        {
-            _logger.LogInformation($"Ignore this product (Streamz={streamz}, StreamzPlus={streamzPlus})");
-            return null; 
-        }
-                
         var labels = document.GetElementsByClassName("detail__meta-label")
             .Select(e => e.Text().Trim())
             .ToList();
@@ -163,6 +172,24 @@ public class VtmGoService2 : IMovieEventService
             .Select(m => m.Content)
             .FirstOrDefault();
 
+        Channel channel;
+        MovieEvent.FeedType feedType;
+        if (streamz)
+        {
+            channel = _channelStreamz;
+            feedType = MovieEvent.FeedType.PaidVod;
+        }
+        else if (streamzPlus)
+        {
+            channel = _channelStreamzPremiumPlus;
+            feedType = MovieEvent.FeedType.PaidVod;
+        }
+        else
+        {
+            channel = _channelVtmGo;
+            feedType = MovieEvent.FeedType.FreeVod;
+        }
+
         return new MovieEvent
         {
             ExternalId = url,
@@ -171,10 +198,10 @@ public class VtmGoService2 : IMovieEventService
             Content = description,
             PosterS = image,
             PosterM = image,
-            Channel = _channelVtmGo,
+            Channel = channel,
             Duration = durationMin,
             Vod = true,
-            Feed = MovieEvent.FeedType.FreeVod,
+            Feed = feedType,
             VodLink = url,
             Type = 1,
             StartTime = DateTime.MinValue,
