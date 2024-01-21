@@ -166,11 +166,19 @@ public class VtmGoService2 : IMovieEventService
             .Select(m => m.Content)
             .FirstOrDefault();
 
-        var description = document.All
-            .OfType<IHtmlMetaElement>()
-            .Where(m => m.Name == "description")
-            .Select(m => m.Content)
-            .FirstOrDefault();
+        var description = 
+            document.All
+                .OfType<IHtmlMetaElement>()
+                .Where(m => m.Name == "description")
+                .Select(m => m.Content)
+                .FirstOrDefault()
+            ??
+            document
+                .GetElementsByClassName("detail__description")
+                .OfType<IHtmlParagraphElement>()
+                .Select(p => p.TextContent)
+                .FirstOrDefault();
+
 
         Channel channel;
         MovieEvent.FeedType feedType;
