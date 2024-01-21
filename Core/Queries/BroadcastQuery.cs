@@ -184,6 +184,16 @@ public class BroadcastQuery : IBroadcastQuery
                 .ThenByDescending(r => r.MovieEvent.Movie!.ImdbRating)
                 .Take(30);
 
+        // Show the movies sorted:
+        //    - first show the movies that are less than 1 month available
+        //    - movies that are more than 1 month available are sorted by descending rating
+        tmp = tmp
+            .OrderBy(m => 
+                (m.MovieEvent.EndTime == null || m.MovieEvent.EndTime > DateTime.Now.AddMonths(1))
+                ? DateTime.MaxValue
+                : m.MovieEvent.EndTime)
+            .ThenByDescending(m => m.MovieEvent.Movie == null ? 0 : m.MovieEvent.Movie.ImdbRating);
+
         result.Records = await tmp.ToListAsync();
 
         if (m.HasValue)

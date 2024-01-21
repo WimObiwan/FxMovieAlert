@@ -54,7 +54,7 @@
 
 <table class="table">
 <tbody>
-@foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.EndTime).ThenByDescending(m => m.MovieEvent.Movie?.ImdbRating ?? 0))
+@foreach (var record in Model.Records)
 {
     var movieEvent = record.MovieEvent;
 

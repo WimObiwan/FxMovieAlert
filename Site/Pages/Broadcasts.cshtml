@@ -1,4 +1,4 @@
-﻿@page
+@page
 @using Microsoft.AspNetCore.Http.Extensions
 @using System.Text.Encodings.Web
 @using System.Web
@@ -90,7 +90,7 @@
     var moviesSinceLastAd = 0;
 }
 
-@foreach (var record in Model.Records.OrderBy(m => m.MovieEvent.StartTime))
+@foreach (var record in Model.Records)
 {
     var movieEvent = record.MovieEvent;
     @if (lastDate == null || lastDate != movieEvent.StartTime.Date)
