@@ -42,7 +42,9 @@ public class PrimeVideoService : IMovieEventService
 
     public string ProviderName => "PrimeVideo";
 
-    public string ChannelCode => "primevideo";
+    public string ProviderCode => "primevideo";
+
+    public IList<string> ChannelCodes => new List<string>() { "primevideo" };
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {

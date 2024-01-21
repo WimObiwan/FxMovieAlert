@@ -14,7 +14,7 @@ namespace FxMovies.Core.Services;
 
 public class VtmGoService2 : IMovieEventService
 {
-    private readonly Channel _channel;
+    private readonly Channel _channelVtmGo;
     private readonly HttpClient _httpClient;
     private readonly ILogger<VtmGoService2> _logger;
 
@@ -25,7 +25,7 @@ public class VtmGoService2 : IMovieEventService
         _logger = logger;
         _httpClient = httpClientFactory.CreateClient("vtmgo");
 
-        _channel = new Channel
+        _channelVtmGo = new Channel
         {
             Code = "vtmgo",
             Name = "VTM GO",
@@ -35,7 +35,9 @@ public class VtmGoService2 : IMovieEventService
 
     public string ProviderName => "VtmGo";
 
-    public string ChannelCode => "vtmgo";
+    public string ProviderCode => "vtmgo";
+
+    public IList<string> ChannelCodes => new List<string>() { "vtmgo" };
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {
@@ -169,7 +171,7 @@ public class VtmGoService2 : IMovieEventService
             Content = description,
             PosterS = image,
             PosterM = image,
-            Channel = _channel,
+            Channel = _channelVtmGo,
             Duration = durationMin,
             Vod = true,
             Feed = MovieEvent.FeedType.FreeVod,

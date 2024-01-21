@@ -28,7 +28,9 @@ public class VrtNuService : IMovieEventService
 
     public string ProviderName => "VrtNu";
 
-    public string ChannelCode => "vrtnu";
+    public string ProviderCode => "vrtnu";
+
+    public IList<string> ChannelCodes => new List<string>() { "vrtnu" };
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {

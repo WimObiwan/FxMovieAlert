@@ -26,7 +26,8 @@ public class GoPlayService : IMovieEventService
 
     public string ProviderName => "GoPlay";
 
-    public string ChannelCode => "goplay";
+    public string ProviderCode => "goplay";
+    public IList<string> ChannelCodes => new List<string>() { "goplay" };
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {

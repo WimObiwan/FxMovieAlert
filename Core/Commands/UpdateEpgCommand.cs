@@ -176,15 +176,16 @@ public class UpdateEpgCommand : IUpdateEpgCommand
 
         foreach (var service in _movieEventServices)
         {
-            var channelCode = service.ChannelCode;
-            if (IsProviderActivated(channelCode))
+            var providerCode = service.ProviderCode;
+            if (IsProviderActivated(providerCode))
                 try
                 {
                     var movieEvents = await service.GetMovieEvents();
                     if (!movieEvents.Any())
                         throw new Exception($"No MovieEvents returned");
+                    var channelCodes = service.ChannelCodes;
                     await UpdateMovieEvents(movieEvents,
-                        me => me.Vod && me.Channel != null && me.Channel.Code == channelCode);
+                        me => me.Vod && me.Channel != null && me.Channel.Code != null && channelCodes.Contains(me.Channel.Code));
                 }
                 catch (Exception x)
                 {
