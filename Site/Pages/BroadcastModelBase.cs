@@ -44,7 +44,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
     public MovieEvent MovieEvent => Data?.MovieEvent;
     public IList<Record> Records => Data?.Records ?? new List<Record>();
 
-    private int HighlightedFilterMonthsThreshold { get; } = 36;
+    private int HighlightedFilterMonthsThreshold { get; } = 60;
     private int HighlightedFilterRatingThreshold { get; } = 8;
     public TimeSpan ActualDuration { get; private set; }
     public bool Debug { get; private set; }
