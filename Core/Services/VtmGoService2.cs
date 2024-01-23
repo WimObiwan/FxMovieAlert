@@ -105,7 +105,7 @@ public class VtmGoService2 : IMovieEventService
             string? src = a.Source;
             if (src == null)
                 return null;
-            var match = Regex.Match(src, "/(VTM_GO-P-[^-]*)-");
+            var match = Regex.Match(src, "(?:/|%2F)(VTM_GO-P-[^-]*)-");
             if (match.Success)
                 return match.Groups[1].Value;
             else
