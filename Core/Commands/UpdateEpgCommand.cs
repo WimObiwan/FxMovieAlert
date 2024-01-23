@@ -389,6 +389,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 existingMovie.YeloUrl = movie.YeloUrl;
                 existingMovie.Vod = movie.Vod;
                 existingMovie.VodLink = movie.VodLink;
+                existingMovie.Feed = movie.Feed;
                 existingMovie.AddedTime ??= DateTime.UtcNow;
             }
             else
