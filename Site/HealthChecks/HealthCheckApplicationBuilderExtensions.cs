@@ -48,7 +48,7 @@ internal static class HealthCheckApplicationBuilderExtensions
                 //.AddMovieDbDataCheck("FxMoviesDB-Streaming-PrimeVideo-data", MovieEvent.FeedType.PaidVod, "primevideo")
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-Broadcasts-missingImdbLink", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-FreeStreaming-missingImdbLink", MovieEvent.FeedType.FreeVod)
-                //.AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)
+                .AddMovieDbMissingImdbLinkCheck("FxMoviesDB-PaidStreaming-missingImdbLink", MovieEvent.FeedType.PaidVod)
                 .AddCheck<ImdbDbDateTimeCheck>("ImdbDB-datetime")
                 .AddCheck<SystemInfoCheck>("SystemInfo");
 
