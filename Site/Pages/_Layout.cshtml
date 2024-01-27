@@ -248,16 +248,26 @@
 <partial name="_CookieConsentPartial"/>
 
 <div class="container body-content">
-    <p class="">
-        <div id="installContainer" class="alert alert-success hidden">
-            Je kunt FilmOpTv.be nu ook installeren als <strong>applicatie</strong> op je mobiele telefoon, 
-            tablet of computer. Druk hiervoor op de knop
-            <button id="butInstall" type="button">
-                installeren
-            </button>
-            .
-        </div>
-    </p>
+
+    <dismissable-alert id="installContainer" expiration="7*24*3600" class="hidden">
+        Je kunt FilmOpTv.be nu ook installeren als <strong>applicatie</strong> op je mobiele telefoon, 
+        tablet of computer. Druk hiervoor op de knop
+        <button id="butInstall" type="button">
+            installeren
+        </button>
+        .
+    </dismissable-alert>
+
+    <dismissable-alert id="filmoptv-update-202401" expiration="7*24*3600">
+        <h4 class="alert-heading">UPDATE Januari 2024: VRT Max en Streamz</h4>
+        De films van <strong>VRT Max</strong> kunnen voorlopig niet meer opgehaald worden.  We proberen hiervoor een oplossing te vinden!
+        <br/>
+        Maar je vindt nu wel de films van <strong>Streamz</strong> en <strong>Streamz Premium+</strong> bij
+        <a asp-page="/PaidStreaming" class="alert-link">
+            <i class="fas fa-euro-sign"></i>
+            &nbsp;Betalende Streaming
+        </a>.
+    </dismissable-alert>
 
     @RenderBody()
     <hr/>

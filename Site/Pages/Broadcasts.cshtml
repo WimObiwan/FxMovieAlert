@@ -38,8 +38,6 @@
     </script>
 -->
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-@* <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.11/plugins/jquery.lazy.picture.min.js"></script> *@
 <script src="~/js/index.js" asp-append-version="true"></script>
 <link rel="stylesheet" href="~/css/index.css" asp-append-version="true"/>
 
@@ -51,20 +49,6 @@
     }
 
 </script>
-
-<p class="">
-    <div class="alert alert-success">
-        <h4 class="alert-heading">UPDATE Januari 2024: VRT Max en Streamz</h4>
-        De films van <strong>VRT Max</strong> kunnen voorlopig niet meer opgehaald worden.  We proberen hiervoor een oplossing te vinden!
-        <br/>
-        Maar je vindt nu wel de films van <strong>Streamz</strong> en <strong>Streamz Premium+</strong> bij
-        <a asp-page="/PaidStreaming" class="alert-link">
-            <i class="fas fa-euro-sign"></i>
-            &nbsp;<span class="hidden-sm">Betalende Streaming</span>
-        </a>
-        bovenaan.
-    </div>
-</p>
 
 <component type="typeof(FilterBar)" render-mode="Static" param-ParentModel="Model"/>
 
