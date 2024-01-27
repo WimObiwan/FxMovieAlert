@@ -275,16 +275,8 @@
         <p class="text-muted">
             Versie @_versionInfo.Version. Running on @_versionInfo.DotNetCoreVersion.<br/>
             Deze website is <a href="https://github.com/WimObiwan/FxMovieAlert">open source</a>.
-            &copy;
-            @if (DateTime.Now.Year > 2017)
-            {
-                @: 2017-@(DateTime.Now.Year)
-            }
-            else
-            {
-                @: 2017
-            }
-            - Fox Innovations / Wim Devos
+            &copy; 2017-@(DateTime.Now.Year)
+            - <a href="https://www.foxinnovations.be/">Fox Innovations</a> / Wim Devos
             @if (ClaimChecker.Has(User.Identity, "edit:imdblinks"))
             {
                 <a href="#" title="Client-side javascript Sentry test" onclick="TestSentry()">&pi;</a>
