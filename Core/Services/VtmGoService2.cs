@@ -97,15 +97,14 @@ public class VtmGoService2 : IMovieEventService
 
         _logger.LogInformation($"Fetching {title}");
 
-        var overlays = document.GetElementsByClassName("detail__header-figure").SelectMany(a =>
-            a.GetElementsByClassName("detail__labels").Cast<IHtmlImageElement>());
+        var overlays = document.GetElementsByClassName("detail__labels").Cast<IHtmlImageElement>();
 
         var products = overlays.Select(a => 
         {
             string? src = a.Source;
             if (src == null)
                 return null;
-            var match = Regex.Match(src, "(?:/|%2F)(VTM_GO-P-[^-]*)-");
+            var match = Regex.Match(src, "/(242844598|242844592)$");
             if (match.Success)
                 return match.Groups[1].Value;
             else
@@ -114,8 +113,8 @@ public class VtmGoService2 : IMovieEventService
 
         _logger.LogInformation($"Using products {string.Join('/', products)}");
 
-        var streamz = products.Any(p => p == "VTM_GO-P-PRODUCT_STREAMZ_BASIC");
-        var streamzPlus = products.Any(p => p == "VTM_GO-P-PRODUCT_STREAMZ_PLUS");
+        var streamz = products.Any(p => p == "242844598"); // Streamz...
+        var streamzPlus = products.Any(p => p == "242844592"); // StreamzPlus...
 
         var labels = document.GetElementsByClassName("detail__meta-label")
             .Select(e => e.Text().Trim())
