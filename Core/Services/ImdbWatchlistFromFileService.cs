@@ -84,6 +84,7 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
     [DelimitedRecord(",")]
     private class ImdbUserWatchlistRecord
     {
+        [FieldQuoted] public string? Position;
         [FieldQuoted] public string? Const;
 
         [FieldQuoted]
@@ -105,7 +106,6 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
         [FieldQuoted] public string? NumVotes;
         // Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
 
-        [FieldQuoted] public string? Position;
         [FieldQuoted] public string? Rated;
 
         [FieldQuoted]
@@ -118,6 +118,7 @@ public class ImdbWatchlistFromFileService : IImdbWatchlistFromFileService
         [FieldQuoted] public string? Url;
         [FieldQuoted] public string? Year;
         [FieldQuoted] public string? YourRating;
+        [FieldQuoted] public string? DateRated;
     }
 
     // Resharper restore All

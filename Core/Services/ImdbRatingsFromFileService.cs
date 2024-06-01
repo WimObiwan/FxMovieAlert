@@ -94,27 +94,26 @@ public class ImdbRatingsFromFileService : IImdbRatingsFromFileService
         // Const,Your Rating,Date Added,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors
         [FieldQuoted] public string? Const;
 
+        [FieldQuoted] public string? YourRating;
         [FieldQuoted]
         //[FieldConverter(ConverterKind.DateMultiFormat, "ddd MMM d HH:mm:ss yyyy", "ddd MMM  d HH:mm:ss yyyy")]
         // 'Wed Sep 20 00:00:00 2017'
         public string? DateAdded;
 
-        [FieldQuoted] public string? Directors;
-        [FieldQuoted] public string? Genres;
+        [FieldQuoted] public string? Title;
+        [FieldQuoted] public string? Url;
+        [FieldQuoted] public string? TitleType;
         [FieldQuoted] public string? IMDbRating;
+        [FieldQuoted] public string? Runtime;
+        [FieldQuoted] public string? Year;
+        [FieldQuoted] public string? Genres;
         [FieldQuoted] public string? NumVotes;
-
         [FieldQuoted]
         //[FieldConverter(ConverterKind.Date, "yyyy-MM-dd")]
         public string? ReleaseDate;
-
-        [FieldQuoted] public string? Runtime;
-
-        [FieldQuoted] public string? Title;
-        [FieldQuoted] public string? TitleType;
-        [FieldQuoted] public string? Url;
-        [FieldQuoted] public string? Year;
-        [FieldQuoted] public string? YourRating;
+        [FieldQuoted] public string? Directors;
+ 
+ 
     }
 
     // Resharper restore All
