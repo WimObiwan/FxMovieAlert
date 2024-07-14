@@ -658,7 +658,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                     continue;
                 }
 
-                movie ??= await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
+                //movie ??= await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
+                movie ??= await _moviesDbContext.Movies.FirstOrDefaultAsync(m => m.ImdbId == imdbMovie.ImdbId);
 
                 if (movie == null)
                 {

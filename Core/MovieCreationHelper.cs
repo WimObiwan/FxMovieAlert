@@ -30,7 +30,8 @@ public class MovieCreationHelper : IMovieCreationHelper
 
     public async Task<Movie> GetOrCreateMovieByImdbId(string imdbId, bool refresh = false)
     {
-        var movie = await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
+        //var movie = await _moviesDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == imdbId);
+        var movie = await _moviesDbContext.Movies.FirstOrDefaultAsync(m => m.ImdbId == imdbId);
 
         if (movie == null)
         {
