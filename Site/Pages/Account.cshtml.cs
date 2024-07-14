@@ -29,7 +29,10 @@ public class AccountModel : PageModel
     {
         await HttpContext.SignOutAsync("Auth0", new AuthenticationProperties
         {
-            RedirectUri = returnUrl
+            //RedirectUri = returnUrl
+            // Should be fixed by: https://community.auth0.com/t/how-do-i-set-up-a-dynamic-allowed-callback-url/60268
+            RedirectUri = "/",
+            IsPersistent = true
         });
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     }
