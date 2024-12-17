@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
@@ -38,37 +39,42 @@ public class GoPlayService : IMovieEventService
             LogoS = "https://www.filmoptv.be/images/goplay.png"
         };
 
-        var list = await GetDataProgramList();
+        var list = await GetDataList();
         return list
             .Select(async dataProgram =>
             {
-                var link = dataProgram.link;
-                var image = dataProgram.images?.teaser;
+                var link = dataProgram.data?.path;
+                var image = dataProgram.data?.images?.posterLandscape ?? dataProgram.data?.images?.poster;
 
                 if (link != null)
                 {
                     if (link.StartsWith('/'))
-                        link = "https://www.goplay.be" + link;
+                        link = "https://www.goplay.be/video" + link;
 
                     try
                     {
                         var dataProgramDetails = await GetDataProgramDetails(link);
 
+                        if (!(dataProgramDetails.program?.published == true 
+                            && dataProgramDetails.program.type == "program" 
+                            && dataProgramDetails.program.subtype == "movie"))
+                            return null;
+
                         return new MovieEvent
                         {
-                            ExternalId = dataProgram.id,
+                            ExternalId = dataProgram.uuid,
                             Type = 1, // 1 = movie, 2 = short movie, 3 = serie
-                            Title = dataProgram.title?.Trim(),
+                            Title = dataProgram.data?.title?.Trim(),
                             Year = null,
                             Vod = true,
                             Feed = MovieEvent.FeedType.FreeVod,
-                            StartTime = GetDateTime(dataProgramDetails.pageInfo?.publishDate) ?? DateTime.UtcNow,
-                            EndTime = GetDateTime(dataProgramDetails.pageInfo?.unpublishDate),
+                            StartTime = GetDateTime(dataProgramDetails.datePublished) ?? DateTime.UtcNow,
+                            EndTime = GetDateTime(dataProgramDetails.dateUnpublished),
                             Channel = channel,
                             PosterS = image,
                             PosterM = image,
-                            Duration = dataProgramDetails.movie?.duration,
-                            Content = dataProgramDetails.pageInfo?.description,
+                            // Duration = dataProgramDetails.movie?.duration,
+                            Content = dataProgramDetails.videoDescription,
                             VodLink = link,
                             AddedTime = DateTime.UtcNow
                         };
@@ -95,43 +101,27 @@ public class GoPlayService : IMovieEventService
         return null;
     }
 
-    private async Task<IList<DataProgram>> GetDataProgramList()
+    private async Task<IList<ProgramData>> GetDataList()
     {
         // https://github.com/timrijckaert/vrtnu-vtmgo-goplay-service/tree/master/vtmgo/src/main/java/be/tapped/vtmgo/content
 
+        // https://www.goplay.be/programmas
         var client = _httpClientFactory.CreateClient("goplay");
-        var response = await client.GetAsync("/programmas/");
+        var response = await client.GetAsync("/programmas?categorie=film");
         response.EnsureSuccessStatusCode();
 
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        var parser = new HtmlParser();
-        var document = await parser.ParseDocumentAsync(stream);
+        string text = await response.Content.ReadAsStringAsync();
+        var match = Regex.Match(text, """\\"brand\\":\\".+?\\",\\"results\\":(.+),\\"categories\\":""");
+        text = JsonSerializer.Deserialize<string>('"' + match.Groups[1].Value + '"') ??  throw new Exception("Json parsing failed");
 
-        return document
-            .QuerySelectorAll(".poster-teaser")
-            .Where(e => e.GetAttribute("data-category") == "5286") // 5286 = Film
-            .Select(e =>
-            {
-                string? dataProgramText = null;
-                try
-                {
-                    dataProgramText = e.GetAttribute("data-program") ??
-                                      throw new Exception("Entry contains no data-program");
-                    return JsonSerializer.Deserialize<DataProgram>(dataProgramText);
-                }
-                catch (Exception x)
-                {
-                    _logger.LogWarning(x, "Skipping line with parsing exception, Text={dataProgramText}",
-                        dataProgramText);
-                    return null;
-                }
-            })
-            .Where(e => e != null)
-            .Select(e => e!)
+        var data = JsonSerializer.Deserialize<ProgramData[]>(text) ??  throw new Exception("Json parsing failed");
+        
+        return data
+            .Where(e => e.data?.categoryName?.Equals("Film", StringComparison.CurrentCultureIgnoreCase) == true)
             .ToList();
     }
 
-    private async Task<DataProgram> GetDataProgramDetails(string link)
+    private async Task<ProgramDataDetails> GetDataProgramDetails(string link)
     {
         var client = _httpClientFactory.CreateClient("goplay");
         var response = await client.GetAsync(link);
@@ -141,70 +131,64 @@ public class GoPlayService : IMovieEventService
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
-        var data = document
-            .QuerySelectorAll("div")
-            .Select(d => d.GetAttribute("data-hero"))
-            .Where(a => a != null)
-            .OrderByDescending(s => s!.Length)
-            .FirstOrDefault();
+        // // https://brightdata.com/blog/how-tos/web-scraping-with-next-js
+        // var scriptNodes = document.QuerySelectorAll("script");
+        // var hydrationScriptNodes = scriptNodes.Where(e => e.InnerHtml.Contains("self.__next_f.push"));
 
-        if (data != null)
-        {
-            var data2 = 
-                JsonSerializer.Deserialize<Data>(data);
-            if (data2?.data != null)
-                return data2.data;
-        }
+        // var scriptNode = hydrationScriptNodes.Where(e => e.InnerHtml.Contains("initialTree"));
 
-        var dataProgramText = document
-                                  .QuerySelectorAll("script")
-                                  .OfType<IHtmlScriptElement>()
-                                  .Where(s => s.Type == "application/json")
-                                  .Select(s => s.Text)
-                                  .OrderByDescending(s => s.Length)
-                                  .FirstOrDefault()
-                              ?? throw new Exception("Entry contains no json");
+        string text = await response.Content.ReadAsStringAsync();
+        //var match = Regex.Match(text, """{\\"meta\\":(.+?)}]]\\n""");
+        //var match = Regex.Match(text, """{\\"video\\":(.+?)\\n""");
+        var match = Regex.Match(text, """{\\"video\\":(.+?),\\"videoId\\":""");
+        text = match.Groups[1].Value;
+        text = text.Replace("\"])</script><script>self.__next_f.push([1,\"", "");
+        text = JsonSerializer.Deserialize<string>('"' + text + '"') ??  throw new Exception("Json parsing failed");
 
-        return JsonSerializer.Deserialize<DataProgram>(dataProgramText) ?? throw new Exception("DataProgram missing");
+        var data = JsonSerializer.Deserialize<ProgramDataDetails>(text) ??  throw new Exception("Json parsing failed");
+        return data;
     }
 
     #region JsonModel
 
     // ReSharper disable All
 
-    private class Data
+    private class ProgramData
     {
-        public DataProgram? data { get; set; }
+        public Data? data { get; set; }
+        public string? uuid { get; set; }
     }
 
-    private class DataProgram
+    private class Data
     {
-        public string? id { get; set; }
+        public string? brandName { get; set; }
+        public string? categoryName { get; set; }
         public string? title { get; set; }
-        public string? link { get; set; }
-        public PageInfo? pageInfo { get; set; }
+        public string? path { get; set; }
+        public string? parentalRating { get; set; }
         public Images? images { get; set; }
-        public Movie? movie { get; set; }
+    }
 
-        public class PageInfo
-        {
-            public string? title { get; set; }
-            public string? type { get; set; }
-            public int? publishDate { get; set; }
-            public int? unpublishDate { get; set; }
-            public string? description { get; set; }
-        }
+    private class Images
+    {
+        public string? poster { get; set; }
+        public string? posterLandscape { get; set; }
+    }
 
-        public class Images
-        {
-            public string? poster { get; set; }
-            public string? teaser { get; set; }
-        }
+    private class ProgramDataDetails
+    {
+        public string? description { get; set; }
+        public string? videoDescription { get; set; }
+        public int? datePublished { get; set; }
+        public int? dateUnpublished { get; set; }
+        public Program? program { get; set; }
+    }
 
-        public class Movie
-        {
-            public int? duration { get; set; }
-        }
+    private class Program
+    {
+        public bool? published { get; set; }
+        public string? type { get; set; }
+        public string? subtype { get; set; }
     }
 
     // ReSharper restore All
