@@ -51,6 +51,8 @@ public class UpdateEpgCommandOptions
     public string[]? ActivateProviders { get; set; }
 
     public DownloadImagesOption? DownloadImages { get; set; }
+
+    public string[]? AutoIgnoreChannels { get; set; }
 }
 
 public class UpdateEpgCommand : IUpdateEpgCommand
@@ -62,10 +64,13 @@ public class UpdateEpgCommand : IUpdateEpgCommand
     private readonly IImdbMatchingQuery _imdbMatchingQuery;
     private readonly ILogger<UpdateEpgCommand> _logger;
     private readonly IManualMatchesQuery _manualMatchesQuery;
+    private readonly IUpdateImdbLinkCommand _updateImdbLinkCommand;
     private readonly IEnumerable<IMovieEventService> _movieEventServices;
     private readonly MoviesDbContext _moviesDbContext;
     private readonly ITheMovieDbService _theMovieDbService;
     private readonly UpdateEpgCommandOptions _updateEpgCommandOptions;
+
+    private readonly string[]? _autoIgnoreChannels;
 
     public UpdateEpgCommand(ILogger<UpdateEpgCommand> logger,
         MoviesDbContext moviesDbContext, ImdbDbContext imdbDbContext,
@@ -75,7 +80,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         IHumoService humoService,
         IImdbMatchingQuery imdbMatchingQuery,
         IHttpClientFactory httpClientFactory,
-        IManualMatchesQuery manualMatchesQuery)
+        IManualMatchesQuery manualMatchesQuery,
+        IUpdateImdbLinkCommand updateImdbLinkCommand)
     {
         _logger = logger;
         _moviesDbContext = moviesDbContext;
@@ -87,9 +93,11 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         _imdbMatchingQuery = imdbMatchingQuery;
         _httpClientFactory = httpClientFactory;
         _manualMatchesQuery = manualMatchesQuery;
-
+        _updateImdbLinkCommand = updateImdbLinkCommand;
         _downloadImagesOption = _updateEpgCommandOptions.DownloadImages ??
                                 UpdateEpgCommandOptions.DownloadImagesOption.Active;
+
+        _autoIgnoreChannels = _updateEpgCommandOptions.AutoIgnoreChannels;
     }
 
     public async Task<int> Execute()
@@ -131,6 +139,7 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         }
 
         if (_downloadImagesOption != UpdateEpgCommandOptions.DownloadImagesOption.Disabled)
+        {
             try
             {
                 await DownloadImageData();
@@ -141,6 +150,23 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 failedOperations.Add(nameof(DownloadImageData));
                 firstException ??= x;
             }
+        }
+
+        if (_autoIgnoreChannels != null)
+        {
+            // Remove all old MovieEvents
+            var set = await _moviesDbContext.MovieEvents.Where(me =>
+                me.Vod == false
+                && _autoIgnoreChannels.Contains(me.Channel!.Code)
+                && (me.Movie == null || (string.IsNullOrEmpty(me.Movie.ImdbId) && !me.Movie.ImdbIgnore))
+                && (me.Ignore == null || me.Ignore == false))
+                .ToListAsync();
+            foreach (var item in set)
+            {
+                _logger.LogInformation("Ignoring: {channel} {title}", item.Channel?.Code, item.Title);
+                await _updateImdbLinkCommand.Execute(item.Id, null, true);
+            }
+        }
 
         if (failedOperations.Any())
         {
