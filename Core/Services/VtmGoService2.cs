@@ -77,6 +77,7 @@ public class VtmGoService2 : IMovieEventService
             .GetElementsByTagName("x-swimlane__scroller")
             .SelectMany(e => e.GetElementsByClassName("teaser__link"))
             .OfType<IHtmlAnchorElement>()
+            .Where(e => e.GetAttribute("js-module") == "teaser")
             .Select(e => e.Href)
             .Distinct()
             .AsEnumerable();
