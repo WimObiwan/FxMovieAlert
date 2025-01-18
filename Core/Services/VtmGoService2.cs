@@ -15,6 +15,7 @@ namespace FxMovies.Core.Services;
 public class VtmGoService2 : IMovieEventService
 {
     private readonly Channel _channelVtmGo;
+    private readonly Channel _channelVtmGoCinema;
     private readonly Channel _channelStreamz;
     private readonly Channel _channelStreamzPremiumPlus;
     private readonly HttpClient _httpClient;
@@ -31,6 +32,13 @@ public class VtmGoService2 : IMovieEventService
         {
             Code = "vtmgo",
             Name = "VTM GO",
+            LogoS = "https://www.filmoptv.be/images/vtmgo.png"
+        };
+
+        _channelVtmGoCinema = new Channel
+        {
+            Code = "vtmgocinema",
+            Name = "VTM GO Cinema",
             LogoS = "https://www.filmoptv.be/images/vtmgo.png"
         };
 
@@ -53,7 +61,7 @@ public class VtmGoService2 : IMovieEventService
 
     public string ProviderCode => "vtmgo";
 
-    public IList<string> ChannelCodes => new List<string>() { "vtmgo", "streamzbasic", "streamzplus" };
+    public IList<string> ChannelCodes => new List<string>() { "vtmgo", "vtmgocinema", "streamzbasic", "streamzplus" };
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {
@@ -105,7 +113,7 @@ public class VtmGoService2 : IMovieEventService
             string? src = a.Source;
             if (src == null)
                 return null;
-            var match = Regex.Match(src, "/(242844598|242844592)(?:$|[^\\d])");
+            var match = Regex.Match(src, "/(242844598|242844592|251795890)(?:$|[^\\d])");
             if (match.Success)
                 return match.Groups[1].Value;
             else
@@ -116,6 +124,7 @@ public class VtmGoService2 : IMovieEventService
 
         var streamz = products.Any(p => p == "242844598"); // Streamz...
         var streamzPlus = products.Any(p => p == "242844592"); // StreamzPlus...
+        var cinema = products.Any(p => p == "251795890"); // VtmGo Cinema...
 
         var labels = document.GetElementsByClassName("detail__meta-label")
             .Select(e => e.Text().Trim())
@@ -190,6 +199,11 @@ public class VtmGoService2 : IMovieEventService
         else if (streamzPlus)
         {
             channel = _channelStreamzPremiumPlus;
+            feedType = MovieEvent.FeedType.PaidVod;
+        }
+        else if (cinema)
+        {
+            channel = _channelVtmGoCinema;
             feedType = MovieEvent.FeedType.PaidVod;
         }
         else
