@@ -15,13 +15,13 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.433" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.14" />
     <!-- Dont know why, but the reference below is required to fix this: -->
     <!-- https://github.com/dotnet/aspnetcore/issues/54530 -->
     <!-- https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/2523 -->
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.3.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="4.13.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.6.1" />
+    <PackageReference Include="Sentry.AspNetCore" Version="5.4.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
     <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="5.0.0" />
     <PackageReference Include="Serilog.Sinks.Seq" Version="8.0.0" />
