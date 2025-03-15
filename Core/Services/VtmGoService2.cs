@@ -113,7 +113,7 @@ public class VtmGoService2 : IMovieEventService
             string? src = a.Source;
             if (src == null)
                 return null;
-            var match = Regex.Match(src, "/(242844598|242844592|251795890)(?:$|[^\\d])");
+            var match = Regex.Match(src, @"/(?:\d+_)?(242844598|242844592|251795890)(?:$|[^\d])");
             if (match.Success)
                 return match.Groups[1].Value;
             else
