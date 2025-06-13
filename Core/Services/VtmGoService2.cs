@@ -108,12 +108,16 @@ public class VtmGoService2 : IMovieEventService
 
         var overlays = document.GetElementsByClassName("detail__labels").Cast<IHtmlImageElement>();
 
+        const string streamzOverlay = "257277079";
+        const string streamzPlusOverlay = "257277090";
+        const string cinemaOverlay = "251795890";
+
         var products = overlays.Select(a => 
         {
             string? src = a.Source;
             if (src == null)
                 return null;
-            var match = Regex.Match(src, @"/(?:\d+_)?(242844598|242844592|251795890)(?:$|[^\d])");
+            var match = Regex.Match(src, $@"/(?:\d+_)?({streamzOverlay}|{streamzPlusOverlay}|{cinemaOverlay})(?:$|[^\d])");
             if (match.Success)
                 return match.Groups[1].Value;
             else
@@ -122,9 +126,9 @@ public class VtmGoService2 : IMovieEventService
 
         _logger.LogInformation($"Using products {string.Join('/', products)}");
 
-        var streamz = products.Any(p => p == "242844598"); // Streamz...
-        var streamzPlus = products.Any(p => p == "242844592"); // StreamzPlus...
-        var cinema = products.Any(p => p == "251795890"); // VtmGo Cinema...
+        var streamz = products.Any(p => p == streamzOverlay); // Streamz...
+        var streamzPlus = products.Any(p => p == streamzPlusOverlay); // StreamzPlus...
+        var cinema = products.Any(p => p == cinemaOverlay); // VtmGo Cinema...
 
         var labels = document.GetElementsByClassName("detail__meta-label")
             .Select(e => e.Text().Trim())
