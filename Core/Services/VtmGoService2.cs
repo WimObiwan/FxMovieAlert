@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -15,6 +16,7 @@ namespace FxMovies.Core.Services;
 public class VtmGoService2 : IMovieEventService
 {
     private readonly Channel _channelVtmGo;
+    private readonly Channel _channelVtmGoPlus;
     private readonly Channel _channelVtmGoCinema;
     private readonly Channel _channelStreamz;
     private readonly Channel _channelStreamzPremiumPlus;
@@ -32,6 +34,13 @@ public class VtmGoService2 : IMovieEventService
         {
             Code = "vtmgo",
             Name = "VTM GO",
+            LogoS = "https://www.filmoptv.be/images/vtmgo.png"
+        };
+
+        _channelVtmGoPlus = new Channel
+        {
+            Code = "vtmgoplus",
+            Name = "VTM GO+",
             LogoS = "https://www.filmoptv.be/images/vtmgo.png"
         };
 
@@ -93,6 +102,11 @@ public class VtmGoService2 : IMovieEventService
 
     private async Task<MovieEvent?> GetMovieDetails(string url)
     {
+// #if DEBUG
+//         // Quick test
+//         url = "https://www.vtmgo.be/vtmgo/top-gun-maverick~c8e7967a-b077-4645-b3db-e7469c2cf6b7";
+// #endif
+
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
@@ -100,37 +114,42 @@ public class VtmGoService2 : IMovieEventService
         var parser = new HtmlParser();
         var document = await parser.ParseDocumentAsync(stream);
 
-        var title = document.GetElementsByClassName("detail__title")
+        var title = document.GetElementsByClassName("detailv3__title")
             .Select(e => e.Text())
             .FirstOrDefault();
 
         _logger.LogInformation($"Fetching {title}");
 
-        var overlays = document.GetElementsByClassName("detail__labels").Cast<IHtmlImageElement>();
+        var broadcasters = document.GetElementsByClassName("detailv3__broadcasters")
+            .SelectMany(e => e.GetElementsByTagName("img"))
+            .OfType<IHtmlImageElement>()
+            .Select(e => e.AlternativeText)
+            .OfType<string>()
+            .ToList();
 
-        const string streamzOverlay = "257277079";
-        const string streamzPlusOverlay = "257277090";
-        const string cinemaOverlay = "251795890";
+        const string vtmGoAltText = "VTM";
+        const string vtmGoPlusAltText = "VTM GO+";
+        const string streamzAltText = "Streamz Basic";
+        const string streamzPlusAltText = "Streamz Premium+";
+        const string cinemaAltText = "Cinema";
 
-        var products = overlays.Select(a => 
-        {
-            string? src = a.Source;
-            if (src == null)
-                return null;
-            var match = Regex.Match(src, $@"/(?:\d+_)?({streamzOverlay}|{streamzPlusOverlay}|{cinemaOverlay})(?:$|[^\d])");
-            if (match.Success)
-                return match.Groups[1].Value;
-            else
-                return null;
-        }).ToList();
+        _logger.LogInformation($"Using broadcasters {string.Join('/', broadcasters)}");
 
-        _logger.LogInformation($"Using products {string.Join('/', products)}");
+        var vtmGo = broadcasters.Any(b => b == vtmGoAltText); // VTM...
+        var vtmGoPlus = broadcasters.Any(b => b == vtmGoPlusAltText); // VTM...
+        var streamz = broadcasters.Any(b => b == streamzAltText); // Streamz...
+        var streamzPlus = broadcasters.Any(b => b == streamzPlusAltText); // StreamzPlus...
+        var cinema = broadcasters.Any(b => b == cinemaAltText); // VtmGo Cinema...
 
-        var streamz = products.Any(p => p == streamzOverlay); // Streamz...
-        var streamzPlus = products.Any(p => p == streamzPlusOverlay); // StreamzPlus...
-        var cinema = products.Any(p => p == cinemaOverlay); // VtmGo Cinema...
+        #if DEBUG
+        var allowedValues = new HashSet<string> {
+            vtmGoAltText, vtmGoPlusAltText, streamzAltText, streamzPlusAltText, cinemaAltText,
+            "PARAMOUNT_PLUS", "STUDIO_100", "VRT" };
+        // Check if any value is not in the allowed set
+        Debug.Assert(!broadcasters.Any(b => !allowedValues.Contains(b)));
+        #endif
 
-        var labels = document.GetElementsByClassName("detail__meta-label")
+        var labels = document.GetElementsByClassName("detailv3__meta-label")
             .Select(e => e.Text().Trim())
             .ToList();
 
@@ -148,6 +167,7 @@ public class VtmGoService2 : IMovieEventService
             .Select(m => (int?)int.Parse(m.Groups[1].Value))
             .FirstOrDefault();
 
+        // 2025-10-12: Doesn't seem to work anymore, when not logged in on the site
         var availableDays = labels
             .Select(l => Regex.Match(l, @"^Nog (\d{1,3}) dag(?:en)? beschikbaar$"))
             .Where(m => m.Success)
@@ -187,7 +207,7 @@ public class VtmGoService2 : IMovieEventService
                 .FirstOrDefault()
             ??
             document
-                .GetElementsByClassName("detail__description")
+                .GetElementsByClassName("detailv3__description")
                 .OfType<IHtmlParagraphElement>()
                 .Select(p => p.TextContent)
                 .FirstOrDefault();
@@ -195,7 +215,18 @@ public class VtmGoService2 : IMovieEventService
 
         Channel channel;
         MovieEvent.FeedType feedType;
-        if (streamz)
+        // if (vtmGo)
+        // {
+        //     channel = _channelVtmGo;
+        //     feedType = MovieEvent.FeedType.FreeVod;
+        // }
+        // else
+        if (vtmGoPlus)
+        {
+            channel = _channelVtmGoPlus;
+            feedType = MovieEvent.FeedType.PaidVod;
+        }
+        else if (streamz)
         {
             channel = _channelStreamz;
             feedType = MovieEvent.FeedType.PaidVod;
