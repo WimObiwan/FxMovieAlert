@@ -1,6 +1,10 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading;
+using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using FxMovies.Core;
 using FxMovies.ImdbDB;
@@ -19,6 +23,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Serilog;
 using Serilog.Events;
@@ -119,6 +124,36 @@ public static class Program
             options.UseSqlite(configuration.GetConnectionString("ImdbDb")));
 
         services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
+        services.Configure<RateLimitOptions>(configuration.GetSection(RateLimitOptions.Position));
+
+        var rateLimitOptions = configuration.GetSection(RateLimitOptions.Position).Get<RateLimitOptions>();
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            
+            options.OnRejected = async (context, cancellationToken) =>
+            {
+                var logger = context.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("RateLimiter");
+                var ipAddress = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                var path = context.HttpContext.Request.Path;
+                logger?.LogWarning("Rate limit exceeded for IP {IpAddress} on path {Path}", ipAddress, path);
+                
+                context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                await context.HttpContext.Response.WriteAsync("Too many requests. Please try again later.", cancellationToken);
+            };
+            
+            options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
+                CreateRateLimitPartition(rateLimitOptions, rateLimitOptions?.PermitLimit ?? 5, 
+                    TimeSpan.FromSeconds(rateLimitOptions?.Window ?? 1),
+                    rateLimitOptions?.QueueLimit ?? 0),
+                CreateRateLimitPartition(rateLimitOptions, rateLimitOptions?.PermitLimitPerMinute ?? 15,
+                    TimeSpan.FromMinutes(rateLimitOptions?.WindowMinute ?? 1),
+                    0),
+                CreateRateLimitPartition(rateLimitOptions, rateLimitOptions?.PermitLimitPerHour ?? 100,
+                    TimeSpan.FromHours(rateLimitOptions?.WindowHour ?? 1),
+                    0)
+            );
+        });
 
         services.AddFxMoviesAuthentication(configuration.GetSection(Auth0Options.Position).Get<Auth0Options>());
         services.AddFxMoviesHealthChecks(configuration);
@@ -181,6 +216,8 @@ public static class Program
 
         app.UseCookiePolicy();
 
+        app.UseRateLimiter();
+
         app.UseAuthentication();
 
         app.UseFxMoviesHealthChecks();
@@ -204,5 +241,93 @@ public static class Program
     {
         const int durationInSeconds = 60 * 60 * 24;
         ctx.Context.Response.Headers[HeaderNames.CacheControl] = "public,max-age=" + durationInSeconds;
+    }
+
+    private static bool IsStaticFile(HttpContext httpContext)
+    {
+        var path = httpContext.Request.Path.ToString();
+        return path.StartsWith("/wwwroot/") || 
+               path.StartsWith("/images/") || 
+               path.StartsWith("/css/") || 
+               path.StartsWith("/js/") || 
+               path.StartsWith("/lib/") ||
+               path.EndsWith(".css") ||
+               path.EndsWith(".js") ||
+               path.EndsWith(".png") ||
+               path.EndsWith(".jpg") ||
+               path.EndsWith(".jpeg") ||
+               path.EndsWith(".gif") ||
+               path.EndsWith(".ico") ||
+               path.EndsWith(".svg") ||
+               path.EndsWith(".woff") ||
+               path.EndsWith(".woff2") ||
+               path.EndsWith(".ttf") ||
+               path.EndsWith(".eot");
+    }
+
+    private static bool ShouldApplyRateLimit(HttpContext httpContext, RateLimitOptions rateLimitOptions)
+    {
+        if (httpContext.Request.Method != HttpMethods.Get || IsStaticFile(httpContext))
+        {
+            return false;
+        }
+
+        var remoteIp = httpContext.Connection.RemoteIpAddress;
+        if (remoteIp == null)
+        {
+            return true;
+        }
+
+        // Check if IP is in whitelist
+        if (rateLimitOptions?.WhitelistedIPs != null)
+        {
+            foreach (var whitelistedEntry in rateLimitOptions.WhitelistedIPs)
+            {
+                if (string.IsNullOrWhiteSpace(whitelistedEntry))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    // Try to parse as CIDR notation
+                    if (IPNetwork2.TryParse(whitelistedEntry, out var network))
+                    {
+                        if (network.Contains(remoteIp))
+                        {
+                            return false; // IP is whitelisted
+                        }
+                    }
+                }
+                catch
+                {
+                    // Invalid CIDR notation, skip
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static PartitionedRateLimiter<HttpContext> CreateRateLimitPartition(
+        RateLimitOptions rateLimitOptions, int permitLimit, TimeSpan window, int queueLimit)
+    {
+        return PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            if (!ShouldApplyRateLimit(httpContext, rateLimitOptions))
+            {
+                return RateLimitPartition.GetNoLimiter<string>("no-limit");
+            }
+            
+            var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return RateLimitPartition.GetFixedWindowLimiter(ipAddress, _ =>
+                new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = permitLimit,
+                    Window = window,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = queueLimit
+                });
+        });
     }
 }
