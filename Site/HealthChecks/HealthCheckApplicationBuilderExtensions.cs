@@ -40,7 +40,7 @@ internal static class HealthCheckApplicationBuilderExtensions
                 .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", MovieEvent.FeedType.FreeVod)
                 .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-VtmGo-data", MovieEvent.FeedType.FreeVod, "vtmgo")
-                //.AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-VrtNu-data", MovieEvent.FeedType.FreeVod, "vrtnu")
+                //.AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-VrtMax-data", MovieEvent.FeedType.FreeVod, "vrtmax")
                 .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-GoPlay-data", MovieEvent.FeedType.FreeVod, "goplay")
                 .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-data", MovieEvent.FeedType.PaidVod)
                 .AddMovieDbDataCheck("FxMoviesDB-PaidStreaming-Streamz-data", MovieEvent.FeedType.PaidVod, "streamzbasic")
