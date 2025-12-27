@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
 
@@ -20,6 +19,13 @@ public interface IImdbRatingsFromWebService
 
 public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
 {
+    private static readonly Regex NextDataRegex = new(
+        @"<script id=""__NEXT_DATA__"" type=""application/json"">(.+?)</script>",
+        RegexOptions.Compiled);
+
+    // Persisted query hash for PersonalizedUserData
+    private const string PersonalizedUserDataHash = "7c4e0771d67f21fc27fd44fc46d49cc589225a9c5e63e51cc0b8d42f39ee99cc";
+
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ImdbRatingsFromWebService> _logger;
 
@@ -33,71 +39,159 @@ public class ImdbRatingsFromWebService : IImdbRatingsFromWebService
 
     public async Task<IList<ImdbRating>> GetRatingsAsync(string imdbUserId, DateTime? fromDateTime)
     {
-        IList<ImdbRating> ratings = new List<ImdbRating>();
-        var url = $"/user/{imdbUserId}/ratings?sort=date_added%2Cdesc&mode=detail";
+        var allRatings = new List<ImdbRating>();
+        var page = 1;
+        bool hasMore;
+
         do
         {
-            using var htmlDocument = await FetchHtmlDocument(url);
-            url = GetRatingsSinglePageAsync(htmlDocument, ratings);
-        } while (url != null && fromDateTime.HasValue && fromDateTime.Value < ratings.Min(r => r.Date));
+            var (titleInfos, pageHasMore) = await GetRatingsPageTitleIds(imdbUserId, page);
+
+            if (titleInfos.Count == 0)
+                break;
+
+            // Fetch user ratings via GraphQL
+            var ratings = await FetchUserRatings(imdbUserId, titleInfos);
+            allRatings.AddRange(ratings);
+
+            hasMore = pageHasMore;
+            page++;
+
+            // Check fromDateTime if specified
+            if (fromDateTime.HasValue && allRatings.Count > 0)
+            {
+                var minDate = allRatings.Min(r => r.Date);
+                if (minDate < fromDateTime.Value)
+                    break;
+            }
+
+            _logger.LogInformation(
+                "Retrieved {Count} ratings for user {UserId}, page {Page}, total so far: {Total}",
+                ratings.Count, imdbUserId, page - 1, allRatings.Count);
+
+        } while (hasMore);
+
+        return allRatings;
+    }
+
+    private async Task<(List<TitleInfo> TitleInfos, bool HasMore)> GetRatingsPageTitleIds(string imdbUserId, int page)
+    {
+        var client = _httpClientFactory.CreateClient("imdb-web");
+        var url = $"https://www.imdb.com/user/{imdbUserId}/ratings";
+        if (page > 1)
+            url += $"?page={page}";
+
+        var response = await client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+
+        var html = await response.Content.ReadAsStringAsync();
+        var match = NextDataRegex.Match(html);
+        if (!match.Success)
+            throw new InvalidOperationException("Could not find __NEXT_DATA__ in ratings page");
+
+        var json = match.Groups[1].Value;
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var pageProps = root.GetProperty("props").GetProperty("pageProps");
+        var mainColumnData = pageProps.GetProperty("mainColumnData");
+        var advancedTitleSearch = mainColumnData.GetProperty("advancedTitleSearch");
+
+        var total = advancedTitleSearch.GetProperty("total").GetInt32();
+        var edges = advancedTitleSearch.GetProperty("edges");
+
+        var titleInfos = new List<TitleInfo>();
+        foreach (var edge in edges.EnumerateArray())
+        {
+            var title = edge.GetProperty("node").GetProperty("title");
+            var imdbId = title.GetProperty("id").GetString()!;
+            var titleText = title.GetProperty("titleText").GetProperty("text").GetString()!;
+            titleInfos.Add(new TitleInfo(imdbId, titleText));
+        }
+
+        // Calculate if there are more pages (250 items per page)
+        var itemsPerPage = 250;
+        var itemsSoFar = (page - 1) * itemsPerPage + titleInfos.Count;
+        var hasMore = itemsSoFar < total;
+
+        return (titleInfos, hasMore);
+    }
+
+    private async Task<List<ImdbRating>> FetchUserRatings(string imdbUserId, List<TitleInfo> titleInfos)
+    {
+        var client = _httpClientFactory.CreateClient("imdb-graphql");
+
+        var idArray = titleInfos.Select(t => t.ImdbId).ToArray();
+
+        var requestBody = new
+        {
+            operationName = "PersonalizedUserData",
+            variables = new
+            {
+                locale = "en-US",
+                idArray = idArray,
+                includeUserData = false,
+                includeWatchedData = false,
+                otherUserId = imdbUserId,
+                fetchOtherUserRating = true
+            },
+            extensions = new
+            {
+                persistedQuery = new
+                {
+                    version = 1,
+                    sha256Hash = PersonalizedUserDataHash
+                }
+            }
+        };
+
+        var jsonContent = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync("https://api.graphql.imdb.com/", content);
+        response.EnsureSuccessStatusCode();
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(responseJson);
+
+        var ratings = new List<ImdbRating>();
+        var titlesArray = doc.RootElement.GetProperty("data").GetProperty("titles");
+
+        // Create a lookup for title text by IMDb ID
+        var titleLookup = titleInfos.ToDictionary(t => t.ImdbId, t => t.Title);
+
+        foreach (var titleElement in titlesArray.EnumerateArray())
+        {
+            try
+            {
+                var imdbId = titleElement.GetProperty("id").GetString()!;
+                var otherUserRating = titleElement.GetProperty("otherUserRating");
+
+                if (otherUserRating.ValueKind == JsonValueKind.Null)
+                    continue;
+
+                var ratingValue = otherUserRating.GetProperty("value").GetInt32();
+                var dateStr = otherUserRating.GetProperty("date").GetString();
+                var date = DateTime.Parse(dateStr!);
+
+                titleLookup.TryGetValue(imdbId, out var titleText);
+
+                ratings.Add(new ImdbRating
+                {
+                    ImdbId = imdbId,
+                    Rating = ratingValue,
+                    Date = date,
+                    Title = titleText ?? imdbId
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse rating for title");
+            }
+        }
 
         return ratings;
     }
 
-    private async Task<IHtmlDocument> FetchHtmlDocument(string url)
-    {
-        var client = _httpClientFactory.CreateClient("imdb");
-        var response = await client.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-        // Troubleshoot: Debug console: 
-        //   response.Content.ReadAsStringAsync().Result,nq 
-        // ==> nq = non-quoted
-
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        var parser = new HtmlParser();
-        return await parser.ParseDocumentAsync(stream);
-    }
-
-    private string? GetRatingsSinglePageAsync(IHtmlDocument document, IList<ImdbRating> ratings)
-    {
-        var ratingsContainer = document.QuerySelector("#ratings-container");
-        if (ratingsContainer == null)
-            return null;
-        var elements = ratingsContainer.GetElementsByClassName("lister-item");
-        foreach (var element in elements)
-            try
-            {
-                var child = element.QuerySelector("div:nth-child(1)");
-                var tt = child?.Attributes["data-tconst"]?.Value ?? throw new Exception("data-tconst not found");
-
-                child = element.QuerySelector("div:nth-child(2) > p:nth-child(5)");
-                var dateString = child?.InnerHtml ?? throw new Exception("date not found");
-                dateString = Regex.Replace(
-                    dateString,
-                    "Rated on (.*)", "$1");
-                var date = DateTime.ParseExact(dateString, "dd MMM yyyy", CultureInfo.InvariantCulture);
-
-                var title = element.QuerySelector("div:nth-child(2) > h3:nth-child(2) > a:nth-child(3)")
-                    ?.InnerHtml.Trim() ?? throw new Exception("title not found");
-                title = WebUtility.UrlDecode(title);
-
-                child = element.QuerySelector(
-                    "div:nth-child(2) > div:nth-child(4) > div:nth-child(2) > span:nth-child(2)");
-                var ratingString = child?.InnerHtml ?? throw new Exception("rating not found");
-                var rating = int.Parse(ratingString);
-                ratings.Add(new ImdbRating
-                {
-                    ImdbId = tt,
-                    Rating = rating,
-                    Date = date,
-                    Title = title
-                });
-            }
-            catch (Exception x)
-            {
-                _logger.LogWarning(x, "Skipping element");
-            }
-
-        return document.QuerySelector("a.flat-button:nth-child(3)")?.Attributes["href"]?.Value;
-    }
+    private record TitleInfo(string ImdbId, string Title);
 }

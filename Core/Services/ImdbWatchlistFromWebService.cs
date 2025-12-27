@@ -1,11 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
@@ -20,6 +16,7 @@ public interface IImdbWatchlistFromWebService
 public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private static readonly Regex NextDataRegex = new(@"<script id=""__NEXT_DATA__"" type=""application/json"">(.+?)</script>", RegexOptions.Singleline | RegexOptions.Compiled);
 
     public ImdbWatchlistFromWebService(
         IHttpClientFactory httpClientFactory)
@@ -29,81 +26,137 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
 
     public async Task<IList<ImdbWatchlist>> GetWatchlistAsync(string imdbUserId)
     {
-        var jsonData = await GetDocumentString(imdbUserId);
-        return GetWatchlist(jsonData);
-    }
+        var allItems = new List<ImdbWatchlist>();
+        int page = 1;
+        bool hasNextPage = true;
 
-    private async Task<JsonData> GetDocumentString(string imdbUserId)
-    {
-        var client = _httpClientFactory.CreateClient("imdb");
-        var response = await client.GetAsync($"/user/{imdbUserId}/watchlist?sort=date_added%2Cdesc&view=detail");
-        response.EnsureSuccessStatusCode();
-        // Troubleshoot: Debug console: 
-        //   response.Content.ReadAsStringAsync().Result,nq 
-        // ==> nq = non-quoted
-
-        string text;
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        using (TextReader textReader = new StreamReader(stream))
+        while (hasNextPage)
         {
-            text = await textReader.ReadToEndAsync();
+            var (items, nextPage) = await GetWatchlistPage(imdbUserId, page);
+            
+            if (items.Count == 0)
+                break;
+
+            allItems.AddRange(items);
+            hasNextPage = nextPage;
+            page++;
         }
 
-        var jsonString = Regex.Match(text, @"IMDbReactInitialState\.push\(({.*})\);").Groups[1].Value;
-        return JsonSerializer.Deserialize<JsonData>(jsonString) ?? throw new Exception("Json missing");
+        return allItems;
     }
 
-    private IList<ImdbWatchlist> GetWatchlist(JsonData jsonData)
+    private async Task<(List<ImdbWatchlist> items, bool hasNextPage)> GetWatchlistPage(string imdbUserId, int page)
     {
-        if (jsonData.list == null || jsonData.list.items == null || jsonData.titles == null)
-            throw new Exception("Json missing");
-        return jsonData.list.items.Select(i =>
+        var client = _httpClientFactory.CreateClient("imdb-web");
+        
+        var url = page == 1 
+            ? $"/user/{imdbUserId}/watchlist/" 
+            : $"/user/{imdbUserId}/watchlist/?page={page}";
+            
+        var response = await client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        
+        var html = await response.Content.ReadAsStringAsync();
+        
+        // Extract __NEXT_DATA__ JSON from the HTML
+        var match = NextDataRegex.Match(html);
+        if (!match.Success)
+            return (new List<ImdbWatchlist>(), false);
+
+        var nextDataJson = match.Groups[1].Value;
+        var nextData = JsonSerializer.Deserialize<NextDataResponse>(nextDataJson);
+        
+        var predefinedList = nextData?.props?.pageProps?.mainColumnData?.predefinedList;
+        if (predefinedList == null)
+            return (new List<ImdbWatchlist>(), false);
+
+        var items = new List<ImdbWatchlist>();
+        
+        var titleListItemSearch = predefinedList.titleListItemSearch;
+        if (titleListItemSearch?.edges != null)
         {
-            var imdbMovieId = i.imdbMovieId ?? throw new Exception("Json missing");
-            jsonData.titles.TryGetValue(imdbMovieId, out var title);
-            DateTime.TryParseExact(i.added, "dd MMM yyyy", CultureInfo.GetCultureInfo("en-GB"),
-                DateTimeStyles.AllowWhiteSpaces, out var dateTimeAdded);
-            return new ImdbWatchlist
+            foreach (var edge in titleListItemSearch.edges)
             {
-                ImdbId = i.imdbMovieId,
-                Title = title?.primary?.title,
-                Date = dateTimeAdded
-            };
-        }).ToList();
+                var listItem = edge?.listItem;
+                if (listItem == null)
+                    continue;
+
+                var titleText = listItem.titleText?.text ?? listItem.originalTitleText?.text;
+                
+                items.Add(new ImdbWatchlist
+                {
+                    ImdbId = listItem.id ?? string.Empty,
+                    Title = titleText,
+                    Date = DateTime.MinValue
+                });
+            }
+        }
+
+        var pageInfo = titleListItemSearch?.pageInfo;
+        return (items, pageInfo?.hasNextPage ?? false);
     }
 
-    #region JsonModel
+    #region Response Models
 
-    // Resharper disable All
+    // ReSharper disable All
 
-    private class JsonData
+    // Models for __NEXT_DATA__ parsing
+    private class NextDataResponse
     {
-        public List? list { get; set; }
-        public Dictionary<string, Title?>? titles { get; set; }
+        public Props? props { get; set; }
     }
 
-    private class List
+    private class Props
     {
-        public List<Item>? items { get; set; }
+        public PageProps? pageProps { get; set; }
     }
 
-    private class Item
+    private class PageProps
     {
-        public string? added { get; set; }
-        [JsonPropertyName("const")] public string? imdbMovieId { get; set; }
+        public MainColumnData? mainColumnData { get; set; }
     }
 
-    private class Title
+    private class MainColumnData
     {
-        public Primary? primary { get; set; }
+        public PredefinedList? predefinedList { get; set; }
     }
 
-    private class Primary
+    private class PredefinedList
     {
-        public string? title { get; set; }
+        public string? id { get; set; }
+        public TitleListItemSearch? titleListItemSearch { get; set; }
     }
 
-    // Resharper restore All
+    private class TitleListItemSearch
+    {
+        public List<Edge>? edges { get; set; }
+        public PageInfo? pageInfo { get; set; }
+    }
+
+    private class Edge
+    {
+        public ListItemData? listItem { get; set; }
+    }
+
+    private class ListItemData
+    {
+        public string? id { get; set; }
+        public TitleText? titleText { get; set; }
+        public TitleText? originalTitleText { get; set; }
+    }
+
+    private class TitleText
+    {
+        public string? text { get; set; }
+    }
+
+    private class PageInfo
+    {
+        public string? endCursor { get; set; }
+        public bool hasNextPage { get; set; }
+    }
+
+    // ReSharper restore All
 
     #endregion
 }

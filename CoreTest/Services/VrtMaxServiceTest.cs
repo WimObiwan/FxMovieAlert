@@ -1,11 +1,5 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
 using FxMovies.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Moq.Contrib.HttpClient;
 
 namespace FxMovies.CoreTest;
 

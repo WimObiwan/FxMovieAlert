@@ -67,7 +67,27 @@ public static class ServiceConfiguration
         );
         services.AddHttpClient("tmdb", c => { c.BaseAddress = new Uri("https://api.themoviedb.org"); });
         services.AddHttpClient("images");
-        services.AddHttpClient("imdb", c => { c.BaseAddress = new Uri("https://www.imdb.com"); });
+        services.AddHttpClient("imdb-web", c => 
+        { 
+            c.BaseAddress = new Uri("https://www.imdb.com");
+            c.DefaultRequestHeaders.Add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            c.DefaultRequestHeaders.Add("accept-language", "en-US,en;q=0.5");
+            c.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+        });
+        services.AddHttpClient("imdb-graphql", c => 
+        { 
+            c.BaseAddress = new Uri("https://api.graphql.imdb.com");
+            c.DefaultRequestHeaders.Add("accept", "application/graphql+json, application/json");
+            c.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+            c.DefaultRequestHeaders.Add("origin", "https://www.imdb.com");
+            c.DefaultRequestHeaders.Add("referer", "https://www.imdb.com/");
+        });
+        services.AddHttpClient("imdb", c => 
+        { 
+            c.BaseAddress = new Uri("https://api.graphql.imdb.com");
+            c.DefaultRequestHeaders.Add("accept", "application/graphql+json, application/json");
+            c.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
+        });
         services.AddHttpClient("primevideo", c => { c.BaseAddress = new Uri("https://www.primevideo.com"); });
 
         services.AddSingleton<IVersionInfo, VersionInfo>(_ => new VersionInfo(assembly));
