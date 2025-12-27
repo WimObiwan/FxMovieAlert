@@ -87,7 +87,7 @@ public class ImdbWatchlistFromWebService : IImdbWatchlistFromWebService
                 {
                     ImdbId = listItem.id ?? string.Empty,
                     Title = titleText,
-                    Date = DateTime.MinValue
+                    Date = null
                 });
             }
         }

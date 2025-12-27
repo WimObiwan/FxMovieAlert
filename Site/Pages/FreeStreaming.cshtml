@@ -242,7 +242,14 @@
                 {
                     <p class="slim">
                         <div class="alert alert-success small-alert">
-                            Deze film heb je op @record.UserWatchListItem.AddedDate.ToLongDateString() op je watchlist gezet
+                            @if (record.UserWatchListItem.AddedDate.HasValue)
+                            {
+                                @:Deze film heb je op @record.UserWatchListItem.AddedDate.Value.ToLongDateString() op je watchlist gezet
+                            }
+                            else
+                            {
+                                @:Deze film staat op je watchlist
+                            }
                         </div>
                     </p>
                 }
