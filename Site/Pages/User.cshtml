@@ -266,7 +266,9 @@
             }
             else
             {
-                <a href="?forcerefresh=true" class="btn btn-success">Ratings nu herladen</a>
+                <form method="post" asp-page-handler="ForceRefresh" style="display:inline;">
+                    <button type="submit" class="btn btn-success">Ratings nu herladen</button>
+                </form>
             }
         </td>
     </tr>

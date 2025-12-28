@@ -156,6 +156,23 @@ public class UserModel : PageModel
         }
     }
 
+    public async Task<IActionResult> OnPostForceRefresh()
+    {
+        var userId = ClaimChecker.UserId(User.Identity);
+
+        if (userId == null)
+            return RedirectToPage();
+
+        var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+        if (user != null)
+        {
+            user.RefreshRequestTime = DateTime.UtcNow;
+            await _moviesDbContext.SaveChangesAsync();
+        }
+
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPost()
     {
         if (Request.Form.Files.Count == 0)
