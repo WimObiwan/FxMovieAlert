@@ -33,12 +33,14 @@ public class UserModel : PageModel
     public bool? LastRefreshSuccess;
     public DateTime? RatingLastDate;
     public string RatingLastMovie;
+    public string RatingLastMovieUrl;
     public int? RatingLastRating;
     public DateTime? RefreshRequestTime;
     public int UserRatingCount;
     public int UserWatchListCount;
     public DateTime? WatchListLastDate;
     public string WatchListLastMovie;
+    public string WatchListLastMovieUrl;
     public string WatchListLastRefreshRatingsResult;
     public bool? WatchListLastRefreshSuccess;
     public DateTime? WatchListLastRefreshTime;
@@ -59,100 +61,61 @@ public class UserModel : PageModel
         _imdbDbContext = imdbDbContext;
     }
 
-    public async Task OnGet(string setimdbuserid = null)
+    public async Task OnGet()
     {
         var userId = ClaimChecker.UserId(User.Identity);
-        bool forcerefresh = false;
-
         if (userId == null) return;
 
-        if (setimdbuserid == null)
+        var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+        if (user != null) 
         {
-            var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-            if (user != null) ImdbUserId = user.ImdbUserId;
-        }
-        else if (setimdbuserid == "remove")
-        {
-            var user = await _moviesDbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId);
-            if (user != null)
-            {
-                _moviesDbContext.UserRatings.RemoveRange(user.UserRatings);
-                _moviesDbContext.Users.Remove(user);
-                await _moviesDbContext.SaveChangesAsync();
-            }
-
-            ImdbUserId = null;
-        }
-        else
-        {
-            var match = Regex.Match(setimdbuserid, @"(ur\d+)");
-            if (match.Success)
-            {
-                ImdbUserId = match.Groups[1].Value;
-                forcerefresh = true;
-            }
-            else
-            {
-                ErrorMessage = string.Format($"Er werd een ongeldige IMDb Gebruikers ID opgegeven: {setimdbuserid}.");
-            }
-        }
-
-        if (ImdbUserId != null)
-        {
-            var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
-            if (user == null)
-            {
-                user = new User
-                {
-                    UserId = userId,
-                    ImdbUserId = ImdbUserId
-                };
-                _moviesDbContext.Users.Add(user);
-            }
-
-            if (forcerefresh)
-                user.RefreshRequestTime = DateTime.UtcNow;
-
-            RefreshRequestTime = user.RefreshRequestTime;
-            LastRefreshRatingsTime = user.LastRefreshRatingsTime;
-            LastRefreshRatingsResult = user.LastRefreshRatingsResult;
-            LastRefreshSuccess = user.LastRefreshSuccess;
-            WatchListLastRefreshTime = user.WatchListLastRefreshTime;
-            WatchListLastRefreshRatingsResult = user.WatchListLastRefreshResult;
-            WatchListLastRefreshSuccess = user.WatchListLastRefreshSuccess;
+            ImdbUserId = user.ImdbUserId;
             user.LastUsageTime = DateTime.UtcNow;
             await _moviesDbContext.SaveChangesAsync();
 
-            UserRatingCount = await _moviesDbContext.UserRatings.CountAsync(ur => ur.User.UserId == userId);
-            UserWatchListCount =
-                await _moviesDbContext.UserWatchLists.Where(ur => ur.User.UserId == userId).CountAsync();
-            var ratingLast = await _moviesDbContext.UserRatings
-                .Include(ur => ur.Movie)
-                .Where(ur => ur.User.UserId == userId)
-                .OrderByDescending(ur => ur.RatingDate)
-                .ThenByDescending(ur => ur.Id)
-                .FirstOrDefaultAsync();
-            if (ratingLast != null)
+            if (ImdbUserId != null)
             {
-                RatingLastDate = ratingLast.RatingDate;
-                RatingLastRating = ratingLast.Rating;
-                RatingLastMovie = ratingLast.Movie.ImdbId;
-                var movie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == RatingLastMovie);
-                if (movie != null) RatingLastMovie = movie.PrimaryTitle;
-            }
+                RefreshRequestTime = user.RefreshRequestTime;
+                LastRefreshRatingsTime = user.LastRefreshRatingsTime;
+                LastRefreshRatingsResult = user.LastRefreshRatingsResult;
+                LastRefreshSuccess = user.LastRefreshSuccess;
+                WatchListLastRefreshTime = user.WatchListLastRefreshTime;
+                WatchListLastRefreshRatingsResult = user.WatchListLastRefreshResult;
+                WatchListLastRefreshSuccess = user.WatchListLastRefreshSuccess;
 
-            var watchListLast = await _moviesDbContext.UserWatchLists
-                .Include(uw => uw.Movie)
-                .Where(uw => uw.User.UserId == userId)
-                .OrderByDescending(uw => uw.AddedDate)
-                .ThenByDescending(uw => uw.Id)
-                .FirstOrDefaultAsync();
-            if (watchListLast != null)
-            {
-                WatchListLastDate = watchListLast.AddedDate;
-                WatchListLastMovie = watchListLast.Movie.ImdbId;
-                var movie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == WatchListLastMovie);
-                if (movie != null) WatchListLastMovie = movie.PrimaryTitle;
+                UserRatingCount = await _moviesDbContext.UserRatings.CountAsync(ur => ur.User.UserId == userId);
+                UserWatchListCount =
+                    await _moviesDbContext.UserWatchLists.Where(ur => ur.User.UserId == userId).CountAsync();
+                var ratingLast = await _moviesDbContext.UserRatings
+                    .Include(ur => ur.Movie)
+                    .Where(ur => ur.User.UserId == userId)
+                    .OrderByDescending(ur => ur.RatingDate)
+                    .ThenByDescending(ur => ur.Id)
+                    .FirstOrDefaultAsync();
+                if (ratingLast != null)
+                {
+                    RatingLastDate = ratingLast.RatingDate;
+                    RatingLastRating = ratingLast.Rating;
+                    RatingLastMovie = ratingLast.Movie.ImdbId;
+                    RatingLastMovieUrl = $"https://www.imdb.com/title/{RatingLastMovie}/";
+                    var movie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == RatingLastMovie);
+                    if (movie != null) RatingLastMovie = movie.PrimaryTitle;
+                }
+
+                var watchListLast = await _moviesDbContext.UserWatchLists
+                    .Include(uw => uw.Movie)
+                    .Where(uw => uw.User.UserId == userId)
+                    .OrderByDescending(uw => uw.AddedDate)
+                    .ThenByDescending(uw => uw.Id)
+                    .FirstOrDefaultAsync();
+                if (watchListLast != null)
+                {
+                    WatchListLastDate = watchListLast.AddedDate;
+                    WatchListLastMovie = watchListLast.Movie.ImdbId;
+                    WatchListLastMovieUrl = $"https://www.imdb.com/title/{WatchListLastMovie}/";
+                    var movie = await _imdbDbContext.Movies.SingleOrDefaultAsync(m => m.ImdbId == WatchListLastMovie);
+                    if (movie != null) WatchListLastMovie = movie.PrimaryTitle;
+                }
             }
         }
     }
@@ -184,13 +147,25 @@ public class UserModel : PageModel
         if (string.IsNullOrEmpty(imdbUserId))
             return RedirectToPage();
 
+        var user = await _moviesDbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId);
+        if (imdbUserId == "remove")
+        {
+            if (user != null)
+            {
+                _moviesDbContext.UserRatings.RemoveRange(user.UserRatings);
+                _moviesDbContext.Users.Remove(user);
+                await _moviesDbContext.SaveChangesAsync();
+            }
+            return RedirectToPage();
+        }
+
         var match = Regex.Match(imdbUserId, @"(ur\d+)");
         if (!match.Success)
             return RedirectToPage();
+            // ErrorMessage = string.Format($"Er werd een ongeldige IMDb Gebruikers ID opgegeven: {setimdbuserid}.");
 
         var validImdbUserId = match.Groups[1].Value;
 
-        var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
         if (user == null)
         {
             user = new User

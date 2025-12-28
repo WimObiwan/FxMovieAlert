@@ -120,17 +120,20 @@
             {
                 @Model.RatingLastDate.Value.ToLocalTime().ToLongDateString()
                 <br/>
-                @Model.RatingLastMovie
+                <a href="@Model.RatingLastMovieUrl" target="_blank" rel="noopener">@Model.RatingLastMovie</a>
                 <br/>
                 @: @(Model.RatingLastRating) / 10
             }
         </td>
         <td>
-            @if (Model.WatchListLastDate.HasValue && Model.WatchListLastMovie != null)
+            @if (Model.WatchListLastMovie != null)
             {
-                @Model.WatchListLastDate.Value.ToLocalTime().ToLongDateString()
-                <br/>
-                @Model.WatchListLastMovie
+                if (Model.WatchListLastDate.HasValue)
+                {
+                    @: @Model.WatchListLastDate.Value.ToLocalTime().ToLongDateString()
+                    <br/>
+                }
+                <a href="@Model.WatchListLastMovieUrl" target="_blank" rel="noopener">@Model.WatchListLastMovie</a>
             }
         </td>
     </tr>
