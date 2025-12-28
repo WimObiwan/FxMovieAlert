@@ -79,9 +79,9 @@
 @if (User.Identity.IsAuthenticated)
 {
     <p>
-        <form action="#" method="GET">
+        <form method="post" asp-page-handler="SetImdbUserId">
             Vul hier je IMDb Gebruikers ID in:
-            <input type="edit" name="setimdbuserid" value="@Model.ImdbUserId" placeholder="ur12345678" pattern="ur[0-9]{7,10}"/>
+            <input type="text" name="imdbUserId" value="@Model.ImdbUserId" placeholder="ur12345678" pattern="ur[0-9]{7,10}"/>
             <input type="submit" value="Bewaren"/>
         </form>
     </p>

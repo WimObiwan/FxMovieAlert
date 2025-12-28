@@ -174,6 +174,43 @@ public class UserModel : PageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostSetImdbUserId(string imdbUserId)
+    {
+        var userId = ClaimChecker.UserId(User.Identity);
+
+        if (userId == null)
+            return RedirectToPage();
+
+        if (string.IsNullOrEmpty(imdbUserId))
+            return RedirectToPage();
+
+        var match = Regex.Match(imdbUserId, @"(ur\d+)");
+        if (!match.Success)
+            return RedirectToPage();
+
+        var validImdbUserId = match.Groups[1].Value;
+
+        var user = await _moviesDbContext.Users.Where(u => u.UserId == userId).SingleOrDefaultAsync();
+        if (user == null)
+        {
+            user = new User
+            {
+                UserId = userId,
+                ImdbUserId = validImdbUserId
+            };
+            _moviesDbContext.Users.Add(user);
+        }
+        else
+        {
+            user.ImdbUserId = validImdbUserId;
+        }
+
+        user.RefreshRequestTime = DateTime.UtcNow;
+        await _moviesDbContext.SaveChangesAsync();
+
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPost()
     {
         if (Request.Form.Files.Count == 0)
