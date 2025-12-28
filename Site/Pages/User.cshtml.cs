@@ -59,9 +59,10 @@ public class UserModel : PageModel
         _imdbDbContext = imdbDbContext;
     }
 
-    public async Task OnGet(bool forcerefresh = false, string setimdbuserid = null)
+    public async Task OnGet(string setimdbuserid = null)
     {
         var userId = ClaimChecker.UserId(User.Identity);
+        bool forcerefresh = false;
 
         if (userId == null) return;
 
