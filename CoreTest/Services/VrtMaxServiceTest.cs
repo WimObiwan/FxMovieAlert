@@ -76,7 +76,10 @@ public class VrtNuServiceTest
         var result = await vrtMaxService.GetMovieEvents();
 
         Assert.NotNull(result);
-        foreach (var movieEvent in result) Assert.NotNull(movieEvent.Title);
-        //Assert.NotNull(movieEvent.Duration);
+        foreach (var movieEvent in result)
+        {
+            Assert.NotNull(movieEvent.Title);
+            Assert.NotNull(movieEvent.Duration);
+        }
     }
 }

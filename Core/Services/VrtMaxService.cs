@@ -59,7 +59,7 @@ public class VrtMaxService : IMovieEventService
             //     type = 2;
 
             await Task.Delay(500);
-            var (endTime, duration, year) = await GetSingleMovieDetails(link);
+            var (startTime, endTime, duration, year) = await GetSingleMovieDetails(link);
 
             // ... create MovieEvent
             movieEvents.Add(new MovieEvent
@@ -75,6 +75,7 @@ public class VrtMaxService : IMovieEventService
                 Type = type,
                 ExternalId = link,
 
+                StartTime = startTime ?? DateTime.Today,
                 EndTime = endTime ?? DateTime.Today.AddYears(1),
                 Duration = duration,
                 Year = year
@@ -104,10 +105,10 @@ public class VrtMaxService : IMovieEventService
         return null;
     }
 
-    private async Task<(DateTime?, int?, int?)> GetSingleMovieDetails(string? programLink)
+    private async Task<(DateTime? StartTime, DateTime? EndTime, int? Duration, int? Year)> GetSingleMovieDetails(string? programLink)
     {
         if (string.IsNullOrEmpty(programLink))
-            return (null, null, null);
+            return (null, null, null, null);
 
         var client = _httpClientFactory.CreateClient("vrtmax");
         
@@ -290,7 +291,7 @@ fragment pageHeaderFragment on PageHeader {
 
             var programPageResponse = await response.Content.ReadFromJsonAsync<ProgramPageResponse>();
             if (programPageResponse?.data?.page == null)
-                return (null, null, null);
+                return (null, null, null, null);
 
             var programPage = programPageResponse.data.page;
 
@@ -359,6 +360,8 @@ fragment pageHeaderFragment on PageHeader {
             var episodeTile = allTiles.FirstOrDefault(t => t.__typename == "EpisodeTile");
 
             // Get episode link and fetch structured metadata from EpisodePage
+            DateTime? startTime = null;
+            DateTime? endTime = null;
             if (episodeTile?.action?.link != null)
             {
                 var episodePageData = await GetEpisodePageData(episodeTile.action.link);
@@ -369,6 +372,14 @@ fragment pageHeaderFragment on PageHeader {
                 if (episodePageData.Year != null)
                 {
                     year = episodePageData.Year;
+                }
+                if (episodePageData.StartTime != null)
+                {
+                    startTime = episodePageData.StartTime;
+                }
+                if (episodePageData.EndTime != null)
+                {
+                    endTime = episodePageData.EndTime;
                 }
             }
 
@@ -385,20 +396,19 @@ fragment pageHeaderFragment on PageHeader {
                     ?? ParseDurationFromStatusText(episodeTile.status.text.defaultText);
             }
 
-            // For endTime, we would need announcement data which isn't in this GraphQL query
-            // We'll return a default value for now
-            DateTime? endTime = DateTime.Today.AddYears(1);
+            // Fallback endTime if not found in EpisodePage
+            endTime ??= DateTime.Today.AddYears(1);
 
-            return (endTime, duration, year);
+            return (startTime, endTime, duration, year);
         }
         catch (HttpRequestException)
         {
             // Failed to fetch details, return nulls
-            return (null, null, null);
+            return (null, null, null, null);
         }
     }
 
-    private async Task<(int? Duration, int? Year)> GetEpisodePageData(string episodeLink)
+    private async Task<(int? Duration, int? Year, DateTime? StartTime, DateTime? EndTime)> GetEpisodePageData(string episodeLink)
     {
         try
         {
@@ -412,6 +422,7 @@ fragment pageHeaderFragment on PageHeader {
                       page(id: $pageId) {
                         ... on EpisodePage {
                           __typename
+                          ldjson
                           components {
                             ... on MediaInfo {
                               __typename
@@ -441,6 +452,67 @@ fragment pageHeaderFragment on PageHeader {
 
             int? duration = null;
             int? year = null;
+            DateTime? startTime = null;
+            DateTime? endTime = null;
+
+            // Parse startTime and endTime from ldjson
+            var ldjsonArray = responseObject?.data?.page?.ldjson;
+            if (ldjsonArray != null)
+            {
+                foreach (var ldjsonStr in ldjsonArray)
+                {
+                    if (string.IsNullOrEmpty(ldjsonStr))
+                        continue;
+                    
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(ldjsonStr);
+                        var root = doc.RootElement;
+                        
+                        // Try to get startDate and endDate from publication array
+                        if (root.TryGetProperty("publication", out var publication) && 
+                            publication.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var pub in publication.EnumerateArray())
+                            {
+                                if (startTime == null && pub.TryGetProperty("startDate", out var startDateProp))
+                                {
+                                    var startDateStr = startDateProp.GetString();
+                                    if (DateTime.TryParse(startDateStr, out var parsedStartTime))
+                                    {
+                                        startTime = parsedStartTime;
+                                    }
+                                }
+                                if (endTime == null && pub.TryGetProperty("endDate", out var endDateProp))
+                                {
+                                    var endDateStr = endDateProp.GetString();
+                                    if (DateTime.TryParse(endDateStr, out var parsedEndTime))
+                                    {
+                                        endTime = parsedEndTime;
+                                    }
+                                }
+                                if (startTime != null && endTime != null)
+                                    break;
+                            }
+                        }
+                        
+                        // Also try expires from video object as fallback for endTime
+                        if (endTime == null && root.TryGetProperty("video", out var video) &&
+                            video.TryGetProperty("expires", out var expires))
+                        {
+                            var expiresStr = expires.GetString();
+                            if (DateTime.TryParse(expiresStr, out var parsedExpires))
+                            {
+                                endTime = parsedExpires;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore JSON parsing errors for individual ldjson entries
+                    }
+                }
+            }
 
             var mediaInfo = responseObject?.data?.page?.components?
                 .FirstOrDefault(c => c.__typename == "MediaInfo");
@@ -466,11 +538,11 @@ fragment pageHeaderFragment on PageHeader {
                 }
             }
 
-            return (duration, year);
+            return (duration, year, startTime, endTime);
         }
         catch
         {
-            return (null, null);
+            return (null, null, null, null);
         }
     }
 
@@ -992,6 +1064,7 @@ fragment pageHeaderFragment on PageHeader {
     public class EpisodePage
     {
         public string? __typename { get; set; }
+        public string[]? ldjson { get; set; }
         public EpisodePageComponent[]? components { get; set; }
     }
 
