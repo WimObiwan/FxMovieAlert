@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FxMovies.Core.Entities;
 
@@ -348,12 +349,27 @@ fragment pageHeaderFragment on PageHeader {
             
             var episodeTile = allTiles.FirstOrDefault(t => t.__typename == "EpisodeTile");
 
-            if (episodeTile?.progress?.durationInSeconds != null)
+            // Get episode link and fetch structured metadata from EpisodePage
+            if (episodeTile?.action?.link != null)
+            {
+                var episodePageData = await GetEpisodePageData(episodeTile.action.link);
+                if (episodePageData.Duration != null)
+                {
+                    duration = episodePageData.Duration;
+                }
+                if (episodePageData.Year != null)
+                {
+                    year = episodePageData.Year;
+                }
+            }
+
+            // Fallback to progress.durationInSeconds
+            if (duration == null && episodeTile?.progress?.durationInSeconds != null)
             {
                 duration = (int)(episodeTile.progress.durationInSeconds / 60);
             }
             
-            // If duration not found in progress, try parsing from status.text (e.g., "133 min")
+            // Fallback to parsing from status.text (e.g., "133 min")
             if (duration == null && episodeTile?.status?.text != null)
             {
                 duration = ParseDurationFromStatusText(episodeTile.status.text.small) 
@@ -370,6 +386,82 @@ fragment pageHeaderFragment on PageHeader {
         {
             // Failed to fetch details, return nulls
             return (null, null, null);
+        }
+    }
+
+    private async Task<(int? Duration, int? Year)> GetEpisodePageData(string episodeLink)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("vrtmax");
+            
+            var requestBody = new
+            {
+                operationName = "EpisodePage",
+                query = """
+                    query EpisodePage($pageId: ID!) {
+                      page(id: $pageId) {
+                        ... on EpisodePage {
+                          __typename
+                          components {
+                            ... on MediaInfo {
+                              __typename
+                              secondaryMeta {
+                                type
+                                value
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    """,
+                variables = new
+                {
+                    pageId = episodeLink
+                }
+            };
+
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync("/vrtnu-api/graphql/public/v1", content);
+            response.EnsureSuccessStatusCode();
+
+            var responseObject = await response.Content.ReadFromJsonAsync<EpisodePageResponse>();
+
+            int? duration = null;
+            int? year = null;
+
+            var mediaInfo = responseObject?.data?.page?.components?
+                .FirstOrDefault(c => c.__typename == "MediaInfo");
+
+            if (mediaInfo?.secondaryMeta != null)
+            {
+                foreach (var meta in mediaInfo.secondaryMeta)
+                {
+                    // Parse duration from values like "133 min"
+                    if (meta.value?.EndsWith(" min") == true)
+                    {
+                        var durationMatch = Regex.Match(meta.value, @"(\d+)\s*min");
+                        if (durationMatch.Success)
+                        {
+                            duration = int.Parse(durationMatch.Groups[1].Value);
+                        }
+                    }
+                    // Parse year from 4-digit values
+                    else if (meta.value != null && Regex.IsMatch(meta.value, @"^\d{4}$"))
+                    {
+                        year = int.Parse(meta.value);
+                    }
+                }
+            }
+
+            return (duration, year);
+        }
+        catch
+        {
+            return (null, null);
         }
     }
 
@@ -845,6 +937,15 @@ fragment pageHeaderFragment on PageHeader {
         public MetaDataItem[]? secondaryMeta { get; set; }
         public ProgramTileProgress? progress { get; set; }
         public StatusIndicator? status { get; set; }
+        public TileAction? action { get; set; }
+    }
+
+    public class TileAction
+    {
+        public string? __typename { get; set; }
+        public string? link { get; set; }
+        public string? internalTarget { get; set; }
+        public string? externalTarget { get; set; }
     }
 
     public class StatusIndicator
@@ -866,6 +967,35 @@ fragment pageHeaderFragment on PageHeader {
     {
         public int? durationInSeconds { get; set; }
         public string? __typename { get; set; }
+    }
+
+    // EpisodePage response models
+    public class EpisodePageResponse
+    {
+        public EpisodePageData? data { get; set; }
+    }
+
+    public class EpisodePageData
+    {
+        public EpisodePage? page { get; set; }
+    }
+
+    public class EpisodePage
+    {
+        public string? __typename { get; set; }
+        public EpisodePageComponent[]? components { get; set; }
+    }
+
+    public class EpisodePageComponent
+    {
+        public string? __typename { get; set; }
+        public EpisodeMetaItem[]? secondaryMeta { get; set; }
+    }
+
+    public class EpisodeMetaItem
+    {
+        public string? type { get; set; }
+        public string? value { get; set; }
     }
 
     #endregion
