@@ -195,6 +195,15 @@ fragment tileFragment on Tile {
   ... on ITile {
     title
     tileType
+    action {
+      __typename
+      ... on LinkAction {
+        internalTarget
+        link
+        externalTarget
+        __typename
+      }
+    }
     image {
       ...imageFragment
       __typename
