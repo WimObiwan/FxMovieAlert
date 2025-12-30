@@ -41,6 +41,7 @@ public class VrtNuServiceTest
     //     }
     // }
 
+    // [Fact]
     [Fact(Skip = "Runtime")]
     public async Task RealTest()
     {
