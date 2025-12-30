@@ -88,6 +88,21 @@ public class VrtMaxService : IMovieEventService
         return new Uri(BaseUrl, url).AbsoluteUri;
     }
 
+    private static int? ParseDurationFromStatusText(string? statusText)
+    {
+        if (string.IsNullOrWhiteSpace(statusText))
+            return null;
+        
+        // Match patterns like "133 min", "133 minuten", "83 min"
+        var match = System.Text.RegularExpressions.Regex.Match(statusText, @"(\d+)\s*min");
+        if (match.Success && int.TryParse(match.Groups[1].Value, out var minutes))
+        {
+            return minutes;
+        }
+        
+        return null;
+    }
+
     private async Task<(DateTime?, int?, int?)> GetSingleMovieDetails(string? programLink)
     {
         if (string.IsNullOrEmpty(programLink))
@@ -191,6 +206,15 @@ fragment tileFragment on Tile {
       ...metaFragment
       __typename
     }
+    status {
+      accessibilityLabel
+      text {
+        small
+        default
+        __typename
+      }
+      __typename
+    }
     __typename
   }
   ... on EpisodeTile {
@@ -272,18 +296,68 @@ fragment pageHeaderFragment on PageHeader {
 
             // Extract duration from episode tiles
             int? duration = null;
-            var episodeTile = programPage.components?
-                .Where(c => c.__typename == "StaticTileList" || c.__typename == "PaginatedTileList")
-                .SelectMany(c => c.items ?? Enumerable.Empty<ProgramTile>())
-                .Concat(programPage.components?
-                    .Where(c => c.__typename == "PaginatedTileList")
-                    .SelectMany(c => c.paginatedItems?.edges?.Select(e => e.node) ?? Enumerable.Empty<ProgramTile>()) 
-                    ?? Enumerable.Empty<ProgramTile>())
-                .FirstOrDefault(t => t?.__typename == "EpisodeTile");
+            
+            // Collect tiles from components (including nested ones in ContainerNavigation)
+            var allTiles = new List<ProgramTile>();
+            
+            void CollectTilesFromComponent(ProgramComponent component)
+            {
+                // StaticTileList has items directly
+                var tileItems = component.GetTileItems();
+                if (tileItems != null)
+                {
+                    allTiles.AddRange(tileItems.Where(t => t != null)!);
+                }
+                
+                // PaginatedTileList has paginatedItems.edges[].node
+                if (component.paginatedItems?.edges != null)
+                {
+                    foreach (var edge in component.paginatedItems.edges)
+                    {
+                        if (edge?.node != null)
+                        {
+                            allTiles.Add(edge.node);
+                        }
+                    }
+                }
+                
+                // ContainerNavigation has items with nested components
+                var navItems = component.GetNavigationItems();
+                if (navItems != null)
+                {
+                    foreach (var navItem in navItems)
+                    {
+                        if (navItem?.components != null)
+                        {
+                            foreach (var nestedComponent in navItem.components)
+                            {
+                                CollectTilesFromComponent(nestedComponent);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (programPage.components != null)
+            {
+                foreach (var component in programPage.components)
+                {
+                    CollectTilesFromComponent(component);
+                }
+            }
+            
+            var episodeTile = allTiles.FirstOrDefault(t => t.__typename == "EpisodeTile");
 
             if (episodeTile?.progress?.durationInSeconds != null)
             {
                 duration = (int)(episodeTile.progress.durationInSeconds / 60);
+            }
+            
+            // If duration not found in progress, try parsing from status.text (e.g., "133 min")
+            if (duration == null && episodeTile?.status?.text != null)
+            {
+                duration = ParseDurationFromStatusText(episodeTile.status.text.small) 
+                    ?? ParseDurationFromStatusText(episodeTile.status.text.defaultText);
             }
 
             // For endTime, we would need announcement data which isn't in this GraphQL query
@@ -697,8 +771,52 @@ fragment pageHeaderFragment on PageHeader {
         public string? objectId { get; set; }
         public string? listId { get; set; }
         public string? title { get; set; }
-        public ProgramTile[]? items { get; set; }
+        
+        // For StaticTileList - items are tiles
+        [JsonPropertyName("items")]
+        public System.Text.Json.JsonElement? itemsRaw { get; set; }
+        
         public ProgramTileConnection? paginatedItems { get; set; }
+        
+        // Helper to get tiles from StaticTileList items
+        public ProgramTile[]? GetTileItems()
+        {
+            if (itemsRaw == null || __typename != "StaticTileList")
+                return null;
+            
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<ProgramTile[]>(itemsRaw.Value.GetRawText());
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        
+        // Helper to get navigation items from ContainerNavigation items
+        public ContainerNavigationItem[]? GetNavigationItems()
+        {
+            if (itemsRaw == null || __typename != "ContainerNavigation")
+                return null;
+            
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<ContainerNavigationItem[]>(itemsRaw.Value.GetRawText());
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
+    public class ContainerNavigationItem
+    {
+        public string? objectId { get; set; }
+        public string? title { get; set; }
+        public ProgramComponent[]? components { get; set; }
+        public string? __typename { get; set; }
     }
 
     public class ProgramTileConnection
@@ -726,6 +844,22 @@ fragment pageHeaderFragment on PageHeader {
         public MetaDataItem[]? primaryMeta { get; set; }
         public MetaDataItem[]? secondaryMeta { get; set; }
         public ProgramTileProgress? progress { get; set; }
+        public StatusIndicator? status { get; set; }
+    }
+
+    public class StatusIndicator
+    {
+        public string? accessibilityLabel { get; set; }
+        public ResponsiveText? text { get; set; }
+        public string? __typename { get; set; }
+    }
+
+    public class ResponsiveText
+    {
+        public string? small { get; set; }
+        [JsonPropertyName("default")]
+        public string? defaultText { get; set; }
+        public string? __typename { get; set; }
     }
 
     public class ProgramTileProgress
