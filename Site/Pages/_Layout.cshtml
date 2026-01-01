@@ -258,7 +258,27 @@
         .
     </dismissable-alert>
 
-    <dismissable-alert id="filmoptv-update-202512" expiration="7*24*3600">
+    <dismissable-alert id="filmoptv-welcome" type="info" expiration="365*24*3600">
+        <h4 class="alert-heading">Hoe kijk jij naar films?</h4>
+        <div class="d-grid gap-4">
+            <button type="button" style="margin-bottom: 15px; text-align: left; width: 100%; white-space: normal; word-wrap: break-word;" class="btn btn-outline-primary text-start" onclick="localStorage.setItem('dismissable-alert-filmoptv-welcome', new Date().toISOString()); location.href='@Url.Page("/Broadcasts")'">
+                <b>Via een decoder, met live of opgenomen programma's?</b><br/>
+                &#8680; Gebruik dan de lijst &ensp; <span class="ms-2"><i class="fas fa-tv"></i> Uitzendingen</span>
+            </button>
+            <button type="button" style="margin-bottom: 15px; text-align: left; width: 100%; white-space: normal; word-wrap: break-word;" class="btn btn-outline-success text-start" onclick="localStorage.setItem('dismissable-alert-filmoptv-welcome', new Date().toISOString()); location.href='@Url.Page("/FreeStreaming")'">
+                <b>Via je computer, tablet of smartphone?  Of op je TV met een chromecast of andere TV app?</b><br/>
+                Dan kun je gratis streaming diensten gebruiken zoals VRT Max, VTM GO of Play More.<br/>
+                &#8680; Gebruik dan de lijst &ensp; <span class="ms-2"><i class="fas fa-play"></i> Gratis Streaming</span>
+            </button>
+            <button type="button" style="margin-bottom: 15px; text-align: left; width: 100%; white-space: normal; word-wrap: break-word;" class="btn btn-outline-warning text-start" onclick="localStorage.setItem('dismissable-alert-filmoptv-welcome', new Date().toISOString()); location.href='@Url.Page("/PaidStreaming")'">
+                <b>Via een betalende streaming dienst zoals Streamz, VTM GO Plus/Cinema of andere?</b><br/>
+                &#8680; Gebruik dan de lijst &ensp; <span class="ms-2"><i class="fas fa-euro-sign"></i> Betalende Streaming</span>
+            </button>
+            Je kunt later wisselen tussen deze lijsten via het navigatiemenu bovenaan.
+        </div>
+    </dismissable-alert>
+
+    <dismissable-alert id="filmoptv-update-202512" expiration="365*24*3600">
         <h4 class="alert-heading">UPDATE December 2025: VRT Max is terug!</h4>
         Na een dik jaar afwezigheid zijn de films van <strong>VRT Max</strong> vanaf nu terug beschikbaar onder
         <a asp-page="/FreeStreaming" class="alert-link">
