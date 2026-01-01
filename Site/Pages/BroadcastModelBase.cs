@@ -10,6 +10,7 @@ using FxMovies.MoviesDB;
 using FxMovies.Site.Components;
 using FxMovies.Site.Options;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
 
@@ -64,9 +65,28 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
     public BroadcastQueryResult Data { get; private set; }
 
+    public const string LastVisitedPageCookieName = "LastVisitedPage";
+
     public async Task OnGet(int? m = null, bool? onlyHighlights = null, int? typeMask = null, decimal? minrating = null,
         bool? notyetrated = null, Cert cert = Cert.all, int? maxdays = null, bool debug = false, bool noCache = false)
     {
+        // Save the current page to a cookie for redirect on next visit to home page
+        var pagePath = _feed switch
+        {
+            MovieEvent.FeedType.Broadcast => "/Broadcasts",
+            MovieEvent.FeedType.FreeVod => "/FreeStreaming",
+            MovieEvent.FeedType.PaidVod => "/PaidStreaming",
+            _ => "/Broadcasts"
+        };
+        Response.Cookies.Append(LastVisitedPageCookieName, pagePath, new CookieOptions
+        {
+            Expires = DateTimeOffset.UtcNow.AddYears(1),
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            IsEssential = true
+        });
+
         var userId = ClaimChecker.UserId(User.Identity);
         Debug = debug;
 
