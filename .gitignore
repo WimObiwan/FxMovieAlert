@@ -42,3 +42,6 @@ upgrade.sh
 CoverageResults/
 
 .idea
+
+scripts/deploy-filmoptv-dev.sh
+scripts/deploy-filmoptv-prd.sh
