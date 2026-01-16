@@ -14,11 +14,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="IPNetwork2" Version="3.4.832" />
+    <PackageReference Include="IPNetwork2" Version="3.4.851" />
     <PackageReference Include="KubernetesClient" Version="18.0.13" />
     <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.477" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
     <!-- Dont know why, but the reference below is required to fix this: -->
     <!-- https://github.com/dotnet/aspnetcore/issues/54530 -->
     <!-- https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/2523 -->
