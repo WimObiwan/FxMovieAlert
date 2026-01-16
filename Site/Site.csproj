@@ -32,6 +32,7 @@
     <ProjectReference Include="..\MoviesDB\MoviesDB.csproj" />
     <ProjectReference Include="..\ImdbDB\ImdbDB.csproj" />
     <ProjectReference Include="..\Core\Core.csproj" />
+    <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json">

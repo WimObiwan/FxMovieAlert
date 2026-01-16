@@ -62,6 +62,9 @@ public static class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Add Aspire service defaults
+        builder.AddServiceDefaults();
+
         builder.Configuration.AddJsonFile("appsettings.Local.json", true, false);
 
         ConfigureHost(builder.Host);
@@ -69,6 +72,9 @@ public static class Program
         ConfigureServices(builder.Services, builder.Environment, builder.Configuration);
 
         var webApplication = builder.Build();
+
+        // Map Aspire default endpoints
+        webApplication.MapDefaultEndpoints();
 
         ConfigureMiddleware(webApplication, builder.Configuration);
 
