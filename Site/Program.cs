@@ -11,6 +11,7 @@ using FxMovies.ImdbDB;
 using FxMovies.MoviesDB;
 using FxMovies.Site.HealthChecks;
 using FxMovies.Site.Options;
+using FxMovies.Site.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
@@ -131,6 +132,10 @@ public static class Program
 
         services.Configure<SiteOptions>(configuration.GetSection(SiteOptions.Position));
         services.Configure<RateLimitOptions>(configuration.GetSection(RateLimitOptions.Position));
+        services.Configure<SearchBotVerificationOptions>(configuration.GetSection(SearchBotVerificationOptions.Position));
+
+        // Register search bot verification service
+        services.AddSingleton<ISearchBotVerificationService, SearchBotVerificationService>();
 
         var rateLimitOptions = configuration.GetSection(RateLimitOptions.Position).Get<RateLimitOptions>();
         services.AddRateLimiter(options =>
@@ -324,8 +329,21 @@ public static class Program
             {
                 return RateLimitPartition.GetNoLimiter<string>("no-limit");
             }
-            
+
+            // Check if this is a verified search bot
             var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var botVerificationService = httpContext.RequestServices.GetService<ISearchBotVerificationService>();
+            if (botVerificationService != null)
+            {
+                // We need to check synchronously here due to the partitioner design
+                // The service will cache results to minimize performance impact
+                var isBot = botVerificationService.IsVerifiedSearchBotAsync(ipAddress).GetAwaiter().GetResult();
+                if (isBot)
+                {
+                    return RateLimitPartition.GetNoLimiter<string>("search-bot-" + ipAddress);
+                }
+            }
+            
             return RateLimitPartition.GetFixedWindowLimiter(ipAddress, _ =>
                 new FixedWindowRateLimiterOptions
                 {
