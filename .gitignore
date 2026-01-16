@@ -45,3 +45,4 @@ CoverageResults/
 
 scripts/deploy-filmoptv-dev.sh
 scripts/deploy-filmoptv-prd.sh
+scripts/generate-imdb-prd.sh
