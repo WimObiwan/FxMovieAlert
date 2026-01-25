@@ -45,6 +45,7 @@ class ImdbDownloader:
         
     def setup_driver(self):
         """Initialize Chrome WebDriver with download preferences"""
+        print("Initializing Chrome WebDriver...")
         options = webdriver.ChromeOptions()
         
         if self.headless:
@@ -66,9 +67,18 @@ class ImdbDownloader:
         }
         options.add_experimental_option("prefs", prefs)
         
-        self.driver = webdriver.Chrome(options=options)
-        self.wait = WebDriverWait(self.driver, 30)
-        print("✓ WebDriver initialized")
+        try:
+            print("  Creating Chrome driver (this may take a moment)...")
+            self.driver = webdriver.Chrome(options=options)
+            self.wait = WebDriverWait(self.driver, 30)
+            print("✓ WebDriver initialized")
+        except Exception as e:
+            print(f"✗ Failed to initialize WebDriver: {e}")
+            print("\nTroubleshooting:")
+            print("  1. Ensure Chrome or Chromium is installed")
+            print("  2. Check if ChromeDriver is compatible with your Chrome version")
+            print("  3. Try running with --no-headless to see browser errors")
+            raise
         
     def login(self):
         """Login to IMDb"""

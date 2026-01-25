@@ -124,14 +124,59 @@ rm -rf venv/
 
 ## Troubleshooting
 
-### Chrome driver issues
+### Diagnostic Test
 
-If you get errors about Chrome driver not found:
+First, run the diagnostic script to check your setup:
 
 ```bash
-# Install/update Chrome driver via Selenium Manager (handled automatically)
-# Or install manually for your system
+./test_selenium.sh
 ```
+
+This will check:
+- Python installation
+- Chrome/Chromium browser
+- ChromeDriver
+- Virtual environment
+- Selenium installation
+- WebDriver initialization
+
+### Common Issues
+
+#### Setup not completed
+
+If you see "Error: Virtual environment not found":
+
+```bash
+./setup.sh
+```
+
+#### Missing configuration
+
+If you see "Error: config.ini not found":
+
+```bash
+cp config.ini.template config.ini
+# Edit config.ini with your IMDb credentials
+```
+
+#### Chrome/Chromium not found
+
+If you see "Error: Chrome or Chromium browser not found":
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install chromium-browser
+
+# Or download Chrome from https://www.google.com/chrome/
+```
+
+### Chrome driver issues
+
+If you get errors about Chrome driver not found or initialization failing:
+
+- Selenium 4.x automatically manages ChromeDriver
+- Ensure Chrome/Chromium is installed and up to date
+- Try updating Selenium: `source venv/bin/activate && pip install --upgrade selenium`
 
 ### Login failures
 
@@ -156,6 +201,7 @@ If you get errors about Chrome driver not found:
 - `requirements.txt` - Python dependencies
 - `setup.sh` - Setup script to create venv and install dependencies
 - `download.sh` - Convenience script to run the downloader
+- `test_selenium.sh` - Diagnostic test script
 - `config.ini.template` - Configuration template
 - `README.md` - This file
 
