@@ -180,9 +180,35 @@ If you get errors about Chrome driver not found or initialization failing:
 
 ### Login failures
 
+**CAPTCHA Detection:**
+
+If you see "CAPTCHA detected" error, IMDb has identified automated access:
+
+- IMDb may show CAPTCHA to prevent automated logins
+- This is common when making multiple login attempts
+- The script will save a screenshot to help diagnose the issue
+
+**Workarounds:**
+
+1. **Manual Export:** Log into IMDb manually and export CSV files
+   - Go to https://www.imdb.com/list/ratings
+   - Click the "Export" button
+   - Repeat for watchlist: https://www.imdb.com/list/watchlist
+
+2. **Wait and Retry:** Try again after a few hours or the next day
+
+3. **Different Network:** Try from a different IP address or network
+
+**Other login issues:**
+
 - Verify your credentials in `config.ini`
 - Check if IMDb requires 2FA (not currently supported)
-- Try running with `--no-headless` to see what's happening
+- Try running with `--no-headless` to see what's happening:
+  ```bash
+  source venv/bin/activate
+  python download_imdb.py --email YOUR_EMAIL --password YOUR_PASSWORD --output ./output --no-headless
+  ```
+- Check the screenshot saved in the output directory for details
 
 ### Empty exports
 

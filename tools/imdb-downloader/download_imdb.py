@@ -84,26 +84,54 @@ class ImdbDownloader:
         """Login to IMDb"""
         print(f"Logging in to IMDb as {self.email}...")
         
-        # Navigate to IMDb sign-in page
-        self.driver.get("https://www.imdb.com/ap/signin?openid.pape.max_auth_age=0")
-        
         try:
+            # Navigate to IMDb sign-in page
+            self.driver.get("https://www.imdb.com/ap/signin?openid.pape.max_auth_age=0")
+            print("  Loaded login page")
+            
             # Wait for and fill email field
             email_field = self.wait.until(
                 EC.presence_of_element_located((By.ID, "ap_email"))
             )
             email_field.send_keys(self.email)
+            print("  Entered email")
             
             # Fill password field
             password_field = self.driver.find_element(By.ID, "ap_password")
             password_field.send_keys(self.password)
+            print("  Entered password")
             
             # Click sign-in button
             sign_in_button = self.driver.find_element(By.ID, "signInSubmit")
             sign_in_button.click()
+            print("  Clicked sign-in button")
             
             # Wait for login to complete (check for user menu or redirect)
-            time.sleep(3)
+            time.sleep(5)
+            
+            # Check for error messages on the login page
+            try:
+                error_box = self.driver.find_element(By.ID, "auth-error-message-box")
+                if error_box:
+                    error_text = error_box.text
+                    print(f"✗ Login error message: {error_text}")
+                    return False
+            except:
+                pass  # No error box found, continue
+            
+            # Check for CAPTCHA
+            try:
+                captcha = self.driver.find_element(By.ID, "auth-captcha-image")
+                if captcha:
+                    print("✗ CAPTCHA detected - automated login not possible")
+                    print("  IMDb has detected automated access and requires CAPTCHA verification")
+                    print("  Please try one of these alternatives:")
+                    print("    1. Export CSV manually from IMDb website")
+                    print("    2. Wait a while and try again later")
+                    print("    3. Try from a different IP address")
+                    return False
+            except:
+                pass  # No CAPTCHA found, continue
             
             # Verify login success by checking for user menu or profile
             try:
@@ -113,11 +141,43 @@ class ImdbDownloader:
                 print("✓ Successfully logged in")
                 return True
             except TimeoutException:
+                # Try alternative selector
+                try:
+                    self.driver.find_element(By.CSS_SELECTOR, "[data-testid='user-profile-menu']")
+                    print("✓ Successfully logged in")
+                    return True
+                except:
+                    pass
+                
                 print("✗ Login verification failed - user menu not found")
+                print("  Current URL:", self.driver.current_url)
+                
+                # Save screenshot for debugging
+                screenshot_path = self.output_dir / "login_failure.png"
+                self.output_dir.mkdir(parents=True, exist_ok=True)
+                self.driver.save_screenshot(str(screenshot_path))
+                print(f"  Screenshot saved to: {screenshot_path}")
+                print("  Check the screenshot to see what went wrong")
+                
                 return False
                 
         except Exception as e:
-            print(f"✗ Login failed: {e}")
+            print(f"✗ Login failed with error: {e}")
+            print(f"  Error type: {type(e).__name__}")
+            
+            # Save screenshot for debugging
+            try:
+                screenshot_path = self.output_dir / "login_error.png"
+                self.output_dir.mkdir(parents=True, exist_ok=True)
+                self.driver.save_screenshot(str(screenshot_path))
+                print(f"  Screenshot saved to: {screenshot_path}")
+            except:
+                pass
+            
+            import traceback
+            print("\nFull error details:")
+            traceback.print_exc()
+            
             return False
     
     def generate_exports(self, download_ratings=True, download_watchlist=True):
