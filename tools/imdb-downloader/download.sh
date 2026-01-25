@@ -31,8 +31,8 @@ fi
 source venv/bin/activate
 
 # Read credentials from config file
-EMAIL=$(grep -E "^email\s*=" config.ini | cut -d'=' -f2 | tr -d ' ')
-PASSWORD=$(grep -E "^password\s*=" config.ini | cut -d'=' -f2 | tr -d ' ')
+EMAIL=$(grep -E "^email\s*=" config.ini | sed 's/^email\s*=\s*//' | sed 's/\s*$//')
+PASSWORD=$(grep -E "^password\s*=" config.ini | sed 's/^password\s*=\s*//' | sed 's/\s*$//')
 
 if [ -z "$EMAIL" ] || [ -z "$PASSWORD" ]; then
     echo "Error: email or password not set in config.ini"

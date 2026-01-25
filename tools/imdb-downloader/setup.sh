@@ -22,7 +22,7 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+PYTHON_VERSION=$(python3 --version | awk '{print $2}')
 echo "Found Python version: $PYTHON_VERSION"
 
 # Create virtual environment if it doesn't exist

@@ -48,7 +48,7 @@ class ImdbDownloader:
         options = webdriver.ChromeOptions()
         
         if self.headless:
-            options.add_argument('--headless=new')
+            options.add_argument('--headless')
         
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
@@ -237,8 +237,20 @@ class ImdbDownloader:
         time.sleep(1)
         self.driver.execute_script("arguments[0].click();", button)
         
-        # Wait for download to complete
-        time.sleep(10)
+        # Wait for download to complete (check for new files)
+        max_wait = 30
+        start_time = time.time()
+        initial_files = set(self.output_dir.glob("*.csv"))
+        
+        while time.time() - start_time < max_wait:
+            current_files = set(self.output_dir.glob("*.csv"))
+            new_files = current_files - initial_files
+            if new_files:
+                break
+            time.sleep(1)
+        
+        # Give a bit more time for file to finish writing
+        time.sleep(2)
         
         # Find the downloaded file and rename it
         downloaded_files = sorted(
