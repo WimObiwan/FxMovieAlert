@@ -1,24 +1,25 @@
 # IMDb Ratings & Watchlist Downloader
 
-This tool automatically downloads your IMDb ratings and watchlist as CSV files using your IMDb credentials.
+This tool helps you download your IMDb ratings and watchlist as CSV files by opening your web browser where you can log in manually.
 
 ## Features
 
 - Downloads IMDb ratings as `ratings.csv`
 - Downloads IMDb watchlist as `watchlist.csv`
-- Uses Selenium for browser automation
+- Uses your default web browser (avoids CAPTCHA issues)
+- No credentials stored - you log in through your browser
+- Automatic file detection from your downloads folder
 - Isolated Python virtual environment
-- Simple configuration via config file
 
 ## Prerequisites
 
 - Python 3.8 or later
-- Chrome or Chromium browser (for Selenium)
-- IMDb account with public ratings/watchlist
+- A web browser (Chrome, Firefox, Safari, etc.)
+- IMDb account
 
 ## Installation
 
-1. Run the setup script to create virtual environment and install dependencies:
+1. Run the setup script to create virtual environment:
 
 ```bash
 cd tools/imdb-downloader
@@ -27,25 +28,8 @@ cd tools/imdb-downloader
 
 This will:
 - Create a Python virtual environment in `venv/`
-- Install required dependencies (Selenium)
+- Install dependencies (uses only Python standard library)
 - Prepare the tool for use
-
-## Configuration
-
-1. Copy the configuration template:
-
-```bash
-cp config.ini.template config.ini
-```
-
-2. Edit `config.ini` and add your IMDb credentials:
-
-```ini
-email = your-email@example.com
-password = your-password-here
-```
-
-**Important:** The `config.ini` file is ignored by git to keep your credentials safe.
 
 ## Usage
 
@@ -57,7 +41,11 @@ Run the download script:
 ./download.sh
 ```
 
-This will download both ratings and watchlist to the `./output` directory.
+This will:
+1. Open your default browser to IMDb
+2. Prompt you to log in and click Export buttons
+3. Detect downloaded files from your Downloads folder
+4. Copy files to the `./output` directory
 
 ### Custom Output Directory
 
@@ -69,24 +57,30 @@ Specify a custom output directory:
 
 ### Advanced Usage
 
-You can also run the Python script directly for more control:
+You can also run the Python script directly:
 
 ```bash
 # Activate virtual environment
 source venv/bin/activate
 
 # Download both ratings and watchlist
-python download_imdb.py --email YOUR_EMAIL --password YOUR_PASSWORD --output ./output
+python download_imdb.py --output ./output
 
 # Download only ratings
-python download_imdb.py --email YOUR_EMAIL --password YOUR_PASSWORD --output ./output --no-watchlist
+python download_imdb.py --output ./output --no-watchlist
 
 # Download only watchlist
-python download_imdb.py --email YOUR_EMAIL --password YOUR_PASSWORD --output ./output --no-ratings
-
-# Run with visible browser (for debugging)
-python download_imdb.py --email YOUR_EMAIL --password YOUR_PASSWORD --output ./output --no-headless
+python download_imdb.py --output ./output --no-ratings
 ```
+
+## How It Works
+
+1. **Opens Browser**: The script opens your default web browser to IMDb's export pages
+2. **Manual Login**: You log in to IMDb in your browser (avoiding CAPTCHA)
+3. **Manual Export**: You click the "Export" button for each list
+4. **Auto Detection**: The script monitors your Downloads folder for the CSV files
+5. **File Copy**: Downloaded files are copied to the output directory
+6. **Cleanup**: Original files are removed from Downloads folder
 
 ## Output Files
 
@@ -97,138 +91,63 @@ The tool generates the following CSV files in the output directory:
 
 These CSV files are compatible with the existing FxMovieAlert import functionality.
 
-## How It Works
-
-1. The script uses Selenium to automate a Chrome browser
-2. Logs into IMDb with your credentials
-3. Navigates to your ratings and watchlist pages
-4. Triggers the CSV export feature
-5. Waits for IMDb to generate the exports
-6. Downloads the CSV files to the output directory
-
 ## Updating
 
-To update the tool dependencies:
+To update the tool:
 
 ```bash
-source venv/bin/activate
-pip install --upgrade -r requirements.txt
-```
-
-To completely reinstall:
-
-```bash
+cd tools/imdb-downloader
 rm -rf venv/
 ./setup.sh
 ```
 
 ## Troubleshooting
 
-### Diagnostic Test
+### Browser doesn't open
 
-First, run the diagnostic script to check your setup:
+If the browser doesn't open automatically:
+- The script will show you the URLs to open manually
+- Open https://www.imdb.com/list/ratings for ratings
+- Open https://www.imdb.com/list/watchlist for watchlist
 
-```bash
-./test_selenium.sh
-```
+### Files not detected
 
-This will check:
-- Python installation
-- Chrome/Chromium browser
-- ChromeDriver
-- Virtual environment
-- Selenium installation
-- WebDriver initialization
+If the script doesn't detect your downloaded files:
+1. Check your Downloads folder for the CSV files
+2. Manually copy them to the output directory:
+   ```bash
+   cp ~/Downloads/ratings*.csv ./output/ratings.csv
+   cp ~/Downloads/watchlist*.csv ./output/watchlist.csv
+   ```
 
-### Common Issues
+### Download location
 
-#### Setup not completed
+The script checks these common locations for your Downloads folder:
+- `~/Downloads`
+- `~/downloads`
+- `~/Download`
+- `~/download`
 
-If you see "Error: Virtual environment not found":
+If your browser downloads to a different location, you can:
+1. Change your browser's download location temporarily
+2. Manually copy files after downloading
 
-```bash
-./setup.sh
-```
+## Advantages Over Automated Login
 
-#### Missing configuration
+**No CAPTCHA Issues**: By using your regular browser with manual login, IMDb doesn't detect automated access and won't show CAPTCHA.
 
-If you see "Error: config.ini not found":
+**Always Works**: This method works regardless of IMDb's login page changes or security measures.
 
-```bash
-cp config.ini.template config.ini
-# Edit config.ini with your IMDb credentials
-```
+**Secure**: Your credentials are never stored or transmitted by the script.
 
-#### Chrome/Chromium not found
-
-If you see "Error: Chrome or Chromium browser not found":
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install chromium-browser
-
-# Or download Chrome from https://www.google.com/chrome/
-```
-
-### Chrome driver issues
-
-If you get errors about Chrome driver not found or initialization failing:
-
-- Selenium 4.x automatically manages ChromeDriver
-- Ensure Chrome/Chromium is installed and up to date
-- Try updating Selenium: `source venv/bin/activate && pip install --upgrade selenium`
-
-### Login failures
-
-**CAPTCHA Detection:**
-
-If you see "CAPTCHA detected" error, IMDb has identified automated access:
-
-- IMDb may show CAPTCHA to prevent automated logins
-- This is common when making multiple login attempts
-- The script will save a screenshot to help diagnose the issue
-
-**Workarounds:**
-
-1. **Manual Export:** Log into IMDb manually and export CSV files
-   - Go to https://www.imdb.com/list/ratings
-   - Click the "Export" button
-   - Repeat for watchlist: https://www.imdb.com/list/watchlist
-
-2. **Wait and Retry:** Try again after a few hours or the next day
-
-3. **Different Network:** Try from a different IP address or network
-
-**Other login issues:**
-
-- Verify your credentials in `config.ini`
-- Check if IMDb requires 2FA (not currently supported)
-- Try running with `--no-headless` to see what's happening:
-  ```bash
-  source venv/bin/activate
-  python download_imdb.py --email YOUR_EMAIL --password YOUR_PASSWORD --output ./output --no-headless
-  ```
-- Check the screenshot saved in the output directory for details
-
-### Empty exports
-
-- Ensure your ratings/watchlist are public
-- Check that you actually have items in your lists
-
-## Security Notes
-
-- Never commit `config.ini` to git (it's in .gitignore)
-- Use a secure password manager for your credentials
-- Consider using environment variables for CI/CD
+**Simple**: No complex browser automation or ChromeDriver setup needed.
 
 ## Files
 
 - `download_imdb.py` - Main Python script
-- `requirements.txt` - Python dependencies
-- `setup.sh` - Setup script to create venv and install dependencies
+- `requirements.txt` - Python dependencies (none required)
+- `setup.sh` - Setup script to create venv
 - `download.sh` - Convenience script to run the downloader
-- `test_selenium.sh` - Diagnostic test script
-- `config.ini.template` - Configuration template
 - `README.md` - This file
 
 ## License

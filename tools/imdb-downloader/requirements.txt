@@ -1,1 +1,1 @@
-selenium>=4.15.0
+# No external dependencies required - uses Python standard library
