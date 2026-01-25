@@ -1,0 +1,8 @@
+# IMDb Downloader Configuration
+# Copy this file to config.ini and fill in your credentials
+
+# Your IMDb account email
+email = your-email@example.com
+
+# Your IMDb account password
+password = your-password-here

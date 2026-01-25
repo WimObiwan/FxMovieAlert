@@ -46,3 +46,9 @@ CoverageResults/
 scripts/deploy-filmoptv-dev.sh
 scripts/deploy-filmoptv-prd.sh
 scripts/generate-imdb-prd.sh
+
+# IMDb Downloader
+tools/imdb-downloader/venv/
+tools/imdb-downloader/config.ini
+tools/imdb-downloader/output/
+tools/imdb-downloader/*.csv
