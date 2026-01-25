@@ -48,7 +48,8 @@ class ImdbDownloader:
         options = webdriver.ChromeOptions()
         
         if self.headless:
-            options.add_argument('--headless')
+            # Use new headless mode for better compatibility with modern Chrome
+            options.add_argument('--headless=new')
         
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
@@ -247,7 +248,7 @@ class ImdbDownloader:
             new_files = current_files - initial_files
             if new_files:
                 break
-            time.sleep(1)
+            time.sleep(2)  # Check every 2 seconds to reduce I/O
         
         # Give a bit more time for file to finish writing
         time.sleep(2)
