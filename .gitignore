@@ -52,3 +52,4 @@ tools/imdb-downloader/venv/
 tools/imdb-downloader/config.ini
 tools/imdb-downloader/output/
 tools/imdb-downloader/*.csv
+tools/imdb-downloader/__pycache__/
