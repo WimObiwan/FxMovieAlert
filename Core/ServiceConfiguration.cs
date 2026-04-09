@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using FxMovies.Core.Commands;
 using FxMovies.Core.Queries;
@@ -20,7 +22,15 @@ public static class ServiceConfiguration
 
         services.AddHttpClient("humo", c => { c.BaseAddress = new Uri("https://www.humo.be"); });
         services.AddHttpClient("goplay", c => { c.BaseAddress = new Uri("https://www.goplay.be"); });
-        services.AddHttpClient("vtmgo", c => { c.BaseAddress = new Uri("https://vtm.be/vtmgo/"); });
+        services.AddHttpClient("vtmgo", c =>
+        {
+            c.BaseAddress = new Uri("https://www.vtmgo.be/vtmgo/");
+        }).ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            var handler = new HttpClientHandler();
+            handler.CookieContainer.Add(new Uri("https://www.vtmgo.be"), new System.Net.Cookie("authId", "00000000-0000-0000-0000-000000000001"));
+            return handler;
+        });
         services.AddHttpClient("vtmgo_login", c =>
         {
             c.BaseAddress = new Uri("https://login2.vtm.be");
@@ -124,7 +134,7 @@ public static class ServiceConfiguration
         services.AddScoped<ITheMovieDbService, TheMovieDbService>();
         services.AddScoped<IMovieEventService, GoPlayService>();
         //services.AddScoped<IMovieEventService, VtmGoService>();
-        services.AddScoped<IMovieEventService, VtmGoService2>();
+        services.AddScoped<IMovieEventService, VtmGoService>();
         services.AddScoped<IMovieEventService, VrtMaxService>();
         services.AddScoped<IMovieEventService, PrimeVideoService>();
         services.AddScoped<IHumoService, HumoService>();
