@@ -251,15 +251,36 @@ public class VtmGoService : IMovieEventService
             feedType = MovieEvent.FeedType.FreeVod;
         }
 
-        // Check availability from playableUntilLabel
+        // Check availability from playableUntilLabel or emphasized headerLabels
         int? availableDays = null;
+        string? playableText = null;
+
         if (detailData.TryGetProperty("playableUntilLabel", out var playableUntil)
             && playableUntil.ValueKind == JsonValueKind.String)
         {
-            var playableText = playableUntil.GetString() ?? "";
+            playableText = playableUntil.GetString();
+        }
+
+        // Fallback: availability can also appear as an emphasized headerLabel
+        if (string.IsNullOrEmpty(playableText) && detailData.TryGetProperty("headerLabels", out var availLabels))
+        {
+            foreach (var label in availLabels.EnumerateArray())
+            {
+                if (label.TryGetProperty("emphasized", out var emp) && emp.GetBoolean())
+                {
+                    playableText = label.GetProperty("label").GetString();
+                    break;
+                }
+            }
+        }
+
+        if (!string.IsNullOrEmpty(playableText))
+        {
             var daysMatch = Regex.Match(playableText, @"Nog (\d{1,3}) dag(?:en)? beschikbaar");
             if (daysMatch.Success)
                 availableDays = int.Parse(daysMatch.Groups[1].Value);
+            else if (playableText.Contains("Tot middernacht beschikbaar", StringComparison.OrdinalIgnoreCase))
+                availableDays = 0;
         }
 
         // Check for "coming soon" in badges

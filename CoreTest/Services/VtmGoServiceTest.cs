@@ -87,6 +87,10 @@ public class VtmGoServiceTest
 
         Assert.NotNull(result);
         Assert.NotEmpty(result);
+        var today = DateTime.Now.Date;
+        Assert.True(result.Any(me => me.EndTime > today && me.EndTime < today.AddHours(36)), "Expected at least one movie event that ends within the next 36 hours.");
+        Assert.True(result.Any(me => me.EndTime > today.AddHours(36) && me.EndTime < today.AddDays(30)), "Expected at least one movie event that ends within one month.");
+        Assert.True(result.Any(me => me.EndTime >= today.AddDays(30)), "Expected at least one movie event that ends later then 1 month.");
         foreach (var movieEvent in result)
         {
             Assert.NotNull(movieEvent.Title);
