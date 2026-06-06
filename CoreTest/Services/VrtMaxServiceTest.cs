@@ -41,7 +41,8 @@ public class VrtNuServiceTest
     //     }
     // }
 
-    [ForceRunFact("VRTMAX")]
+    //[ForceRunFact("VRTMAX")]
+    [Fact]
     public async Task RealTest()
     {
         IServiceCollection services = new ServiceCollection(); // [1]

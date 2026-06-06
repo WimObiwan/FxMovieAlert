@@ -812,6 +812,7 @@ fragment pageHeaderFragment on PageHeader {
         public string? __typename { get; set; }
     }
 
+    [JsonConverter(typeof(MetaDataItemJsonConverter))]
     public class MetaDataItem
     {
         public string? __typename { get; set; }
@@ -819,6 +820,135 @@ fragment pageHeaderFragment on PageHeader {
         public string? value { get; set; }
         public string? shortValue { get; set; }
         public string? longValue { get; set; }
+    }
+
+    public class MetaDataItemJsonConverter : JsonConverter<MetaDataItem>
+    {
+        public override MetaDataItem Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return new MetaDataItem();
+            }
+
+            if (reader.TokenType != JsonTokenType.StartObject)
+            {
+                return new MetaDataItem { value = ReadFlexibleString(ref reader) };
+            }
+
+            var item = new MetaDataItem();
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndObject)
+                {
+                    return item;
+                }
+
+                if (reader.TokenType != JsonTokenType.PropertyName)
+                {
+                    continue;
+                }
+
+                var propertyName = reader.GetString();
+                if (!reader.Read())
+                {
+                    break;
+                }
+
+                switch (propertyName)
+                {
+                    case "__typename":
+                        item.__typename = ReadFlexibleString(ref reader);
+                        break;
+                    case "type":
+                        item.type = ReadFlexibleString(ref reader);
+                        break;
+                    case "value":
+                        item.value = ReadFlexibleString(ref reader);
+                        break;
+                    case "shortValue":
+                        item.shortValue = ReadFlexibleString(ref reader);
+                        break;
+                    case "longValue":
+                        item.longValue = ReadFlexibleString(ref reader);
+                        break;
+                    default:
+                        using (JsonDocument.ParseValue(ref reader))
+                        {
+                        }
+
+                        break;
+                }
+            }
+
+            return item;
+        }
+
+        public override void Write(Utf8JsonWriter writer, MetaDataItem value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+
+            if (value.__typename != null)
+            {
+                writer.WriteString("__typename", value.__typename);
+            }
+
+            if (value.type != null)
+            {
+                writer.WriteString("type", value.type);
+            }
+
+            if (value.value != null)
+            {
+                writer.WriteString("value", value.value);
+            }
+
+            if (value.shortValue != null)
+            {
+                writer.WriteString("shortValue", value.shortValue);
+            }
+
+            if (value.longValue != null)
+            {
+                writer.WriteString("longValue", value.longValue);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        private static string? ReadFlexibleString(ref Utf8JsonReader reader)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                return reader.GetString();
+            }
+
+            if (reader.TokenType == JsonTokenType.Number)
+            {
+                return reader.GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (reader.TokenType == JsonTokenType.True)
+            {
+                return bool.TrueString.ToLowerInvariant();
+            }
+
+            if (reader.TokenType == JsonTokenType.False)
+            {
+                return bool.FalseString.ToLowerInvariant();
+            }
+
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return null;
+            }
+
+            using var document = JsonDocument.ParseValue(ref reader);
+            return document.RootElement.ValueKind == JsonValueKind.Null
+                ? null
+                : document.RootElement.ToString();
+        }
     }
 
     public class Status
