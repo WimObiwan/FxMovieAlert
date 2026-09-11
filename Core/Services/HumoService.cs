@@ -19,26 +19,27 @@ public class HumoService : IHumoService
 {
     private static readonly string[] Channels =
     {
-        "een",
-        "canvas",
+        "vrt-1",
+        "vrt-canvas",
         "vtm",
-        "play4",
-        "vtm2",
-        "play5",
-        "play6",
-        "play7",
-        "vtm3",
-        "vtm4",
+        "play",
+        "vtm-2",
+        "play-fictie",
+        "play-actie",
+        "play-crime",
+        "play-reality",
+        "vtm-3",
+        "vtm-4",
+        "vtm-gold",
+        "vtm-series",
         "npo-1",
         "npo-2",
         "npo-3",
         "mtv-vlaanderen",
-        "viceland",
         "ketnet",
-        "vtm-kids",
         "studio-100-tv",
-        "disney-channel",
-        "nickelodeon-spike",
+        "disney-channel-vlaanderen",
+        "nickelodeon-vlaanderen",
         "cartoon24"
     };
 
@@ -158,13 +159,7 @@ public class HumoService : IHumoService
                 //     description += $" (SERIE: begin van seizoen {broadcast.program.episodeseason})";
                 // }
 
-                var genre = broadcast.genre?.Trim() ?? "";
-                if (broadcast.subGenres != null && broadcast.subGenres.Any())
-                {
-                    if (genre != "")
-                        genre += " - ";
-                    genre += string.Join(' ', broadcast.subGenres);
-                }
+                var genre = FormatGenres(broadcast.genres);
 
                 int type;
                 if (broadcast.IsMovie())
@@ -186,9 +181,8 @@ public class HumoService : IHumoService
                 //     else
                 //         opinion = stars + " " + opinion;
                 // }
-                if (broadcast.rating.HasValue)
+                if (broadcast.rating?.value is { } rating)
                 {
-                    var rating = broadcast.rating.Value;
                     if (rating is (> 0 and <= 100))
                     {
                         var stars = new string('★', rating / 20);
@@ -211,8 +205,8 @@ public class HumoService : IHumoService
                     EndTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(broadcast.to / 1000.0)
                         .ToLocalTime(),
                     Duration = broadcast.duration.HasValue ? broadcast.duration.Value / 60 : null,
-                    PosterS = broadcast.imageUrl,
-                    PosterM = broadcast.imageUrl,
+                    PosterS = broadcast.imageUrlVariants?.small?.density1X,
+                    PosterM = broadcast.imageUrlVariants?.medium?.density2X,
                     Content = broadcast.synopsis,
                     Opinion = opinion,
                     Genre = genre,
@@ -224,6 +218,23 @@ public class HumoService : IHumoService
         }
 
         return movies;
+    }
+
+    private static string FormatGenres(string[]? genres)
+    {
+        if (genres == null)
+            return "";
+
+        return string.Join(" - ", genres.Select(Humanize).Where(g => g != ""));
+    }
+
+    /// <summary>
+    ///     Turns a Humo genre constant (eg. SCIENCE_AND_TECHNOLOGY) into a readable label (eg. Science and technology).
+    /// </summary>
+    private static string Humanize(string genre)
+    {
+        var label = genre.Replace('_', ' ').Trim().ToLowerInvariant();
+        return label.Length == 0 ? "" : char.ToUpperInvariant(label[0]) + label[1..];
     }
 
     #region JsonModel
@@ -238,17 +249,17 @@ public class HumoService : IHumoService
         public long to { get; set; }
         public int? duration { get; set; }
         public string? playableType { get; set; }
+        public string? format { get; set; }
         public string? title { get; set; }
-        public string? genre { get; set; }
-        public string[]? subGenres { get; set; }
+        public string[]? genres { get; set; }
         public string? synopsis { get; set; }
-        public string? imageUrl { get; set; }
-        public int? rating { get; set; }
+        public HumoImageUrlVariants? imageUrlVariants { get; set; }
+        public HumoRating? rating { get; set; }
 
 
         public bool IsMovie()
         {
-            return playableType != null && playableType.Equals("movies", StringComparison.InvariantCultureIgnoreCase);
+            return format != null && format.Equals("MOVIE", StringComparison.InvariantCultureIgnoreCase);
         }
         //public bool IsFirstOfSerieSeason() => program.genres != null && program.genres.Any(g => g.StartsWith("serie-")) && program.episodenumber == 1;
 
@@ -256,6 +267,26 @@ public class HumoService : IHumoService
         {
             return duration < 3600;
         }
+    }
+
+    private class HumoImageUrl
+    {
+        public string? density1X { get; set; }
+        public string? density2X { get; set; }
+    }
+
+    private class HumoImageUrlVariants
+    {
+        public HumoImageUrl? small { get; set; }
+        public HumoImageUrl? medium { get; set; }
+        public HumoImageUrl? large { get; set; }
+    }
+
+    [DebuggerDisplay("provider = {provider}, value = {value}")]
+    private class HumoRating
+    {
+        public string? provider { get; set; }
+        public int? value { get; set; }
     }
 
     [DebuggerDisplay("name = {name}")]
