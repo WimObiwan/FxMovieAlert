@@ -211,7 +211,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                         throw new Exception($"No MovieEvents returned");
                     var channelCodes = service.ChannelCodes;
                     await UpdateMovieEvents(movieEvents,
-                        me => me.Vod && me.Channel != null && me.Channel.Code != null && channelCodes.Contains(me.Channel.Code));
+                        me => me.Vod && me.Channel != null && me.Channel.Code != null && channelCodes.Contains(me.Channel.Code),
+                        channelCodes);
                 }
                 catch (Exception x)
                 {
@@ -272,7 +273,8 @@ public class UpdateEpgCommand : IUpdateEpgCommand
     }
 
     private async Task UpdateMovieEvents(IList<MovieEvent> movieEvents,
-        Expression<Func<MovieEvent, bool>> movieEventsSubset)
+        Expression<Func<MovieEvent, bool>> movieEventsSubset,
+        IList<string>? channelCodesByPreference = null)
     {
         // Remove movies that should be ignored
         bool IsMovieIgnored(MovieEvent movieEvent)
@@ -394,6 +396,43 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 }
 
             movieEvents = unique;
+        }
+
+        // Remove movies that are offered on more than one channel of the provider
+        // A provider can offer the same movie in more than one of its products, once per
+        // product: VTM GO lists a movie that is both included in a subscription and rented
+        // out through Cinema twice, each time with its own id, channel and even production
+        // year.  That is one movie to watch, so keep the entry on the channel that is easiest
+        // to get to, which is the channel the provider lists first.  Title and duration
+        // identify the movie: the same title with another duration is another movie.  The
+        // title is compared case insensitively, since the provider doesn't spell it the same
+        // way in every product.
+        if (channelCodesByPreference != null)
+        {
+            int Preference(MovieEvent movieEvent)
+            {
+                var index = channelCodesByPreference.IndexOf(movieEvent.Channel?.Code ?? string.Empty);
+                return index < 0 ? int.MaxValue : index;
+            }
+
+            var superseded = new HashSet<MovieEvent>();
+            foreach (var group in movieEvents
+                         .Where(m => m.Duration.HasValue)
+                         .GroupBy(m => (Title: m.Title?.ToLowerInvariant(), m.Duration))
+                         .Where(g => g.Count() > 1))
+            {
+                var kept = group.MinBy(Preference)!;
+                foreach (var movie in group.Where(m => m != kept))
+                {
+                    _logger.LogWarning(
+                        "Skipping movie that is also offered on {KeptChannelCode}: {ChannelCode} {Title} {ExternalId}",
+                        kept.Channel?.Code, movie.Channel?.Code, movie.Title, movie.ExternalId);
+                    superseded.Add(movie);
+                }
+            }
+
+            if (superseded.Any())
+                movieEvents = movieEvents.Where(m => !superseded.Contains(m)).ToList();
         }
 
         // Remove exising movies that don't appear in new movies

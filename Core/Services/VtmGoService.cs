@@ -72,7 +72,11 @@ public class VtmGoService : IMovieEventService
 
     public string ProviderCode => "vtmgo";
 
-    public IList<string> ChannelCodes => new List<string>() { "vtmgo", "vtmgocinema", "streamzbasic", "streamzplus" };
+    // VTM GO offers a movie that is included in more than one of its products once per
+    // product, so the order matters: a movie that is both included in a subscription and
+    // rented out through Cinema is kept on the channel that needs the least to watch it.
+    public IList<string> ChannelCodes =>
+        new List<string>() { "vtmgo", "vtmgoplus", "streamzbasic", "streamzplus", "vtmgocinema" };
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {

@@ -111,6 +111,66 @@ public class UpdateEpgCommandTest : IDisposable
             new Mock<IUpdateImdbLinkCommand>().Object);
     }
 
+    /// <summary>
+    ///     A movie a streaming provider offers, on the given channel.
+    /// </summary>
+    private static MovieEvent VodMovieEvent(string channelCode, string title, int duration)
+    {
+        return new MovieEvent
+        {
+            ExternalId = $"{channelCode}-{title}-{duration}",
+            Title = title,
+            Vod = true,
+            Feed = MovieEvent.FeedType.PaidVod,
+            Type = 1,
+            StartTime = DateTime.MinValue,
+            EndTime = DateTime.Now.Date.AddDays(300),
+            Duration = duration,
+            Channel = new Channel
+            {
+                Code = channelCode,
+                Name = channelCode,
+                LogoS = "http://test/logo.png"
+            }
+        };
+    }
+
+    /// <summary>
+    ///     A command that only runs the given streaming provider.
+    /// </summary>
+    private UpdateEpgCommand GetVodCommand(IList<string> channelCodes, params MovieEvent[] movieEvents)
+    {
+        var updateEpgCommandOptions = new Mock<IOptionsSnapshot<UpdateEpgCommandOptions>>();
+        updateEpgCommandOptions.SetupGet(o => o.Value).Returns(new UpdateEpgCommandOptions
+        {
+            ActivateProviders = new[] { "test-provider" },
+            DownloadImages = UpdateEpgCommandOptions.DownloadImagesOption.Disabled
+        });
+
+        var movieEventService = new Mock<IMovieEventService>();
+        movieEventService.SetupGet(s => s.ProviderName).Returns("TestProvider");
+        movieEventService.SetupGet(s => s.ProviderCode).Returns("test-provider");
+        movieEventService.SetupGet(s => s.ChannelCodes).Returns(channelCodes);
+        movieEventService.Setup(s => s.GetMovieEvents()).ReturnsAsync(movieEvents.ToList());
+
+        var imdbMatchingQuery = new Mock<IImdbMatchingQuery>();
+        imdbMatchingQuery.Setup(q => q.Execute(It.IsAny<string>(), It.IsAny<int?>()))
+            .ReturnsAsync(new ImdbMatchingQueryResult());
+
+        return new UpdateEpgCommand(
+            NullLogger<UpdateEpgCommand>.Instance,
+            _moviesDbContext,
+            _imdbDbContext,
+            updateEpgCommandOptions.Object,
+            new Mock<ITheMovieDbService>().Object,
+            new List<IMovieEventService> { movieEventService.Object },
+            new Mock<IHumoService>().Object,
+            imdbMatchingQuery.Object,
+            new Mock<IHttpClientFactory>().Object,
+            new Mock<IManualMatchesQuery>().Object,
+            new Mock<IUpdateImdbLinkCommand>().Object);
+    }
+
     private List<MovieEvent> GetStoredMovieEvents()
     {
         return _moviesDbContext.MovieEvents.Include(me => me.Channel).OrderBy(me => me.StartTime).ToList();
@@ -224,5 +284,74 @@ public class UpdateEpgCommandTest : IDisposable
         Assert.NotEmpty(movieEvents);
         Assert.Equal(movieEvents.Select(me => me.StartTime).Distinct(), movieEvents.Select(me => me.StartTime));
         Assert.Single(_moviesDbContext.Channels);
+    }
+
+    /// <summary>
+    ///     A provider can offer the same movie in more than one of its products, once per
+    ///     product, and doesn't spell the title the same way in every one of them: that is one
+    ///     movie to watch, and it is stored on the channel that is easiest to get to, whatever
+    ///     order the provider returns them in.
+    /// </summary>
+    [Fact]
+    public async Task Execute_VodMovieOnMoreThanOneChannel_IsStoredOnce()
+    {
+        var channelCodes = new List<string> { "cheap-channel", "expensive-channel" };
+
+        await GetVodCommand(channelCodes,
+            VodMovieEvent("expensive-channel", "Test Movie", 100),
+            VodMovieEvent("cheap-channel", "Test movie", 100)).Execute();
+
+        var movieEvents = GetStoredMovieEvents();
+
+        Assert.Single(movieEvents);
+        Assert.Equal("cheap-channel", movieEvents.Single().Channel?.Code);
+        Assert.Equal("Test movie", movieEvents.Single().Title);
+    }
+
+    /// <summary>
+    ///     The same title with another duration is another movie.
+    /// </summary>
+    [Fact]
+    public async Task Execute_VodMovieWithAnotherDuration_IsKept()
+    {
+        var channelCodes = new List<string> { "cheap-channel", "expensive-channel" };
+
+        await GetVodCommand(channelCodes,
+            VodMovieEvent("cheap-channel", "Test movie", 100),
+            VodMovieEvent("expensive-channel", "Test movie", 120)).Execute();
+
+        var movieEvents = GetStoredMovieEvents();
+
+        Assert.Equal(2, movieEvents.Count);
+        Assert.Equal(new int?[] { 100, 120 }, movieEvents.Select(me => me.Duration).OrderBy(d => d).ToList());
+    }
+
+    /// <summary>
+    ///     Which of the channels is kept doesn't depend on the run, so the stored movie event
+    ///     survives the next one instead of being removed and added again.
+    /// </summary>
+    [Fact]
+    public async Task Execute_VodRepeatedRun_DoesNotDuplicateMovieEvents()
+    {
+        var channelCodes = new List<string> { "cheap-channel", "expensive-channel" };
+
+        MovieEvent[] MovieEvents()
+        {
+            return new[]
+            {
+                VodMovieEvent("cheap-channel", "Test movie", 100),
+                VodMovieEvent("expensive-channel", "Test movie", 100),
+                VodMovieEvent("expensive-channel", "Another test movie", 110)
+            };
+        }
+
+        await GetVodCommand(channelCodes, MovieEvents()).Execute();
+        var afterFirstRun = GetStoredMovieEvents();
+
+        await GetVodCommand(channelCodes, MovieEvents()).Execute();
+        var afterSecondRun = GetStoredMovieEvents();
+
+        Assert.Equal(2, afterFirstRun.Count);
+        Assert.Equal(afterFirstRun.Select(me => me.Id), afterSecondRun.Select(me => me.Id));
     }
 }
