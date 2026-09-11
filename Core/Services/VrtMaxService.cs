@@ -26,6 +26,11 @@ public class VrtMaxService : IMovieEventService
     // Only keep first MaxCount MovieEvents for performance reasons during testing (Design for Testability)
     public int MaxCount { get; set; } = 1024;
 
+    // Number of components (tile lists) and tiles per component requested at a time.
+    // Lowering these forces the paging loops to run (Design for Testability).
+    public int ComponentsPerRequest { get; set; } = 20;
+    public int ItemsPerRequest { get; set; } = 500;
+
     public string ProviderName => "VrtMax";
 
     public string ProviderCode => "vrtmax";
@@ -44,7 +49,7 @@ public class VrtMaxService : IMovieEventService
 
         // Now you can extract movie information from each tile
         var movieEvents = new List<MovieEvent>();
-        foreach (var tile in movieTiles)
+        foreach (var tile in movieTiles.Take(MaxCount))
         {
             var objectId = tile.objectId;
             var title = tile.title;
@@ -548,17 +553,118 @@ fragment pageHeaderFragment on PageHeader {
 
     private async Task<IList<Tile>> GetAllMovieData()
     {
+        // The films page is a list of components (tile lists), each of which is itself a
+        // paginated list of tiles.  Both levels have to be paged through to get all films.
+        var allTiles = new List<Tile>();
+        var componentAfter = "";
+
+        while (true)
+        {
+            var responseObject = await QueryFilmsPage(ComponentsPerRequest, componentAfter, ItemsPerRequest, null);
+            var paginatedComponents = responseObject.data?.page?.paginatedComponents;
+            var edges = paginatedComponents?.edges;
+            if (edges == null || edges.Length == 0)
+                break;
+
+            // The cursor of the component preceding the one being handled, needed to
+            // re-request a single component when its tile list has more tiles.
+            var previousComponentCursor = componentAfter;
+            foreach (var edge in edges)
+            {
+                if (edge?.node != null)
+                    allTiles.AddRange(await GetComponentTiles(edge.node, previousComponentCursor));
+
+                if (!string.IsNullOrEmpty(edge?.cursor))
+                    previousComponentCursor = edge.cursor;
+            }
+
+            var pageInfo = paginatedComponents?.pageInfo;
+            if (pageInfo?.hasNextPage != true || string.IsNullOrEmpty(pageInfo.endCursor) ||
+                pageInfo.endCursor == componentAfter)
+                break;
+
+            componentAfter = pageInfo.endCursor;
+        }
+
+        // Filter for movie tiles only.  The film page also contains genre banners
+        // (BannerTile, linking to /vrtmax/themas/...), which are not movies.
+        var movieTiles = allTiles
+            .Where(t => t.tileType == "program")
+            .GroupBy(t => t.objectId) // Remove duplicates
+            .Select(g => g.First())
+            .ToList();
+
+        return movieTiles;
+    }
+
+    /// <summary>
+    ///     Returns all tiles of a single page component, paging through the tile list when needed.
+    /// </summary>
+    /// <param name="component">The component as returned in the page request.</param>
+    /// <param name="componentAfter">
+    ///     Cursor of the preceding component, used to re-request this single component
+    ///     when its tile list holds more tiles than were returned.
+    /// </param>
+    private async Task<IList<Tile>> GetComponentTiles(ComponentNode component, string componentAfter)
+    {
+        var tiles = new List<Tile>();
+
+        if (component.__typename == "StaticTileList")
+        {
+            // Get tiles directly from items
+            if (component.items != null)
+                tiles.AddRange(component.items);
+            return tiles;
+        }
+
+        if (component.__typename != "PaginatedTileList")
+            return tiles;
+
+        var paginatedItems = component.paginatedItems;
+        var itemAfter = "";
+        while (paginatedItems != null)
+        {
+            // Get tiles from paginated items
+            var newTiles = paginatedItems.edges?
+                .Select(e => e.node)
+                .Where(t => t != null)
+                .Select(t => t!);
+
+            if (newTiles != null)
+                tiles.AddRange(newTiles);
+
+            var pageInfo = paginatedItems.pageInfo;
+            if (pageInfo?.hasNextPage != true || string.IsNullOrEmpty(pageInfo.endCursor) ||
+                pageInfo.endCursor == itemAfter)
+                break;
+
+            itemAfter = pageInfo.endCursor;
+
+            // Request this single component again, with the next window of tiles.
+            var responseObject = await QueryFilmsPage(1, componentAfter, ItemsPerRequest, itemAfter);
+            paginatedItems = responseObject.data?.page?.paginatedComponents?.edges?
+                .FirstOrDefault()?.node?.paginatedItems;
+        }
+
+        return tiles;
+    }
+
+    private async Task<GraphQLPageResponse> QueryFilmsPage(int componentCount, string componentAfter, int itemCount,
+        string? itemAfter)
+    {
         var client = _httpClientFactory.CreateClient("vrtmax");
 
         // Prepare the request body
         var requestBody = new
         {
             operationName = "Page",
-            query = "query Page($pageId: ID!, $lazyItemCount: Int = 10, $after: ID, $before: ID, $componentCount: Int = 5, $componentAfter: ID) {\n  page(id: $pageId) {\n    ... on IIdentifiable {\n      __typename\n      objectId\n    }\n    ... on IPage {\n      id\n      permalink\n      title\n      ldjson\n      header {\n        title\n        primaryMeta {\n          longValue\n          shortValue\n          type\n          value\n          __typename\n        }\n        __typename\n      }\n      popUp: nudge {\n        ...popupFragment\n        __typename\n      }\n      toast: nudge {\n        ...toastFragment\n        __typename\n      }\n      ...paginatedComponents\n      seo {\n        ...seoFragment\n        __typename\n      }\n      socialSharing {\n        ...socialSharingFragment\n        __typename\n      }\n      trackingData {\n        ...trackingDataFragment\n        __typename\n      }\n      heading {\n        ... on ImageBillboard {\n          ...ImageBillboardFragment\n          __typename\n        }\n        ... on Banner {\n          ...bannerFragment\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    ... on ArticlePage {\n      publicationDate {\n        __typename\n        raw\n        formatted\n      }\n      __typename\n    }\n    ...errorFragment\n    __typename\n  }\n}\nfragment paginatedComponents on IPage {\n  paginatedComponents(first: $componentCount, after: $componentAfter) {\n    __typename\n    pageInfo {\n      hasNextPage\n      startCursor\n      endCursor\n      __typename\n    }\n    edges {\n      __typename\n      node {\n        ... on IIdentifiable {\n          __typename\n          objectId\n        }\n        ... on IComponent {\n          ...componentTrackingDataFragment\n          __typename\n        }\n        ... on PageHeader {\n          ...pageHeaderFragment\n          __typename\n        }\n        ... on Banner {\n          ...bannerFragment\n          __typename\n        }\n        ... on PaginatedTileList {\n          ...paginatedTileListFragment\n          __typename\n        }\n        ... on StaticTileList {\n          ...staticTileListFragment\n          __typename\n        }\n        ... on Text {\n          ...textFragment\n          __typename\n        }\n        ... on ResponsiveImage {\n          __typename\n          objectId\n          templateUrl\n          alt\n          focusPoint {\n            x\n            y\n            __typename\n          }\n          ... on IComponent {\n            title\n            __typename\n          }\n        }\n        ... on Quote {\n          __typename\n          objectId\n          text\n          authors\n        }\n        ... on NoContent {\n          ...noContentFragment\n          __typename\n        }\n        ...buttonFragment\n        ...containerNavigationFragment\n        __typename\n      }\n    }\n  }\n  __typename\n}\nfragment staticTileListFragment on StaticTileList {\n  __typename\n  objectId\n  listId\n  title\n  description\n  tileContentType\n  displayType\n  maxAge\n  tileVariant\n  action {\n    ... on LinkAction {\n      __typename\n      externalTarget\n      link\n    }\n    ... on SwitchTabAction {\n      __typename\n      link\n      referencedTabId\n    }\n    __typename\n  }\n  banner {\n    actionItems {\n      ...actionItemFragment\n      __typename\n    }\n    description\n    image {\n      ...imageFragment\n      __typename\n    }\n    compactLayout\n    backgroundColor\n    textTheme\n    title\n    titleArt {\n      objectId\n      templateUrl\n      __typename\n    }\n    __typename\n  }\n  bannerSize\n  items {\n    ...tileFragment\n    __typename\n  }\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n}\nfragment actionItemFragment on ActionItem {\n  __typename\n  objectId\n  accessibilityLabel\n  active\n  mode\n  title\n  themeOverride\n  action {\n    ...actionFragment\n    __typename\n  }\n  icons {\n    ...iconFragment\n    __typename\n  }\n}\nfragment actionFragment on Action {\n  __typename\n  ... on FavoriteAction {\n    id\n    favorite\n    title\n    __typename\n  }\n  ... on ListDeleteAction {\n    listName\n    id\n    listId\n    title\n    __typename\n  }\n  ... on ListTileDeletedAction {\n    listName\n    id\n    listId\n    __typename\n  }\n  ... on LinkAction {\n    internalTarget\n    link\n    internalTarget\n    externalTarget\n    passUserIdentity\n    zone {\n      preferredZone\n      isExclusive\n      __typename\n    }\n    linkTokens {\n      __typename\n      placeholder\n      value\n    }\n    __typename\n  }\n  ... on ClientDrivenAction {\n    __typename\n    clientDrivenActionType\n  }\n  ... on ShareAction {\n    title\n    url\n    __typename\n  }\n  ... on SwitchTabAction {\n    referencedTabId\n    link\n    __typename\n  }\n  ... on FinishAction {\n    id\n    __typename\n  }\n}\nfragment iconFragment on Icon {\n  __typename\n  accessibilityLabel\n  position\n  type\n  ... on DesignSystemIcon {\n    value {\n      __typename\n      color\n      name\n    }\n    activeValue {\n      __typename\n      color\n      name\n    }\n    __typename\n  }\n  ... on ImageIcon {\n    value {\n      __typename\n      srcSet {\n        src\n        format\n        __typename\n      }\n    }\n    activeValue {\n      __typename\n      srcSet {\n        src\n        format\n        __typename\n      }\n    }\n    __typename\n  }\n}\nfragment componentTrackingDataFragment on IComponent {\n  trackingData {\n    data\n    perTrigger {\n      trigger\n      data\n      template {\n        id\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\nfragment imageFragment on Image {\n  __typename\n  objectId\n  alt\n  focusPoint {\n    x\n    y\n    __typename\n  }\n  templateUrl\n}\nfragment tileFragment on Tile {\n  ... on IIdentifiable {\n    __typename\n    objectId\n  }\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n  ... on ITile {\n    title\n    active\n    accessibilityTitle\n    tileType\n    action {\n      __typename\n      ... on LinkAction {\n        internalTarget\n        link\n        internalTarget\n        externalTarget\n        __typename\n      }\n    }\n    actionItems {\n      ...actionItemFragment\n      __typename\n    }\n    image {\n      ...imageFragment\n      __typename\n    }\n    primaryMeta {\n      ...metaFragment\n      __typename\n    }\n    secondaryMeta {\n      ...metaFragment\n      __typename\n    }\n    tertiaryMeta {\n      ...metaFragment\n      __typename\n    }\n    indexMeta {\n      __typename\n      type\n      value\n    }\n    status {\n      accessibilityLabel\n      icon {\n        ...iconFragment\n        __typename\n      }\n      text {\n        small\n        default\n        __typename\n      }\n      __typename\n    }\n    labelMeta {\n      __typename\n      type\n      value\n    }\n    __typename\n  }\n  ... on ContentTile {\n    brand\n    brandLogos {\n      ...brandLogosFragment\n      __typename\n    }\n    __typename\n  }\n  ... on BannerTile {\n    backgroundColor\n    brand\n    brandLogos {\n      ...brandLogosFragment\n      __typename\n    }\n    compactLayout\n    description\n    textTheme\n    titleArt {\n      objectId\n      templateUrl\n      __typename\n    }\n    __typename\n  }\n  ... on EpisodeTile {\n    description\n    available\n    chapterStart\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on PodcastEpisodeTile {\n    available\n    description\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on AudioLivestreamTile {\n    brand\n    brandsLogos {\n      brand\n      brandTitle\n      logos {\n        ...brandLogosFragment\n        __typename\n      }\n      __typename\n    }\n    description\n    progress {\n      durationInSeconds\n      progressInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on LivestreamTile {\n    description\n    progress {\n      durationInSeconds\n      progressInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on ButtonTile {\n    mode\n    icons {\n      ...iconFragment\n      __typename\n    }\n    __typename\n  }\n  ... on RadioEpisodeTile {\n    available\n    description\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on RadioFragmentTile {\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on SongTile {\n    startDate\n    formattedStartDate\n    endDate\n    description\n    __typename\n  }\n  __typename\n}\nfragment brandLogosFragment on Logo {\n  colorOnColor\n  height\n  mono\n  primary\n  type\n  width\n  __typename\n}\nfragment metaFragment on MetaDataItem {\n  __typename\n  type\n  value\n  shortValue\n  longValue\n}\nfragment paginatedTileListFragment on PaginatedTileList {\n  __typename\n  objectId\n  listId\n  action {\n    ... on LinkAction {\n      __typename\n      externalTarget\n      link\n    }\n    ... on SwitchTabAction {\n      __typename\n      link\n      referencedTabId\n    }\n    __typename\n  }\n  banner {\n    actionItems {\n      ...actionItemFragment\n      __typename\n    }\n    backgroundColor\n    compactLayout\n    description\n    image {\n      ...imageFragment\n      __typename\n    }\n    titleArt {\n      ...imageFragment\n      __typename\n    }\n    textTheme\n    title\n    __typename\n  }\n  bannerSize\n  displayType\n  maxAge\n  tileVariant\n  paginatedItems(first: $lazyItemCount, after: $after, before: $before) {\n    __typename\n    edges {\n      __typename\n      cursor\n      node {\n        __typename\n        ...tileFragment\n      }\n    }\n    pageInfo {\n      __typename\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  tileContentType\n  title\n  description\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n}\nfragment pageHeaderFragment on PageHeader {\n  objectId\n  accessibilityTitle\n  brandsLogos {\n    brandTitle\n    __typename\n  }\n  presenters {\n    title\n    __typename\n  }\n  title\n  titleArt {\n    objectId\n    templateUrl\n    __typename\n  }\n  richDescription {\n    __typename\n    html\n  }\n  actionItems {\n    ...actionItemFragment\n    __typename\n  }\n  primaryMeta {\n    type\n    value\n    shortValue\n    __typename\n  }\n  secondaryMeta {\n    type\n    value\n    shortValue\n    longValue\n    __typename\n  }\n  tertiaryMeta {\n    type\n    value\n    shortValue\n    __typename\n  }\n  image {\n    __typename\n    objectId\n    focusPoint {\n      x\n      y\n      __typename\n    }\n    templateUrl\n  }\n  __typename\n}\nfragment bannerFragment on Banner {\n  __typename\n  objectId\n  accessibilityTitle\n  brand\n  countdown {\n    date\n    __typename\n  }\n  richDescription {\n    __typename\n    text\n  }\n  image {\n    objectId\n    templateUrl\n    alt\n    focusPoint {\n      x\n      y\n      __typename\n    }\n    __typename\n  }\n  title\n  compactLayout\n  textTheme\n  backgroundColor\n  style\n  action {\n    ...actionFragment\n    __typename\n  }\n  actionItems {\n    ...actionItemFragment\n    __typename\n  }\n  titleArt {\n    objectId\n    templateUrl\n    __typename\n  }\n  labelMeta {\n    __typename\n    type\n    value\n  }\n  preview {\n    video {\n      objectId\n      modes {\n        __typename\n        streamId\n      }\n      __typename\n    }\n    __typename\n  }\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n}\nfragment textFragment on Text {\n  __typename\n  objectId\n  html\n}\nfragment buttonFragment on Button {\n  __typename\n  objectId\n  title\n  accessibilityTitle\n  mode\n  action {\n    ...actionFragment\n    __typename\n  }\n  ...componentTrackingDataFragment\n}\nfragment noContentFragment on NoContent {\n  __typename\n  objectId\n  title\n  text\n  backgroundImage {\n    ...imageFragment\n    __typename\n  }\n  mainImage {\n    ...imageFragment\n    __typename\n  }\n  noContentType\n  actionItems {\n    ...actionItemFragment\n    __typename\n  }\n}\nfragment containerNavigationFragment on ContainerNavigation {\n  __typename\n  objectId\n  navigationType\n  items {\n    __typename\n    objectId\n    componentId\n    active\n    action {\n      ... on SwitchTabAction {\n        __typename\n        referencedTabId\n        link\n      }\n      __typename\n    }\n    title\n    total\n    mediaType\n    disabled\n  }\n}\nfragment ImageBillboardFragment on ImageBillboard {\n  __typename\n  objectId\n  size\n  background {\n    ...imageFragment\n    __typename\n  }\n  midground {\n    ...imageFragment\n    __typename\n  }\n  titleArt {\n    ...imageFragment\n    __typename\n  }\n}\nfragment seoFragment on SeoProperties {\n  __typename\n  title\n  description\n}\nfragment socialSharingFragment on SocialSharingProperties {\n  __typename\n  title\n  description\n  image {\n    __typename\n    objectId\n    templateUrl\n  }\n}\nfragment trackingDataFragment on PageTrackingData {\n  data\n  perTrigger {\n    trigger\n    data\n    template {\n      id\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\nfragment errorFragment on ErrorPage {\n  errorComponents: components {\n    ...noContentFragment\n    __typename\n  }\n  __typename\n}\nfragment popupFragment on PopUp {\n  __typename\n  brand\n  brandsLogos {\n    ...brandLogo\n    __typename\n  }\n  buttons {\n    ...actionItemFragment\n    __typename\n  }\n  description\n  image {\n    ...imageFragment\n    __typename\n  }\n  objectId\n  size\n  title\n  trackingData {\n    ...trackingDataFragment\n    __typename\n  }\n}\nfragment brandLogo on BrandLogo {\n  brand\n  brandTitle\n  logos {\n    type\n    primary\n    colorOnColor\n    __typename\n  }\n  __typename\n}\nfragment toastFragment on Toast {\n  __typename\n  description\n  image {\n    ...imageFragment\n    __typename\n  }\n  objectId\n  title\n}",
+            query = "query Page($pageId: ID!, $lazyItemCount: Int = 10, $after: ID, $before: ID, $componentCount: Int = 5, $componentAfter: ID) {\n  page(id: $pageId) {\n    ... on IIdentifiable {\n      __typename\n      objectId\n    }\n    ... on IPage {\n      id\n      permalink\n      title\n      ldjson\n      header {\n        title\n        primaryMeta {\n          longValue\n          shortValue\n          type\n          value\n          __typename\n        }\n        __typename\n      }\n      popUp: nudge {\n        ...popupFragment\n        __typename\n      }\n      toast: nudge {\n        ...toastFragment\n        __typename\n      }\n      ...paginatedComponents\n      seo {\n        ...seoFragment\n        __typename\n      }\n      socialSharing {\n        ...socialSharingFragment\n        __typename\n      }\n      trackingData {\n        ...trackingDataFragment\n        __typename\n      }\n      heading {\n        ... on ImageBillboard {\n          ...ImageBillboardFragment\n          __typename\n        }\n        ... on Banner {\n          ...bannerFragment\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    ... on ArticlePage {\n      publicationDate {\n        __typename\n        raw\n        formatted\n      }\n      __typename\n    }\n    ...errorFragment\n    __typename\n  }\n}\nfragment paginatedComponents on IPage {\n  paginatedComponents(first: $componentCount, after: $componentAfter) {\n    __typename\n    pageInfo {\n      hasNextPage\n      startCursor\n      endCursor\n      __typename\n    }\n    edges {\n      __typename\n      cursor\n      node {\n        ... on IIdentifiable {\n          __typename\n          objectId\n        }\n        ... on IComponent {\n          ...componentTrackingDataFragment\n          __typename\n        }\n        ... on PageHeader {\n          ...pageHeaderFragment\n          __typename\n        }\n        ... on Banner {\n          ...bannerFragment\n          __typename\n        }\n        ... on PaginatedTileList {\n          ...paginatedTileListFragment\n          __typename\n        }\n        ... on StaticTileList {\n          ...staticTileListFragment\n          __typename\n        }\n        ... on Text {\n          ...textFragment\n          __typename\n        }\n        ... on ResponsiveImage {\n          __typename\n          objectId\n          templateUrl\n          alt\n          focusPoint {\n            x\n            y\n            __typename\n          }\n          ... on IComponent {\n            title\n            __typename\n          }\n        }\n        ... on Quote {\n          __typename\n          objectId\n          text\n          authors\n        }\n        ... on NoContent {\n          ...noContentFragment\n          __typename\n        }\n        ...buttonFragment\n        ...containerNavigationFragment\n        __typename\n      }\n    }\n  }\n  __typename\n}\nfragment staticTileListFragment on StaticTileList {\n  __typename\n  objectId\n  listId\n  title\n  description\n  tileContentType\n  displayType\n  maxAge\n  tileVariant\n  action {\n    ... on LinkAction {\n      __typename\n      externalTarget\n      link\n    }\n    ... on SwitchTabAction {\n      __typename\n      link\n      referencedTabId\n    }\n    __typename\n  }\n  banner {\n    actionItems {\n      ...actionItemFragment\n      __typename\n    }\n    description\n    image {\n      ...imageFragment\n      __typename\n    }\n    compactLayout\n    backgroundColor\n    textTheme\n    title\n    titleArt {\n      objectId\n      templateUrl\n      __typename\n    }\n    __typename\n  }\n  bannerSize\n  items {\n    ...tileFragment\n    __typename\n  }\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n}\nfragment actionItemFragment on ActionItem {\n  __typename\n  objectId\n  accessibilityLabel\n  active\n  mode\n  title\n  themeOverride\n  action {\n    ...actionFragment\n    __typename\n  }\n  icons {\n    ...iconFragment\n    __typename\n  }\n}\nfragment actionFragment on Action {\n  __typename\n  ... on FavoriteAction {\n    id\n    favorite\n    title\n    __typename\n  }\n  ... on ListDeleteAction {\n    listName\n    id\n    listId\n    title\n    __typename\n  }\n  ... on ListTileDeletedAction {\n    listName\n    id\n    listId\n    __typename\n  }\n  ... on LinkAction {\n    internalTarget\n    link\n    internalTarget\n    externalTarget\n    passUserIdentity\n    zone {\n      preferredZone\n      isExclusive\n      __typename\n    }\n    linkTokens {\n      __typename\n      placeholder\n      value\n    }\n    __typename\n  }\n  ... on ShareAction {\n    title\n    url\n    __typename\n  }\n  ... on SwitchTabAction {\n    referencedTabId\n    link\n    __typename\n  }\n  ... on FinishAction {\n    id\n    __typename\n  }\n}\nfragment iconFragment on Icon {\n  __typename\n  accessibilityLabel\n  position\n  type\n  ... on DesignSystemIcon {\n    value {\n      __typename\n      color\n      name\n    }\n    activeValue {\n      __typename\n      color\n      name\n    }\n    __typename\n  }\n  ... on ImageIcon {\n    value {\n      __typename\n      srcSet {\n        src\n        format\n        __typename\n      }\n    }\n    activeValue {\n      __typename\n      srcSet {\n        src\n        format\n        __typename\n      }\n    }\n    __typename\n  }\n}\nfragment componentTrackingDataFragment on IComponent {\n  trackingData {\n    data\n    perTrigger {\n      trigger\n      data\n      template {\n        id\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\nfragment imageFragment on Image {\n  __typename\n  objectId\n  alt\n  focusPoint {\n    x\n    y\n    __typename\n  }\n  templateUrl\n}\nfragment tileFragment on Tile {\n  ... on IIdentifiable {\n    __typename\n    objectId\n  }\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n  ... on ITile {\n    title\n    active\n    accessibilityTitle\n    tileType\n    action {\n      __typename\n      ... on LinkAction {\n        internalTarget\n        link\n        internalTarget\n        externalTarget\n        __typename\n      }\n    }\n    actionItems {\n      ...actionItemFragment\n      __typename\n    }\n    image {\n      ...imageFragment\n      __typename\n    }\n    primaryMeta {\n      ...metaFragment\n      __typename\n    }\n    secondaryMeta {\n      ...metaFragment\n      __typename\n    }\n    tertiaryMeta {\n      ...metaFragment\n      __typename\n    }\n    indexMeta {\n      __typename\n      type\n      value\n    }\n    status {\n      accessibilityLabel\n      icon {\n        ...iconFragment\n        __typename\n      }\n      text {\n        small\n        default\n        __typename\n      }\n      __typename\n    }\n    labelMeta {\n      __typename\n      type\n      value\n    }\n    __typename\n  }\n  ... on ContentTile {\n    brand\n    brandLogos {\n      ...brandLogosFragment\n      __typename\n    }\n    __typename\n  }\n  ... on BannerTile {\n    backgroundColor\n    brand\n    brandLogos {\n      ...brandLogosFragment\n      __typename\n    }\n    compactLayout\n    description\n    textTheme\n    titleArt {\n      objectId\n      templateUrl\n      __typename\n    }\n    __typename\n  }\n  ... on EpisodeTile {\n    description\n    available\n    chapterStart\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on PodcastEpisodeTile {\n    available\n    description\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on AudioLivestreamTile {\n    brand\n    brandsLogos {\n      brand\n      brandTitle\n      logos {\n        ...brandLogosFragment\n        __typename\n      }\n      __typename\n    }\n    description\n    progress {\n      durationInSeconds\n      progressInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on LivestreamTile {\n    description\n    progress {\n      durationInSeconds\n      progressInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on ButtonTile {\n    mode\n    icons {\n      ...iconFragment\n      __typename\n    }\n    __typename\n  }\n  ... on RadioEpisodeTile {\n    available\n    description\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on RadioFragmentTile {\n    progress {\n      completed\n      progressInSeconds\n      durationInSeconds\n      __typename\n    }\n    __typename\n  }\n  ... on SongTile {\n    startDate\n    formattedStartDate\n    endDate\n    description\n    __typename\n  }\n  __typename\n}\nfragment brandLogosFragment on Logo {\n  colorOnColor\n  height\n  mono\n  primary\n  type\n  width\n  __typename\n}\nfragment metaFragment on MetaDataItem {\n  __typename\n  type\n  value\n  shortValue\n  longValue\n}\nfragment paginatedTileListFragment on PaginatedTileList {\n  __typename\n  objectId\n  listId\n  action {\n    ... on LinkAction {\n      __typename\n      externalTarget\n      link\n    }\n    ... on SwitchTabAction {\n      __typename\n      link\n      referencedTabId\n    }\n    __typename\n  }\n  banner {\n    actionItems {\n      ...actionItemFragment\n      __typename\n    }\n    backgroundColor\n    compactLayout\n    description\n    image {\n      ...imageFragment\n      __typename\n    }\n    titleArt {\n      ...imageFragment\n      __typename\n    }\n    textTheme\n    title\n    __typename\n  }\n  bannerSize\n  displayType\n  maxAge\n  tileVariant\n  paginatedItems(first: $lazyItemCount, after: $after, before: $before) {\n    __typename\n    edges {\n      __typename\n      cursor\n      node {\n        __typename\n        ...tileFragment\n      }\n    }\n    pageInfo {\n      __typename\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  tileContentType\n  title\n  description\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n}\nfragment pageHeaderFragment on PageHeader {\n  objectId\n  accessibilityTitle\n  brandsLogos {\n    brandTitle\n    __typename\n  }\n  presenters {\n    title\n    __typename\n  }\n  title\n  titleArt {\n    objectId\n    templateUrl\n    __typename\n  }\n  richDescription {\n    __typename\n    html\n  }\n  actionItems {\n    ...actionItemFragment\n    __typename\n  }\n  primaryMeta {\n    type\n    value\n    shortValue\n    __typename\n  }\n  secondaryMeta {\n    type\n    value\n    shortValue\n    longValue\n    __typename\n  }\n  tertiaryMeta {\n    type\n    value\n    shortValue\n    __typename\n  }\n  image {\n    __typename\n    objectId\n    focusPoint {\n      x\n      y\n      __typename\n    }\n    templateUrl\n  }\n  __typename\n}\nfragment bannerFragment on Banner {\n  __typename\n  objectId\n  accessibilityTitle\n  brand\n  countdown {\n    date\n    __typename\n  }\n  richDescription {\n    __typename\n    text\n  }\n  image {\n    objectId\n    templateUrl\n    alt\n    focusPoint {\n      x\n      y\n      __typename\n    }\n    __typename\n  }\n  title\n  compactLayout\n  textTheme\n  backgroundColor\n  style\n  action {\n    ...actionFragment\n    __typename\n  }\n  actionItems {\n    ...actionItemFragment\n    __typename\n  }\n  titleArt {\n    objectId\n    templateUrl\n    __typename\n  }\n  labelMeta {\n    __typename\n    type\n    value\n  }\n  preview {\n    video {\n      objectId\n      modes {\n        __typename\n        streamId\n      }\n      __typename\n    }\n    __typename\n  }\n  ... on IComponent {\n    ...componentTrackingDataFragment\n    __typename\n  }\n}\nfragment textFragment on Text {\n  __typename\n  objectId\n  html\n}\nfragment buttonFragment on Button {\n  __typename\n  objectId\n  title\n  accessibilityTitle\n  mode\n  action {\n    ...actionFragment\n    __typename\n  }\n  ...componentTrackingDataFragment\n}\nfragment noContentFragment on NoContent {\n  __typename\n  objectId\n  title\n  text\n  backgroundImage {\n    ...imageFragment\n    __typename\n  }\n  mainImage {\n    ...imageFragment\n    __typename\n  }\n  noContentType\n  actionItems {\n    ...actionItemFragment\n    __typename\n  }\n}\nfragment containerNavigationFragment on ContainerNavigation {\n  __typename\n  objectId\n  navigationType\n  items {\n    __typename\n    objectId\n    componentId\n    active\n    action {\n      ... on SwitchTabAction {\n        __typename\n        referencedTabId\n        link\n      }\n      __typename\n    }\n    title\n    total\n    mediaType\n    disabled\n  }\n}\nfragment ImageBillboardFragment on ImageBillboard {\n  __typename\n  objectId\n  size\n  background {\n    ...imageFragment\n    __typename\n  }\n  midground {\n    ...imageFragment\n    __typename\n  }\n  titleArt {\n    ...imageFragment\n    __typename\n  }\n}\nfragment seoFragment on SeoProperties {\n  __typename\n  title\n  description\n}\nfragment socialSharingFragment on SocialSharingProperties {\n  __typename\n  title\n  description\n  image {\n    __typename\n    objectId\n    templateUrl\n  }\n}\nfragment trackingDataFragment on PageTrackingData {\n  data\n  perTrigger {\n    trigger\n    data\n    template {\n      id\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\nfragment errorFragment on ErrorPage {\n  errorComponents: components {\n    ...noContentFragment\n    __typename\n  }\n  __typename\n}\nfragment popupFragment on PopUp {\n  __typename\n  brand\n  brandsLogos {\n    ...brandLogo\n    __typename\n  }\n  buttons {\n    ...actionItemFragment\n    __typename\n  }\n  description\n  image {\n    ...imageFragment\n    __typename\n  }\n  objectId\n  size\n  title\n  trackingData {\n    ...trackingDataFragment\n    __typename\n  }\n}\nfragment brandLogo on BrandLogo {\n  brand\n  brandTitle\n  logos {\n    type\n    primary\n    colorOnColor\n    __typename\n  }\n  __typename\n}\nfragment toastFragment on Toast {\n  __typename\n  description\n  image {\n    ...imageFragment\n    __typename\n  }\n  objectId\n  title\n}",
             variables = new
             {
-                componentAfter = "",
-                componentCount = 4,
+                componentAfter,
+                componentCount,
+                lazyItemCount = itemCount,
+                after = itemAfter,
                 pageId = "/vrtmax/films/"
             }
         };
@@ -573,47 +679,8 @@ fragment pageHeaderFragment on PageHeader {
         // // Or put this in the Debug Console: responseBody,nq
         // Console.WriteLine(responseBody);
 
-        var responseObject = await response.Content.ReadFromJsonAsync<GraphQLPageResponse>() 
-            ?? throw new Exception("Response is missing");
-
-        var page = responseObject.data?.page;
-        var components = page?.paginatedComponents?.edges?.Select(e => e.node) ?? Enumerable.Empty<ComponentNode>();
-
-        // Extract all tiles from all components
-        var allTiles = new List<Tile>();
-
-        foreach (var component in components)
-        {
-            if (component == null)
-                continue;
-
-            if (component.__typename == "PaginatedTileList")
-            {
-                // Get tiles from paginated items
-                var tiles = component.paginatedItems?.edges?
-                    .Select(e => e.node)
-                    .Where(t => t != null)
-                    .Select(t => t!);
-                
-                if (tiles != null)
-                    allTiles.AddRange(tiles);
-            }
-            else if (component.__typename == "StaticTileList")
-            {
-                // Get tiles directly from items
-                if (component.items != null)
-                    allTiles.AddRange(component.items);
-            }
-        }
-
-        // Filter for movie tiles only (optional)
-        var movieTiles = allTiles
-            .GroupBy(t => t.objectId) // Remove duplicates
-            .Select(g => g.First())
-            // .Where(t => t.tileType == "program")
-            .ToList();
-
-        return movieTiles;
+        return await response.Content.ReadFromJsonAsync<GraphQLPageResponse>()
+               ?? throw new Exception("Response is missing");
     }
 
     #region GraphQL Response Model for GetAllMovieData
@@ -665,6 +732,7 @@ fragment pageHeaderFragment on PageHeader {
     public class ComponentEdge
     {
         public string? __typename { get; set; }
+        public string? cursor { get; set; }
         public ComponentNode? node { get; set; }
     }
 
