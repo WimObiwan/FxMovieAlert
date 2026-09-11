@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
 using FxMovies.Core.Entities;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +14,16 @@ namespace FxMovies.Core.Services;
 
 public class GoPlayService : IMovieEventService
 {
+    private const string SiteBaseUrl = "https://www.play.tv";
+    private const int SearchPageSize = 20;
+    private const int MaxSearchPages = 500;
+
+    // The search API has no "list everything" mode, it only accepts a free text query (minimum 2 characters).
+    // The query terms are OR'ed and match on word prefixes, so searching for every 2 character combination
+    // returns the complete program catalog in a single (paged) search.  Keep the number of terms below ~800,
+    // the search backend answers with a 500 when the query expands into too many clauses.
+    private static readonly string SearchAllQuery = BuildSearchAllQuery();
+
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<GoPlayService> _logger;
 
@@ -32,163 +42,231 @@ public class GoPlayService : IMovieEventService
 
     public async Task<IList<MovieEvent>> GetMovieEvents()
     {
+        // GoPlay was rebranded to Play (goplay.be -> play.tv), the channel code is kept for backwards compatibility.
         var channel = new Channel
         {
             Code = "goplay",
-            Name = "GoPlay",
-            LogoS = "https://www.filmoptv.be/images/goplay.png"
+            Name = "Play",
+            LogoS = "https://www.filmoptv.be/images/playtv.png"
         };
 
-        var list = await GetDataList();
-        return list
-            .Select(async dataProgram =>
+        var movieEvents = new List<MovieEvent>();
+
+        foreach (var program in await GetFilmPrograms())
+        {
+            var uuid = program.uuid;
+            if (uuid == null)
+                continue;
+
+            try
             {
-                var link = dataProgram.data?.path;
-                var image = dataProgram.data?.images?.posterLandscape ?? dataProgram.data?.images?.poster;
+                var details = await GetProgramDetails(uuid);
 
-                if (link != null)
+                if (details == null)
+                    continue;
+
+                if (!string.Equals(details.type, "MOVIE", StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                // Movies with a tvod section have to be rented or bought (Play Kinepolis), they are no free VOD.
+                if (details.tvod != null)
+                    continue;
+
+                var image = GetImageUrl(details.images) ?? GetImageUrl(program.images);
+                var link = details.link != null ? SiteBaseUrl + details.link : program.url;
+
+                movieEvents.Add(new MovieEvent
                 {
-                    if (link.StartsWith('/'))
-                        link = "https://www.goplay.be/video" + link;
+                    ExternalId = uuid,
+                    Type = 1, // 1 = movie, 2 = short movie, 3 = serie
+                    Title = (details.title ?? program.title)?.Trim(),
+                    Year = null,
+                    Vod = true,
+                    Feed = MovieEvent.FeedType.FreeVod,
+                    StartTime = GetDateTime(details.dates?.publishDate) ?? DateTime.UtcNow,
+                    EndTime = GetDateTime(details.dates?.unpublishDate),
+                    Channel = channel,
+                    PosterS = image,
+                    PosterM = image,
+                    Duration = details.duration.HasValue ? details.duration.Value / 60 : null,
+                    Content = details.description,
+                    VodLink = link,
+                    AddedTime = DateTime.UtcNow
+                });
+            }
+            catch (Exception x)
+            {
+                _logger.LogWarning(x, "Skipping program with parsing exception, Uuid={uuid}", uuid);
+            }
+        }
 
-                    try
-                    {
-                        var dataProgramDetails = await GetDataProgramDetails(link);
-
-                        if (!(dataProgramDetails.program?.published == true 
-                            && dataProgramDetails.program.type == "program" 
-                            && dataProgramDetails.program.subtype == "movie"))
-                            return null;
-
-                        return new MovieEvent
-                        {
-                            ExternalId = dataProgram.uuid,
-                            Type = 1, // 1 = movie, 2 = short movie, 3 = serie
-                            Title = dataProgram.data?.title?.Trim(),
-                            Year = null,
-                            Vod = true,
-                            Feed = MovieEvent.FeedType.FreeVod,
-                            StartTime = GetDateTime(dataProgramDetails.datePublished) ?? DateTime.UtcNow,
-                            EndTime = GetDateTime(dataProgramDetails.dateUnpublished),
-                            Channel = channel,
-                            PosterS = image,
-                            PosterM = image,
-                            // Duration = dataProgramDetails.movie?.duration,
-                            Content = dataProgramDetails.videoDescription,
-                            VodLink = link,
-                            AddedTime = DateTime.UtcNow
-                        };
-                    }
-                    catch (Exception x)
-                    {
-                        _logger.LogWarning(x, "Skipping event with parsing exception, Url={link}",
-                            link);
-                    }
-                }
-
-                return null;
-            })
-            .Select(t => t?.Result)
-            .Where(me => me != null)
-            .Select(me => me!)
-            .ToList();
+        return movieEvents;
     }
 
-    private DateTime? GetDateTime(int? date)
+    private static string BuildSearchAllQuery()
+    {
+        const string letters = "abcdefghijklmnopqrstuvwxyz";
+        const string digits = "0123456789";
+
+        var query = new StringBuilder();
+
+        foreach (var first in letters)
+        foreach (var second in letters)
+        {
+            if (query.Length > 0)
+                query.Append(' ');
+            query.Append(first).Append(second);
+        }
+
+        foreach (var first in digits)
+        foreach (var second in digits)
+            query.Append(' ').Append(first).Append(second);
+
+        return query.ToString();
+    }
+
+    private DateTime? GetDateTime(long? date)
     {
         if (date.HasValue)
-            return new DateTime(1970, 1, 1).AddSeconds(date.Value).ToLocalTime();
+            return DateTime.UnixEpoch.AddSeconds(date.Value).ToLocalTime();
         return null;
     }
 
-    private async Task<IList<ProgramData>> GetDataList()
+    private static string? GetImageUrl(ProgramImages? images)
     {
-        // https://github.com/timrijckaert/vrtnu-vtmgo-goplay-service/tree/master/vtmgo/src/main/java/be/tapped/vtmgo/content
-
-        // https://www.goplay.be/programmas
-        var client = _httpClientFactory.CreateClient("goplay");
-        var response = await client.GetAsync("/programmas?categorie=film");
-        response.EnsureSuccessStatusCode();
-
-        string text = await response.Content.ReadAsStringAsync();
-        var match = Regex.Match(text, """\\"brand\\":\\".+?\\",\\"results\\":(.+),\\"categories\\":""");
-        text = JsonSerializer.Deserialize<string>('"' + match.Groups[1].Value + '"') ??  throw new Exception("Json parsing failed");
-
-        var data = JsonSerializer.Deserialize<ProgramData[]>(text) ??  throw new Exception("Json parsing failed");
-        
-        return data
-            .Where(e => e.data?.categoryName?.Equals("Film", StringComparison.CurrentCultureIgnoreCase) == true)
-            .ToList();
+        return images?.landscape?.FirstOrDefault(i => i.url != null)?.url
+               ?? images?.portrait?.FirstOrDefault(i => i.url != null)?.url;
     }
 
-    private async Task<ProgramDataDetails> GetDataProgramDetails(string link)
+    private static string? GetImageUrl(SearchImages? images)
+    {
+        return images?.landscape ?? images?.defaultImage ?? images?.portrait;
+    }
+
+    private async Task<IList<SearchSource>> GetFilmPrograms()
     {
         var client = _httpClientFactory.CreateClient("goplay");
-        var response = await client.GetAsync(link);
+
+        var programs = new Dictionary<string, SearchSource>();
+        var page = 0;
+        int pageCount;
+
+        do
+        {
+            var response = await client.PostAsJsonAsync("/web/v1/search", new
+            {
+                mode = "programs",
+                page,
+                query = SearchAllQuery
+            });
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<SearchResult>()
+                         ?? throw new Exception("Json parsing failed");
+
+            var hits = result.hits?.hits ?? Array.Empty<SearchHit>();
+            if (hits.Length == 0)
+                break;
+
+            foreach (var source in hits.Select(h => h.source))
+                if (source?.uuid != null
+                    && source.tracking?.item_category?.Equals("Film", StringComparison.CurrentCultureIgnoreCase) == true)
+                    programs[source.uuid] = source;
+
+            pageCount = Math.Min((result.hits!.total + SearchPageSize - 1) / SearchPageSize, MaxSearchPages);
+        } while (++page < pageCount);
+
+        return programs.Values.ToList();
+    }
+
+    private async Task<ProgramDetails?> GetProgramDetails(string uuid)
+    {
+        var client = _httpClientFactory.CreateClient("goplay");
+        var response = await client.GetAsync($"/web/v1/programs/{uuid}");
+
+        // The search index also contains programs that are no longer available.
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogInformation("Skipping program that is not available anymore, Uuid={uuid}", uuid);
+            return null;
+        }
+
         response.EnsureSuccessStatusCode();
 
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        var parser = new HtmlParser();
-        var document = await parser.ParseDocumentAsync(stream);
-
-        // // https://brightdata.com/blog/how-tos/web-scraping-with-next-js
-        // var scriptNodes = document.QuerySelectorAll("script");
-        // var hydrationScriptNodes = scriptNodes.Where(e => e.InnerHtml.Contains("self.__next_f.push"));
-
-        // var scriptNode = hydrationScriptNodes.Where(e => e.InnerHtml.Contains("initialTree"));
-
-        string text = await response.Content.ReadAsStringAsync();
-        //var match = Regex.Match(text, """{\\"meta\\":(.+?)}]]\\n""");
-        //var match = Regex.Match(text, """{\\"video\\":(.+?)\\n""");
-        var match = Regex.Match(text, """{\\"video\\":(.+?),\\"videoId\\":""");
-        text = match.Groups[1].Value;
-        text = text.Replace("\"])</script><script>self.__next_f.push([1,\"", "");
-        text = JsonSerializer.Deserialize<string>('"' + text + '"') ??  throw new Exception("Json parsing failed");
-
-        var data = JsonSerializer.Deserialize<ProgramDataDetails>(text) ??  throw new Exception("Json parsing failed");
-        return data;
+        return await response.Content.ReadFromJsonAsync<ProgramDetails>();
     }
 
     #region JsonModel
 
     // ReSharper disable All
 
-    private class ProgramData
+    private class SearchResult
     {
-        public Data? data { get; set; }
+        public SearchHits? hits { get; set; }
+    }
+
+    private class SearchHits
+    {
+        public int total { get; set; }
+        public SearchHit[]? hits { get; set; }
+    }
+
+    private class SearchHit
+    {
+        [JsonPropertyName("_source")] public SearchSource? source { get; set; }
+    }
+
+    private class SearchSource
+    {
         public string? uuid { get; set; }
-    }
-
-    private class Data
-    {
-        public string? brandName { get; set; }
-        public string? categoryName { get; set; }
         public string? title { get; set; }
-        public string? path { get; set; }
-        public string? parentalRating { get; set; }
-        public Images? images { get; set; }
+        public string? url { get; set; }
+        public SearchImages? images { get; set; }
+        public SearchTracking? tracking { get; set; }
     }
 
-    private class Images
+    private class SearchImages
     {
-        public string? poster { get; set; }
-        public string? posterLandscape { get; set; }
+        [JsonPropertyName("default")] public string? defaultImage { get; set; }
+        public string? portrait { get; set; }
+        public string? landscape { get; set; }
     }
 
-    private class ProgramDataDetails
+    private class SearchTracking
     {
-        public string? description { get; set; }
-        public string? videoDescription { get; set; }
-        public int? datePublished { get; set; }
-        public int? dateUnpublished { get; set; }
-        public Program? program { get; set; }
+        public string? item_category { get; set; }
     }
 
-    private class Program
+    private class ProgramDetails
     {
-        public bool? published { get; set; }
+        public string? programUuid { get; set; }
         public string? type { get; set; }
-        public string? subtype { get; set; }
+        public string? title { get; set; }
+        public string? category { get; set; }
+        public string? description { get; set; }
+        public string? link { get; set; }
+        public int? duration { get; set; }
+        public ProgramDates? dates { get; set; }
+        public ProgramImages? images { get; set; }
+        public object? tvod { get; set; }
+    }
+
+    private class ProgramDates
+    {
+        public long? publishDate { get; set; }
+        public long? unpublishDate { get; set; }
+    }
+
+    private class ProgramImages
+    {
+        public ProgramImage[]? portrait { get; set; }
+        public ProgramImage[]? landscape { get; set; }
+    }
+
+    private class ProgramImage
+    {
+        public string? style { get; set; }
+        public string? url { get; set; }
     }
 
     // ReSharper restore All

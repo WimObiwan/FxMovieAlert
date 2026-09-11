@@ -21,7 +21,7 @@ public static class ServiceConfiguration
         services.AddMemoryCache();
 
         services.AddHttpClient("humo", c => { c.BaseAddress = new Uri("https://www.humo.be"); });
-        services.AddHttpClient("goplay", c => { c.BaseAddress = new Uri("https://www.goplay.be"); });
+        services.AddHttpClient("goplay", c => { c.BaseAddress = new Uri("https://api.play.tv"); });
         services.AddHttpClient("vtmgo", c =>
         {
             c.BaseAddress = new Uri("https://www.vtmgo.be/vtmgo/");
