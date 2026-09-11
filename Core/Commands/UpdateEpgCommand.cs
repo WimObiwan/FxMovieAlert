@@ -248,13 +248,27 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         var now = DateTime.Now;
 
         var maxDays = _updateEpgCommandOptions.MaxDays ?? 7;
+
+        // A Humo guide doesn't cover a calendar day, but a broadcast day: it starts in the
+        // early morning and ends in the early morning of the day after.  The guides of two
+        // consecutive days therefore overlap, and a broadcast shortly after midnight is only
+        // listed by the guide of the day before.  Collect all guides and handle them in one
+        // go: handling them day per day made every guide add broadcasts that the guide of
+        // the next day then didn't recognize.
+        var movieEvents = new List<MovieEvent>();
         for (var days = 0; days <= maxDays; days++)
         {
             var date = now.Date.AddDays(days);
-            var movieEvents = await _humoService.GetGuide(date);
-
-            await UpdateMovieEvents(movieEvents, me => !me.Vod && me.StartTime.Date == date);
+            movieEvents.AddRange(await _humoService.GetGuide(date));
         }
+
+        if (!movieEvents.Any())
+            throw new Exception("No MovieEvents returned");
+
+        var lastStartTime = movieEvents.Max(me => me.StartTime);
+
+        await UpdateMovieEvents(movieEvents,
+            me => !me.Vod && me.StartTime >= now.Date && me.StartTime <= lastStartTime);
     }
 
     private async Task UpdateMovieEvents(IList<MovieEvent> movieEvents,
@@ -336,9 +350,13 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         _logger.LogInformation("New movies: {NewMovieCount}", movieEvents.Count);
 
         // Update channels
-        foreach (var channel in movieEvents.Select(m => m.Channel).Where(c => c != null).Select(c => c!).Distinct())
+        // A provider can hand out a Channel instance per movie or per day, so group them by
+        // code: without that, a channel that isn't in the database yet would be added once
+        // per instance.
+        foreach (var channelGroup in movieEvents.Where(m => m.Channel != null).GroupBy(m => m.Channel!.Code))
         {
-            var existingChannel = await _moviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channel.Code);
+            var channel = channelGroup.First().Channel!;
+            var existingChannel = await _moviesDbContext.Channels.SingleOrDefaultAsync(c => c.Code == channelGroup.Key);
             if (existingChannel != null)
             {
                 existingChannel.Name = channel.Name;
@@ -349,42 +367,75 @@ public class UpdateEpgCommand : IUpdateEpgCommand
                 }
 
                 _moviesDbContext.Channels.Update(existingChannel);
-                foreach (var movie in movieEvents.Where(m => m.Channel == channel))
-                    movie.Channel = existingChannel;
+                channel = existingChannel;
             }
             else
             {
                 _moviesDbContext.Channels.Add(channel);
             }
+
+            foreach (var movie in channelGroup)
+                movie.Channel = channel;
+        }
+
+        // Remove duplicates in the new movies
+        {
+            var identities = new HashSet<(string?, string?, DateTime)>();
+            var unique = new List<MovieEvent>(movieEvents.Count);
+            foreach (var movie in movieEvents)
+                if (identities.Add(GetIdentity(movie)))
+                {
+                    unique.Add(movie);
+                }
+                else
+                {
+                    _logger.LogWarning("Skipping duplicate movie: {ChannelCode} {Title} {StartTime} {ExternalId}",
+                        movie.Channel?.Code, movie.Title, movie.StartTime, movie.ExternalId);
+                }
+
+            movieEvents = unique;
         }
 
         // Remove exising movies that don't appear in new movies
         {
-            var remove = existingMovies.ToList().Where(m1 => movieEvents.All(m2 => m2.ExternalId != m1.ExternalId))
+            var newExternalIds = movieEvents.Select(m => m.ExternalId).ToHashSet();
+            var newIdentities = movieEvents.Select(GetIdentity).ToHashSet();
+            var remove = existingMovies.Include(me => me.Channel).ToList()
+                .Where(m1 => !newExternalIds.Contains(m1.ExternalId) && !newIdentities.Contains(GetIdentity(m1)))
                 .ToList();
             _logger.LogInformation("Existing movies to be removed: {ExistingMoviesToRemove}", remove.Count);
             _moviesDbContext.RemoveRange(remove);
             await _moviesDbContext.SaveChangesAsync();
         }
 
-        foreach (var movie in movieEvents)
-        {
-            var existingDuplicates = await existingMovies
-                .Where(me => me.ExternalId == movie.ExternalId)
-                .OrderBy(me => me.Id)
-                .Skip(1)
-                .ToListAsync();
-            _moviesDbContext.MovieEvents.RemoveRange(existingDuplicates);
-            await _moviesDbContext.SaveChangesAsync();
-        }
-
         // Update movies
+        var handledMovieEventIds = new HashSet<int>();
         foreach (var movie in movieEvents)
         {
-            var existingMovie = await existingMovies.Include(me => me.Movie)
-                .SingleOrDefaultAsync(me => me.ExternalId == movie.ExternalId);
+            var matches = (await FindExistingMovieEvents(movie)
+                    .Include(me => me.Movie)
+                    .OrderBy(me => me.Id)
+                    .ToListAsync())
+                .Where(me => !handledMovieEventIds.Contains(me.Id))
+                .ToList();
+
+            foreach (var match in matches)
+                handledMovieEventIds.Add(match.Id);
+
+            // Keep the oldest match: it holds the IMDb link and the moment the movie was
+            // first seen.  Any other match is a duplicate of the same broadcast.
+            var existingMovie = matches.FirstOrDefault();
+            if (matches.Count > 1)
+            {
+                var duplicates = matches.Skip(1).ToList();
+                _logger.LogWarning("Removing {DuplicateCount} duplicate(s): {ChannelCode} {Title} {StartTime}",
+                    duplicates.Count, movie.Channel?.Code, movie.Title, movie.StartTime);
+                _moviesDbContext.MovieEvents.RemoveRange(duplicates);
+            }
+
             if (existingMovie != null)
             {
+                existingMovie.ExternalId = movie.ExternalId;
                 if (existingMovie.Title != movie.Title)
                 {
                     existingMovie.Title = movie.Title;
@@ -426,6 +477,40 @@ public class UpdateEpgCommand : IUpdateEpgCommand
         }
 
         await _moviesDbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    ///     Identifies the movie event the way it is programmed: a VOD movie by the entry it
+    ///     points to, a broadcast by the slot it occupies.  A channel can't broadcast two
+    ///     movies at the same moment, so two broadcasts on one channel with the same start
+    ///     time are the same broadcast, even when the provider gives them a different
+    ///     ExternalId.  The same movie broadcast at another moment is a separate event.
+    /// </summary>
+    private static (string? ChannelCode, string? ExternalId, DateTime StartTime) GetIdentity(MovieEvent movieEvent)
+    {
+        return movieEvent.Vod
+            ? (movieEvent.Channel?.Code, movieEvent.ExternalId, default)
+            : (movieEvent.Channel?.Code, null, movieEvent.StartTime);
+    }
+
+    /// <summary>
+    ///     Finds the movie events already stored for the given movie, oldest first.  A
+    ///     broadcast is also matched on its slot, so that a broadcast that the provider
+    ///     republished under a new ExternalId is recognized instead of added a second time.
+    /// </summary>
+    private IQueryable<MovieEvent> FindExistingMovieEvents(MovieEvent movie)
+    {
+        var externalId = movie.ExternalId;
+
+        if (movie.Vod)
+            return _moviesDbContext.MovieEvents.Where(me => me.Vod && me.ExternalId == externalId);
+
+        var channelCode = movie.Channel?.Code;
+        var startTime = movie.StartTime;
+        return _moviesDbContext.MovieEvents.Where(me => !me.Vod
+                                                        && (me.ExternalId == externalId
+                                                            || (me.Channel!.Code == channelCode &&
+                                                                me.StartTime == startTime)));
     }
 
     private async Task UpdateMissingImageLinks()
