@@ -58,11 +58,15 @@ internal static class AuthenticationApplicationBuilderExtensions
                 // Configure the Claims Issuer to be Auth0
                 options.ClaimsIssuer = "Auth0";
 
+                // No OnRedirectToIdentityProviderForSignOut override: the handler used to
+                // build Auth0's non-standard https://{Domain}/v2/logout and call
+                // HandleResponse(), which suppressed the built-in sign-out entirely.
+                // Keycloak publishes a standard end_session_endpoint in its discovery
+                // document, so letting OpenIdConnectHandler do the redirect is correct
+                // (it sends id_token_hint - SaveTokens above - and post_logout_redirect_uri).
                 options.Events = new OpenIdConnectEvents
                 {
-                    OnTicketReceived = OnTicketReceived,
-                    OnRedirectToIdentityProviderForSignOut =
-                        ctx => OnRedirectToIdentityProviderForSignOut(ctx, auth0Options)
+                    OnTicketReceived = OnTicketReceived
                 };
             });
 
@@ -103,28 +107,4 @@ internal static class AuthenticationApplicationBuilderExtensions
         return Task.CompletedTask;
     }
 
-    private static Task OnRedirectToIdentityProviderForSignOut(RedirectContext context, Auth0Options auth0Options)
-    {
-        var logoutUri =
-            $"https://{auth0Options.Domain}/v2/logout?client_id={auth0Options.ClientId}";
-
-        var postLogoutUri = context.Properties.RedirectUri;
-        if (!string.IsNullOrEmpty(postLogoutUri))
-        {
-            if (postLogoutUri.StartsWith("/"))
-            {
-                // transform to absolute
-                var request = context.Request;
-                postLogoutUri = request.Scheme + "://" + request.Host + request.PathBase +
-                                postLogoutUri;
-            }
-
-            logoutUri += $"&returnTo={Uri.EscapeDataString(postLogoutUri)}";
-        }
-
-        context.Response.Redirect(logoutUri);
-        context.HandleResponse();
-
-        return Task.CompletedTask;
-    }
 }
