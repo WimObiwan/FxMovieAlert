@@ -13,7 +13,7 @@ namespace FxMovies.Site;
 internal static class AuthenticationApplicationBuilderExtensions
 {
     public static IServiceCollection AddFxMoviesAuthentication(this IServiceCollection services,
-        Auth0Options auth0Options)
+        OidcOptions oidcOptions)
     {
         services.AddAuthentication(options =>
             {
@@ -32,14 +32,14 @@ internal static class AuthenticationApplicationBuilderExtensions
                 options.Cookie.SameSite = SameSiteMode.None;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             })
-            .AddOpenIdConnect("Auth0", options =>
+            .AddOpenIdConnect("oidc", options =>
             {
-                // Set the authority to your Auth0 domain
-                options.Authority = $"https://{auth0Options.Domain}";
+                // Authority is the OIDC issuer; discovery is fetched from
+                // {Authority}/.well-known/openid-configuration.
+                options.Authority = $"https://{oidcOptions.Domain}";
 
-                // Configure the Auth0 Client ID and Client Secret
-                options.ClientId = auth0Options.ClientId;
-                options.ClientSecret = auth0Options.ClientSecret;
+                options.ClientId = oidcOptions.ClientId;
+                options.ClientSecret = oidcOptions.ClientSecret;
 
                 // Set response type to code
                 options.ResponseType = "code";
@@ -51,12 +51,11 @@ internal static class AuthenticationApplicationBuilderExtensions
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
 
-                // Set the callback path, so Auth0 will call back to http://localhost:5000/signin-auth0 
-                // Also ensure that you have added the URL as an Allowed Callback URL in your Auth0 dashboard 
-                options.CallbackPath = new PathString("/signin-auth0");
+                // Must be registered as a Valid Redirect URI on the identity provider
+                // client. Matches the framework default for the "oidc" scheme.
+                options.CallbackPath = new PathString("/signin-oidc");
 
-                // Configure the Claims Issuer to be Auth0
-                options.ClaimsIssuer = "Auth0";
+                options.ClaimsIssuer = "oidc";
 
                 // No OnRedirectToIdentityProviderForSignOut override: the handler used to
                 // build Auth0's non-standard https://{Domain}/v2/logout and call

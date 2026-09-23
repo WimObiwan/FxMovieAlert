@@ -18,7 +18,7 @@ public class AccountModel : PageModel
 
     public async Task OnGetLogin(string returnUrl = "/")
     {
-        await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties
+        await HttpContext.ChallengeAsync("oidc", new AuthenticationProperties
         {
             RedirectUri = returnUrl,
             IsPersistent = true,
@@ -28,7 +28,7 @@ public class AccountModel : PageModel
 
     public async Task OnGetLogout(string returnUrl = "/")
     {
-        await HttpContext.SignOutAsync("Auth0", new AuthenticationProperties
+        await HttpContext.SignOutAsync("oidc", new AuthenticationProperties
         {
             //RedirectUri = returnUrl
             // Should be fixed by: https://community.auth0.com/t/how-do-i-set-up-a-dynamic-allowed-callback-url/60268

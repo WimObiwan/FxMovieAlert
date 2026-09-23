@@ -166,7 +166,7 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
     public async Task OnGetLogin(string returnUrl = "/")
     {
-        await HttpContext.ChallengeAsync("Auth0", new AuthenticationProperties { RedirectUri = returnUrl });
+        await HttpContext.ChallengeAsync("oidc", new AuthenticationProperties { RedirectUri = returnUrl });
     }
 
     #region Filter helper functions

@@ -166,7 +166,7 @@ public static class Program
             );
         });
 
-        services.AddFxMoviesAuthentication(configuration.GetSection(Auth0Options.Position).Get<Auth0Options>());
+        services.AddFxMoviesAuthentication(configuration.GetSection(OidcOptions.Position).Get<OidcOptions>());
         services.AddFxMoviesHealthChecks(configuration);
         services.AddFxMoviesCore(configuration, typeof(Program).Assembly);
     }

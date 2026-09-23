@@ -3,9 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 namespace FxMovies.Site.Options;
 
 [ExcludeFromCodeCoverage]
-public class Auth0Options
+public class OidcOptions
 {
-    public static string Position => "Auth0";
+    public static string Position => "Oidc";
 
     public string Domain { get; set; }
     public string ClientId { get; set; }

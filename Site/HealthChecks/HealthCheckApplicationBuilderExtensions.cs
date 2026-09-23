@@ -35,8 +35,8 @@ internal static class HealthCheckApplicationBuilderExtensions
                     configuration.GetConnectionString("ImdbDb"),
                     name: "sqlite-ImdbDb")
                 .AddOpenIdConnectServer(
-                    new Uri($"https://{configuration["Auth0:Domain"]}/"),
-                    name: "idsvr-Auth0")
+                    new Uri($"https://{configuration["Oidc:Domain"]}/"),
+                    name: "idsvr-oidc")
                 .AddMovieDbDataCheck("FxMoviesDB-Broadcasts-data", MovieEvent.FeedType.Broadcast)
                 .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-data", MovieEvent.FeedType.FreeVod)
                 .AddMovieDbDataCheck("FxMoviesDB-FreeStreaming-VtmGo-data", MovieEvent.FeedType.FreeVod, "vtmgo")
