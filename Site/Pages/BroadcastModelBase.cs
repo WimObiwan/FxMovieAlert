@@ -166,7 +166,10 @@ public class BroadcastsModelBase : PageModel, IFilterBarParentModel
 
     public async Task OnGetLogin(string returnUrl = "/")
     {
-        await HttpContext.ChallengeAsync("oidc", new AuthenticationProperties { RedirectUri = returnUrl });
+        // Guarded against open redirect - see AccountModel.OnGetLogin for why the IdP
+        // does not validate this value.
+        await HttpContext.ChallengeAsync("oidc",
+            new AuthenticationProperties { RedirectUri = Url.IsLocalUrl(returnUrl) ? returnUrl : "/" });
     }
 
     #region Filter helper functions

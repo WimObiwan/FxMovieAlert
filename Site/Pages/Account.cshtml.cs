@@ -16,23 +16,31 @@ public class AccountModel : PageModel
     {
     }
 
+    // returnUrl arrives on the query string and is applied by THIS app after the identity
+    // provider redirects back - it travels in `state`, not as redirect_uri or
+    // post_logout_redirect_uri, so Keycloak never validates it. Unvalidated it is an open
+    // redirect: ?handler=login&returnUrl=https://evil.example/ lands the victim there after
+    // a genuine login. IsLocalUrl also rejects //host and /\host, which a StartsWith("/")
+    // check would let through.
     public async Task OnGetLogin(string returnUrl = "/")
     {
         await HttpContext.ChallengeAsync("oidc", new AuthenticationProperties
         {
-            RedirectUri = returnUrl,
+            RedirectUri = Url.IsLocalUrl(returnUrl) ? returnUrl : "/",
             IsPersistent = true,
             AllowRefresh = true
         });
     }
 
+    // returnUrl was hardcoded to "/" because Auth0 required each post-logout URL to be
+    // registered exactly, so a dynamic one could not work. Keycloak allows any path under
+    // the client root, so the dynamic value is restored - guarded as in OnGetLogin above,
+    // since the app performs this redirect itself and the IdP does not check it.
     public async Task OnGetLogout(string returnUrl = "/")
     {
         await HttpContext.SignOutAsync("oidc", new AuthenticationProperties
         {
-            //RedirectUri = returnUrl
-            // Should be fixed by: https://community.auth0.com/t/how-do-i-set-up-a-dynamic-allowed-callback-url/60268
-            RedirectUri = "/",
+            RedirectUri = Url.IsLocalUrl(returnUrl) ? returnUrl : "/",
             IsPersistent = true
         });
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
